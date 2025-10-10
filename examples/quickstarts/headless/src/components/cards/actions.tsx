@@ -1,10 +1,11 @@
 import { getAddress, parseAbi } from "viem";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useChainId, useReadContract, useWriteContract } from "wagmi";
 import { TruncateData } from "../ui/TruncateData";
 
 const MintContract = () => {
 
   const { address } = useAccount()
+  const chainId = useChainId()
 
 
   const { data: balance, refetch, error: balanceError } = useReadContract({
@@ -49,11 +50,22 @@ const MintContract = () => {
   })
 
   async function submit({ amount }: { amount: string }) {
+    if (!address) {
+      console.error('Wallet address is missing. Unable to mint.')
+      return
+    }
+
+    if (!chainId) {
+      console.error('Chain is missing. Unable to mint.', chainId)
+      return
+    }
+
     writeContract({
       address: getAddress('0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'),
       abi: parseAbi(['function mint(address to, uint256 amount)']),
       functionName: 'mint',
-      args: [address!, BigInt(amount)],
+      args: [address, BigInt(amount)],
+      chainId,
     })
   }
 
