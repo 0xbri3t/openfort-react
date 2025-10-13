@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { providersLogos } from "../../assets/logos";
 import { useOpenfortCore } from '../../openfort/useOpenfort';
+import { getFriendlyOAuthErrorMessage } from '../../utils';
 import Loader from "../Common/Loading";
 import { PageContent } from "../Common/Modal/styles";
 import { useOpenfort } from '../Openfort/useOpenfort';
@@ -34,6 +35,31 @@ const ConnectWithOAuth: React.FC<{}> = ({ }) => {
           else setTimeout(() => setStatus(states.REDIRECT), 150); // UX: wait a bit before redirecting
           break;
         case states.CONNECTING:
+          const oauthError = url.searchParams.get("error");
+          const oauthErrorDescription = url.searchParams.get("error_description");
+          if (oauthError) {
+            const removeParams = () => {
+              [
+                "openfortAuthProviderUI",
+                "error",
+                "error_description",
+                "refresh_token",
+                "access_token",
+                "player_id",
+              ].forEach((key) => url.searchParams.delete(key));
+              window.history.replaceState({}, document.title, url.toString());
+            }
+
+            const message = getFriendlyOAuthErrorMessage(provider, oauthError, oauthErrorDescription);
+
+            console.warn("OAuth callback returned error", { provider, oauthError, oauthErrorDescription });
+            setDescription(message);
+            setStatus(states.ERROR);
+            setRoute(routes.CONNECT);
+            removeParams();
+            return;
+          }
+
           const player = url.searchParams.get("player_id");
           const accessToken = url.searchParams.get("access_token");
           const refreshToken = url.searchParams.get("refresh_token");
@@ -41,6 +67,8 @@ const ConnectWithOAuth: React.FC<{}> = ({ }) => {
           // Remove specified keys from the URL
           [
             "openfortAuthProviderUI",
+            "error",
+            "error_description",
             "refresh_token",
             "access_token",
             "player_id",

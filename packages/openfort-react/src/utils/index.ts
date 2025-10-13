@@ -113,6 +113,18 @@ export const isSafeConnector = (connectorId?: string) => connectorId === 'safe';
 export const isInjectedConnector = (connectorId?: string) =>
   connectorId === 'injected';
 
+export const getFriendlyOAuthErrorMessage = (
+  provider: string | null | undefined,
+  oauthError?: string | null,
+  oauthErrorDescription?: string | null,
+) => {
+  if (oauthError === 'access_denied') {
+    return provider ? `You canceled ${provider} sign-in` : 'Sign-in canceled';
+  }
+  if (oauthErrorDescription) return oauthErrorDescription;
+  return 'There was an error during authentication. Please try again.';
+};
+
 export {
   nFormatter,
   truncateEthAddress,

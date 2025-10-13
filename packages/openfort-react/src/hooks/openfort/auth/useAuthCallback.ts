@@ -3,6 +3,7 @@ import { UIAuthProvider } from "../../../components/Openfort/types";
 import { useOpenfort } from "../../../components/Openfort/useOpenfort";
 import { OpenfortError, OpenfortErrorType, OpenfortHookOptions } from "../../../types";
 import { onError } from "../hookConsistency";
+import { getFriendlyOAuthErrorMessage } from "../../../utils";
 import { CreateWalletPostAuthOptions } from "./useConnectToWalletPostAuth";
 import { EmailVerificationResult, useEmailAuth } from "./useEmailAuth";
 import { StoreCredentialsResult, useOAuth } from "./useOAuth";
@@ -169,6 +170,38 @@ export const useAuthCallback = ({
         setEmail(email);
         removeParams();
       } else {
+        // Handle OAuth error short-circuit (e.g., user canceled on provider)
+        const oauthError = url.searchParams.get("error");
+        const oauthErrorDescription = url.searchParams.get("error_description");
+
+        if (oauthError) {
+          const removeParams = () => {
+            [
+              "openfortAuthProvider",
+              "error",
+              "error_description",
+              "refresh_token",
+              "access_token",
+              "player_id",
+            ].forEach((key) => url.searchParams.delete(key));
+            window.history.replaceState({}, document.title, url.toString());
+          }
+
+          const message = getFriendlyOAuthErrorMessage(openfortAuthProvider, oauthError, oauthErrorDescription);
+          onError({
+            hookOptions,
+            options: {},
+            error: new OpenfortError(message, OpenfortErrorType.AUTHENTICATION_ERROR, {
+              provider: openfortAuthProvider,
+              error: oauthError,
+              errorDescription: oauthErrorDescription,
+              fixedUrl,
+            }),
+          });
+
+          removeParams();
+          return;
+        }
 
         const player = url.searchParams.get("player_id");
         const accessToken = url.searchParams.get("access_token");
@@ -193,6 +226,8 @@ export const useAuthCallback = ({
         const removeParams = () => {
           [
             "openfortAuthProvider",
+            "error",
+            "error_description",
             "refresh_token",
             "access_token",
             "player_id",
