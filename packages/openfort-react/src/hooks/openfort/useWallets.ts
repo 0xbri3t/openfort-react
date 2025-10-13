@@ -413,7 +413,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             limit: 100,
             // If its EOA we want all accounts, otherwise we want only smart accounts
             accountType: walletConfig?.accountType === AccountTypeEnum.EOA ?
-              AccountTypeEnum.EOA : AccountTypeEnum.SMART_ACCOUNT
+              undefined : AccountTypeEnum.SMART_ACCOUNT
           }),
         });
         let walletAddress = optionsObject.address;
