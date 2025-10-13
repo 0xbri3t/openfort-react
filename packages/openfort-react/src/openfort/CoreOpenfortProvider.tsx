@@ -185,7 +185,7 @@ export const CoreOpenfortProvider: React.FC<PropsWithChildren<CoreOpenfortProvid
       limit: 100,
       // If its EOA we want all accounts, otherwise we want only smart accounts
       accountType: walletConfig?.accountType === AccountTypeEnum.EOA ?
-        AccountTypeEnum.EOA : AccountTypeEnum.SMART_ACCOUNT
+        undefined : AccountTypeEnum.SMART_ACCOUNT
     }),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
