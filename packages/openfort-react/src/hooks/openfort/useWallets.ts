@@ -41,7 +41,7 @@ export type WalletRecovery = {
 type SetActiveWalletResult = { error?: OpenfortError, wallet?: UserWallet }
 
 type SetActiveWalletOptions = ({
-  walletId: string | Connector;
+  walletId: string;
   recovery?: WalletRecovery;
   address?: Hex | undefined;
   showUI?: boolean;
@@ -324,32 +324,27 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     const optionsObject: SetActiveWalletOptions = typeof options === "string" ? { walletId: options } : options;
 
     const { showUI } = optionsObject;
-    const requestedWalletId = typeof optionsObject.walletId === 'string'
-      ? optionsObject.walletId
-      : optionsObject.walletId?.id;
-    const isEmbeddedWalletRequest = requestedWalletId === embeddedWalletId;
 
     let connector: Connector | null = null;
 
     if (typeof optionsObject.walletId === 'string') {
       const wallet = availableWallets.find(c => c.id === optionsObject.walletId);
-      if (wallet) {
-        log("Connecting to", wallet.connector)
-        connector = wallet.connector;
-      } else if (!isEmbeddedWalletRequest) {
-        log("Connector not found", availableWallets, optionsObject.walletId);
+      if (!wallet) {
+        log("Connector not found", connector);
         return { error: new OpenfortError("Connector not found", OpenfortErrorType.WALLET_ERROR) };
       }
+      log("Connecting to", wallet.connector)
+      connector = wallet.connector;
     } else {
       connector = optionsObject.walletId;
     }
 
-    if (!connector && !isEmbeddedWalletRequest) {
+    if (!connector) {
       log("Connector not found", availableWallets, optionsObject.walletId);
       return { error: new OpenfortError("Connector not found", OpenfortErrorType.WALLET_ERROR) };
     }
 
-    if (connector && activeWallet?.id === connector.id && address === optionsObject.address) {
+    if (activeWallet?.id === connector.id && address === optionsObject.address) {
       log(`Already connected to ${connector.id} with address ${address}, skipping connection`);
       return { wallet: activeWallet };
     }
@@ -357,23 +352,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     await disconnectAsync();
 
     if (showUI) {
-      if (isEmbeddedWalletRequest) {
-        setTimeout(() => {
-          setRoute(routes.RECOVER);
-          setOpen(true);
-        });
-        return {};
-      }
-
-      if (!connector) {
-        log("Connector not available for wallet", requestedWalletId);
-        return onError({
-          error: new OpenfortError("Wallet not found", OpenfortErrorType.AUTHENTICATION_ERROR),
-          options: optionsObject,
-          hookOptions
-        });
-      }
-
       const walletToConnect = wallets.find((w) => w.id == connector.id)
       if (!walletToConnect) {
         log("Wallet not found", connector);
@@ -398,9 +376,15 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       return {};
     }
 
+    function isOpenfortWallet(
+      opts: SetActiveWalletOptions
+    ) {
+      return opts.walletId === embeddedWalletId;
+    }
+
     log("Setting active wallet", { options: optionsObject, chainId });
 
-    if (isEmbeddedWalletRequest) {
+    if (isOpenfortWallet(optionsObject)) {
       setStatus({
         status: 'connecting',
         address: optionsObject.address,
@@ -552,12 +536,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         status: 'connecting',
         address: optionsObject.address,
       });
-      if (!connector) {
-        log("Connector not available for wallet", requestedWalletId);
-        return {
-          error: new OpenfortError("Connector not found", OpenfortErrorType.WALLET_ERROR),
-        };
-      }
       setConnectToConnector({
         address: optionsObject.address,
         connector,
