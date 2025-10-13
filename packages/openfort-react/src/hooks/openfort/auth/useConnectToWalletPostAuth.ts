@@ -1,6 +1,7 @@
-import { EmbeddedAccount, RecoveryMethod } from "@openfort/openfort-js"
+import { AccountTypeEnum, EmbeddedAccount, RecoveryMethod } from "@openfort/openfort-js"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback } from "react"
+import { Hex } from "viem"
 import { useOpenfort } from "../../../components/Openfort/useOpenfort"
 import { embeddedWalletId } from "../../../constants/openfort"
 import { UserWallet, useWallets } from "../useWallets"
@@ -57,7 +58,7 @@ export const useConnectToWalletPostAuth = () => {
       return {};
     }
 
-    const wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({ queryKey: ['openfortEmbeddedAccountsList'] });
+    let wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({ queryKey: ['openfortEmbeddedAccountsList'] });
 
     let wallet: UserWallet | undefined;
 
@@ -70,12 +71,22 @@ export const useConnectToWalletPostAuth = () => {
         return {};
       }
       wallet = createWalletResult.wallet!;
+      wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({ queryKey: ['openfortEmbeddedAccountsList'] });
     }
 
     // Has a wallet with automatic recovery
-    if (wallets.some(w => w.recoveryMethod === RecoveryMethod.AUTOMATIC || w.recoveryMethod === RecoveryMethod.PASSKEY)) {
+    const hasAutoRecovery = wallets.some(w => w.recoveryMethod === RecoveryMethod.AUTOMATIC || w.recoveryMethod === RecoveryMethod.PASSKEY);
+    const shouldForceActivation = walletConfig?.accountType === AccountTypeEnum.EOA && wallets.length > 0;
+
+    if (hasAutoRecovery || shouldForceActivation) {
+      const targetAddress =
+        wallet?.address ??
+        wallets.find(w => w.recoveryMethod === RecoveryMethod.AUTOMATIC || w.recoveryMethod === RecoveryMethod.PASSKEY)?.address as Hex | undefined ??
+        wallets[0]?.address as Hex | undefined;
+
       const setWalletResult = await setActiveWallet({
         walletId: embeddedWalletId,
+        address: targetAddress,
       });
 
       if (!setWalletResult.wallet || (setWalletResult.error && signOutOnError)) {
@@ -83,11 +94,11 @@ export const useConnectToWalletPostAuth = () => {
         // If there was an error and we should log out, we can call the logout function
         await signOut();
       }
-      wallet = setWalletResult.wallet!;
+      wallet = setWalletResult.wallet ?? wallet;
     }
 
     return { wallet };
-  }, [walletConfig, setActiveWallet, signOut]);
+  }, [walletConfig, setActiveWallet, signOut, createWallet, queryClient]);
 
   return {
     tryUseWallet,
