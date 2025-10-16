@@ -1,4 +1,4 @@
-import { NavRoute } from "@/components/Nav";
+import type { NavRoute } from '@/components/Nav'
 
 export const navRoutes: NavRoute[] = [
   {
@@ -32,16 +32,21 @@ export const navRoutes: NavRoute[] = [
         href: '/auth/useUser',
         label: 'useUser',
       },
-    ]
+    ],
   },
   {
     label: 'Wallet hooks',
     children: [
       {
+        href: '/wallet/useWallet',
+        label: 'useWallet',
+        exact: true,
+      },
+      {
         href: '/wallet/useWallets',
         label: 'useWallets',
       },
-    ]
+    ],
   },
   {
     label: 'Utils',
@@ -53,7 +58,7 @@ export const navRoutes: NavRoute[] = [
       {
         href: '/wagmi',
         label: 'wagmi',
-      }
-    ]
+      },
+    ],
   },
 ]

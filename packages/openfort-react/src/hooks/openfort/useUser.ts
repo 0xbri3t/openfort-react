@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { useOpenfortCore } from '../../openfort/useOpenfort';
-import { EmbeddedState } from "@openfort/openfort-js";
+import { EmbeddedState } from '@openfort/openfort-js'
+import { useCallback } from 'react'
+import { useOpenfortCore } from '../../openfort/useOpenfort'
 
 /**
  * Hook for accessing current user information and authentication state
@@ -47,18 +47,18 @@ import { EmbeddedState } from "@openfort/openfort-js";
  * ```
  */
 export function useUser() {
-  const { user, client, embeddedState } = useOpenfortCore();
+  const { user, client, embeddedState } = useOpenfortCore()
 
   const getAccessTokenAndUpdate = useCallback(async () => {
-    await client.validateAndRefreshToken();
-    const token = await client.getAccessToken();
-    return token;
-  }, [client]);
+    await client.validateAndRefreshToken()
+    const token = await client.getAccessToken()
+    return token
+  }, [client])
 
   return {
     user,
     isAuthenticated: embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED,
     getAccessToken: getAccessTokenAndUpdate,
     validateAndRefreshToken: async () => await client.validateAndRefreshToken(),
-  };
-};
+  }
+}

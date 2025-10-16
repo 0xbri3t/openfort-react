@@ -1,19 +1,17 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createConfig, WagmiProvider } from 'wagmi';
-
-import { getDefaultConfig, OpenfortProvider, AccountTypeEnum } from "@openfort/react";
-import { beamTestnet, polygonAmoy } from 'viem/chains';
-
+import { AccountTypeEnum, getDefaultConfig, OpenfortProvider } from '@openfort/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { beamTestnet, polygonAmoy } from 'viem/chains'
+import { createConfig, WagmiProvider } from 'wagmi'
 
 export const config = createConfig(
   getDefaultConfig({
     appName: 'Openfort Next.js demo',
-    chains: [polygonAmoy,beamTestnet], // The chains you want to support
+    chains: [polygonAmoy, beamTestnet], // The chains you want to support
     walletConnectProjectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID, // The WalletConnect Project ID
   })
-);
+)
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient()
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
@@ -21,7 +19,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <OpenfortProvider
           debugMode
           publishableKey={import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY!}
-
           // Set the wallet configuration. In this example, we will be using the embedded signer.
           walletConfig={{
             accountType: AccountTypeEnum.EOA,
@@ -31,11 +28,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             recoverWalletAutomaticallyAfterAuth: true, // We will manually call create/setActive wallet after auth
           }}
         >
-          <>
-            {children}
-          </>
+          {children}
         </OpenfortProvider>
       </QueryClientProvider>
     </WagmiProvider>
-  );
+  )
 }
