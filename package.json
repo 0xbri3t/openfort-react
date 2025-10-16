@@ -12,7 +12,8 @@
     "check:types": "tsc --noEmit",
     "check:unused": "pnpm clean && knip",
     "clean": "rm -rf packages/openfort-react/build",
-    "postinstall": "simple-git-hooks",
+    "postinstall": "git config --unset core.hooksPath 2>/dev/null || true && simple-git-hooks && ./.husky/install_gitleaks.sh",
+    "scan:secrets": "./.husky/run_gitleaks.sh",
     "dev": "pnpm --filter @openfort/react run dev",
     "dev:firebase": "pnpm --filter quickstart-firebase run dev",
     "dev:headless": "pnpm --filter quickstart-headless run dev",
@@ -60,11 +61,12 @@
     "wagmi": "^2.16.0"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm check"
+    "pre-commit": "./.husky/run_gitleaks.sh && pnpm check"
   },
   "knip": {
     "ignore": [
       ".github/**",
+      ".husky/**",
       "**/.next/**",
       "**/dist/**",
       "**/build/**",
