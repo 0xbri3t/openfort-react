@@ -100,22 +100,17 @@ Clone the project and install the necessary dependencies:
 
 ```sh
 $ git clone git@github.com:openfort-xyz/openfort-react.git
-$ cd openfort
-$ yarn install
-```
-
-and start the code bundler:
-
-```sh
-$ yarn dev:kit
+$ cd openfort-react
+$ pnpm install
 ```
 
 and then simply select the example you'd like to run:
 
 ```sh
-$ yarn dev:vite # Vite
-$ yarn dev:nextjs # Next.js
-$ yarn dev:cra # Create React App
+$ pnpm dev:playground # Playground
+$ pnpm dev:firebase # Firebase
+$ pnpm dev:headless # Headless
+$ pnpm dev:openfort-ui # Openfort UI
 ```
 
 ## License
