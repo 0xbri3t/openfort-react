@@ -16,6 +16,7 @@ import { embeddedWalletId } from '../../constants/openfort'
 import { useOpenfortCore, useWalletStatus } from '../../openfort/useOpenfort'
 import { OpenfortError, OpenfortErrorType, type OpenfortHookOptions } from '../../types'
 import { logger } from '../../utils/logger'
+import { isPasskeyRegistrationAvailable } from '../../utils/passkeySupport'
 import { useWallets as useWagmiWallets } from '../../wallets/useWallets'
 import type { BaseFlowState } from './auth/status'
 import { onError, onSuccess } from './hookConsistency'
@@ -261,6 +262,12 @@ export function useWallets(hookOptions: WalletOptions = {}) {
               password: recovery.password,
             }
           case RecoveryMethod.PASSKEY: {
+            if (!isPasskeyRegistrationAvailable()) {
+              throw new OpenfortError(
+                'Passkey recovery is not available in this environment. Please choose a different recovery method or open this page in a new tab.',
+                OpenfortErrorType.ENVIRONMENT_ERROR
+              )
+            }
             if (!embeddedAccounts) {
               return {
                 recoveryMethod: RecoveryMethod.PASSKEY,
