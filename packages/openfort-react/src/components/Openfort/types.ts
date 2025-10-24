@@ -60,6 +60,8 @@ type CommonWalletConfig = {
   shieldPublishableKey: string
   /** Policy ID (pol_...) for the embedded signer. */
   ethereumProviderPolicyId?: PolicyConfig
+  /** RPC URLs for custom/unsupported chains. Maps chain ID to RPC URL. */
+  ethereumProviderChains?: Record<number, string>
   accountType?: AccountTypeEnum
   debug?: boolean
   recoverWalletAutomaticallyAfterAuth?: boolean

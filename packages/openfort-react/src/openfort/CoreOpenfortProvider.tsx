@@ -190,7 +190,12 @@ export const CoreOpenfortProvider: React.FC<PropsWithChildren<CoreOpenfortProvid
       return { policy }
     }
 
-    openfort.embeddedWallet.getEthereumProvider(resolvePolicy())
+    const providerOptions = {
+      ...resolvePolicy(),
+      chains: walletConfig.ethereumProviderChains,
+    }
+
+    openfort.embeddedWallet.getEthereumProvider(providerOptions)
   }, [openfort, walletConfig, chainId])
 
   const [isConnectedWithEmbeddedSigner, setIsConnectedWithEmbeddedSigner] = useState(false)
