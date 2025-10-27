@@ -23,7 +23,10 @@ import MobileConnectors from '../Pages/MobileConnectors'
 import Onboarding from '../Pages/Onboarding'
 import Profile from '../Pages/Profile'
 import Providers from '../Pages/Providers'
+import Receive from '../Pages/Receive'
 import RecoverPage from '../Pages/Recover'
+import Send from '../Pages/Send'
+import SendConfirmation from '../Pages/SendConfirmation'
 import SocialProviders from '../Pages/SoicalProviders'
 import SwitchNetworks from '../Pages/SwitchNetworks'
 import ConnectUsing from './ConnectUsing'
@@ -60,6 +63,16 @@ const ConnectModal: React.FC<{
   const onBack = () => {
     if (context.route === routes.CONNECT) {
       context.setRoute(routes.CONNECTORS)
+      return
+    }
+
+    if (context.route === routes.SEND_CONFIRMATION) {
+      context.setRoute(routes.SEND)
+      return
+    }
+
+    if (context.route === routes.SEND || context.route === routes.RECEIVE) {
+      context.setRoute(routes.PROFILE)
       return
     }
 
@@ -108,6 +121,9 @@ const ConnectModal: React.FC<{
     switchNetworks: <SwitchNetworks />,
     recover: <RecoverPage />,
     connectWithMobile: <ConnectWithMobile />,
+    send: <Send />,
+    sendConfirmation: <SendConfirmation />,
+    receive: <Receive />,
   }
 
   function hide() {

@@ -4,7 +4,12 @@ import { createContext } from 'react'
 import type { ValueOf } from 'viem/_types/types/utils'
 import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
-import type { OpenfortUIOptionsExtended, OpenfortWalletConfig, routes } from './types'
+import type {
+  OpenfortUIOptionsExtended,
+  OpenfortWalletConfig,
+  SendFormState,
+  routes,
+} from './types'
 
 type Connector =
   | {
@@ -40,6 +45,8 @@ export type ContextValue = {
   thirdPartyAuth?: ThirdPartyAuthConfiguration
   emailInput: string
   setEmailInput: React.Dispatch<React.SetStateAction<string>>
+  sendForm: SendFormState
+  setSendForm: React.Dispatch<React.SetStateAction<SendFormState>>
 } & useConnectCallbackProps
 
 export const Openfortcontext = createContext<ContextValue | null>(null)
