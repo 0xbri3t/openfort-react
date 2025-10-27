@@ -138,7 +138,7 @@ const Profile: React.FC<{ closeModal?: () => void }> = ({ closeModal }) => {
                       context.setRoute(routes.RECEIVE)
                     }}
                   >
-                    Receive
+                    Get
                   </ActionButton>
                   <ActionButton
                     icon={<BuyIcon />}
