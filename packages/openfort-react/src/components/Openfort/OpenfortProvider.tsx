@@ -16,11 +16,11 @@ import { Web3ContextProvider } from '../contexts/web3'
 import { type ContextValue, type ErrorMessage, Openfortcontext } from './context'
 import {
   type ConnectUIOptions,
+  defaultSendFormState,
   type OpenfortUIOptionsExtended,
   type OpenfortWalletConfig,
-  type SendFormState,
-  defaultSendFormState,
   routes,
+  type SendFormState,
   UIAuthProvider,
 } from './types'
 

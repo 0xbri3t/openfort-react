@@ -4,12 +4,7 @@ import { createContext } from 'react'
 import type { ValueOf } from 'viem/_types/types/utils'
 import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
-import type {
-  OpenfortUIOptionsExtended,
-  OpenfortWalletConfig,
-  SendFormState,
-  routes,
-} from './types'
+import type { OpenfortUIOptionsExtended, OpenfortWalletConfig, routes, SendFormState } from './types'
 
 type Connector =
   | {

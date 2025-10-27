@@ -12,7 +12,7 @@ import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { truncateEthAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
-import CopyToClipboard from '../../Common/CopyToClipboard'
+import { CopyText } from '../../Common/CopyToClipboard'
 import FitText from '../../Common/FitText'
 import Input from '../../Common/Input'
 import Loader from '../../Common/Loading'
@@ -86,7 +86,7 @@ const RecoverPasswordWallet = ({ wallet }: { wallet: UserWallet }) => {
       <ModalHeading>Recover wallet</ModalHeading>
       <ModalBody style={{ textAlign: 'center' }}>
         Please enter the recovery password to recover wallet{' '}
-        <CopyToClipboard string={wallet.address}>{ensName ?? truncateEthAddress(wallet.address)}</CopyToClipboard>
+        <CopyText value={wallet.address}>{ensName ?? truncateEthAddress(wallet.address)}</CopyText>
       </ModalBody>
       <form
         onSubmit={(e) => {
