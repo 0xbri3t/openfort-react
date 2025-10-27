@@ -25,6 +25,7 @@ import Profile from '../Pages/Profile'
 import Providers from '../Pages/Providers'
 import Receive from '../Pages/Receive'
 import RecoverPage from '../Pages/Recover'
+import SelectToken from '../Pages/SelectToken'
 import Send from '../Pages/Send'
 import SendConfirmation from '../Pages/SendConfirmation'
 import SocialProviders from '../Pages/SoicalProviders'
@@ -67,6 +68,11 @@ const ConnectModal: React.FC<{
     }
 
     if (context.route === routes.SEND_CONFIRMATION) {
+      context.setRoute(routes.SEND)
+      return
+    }
+
+    if (context.route === routes.SEND_TOKEN_SELECT) {
       context.setRoute(routes.SEND)
       return
     }
@@ -123,6 +129,7 @@ const ConnectModal: React.FC<{
     connectWithMobile: <ConnectWithMobile />,
     send: <Send />,
     sendConfirmation: <SendConfirmation />,
+    sendTokenSelect: <SelectToken />,
     receive: <Receive />,
   }
 
