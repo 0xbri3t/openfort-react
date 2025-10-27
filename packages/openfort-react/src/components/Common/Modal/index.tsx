@@ -214,17 +214,17 @@ const Modal: React.FC<ModalProps> = ({
   })
   const [inTransition, setInTransition] = useState<boolean | undefined>(undefined)
 
-  // Calculate new content bounds
-  const updateBounds = (node: any) => {
+  const updateBounds = useCallback((node: HTMLElement | null) => {
+    if (!node) return
     const bounds = {
-      width: node?.offsetWidth,
-      height: node?.offsetHeight,
+      width: node.offsetWidth,
+      height: node.offsetHeight,
     }
     setDimensions({
-      width: `${bounds?.width}px`,
-      height: `${bounds?.height}px`,
+      width: `${bounds.width}px`,
+      height: `${bounds.height}px`,
     })
-  }
+  }, [])
 
   let blockTimeout: ReturnType<typeof setTimeout>
   const contentRef = useCallback(
@@ -240,7 +240,7 @@ const Modal: React.FC<ModalProps> = ({
       // Calculate new content bounds
       updateBounds(node)
     },
-    [open, inTransition]
+    [open, inTransition, updateBounds]
   )
 
   // Update layout on chain/network switch to avoid clipping
@@ -250,7 +250,19 @@ const Modal: React.FC<ModalProps> = ({
   const ref = useRef<any>(null)
   useEffect(() => {
     if (ref.current) updateBounds(ref.current)
-  }, [chain, switchChain, mobile, context.uiConfig, context.resize])
+  }, [chain, switchChain, mobile, context.uiConfig, context.resize, updateBounds])
+
+  useEffect(() => {
+    const node = ref.current
+    if (!node || typeof ResizeObserver === 'undefined') return
+
+    const observer = new ResizeObserver(() => {
+      updateBounds(node)
+    })
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [pageId, rendered, updateBounds])
 
   useEffect(() => {
     if (!mounted) {
