@@ -24,6 +24,7 @@ import {
   Balance,
   BalanceContainer,
   ChainSelectorContainer,
+  DisconnectButton,
   LoadingBalance,
   Unsupported,
 } from './styles'
@@ -179,9 +180,9 @@ const Profile: React.FC<{ closeModal?: () => void }> = ({ closeModal }) => {
         )}
       </ModalContent>
       {!isSafeConnector(connector?.id) && (
-        <Button onClick={() => setShouldDisconnect(true)} icon={<DisconnectIcon />}>
+        <DisconnectButton onClick={() => setShouldDisconnect(true)} icon={<DisconnectIcon />}>
           {locales.disconnect}
-        </Button>
+        </DisconnectButton>
       )}
       <PoweredByFooter />
     </PageContent>
