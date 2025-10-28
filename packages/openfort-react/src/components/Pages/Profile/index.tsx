@@ -16,7 +16,6 @@ import PoweredByFooter from '../../Common/PoweredByFooter'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
-import { LinkedProviders } from './LinkedProviders'
 import {
   ActionButton,
   ActionButtonsContainer,
