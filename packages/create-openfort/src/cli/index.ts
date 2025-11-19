@@ -287,7 +287,8 @@ export const runCli = async (): Promise<CliResults> => {
     );
 
     if (project.setupMethod === "automatic") {
-      autoKeys = await getAutomatedKeys();
+      const currentAppName = (project.name as string) || cliResults.appName!;
+      autoKeys = await getAutomatedKeys(currentAppName);
     }
 
     const keys = await p.group(

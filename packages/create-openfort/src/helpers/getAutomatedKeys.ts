@@ -1,5 +1,5 @@
+import { randomUUID } from "node:crypto";
 import * as p from "@clack/prompts";
-import { randomUUID } from "crypto";
 
 export interface AutomatedKeys {
   openfortPublishableKey: string;
@@ -9,25 +9,14 @@ export interface AutomatedKeys {
   shieldEncryptionShare: string;
 }
 
-export const getAutomatedKeys = async (): Promise<AutomatedKeys> => {
-  const projectName = await p.text({
-    message: "What is the name of your project?",
-    placeholder: "My Awesome Project",
-    validate: (value) => {
-      if (!value) return "Please enter a project name.";
-    },
-  });
-
-  if (p.isCancel(projectName)) {
-    p.cancel("Operation cancelled.");
-    process.exit(0);
-  }
-
+export const getAutomatedKeys = async (
+  appName: string,
+): Promise<AutomatedKeys> => {
   const sessionId = randomUUID();
 
   const url = new URL("https://dashboard.openfort.xyz/cli/callback");
   url.searchParams.set("session_id", sessionId);
-  url.searchParams.set("name", projectName as string);
+  url.searchParams.set("name", appName);
 
   p.log.info(`Please visit: ${url.toString()}`);
   const s = p.spinner();
