@@ -18,6 +18,8 @@ export const getAutomatedKeys = async (): Promise<AutomatedKeys> => {
   // Mock delay and response
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
+  s.stop("Authentication successful! Keys retrieved.");
+
   // Mocked keys
   const autoKeys = {
     openfortPublishableKey: "pk_test_mocked_one_click_setup",
@@ -27,6 +29,5 @@ export const getAutomatedKeys = async (): Promise<AutomatedKeys> => {
     shieldEncryptionShare: "mocked_share_one_click_setup",
   };
 
-  s.stop("Authentication successful! Keys retrieved.");
   return autoKeys;
 };

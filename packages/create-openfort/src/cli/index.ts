@@ -164,6 +164,9 @@ export const runCli = async (): Promise<CliResults> => {
 
     let autoKeys: AutomatedKeys | null = null;
 
+    // Pre-fetch keys if needed before entering the group for keys
+    // This avoids the spinner conflict inside the group prompt flow
+
     const project = await p.group(
       {
         ...(!cliProvidedName && {
@@ -278,10 +281,23 @@ export const runCli = async (): Promise<CliResults> => {
             initialValue: "automatic",
           });
         },
-        openfortPublishableKey: async ({ results }) => {
-          if (results.setupMethod === "automatic") {
-            autoKeys = await getAutomatedKeys();
-            return autoKeys.openfortPublishableKey;
+      },
+      {
+        onCancel() {
+          process.exit(1);
+        },
+      },
+    );
+
+    if (project.setupMethod === "automatic") {
+      autoKeys = await getAutomatedKeys();
+    }
+
+    const keys = await p.group(
+      {
+        openfortPublishableKey: () => {
+          if (project.setupMethod === "automatic" && autoKeys) {
+            return Promise.resolve(autoKeys.openfortPublishableKey);
           }
           return p.text({
             message: "Enter your Openfort Publishable Key:",
@@ -289,11 +305,15 @@ export const runCli = async (): Promise<CliResults> => {
             validate: validateOpenfortPublishableKey,
           });
         },
-        openfortSecretKey: ({ results }) => {
-          if (results.setupMethod === "automatic" && results.createBackend) {
-            return autoKeys?.openfortSecretKey;
+        openfortSecretKey: () => {
+          if (
+            project.setupMethod === "automatic" &&
+            project.createBackend &&
+            autoKeys
+          ) {
+            return Promise.resolve(autoKeys.openfortSecretKey);
           }
-          if (results.createBackend) {
+          if (project.createBackend) {
             return p.text({
               message: "Enter your Openfort Secret Key:",
               placeholder: "sk_test_...",
@@ -302,9 +322,9 @@ export const runCli = async (): Promise<CliResults> => {
           }
           return undefined;
         },
-        shieldPublishableKey: ({ results }) => {
-          if (results.setupMethod === "automatic") {
-            return autoKeys?.shieldPublishableKey;
+        shieldPublishableKey: () => {
+          if (project.setupMethod === "automatic" && autoKeys) {
+            return Promise.resolve(autoKeys.shieldPublishableKey);
           }
           return p.text({
             message: "Enter your Shield Publishable Key:",
@@ -312,11 +332,15 @@ export const runCli = async (): Promise<CliResults> => {
             validate: validateShieldPublishableKey,
           });
         },
-        shieldEncryptionShare: ({ results }) => {
-          if (results.setupMethod === "automatic" && results.createBackend) {
-            return autoKeys?.shieldEncryptionShare;
+        shieldEncryptionShare: () => {
+          if (
+            project.setupMethod === "automatic" &&
+            project.createBackend &&
+            autoKeys
+          ) {
+            return Promise.resolve(autoKeys.shieldEncryptionShare);
           }
-          if (results.createBackend) {
+          if (project.createBackend) {
             return p.text({
               message: "Enter your Shield Encryption Share:",
               placeholder: "Your 44-character encryption share",
@@ -325,11 +349,15 @@ export const runCli = async (): Promise<CliResults> => {
           }
           return undefined;
         },
-        shieldSecretKey: ({ results }) => {
-          if (results.setupMethod === "automatic" && results.createBackend) {
-            return autoKeys?.shieldSecretKey;
+        shieldSecretKey: () => {
+          if (
+            project.setupMethod === "automatic" &&
+            project.createBackend &&
+            autoKeys
+          ) {
+            return Promise.resolve(autoKeys.shieldSecretKey);
           }
-          if (results.createBackend) {
+          if (project.createBackend) {
             return p.text({
               message: "Enter your Shield Secret Key:",
               placeholder: "Your Shield Secret",
@@ -357,7 +385,7 @@ export const runCli = async (): Promise<CliResults> => {
 
     // Update telemetry with project details
     telemetry.template = project.template as OpenfortTemplate;
-    telemetry.projectId = project.openfortPublishableKey as string;
+    telemetry.projectId = keys.openfortPublishableKey as string;
 
     return {
       appName: (project.name as string) || cliResults.appName!,
@@ -365,16 +393,14 @@ export const runCli = async (): Promise<CliResults> => {
       theme: project.theme as OpenfortTheme | undefined,
       createBackend: project.createBackend as boolean,
       apiEndpoint: project.apiEndpoint as string | undefined,
-      openfortPublishableKey: project.openfortPublishableKey as string,
-      openfortSecretKey: project.openfortSecretKey as string | undefined,
-      shieldPublishableKey: project.shieldPublishableKey as string,
-      shieldSecretKey: project.shieldSecretKey as string | undefined,
-      shieldEncryptionShare: project.shieldEncryptionShare as
-        | string
-        | undefined,
+      openfortPublishableKey: keys.openfortPublishableKey as string,
+      openfortSecretKey: keys.openfortSecretKey as string | undefined,
+      shieldPublishableKey: keys.shieldPublishableKey as string,
+      shieldSecretKey: keys.shieldSecretKey as string | undefined,
+      shieldEncryptionShare: keys.shieldEncryptionShare as string | undefined,
       flags: {
         ...cliResults.flags!,
-        noGit: !project.git || cliResults.flags!.noGit,
+        noGit: !keys.git || cliResults.flags!.noGit,
       },
     };
   } catch (err) {
