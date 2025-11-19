@@ -4,6 +4,10 @@ import { Command, Option } from "commander";
 
 import { CREATE_OPENFORT_APP, DEFAULT_APP_NAME } from "~/consts.js";
 import {
+  type AutomatedKeys,
+  getAutomatedKeys,
+} from "~/helpers/getAutomatedKeys.js";
+import {
   availableTemplates,
   availableThemes,
   type OpenfortTemplate,
@@ -158,6 +162,8 @@ export const runCli = async (): Promise<CliResults> => {
       throw new IsTTYError("Non-interactive environment");
     }
 
+    let autoKeys: AutomatedKeys | null = null;
+
     const project = await p.group(
       {
         ...(!cliProvidedName && {
@@ -262,7 +268,21 @@ export const runCli = async (): Promise<CliResults> => {
           }
           return undefined;
         },
-        openfortPublishableKey: () => {
+        setupMethod: () => {
+          return p.select({
+            message: "How would you like to configure your project keys?",
+            options: [
+              { value: "automatic", label: "One-click setup (Recommended)" },
+              { value: "manual", label: "Manual entry" },
+            ],
+            initialValue: "automatic",
+          });
+        },
+        openfortPublishableKey: async ({ results }) => {
+          if (results.setupMethod === "automatic") {
+            autoKeys = await getAutomatedKeys();
+            return autoKeys.openfortPublishableKey;
+          }
           return p.text({
             message: "Enter your Openfort Publishable Key:",
             placeholder: "pk_test_...",
@@ -270,6 +290,9 @@ export const runCli = async (): Promise<CliResults> => {
           });
         },
         openfortSecretKey: ({ results }) => {
+          if (results.setupMethod === "automatic" && results.createBackend) {
+            return autoKeys?.openfortSecretKey;
+          }
           if (results.createBackend) {
             return p.text({
               message: "Enter your Openfort Secret Key:",
@@ -279,7 +302,10 @@ export const runCli = async (): Promise<CliResults> => {
           }
           return undefined;
         },
-        shieldPublishableKey: () => {
+        shieldPublishableKey: ({ results }) => {
+          if (results.setupMethod === "automatic") {
+            return autoKeys?.shieldPublishableKey;
+          }
           return p.text({
             message: "Enter your Shield Publishable Key:",
             placeholder: "00000000-0000-0000-0000-000000000000",
@@ -287,6 +313,9 @@ export const runCli = async (): Promise<CliResults> => {
           });
         },
         shieldEncryptionShare: ({ results }) => {
+          if (results.setupMethod === "automatic" && results.createBackend) {
+            return autoKeys?.shieldEncryptionShare;
+          }
           if (results.createBackend) {
             return p.text({
               message: "Enter your Shield Encryption Share:",
@@ -297,6 +326,9 @@ export const runCli = async (): Promise<CliResults> => {
           return undefined;
         },
         shieldSecretKey: ({ results }) => {
+          if (results.setupMethod === "automatic" && results.createBackend) {
+            return autoKeys?.shieldSecretKey;
+          }
           if (results.createBackend) {
             return p.text({
               message: "Enter your Shield Secret Key:",
