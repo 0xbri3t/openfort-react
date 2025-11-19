@@ -164,9 +164,6 @@ export const runCli = async (): Promise<CliResults> => {
 
     let autoKeys: AutomatedKeys | null = null;
 
-    // Pre-fetch keys if needed before entering the group for keys
-    // This avoids the spinner conflict inside the group prompt flow
-
     const project = await p.group(
       {
         ...(!cliProvidedName && {
