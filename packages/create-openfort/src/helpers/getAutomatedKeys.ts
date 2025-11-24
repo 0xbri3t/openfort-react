@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import * as p from "@clack/prompts";
+import open from "open";
 
 export interface AutomatedKeys {
   openfortPublishableKey: string;
@@ -19,6 +20,14 @@ export const getAutomatedKeys = async (
   url.searchParams.set("name", appName);
 
   p.log.info(`Please visit: ${url.toString()}`);
+
+  // Automatically open the URL in the default browser
+  try {
+    await open(url.toString());
+  } catch (_error) {
+    // Silently fail if we can't open the browser - user still has the URL
+  }
+
   const s = p.spinner();
   s.start("Waiting for authentication...");
 
