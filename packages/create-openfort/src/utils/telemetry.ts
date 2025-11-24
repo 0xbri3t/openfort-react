@@ -46,7 +46,7 @@ class Telemetry {
 
     if (!posthogKey || !posthogHost) {
       logger.warn(
-        "Telemetry is not configured properly. Please contact openfort developers at support@openfort.xyz.",
+        "Telemetry is not configured properly. Please contact openfort developers at https://t.me/openfort.",
       );
       return;
     }

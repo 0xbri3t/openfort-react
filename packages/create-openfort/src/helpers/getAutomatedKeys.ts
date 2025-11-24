@@ -14,7 +14,7 @@ export const getAutomatedKeys = async (
 ): Promise<AutomatedKeys> => {
   const sessionId = randomUUID();
 
-  const url = new URL("https://dashboard.openfort.xyz/cli/callback");
+  const url = new URL("https://dashboard.openfort.io/cli/callback");
   url.searchParams.set("session_id", sessionId);
   url.searchParams.set("name", appName);
 
@@ -30,7 +30,7 @@ export const getAutomatedKeys = async (
     while (Date.now() - startTime < timeout) {
       try {
         const response = await fetch(
-          `https://api.openfort.xyz/v1/cli/session/${sessionId}`,
+          `https://api.openfort.io/v1/cli/session/${sessionId}`,
         );
 
         if (response.ok) {
