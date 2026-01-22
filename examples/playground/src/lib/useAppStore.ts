@@ -74,16 +74,20 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
     assets: {
       [polygonAmoy.id]: ['0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'],
     },
-    requestWalletRecoverOTP: async ({ userId, email, phone }) => {
-      await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: userId, email, phone }),
-      })
+    otpVerification: {
+      // requestWalletRecoverOTP: async ({ userId, email, phone, accessToken }) => {
+      //   await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {
+      //     method: 'POST',
+      //     headers: {
+      //       'Content-Type': 'application/json',
+      //       authorization: accessToken ? `Bearer ${accessToken}` : '',
+      //     },
+      //     body: JSON.stringify({ user_id: userId, email, phone }),
+      //   })
+      // },
+      requestWalletRecoverOTPEndpoint: import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT,
+      // createEncryptionSessionSkipOtpEndpoint: import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_SKIP_OTP_ENDPOINT,
     },
-    // requestWalletRecoverOTPEndpoint: import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT,
   },
   onConnect: undefined,
   onDisconnect: undefined,

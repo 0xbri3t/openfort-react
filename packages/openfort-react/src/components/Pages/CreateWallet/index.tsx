@@ -102,7 +102,7 @@ const CreateWalletAutomaticRecovery = ({
 
     if (response.error) {
       setOtpStatus('error')
-      setError(response.error.message || 'There was an error verifying the OTP')
+      // setError(response.error.message || 'There was an error verifying the OTP')
       logger.log('Error verifying OTP for wallet recovery', response.error)
       setTimeout(() => {
         setOtpStatus('idle')
@@ -124,6 +124,7 @@ const CreateWalletAutomaticRecovery = ({
         const response = await createWallet()
 
         if (response.isOTPRequired && isWalletRecoveryOTPEnabled) {
+          logger.log('Requesting OTP for wallet recovery')
           const response = await requestWalletRecoverOTP()
           setNeedsOTP(true)
           setOtpResponse(response)

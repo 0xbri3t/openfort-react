@@ -11,11 +11,12 @@ import { PageContent } from '../../PageContent'
 const LoadWallets: React.FC = () => {
   const { user } = useOpenfortCore()
   const { triggerResize, setRoute, setConnector } = useOpenfort()
-  const { wallets, isLoadingWallets, error: errorWallets } = useWallets()
+  const { wallets, isLoadingWallets, error: errorWallets, reset } = useWallets()
   const [loadingUX, setLoadingUX] = useState(true)
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
+    reset()
     if (!isLoadingWallets) {
       timeout = setTimeout(() => {
         setLoadingUX(false)

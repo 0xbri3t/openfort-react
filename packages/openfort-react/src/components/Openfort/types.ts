@@ -136,38 +136,6 @@ export enum LinkWalletOnSignUpOption {
 
 type PolicyConfig = string | Record<number, string>
 
-type CommonWalletConfig = {
-  /** Publishable key for the Shield API. */
-  shieldPublishableKey: string
-  /** Policy ID (pol_...) for the embedded signer. */
-  ethereumProviderPolicyId?: PolicyConfig
-  accountType?: AccountTypeEnum
-  /** @deprecated Use `debugMode` prop instead. */
-  debug?: boolean
-  recoverWalletAutomaticallyAfterAuth?: boolean
-  assets?: {
-    [chainId: number]: Hex[]
-  }
-}
-
-export type GetEncryptionSessionParams = {
-  accessToken: string
-  otpCode?: string
-  userId: string
-}
-
-type EncryptionSession =
-  | {
-      /** Function to retrieve an encryption session using a session ID. */
-      getEncryptionSession?: ({ accessToken, otpCode, userId }: GetEncryptionSessionParams) => Promise<string>
-      createEncryptedSessionEndpoint?: never
-    }
-  | {
-      /** API endpoint for creating an encrypted session. */
-      getEncryptionSession?: never
-      createEncryptedSessionEndpoint?: string
-    }
-
 type RecoverWithOTP =
   | {
       /** Function to recover a wallet with otp. */
@@ -190,6 +158,66 @@ type RecoverWithOTP =
       requestWalletRecoverOTPEndpoint?: string
     }
 
+type EncryptionSession =
+  | {
+      /** Function to retrieve an encryption session using a session ID. */
+      createEncryptionSession?: ({ accessToken, otpCode, userId }: GetEncryptionSessionParams) => Promise<string>
+      createEncryptionSessionEndpoint?: never
+
+      /** @deprecated please use createEncryptionSession instead */
+      getEncryptionSession?: ({ accessToken, otpCode, userId }: GetEncryptionSessionParams) => Promise<string>
+      /** @deprecated please use createEncryptionSessionEndpoint instead */
+      createEncryptedSessionEndpoint?: never
+    }
+  | {
+      /** API endpoint for creating an encryption session. */
+      createEncryptionSession?: never
+      createEncryptionSessionEndpoint?: string
+
+      /** @deprecated please use createEncryptionSession instead */
+      getEncryptionSession?: never
+      /** @deprecated please use createEncryptionSessionEndpoint instead */
+      createEncryptedSessionEndpoint?: string
+    }
+
+type EncryptionSessionSkipOtp =
+  | {
+      /** Function to retrieve an encryption session using a session ID. */
+      createEncryptionSessionSkipOtp?: ({ accessToken, userId }: GetEncryptionSessionSkipOtpParams) => Promise<string>
+      createEncryptionSessionSkipOtpEndpoint?: never
+    }
+  | {
+      /** API endpoint for creating an encryption session. */
+      createEncryptionSessionSkipOtp?: never
+      createEncryptionSessionSkipOtpEndpoint?: string
+    }
+
+type CommonWalletConfig = {
+  /** Publishable key for the Shield API. */
+  shieldPublishableKey: string
+  /** Policy ID (pol_...) for the embedded signer. */
+  ethereumProviderPolicyId?: PolicyConfig
+  accountType?: AccountTypeEnum
+  /** @deprecated Use `debugMode` prop instead. */
+  debug?: boolean
+  recoverWalletAutomaticallyAfterAuth?: boolean
+  assets?: {
+    [chainId: number]: Hex[]
+  }
+  otpVerification?: RecoverWithOTP & EncryptionSessionSkipOtp
+}
+
+export type GetEncryptionSessionParams = {
+  accessToken: string
+  otpCode?: string
+  userId: string
+}
+
+export type GetEncryptionSessionSkipOtpParams = {
+  accessToken: string
+  userId: string
+}
+
 export type DebugModeOptions = {
   openfortReactDebugMode?: boolean
   openfortCoreDebugMode?: boolean
@@ -201,10 +229,10 @@ export type DebugModeOptions = {
  *
  * @remarks
  * Automatic recovery requires an encryption session, which may be supplied via
- * the `createEncryptedSessionEndpoint` endpoint or the `getEncryptionSession` callback.
+ * the `createEncryptionSessionEndpoint` endpoint or the `createEncryptionSession` callback.
  * Password-based and passkey-based recovery methods do not require encryption sessions.
  */
-export type OpenfortWalletConfig = CommonWalletConfig & EncryptionSession & RecoverWithOTP
+export type OpenfortWalletConfig = CommonWalletConfig & EncryptionSession
 
 type OpenfortUIOptions = {
   linkWalletOnSignUp?: LinkWalletOnSignUpOption
