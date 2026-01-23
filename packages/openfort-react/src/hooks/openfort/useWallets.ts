@@ -272,14 +272,25 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       }
 
       if (walletConfig.getEncryptionSession) {
+        logger.warn("'walletConfig.getEncryptionSession' is deprecated. Please use 'createEncryptionSession' instead.")
         return await walletConfig.getEncryptionSession({ userId, otpCode: otpCode, accessToken })
       }
-
-      if (!walletConfig.createEncryptedSessionEndpoint) {
-        throw new Error('No requestWalletRecoverOTPEndpoint set in walletConfig')
+      if (walletConfig.createEncryptionSession) {
+        return await walletConfig.createEncryptionSession({ userId, otpCode: otpCode, accessToken })
+      }
+      if (walletConfig.createEncryptedSessionEndpoint) {
+        logger.warn(
+          "'walletConfig.createEncryptedSessionEndpoint' is deprecated. Please use 'createEncryptionSessionEndpoint' instead."
+        )
       }
 
-      const resp = await fetch(walletConfig.createEncryptedSessionEndpoint, {
+      const createEncryptionSessionEndpoint =
+        walletConfig.createEncryptedSessionEndpoint ?? walletConfig.createEncryptionSessionEndpoint
+      if (!createEncryptionSessionEndpoint) {
+        throw new Error('No createEncryptionSessionEndpoint set in walletConfig')
+      }
+
+      const resp = await fetch(createEncryptionSessionEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
