@@ -86,7 +86,7 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
       //   })
       // },
       requestWalletRecoverOTPEndpoint: import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT,
-      // createEncryptionSessionSkipOtpEndpoint: import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_SKIP_OTP_ENDPOINT,
+      createEncryptionSessionSkipOtpEndpoint: import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_SKIP_OTP_ENDPOINT,
     },
   },
   onConnect: undefined,
