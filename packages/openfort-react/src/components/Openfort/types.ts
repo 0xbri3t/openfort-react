@@ -6,6 +6,7 @@ import type { Hex } from 'viem'
 import type { getAssets } from 'viem/_types/experimental/erc7811/actions/getAssets'
 import type { UserWallet } from '../../hooks/openfort/useWallets'
 import type { UserAccount } from '../../openfortCustomTypes'
+import type { SolanaConfig } from '../../solana/types'
 import type { CustomAvatarProps, CustomTheme, Languages, Mode, Theme } from '../../types'
 
 export const routes = {
@@ -148,6 +149,23 @@ type CommonWalletConfig = {
   assets?: {
     [chainId: number]: Hex[]
   }
+  /**
+   * Solana configuration. When provided, enables Solana support.
+   *
+   * @example
+   * ```tsx
+   * walletConfig={{
+   *   shieldPublishableKey: 'shield_pk_...',
+   *   solana: {
+   *     cluster: 'mainnet-beta',
+   *     commitment: 'confirmed'
+   *   }
+   * }}
+   * ```
+   *
+   * @see RFC-0001 Section 1.5
+   */
+  solana?: SolanaConfig
 }
 
 export type GetEncryptionSessionParams = {
