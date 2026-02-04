@@ -112,6 +112,7 @@ const ConnectModal: React.FC<{
   //     }
 
   const pages: Record<ValueOf<typeof routes>, React.ReactNode> = {
+    // Shared routes
     onboarding: <Onboarding />,
     about: <About />,
     loading: <Loading />,
@@ -161,6 +162,27 @@ const ConnectModal: React.FC<{
     buy: <Buy />,
 
     exportKey: <ExportKey />,
+
+    // Ethereum-specific routes (chain-prefixed)
+    'eth:connected': <Connected />,
+    'eth:createWallet': <CreateWallet />,
+    'eth:recoverWallet': <RecoverPage />,
+    'eth:switchNetworks': <SwitchNetworks />,
+    'eth:send': <Send />,
+    'eth:receive': <Receive />,
+    'eth:buy': <Buy />,
+    'eth:connectors': <Connectors />,
+
+    // Solana-specific routes (chain-prefixed)
+    'sol:connected': <Connected />,
+    'sol:createWallet': <CreateWallet />,
+    'sol:recoverWallet': <RecoverPage />,
+    'sol:switchCluster': <SwitchNetworks />, // TODO: Implement SolanaClusterSwitcher
+    'sol:send': <Send />, // TODO: Implement SolanaSend
+    'sol:receive': <Receive />, // TODO: Implement SolanaReceive
+
+    // Multi-chain routes
+    walletOverview: <Connected />,
   }
 
   function hide() {

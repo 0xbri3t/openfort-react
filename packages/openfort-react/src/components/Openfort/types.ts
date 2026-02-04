@@ -10,8 +10,13 @@ import type { SolanaConfig } from '../../solana/types'
 import type { CustomAvatarProps, CustomTheme, Languages, Mode, Theme } from '../../types'
 
 export const routes = {
+  // ==========================================================================
+  // Shared Routes (both chains)
+  // ==========================================================================
   PROVIDERS: 'providers',
   SOCIAL_PROVIDERS: 'socialProviders',
+  PROFILE: 'profile',
+  EXPORT_KEY: 'exportKey',
 
   LOADING: 'loading',
   LOAD_WALLETS: 'loadWallets',
@@ -38,12 +43,10 @@ export const routes = {
   CONNECT: 'connect',
   DOWNLOAD: 'download',
   CONNECTED: 'connected',
-  PROFILE: 'profile',
   SWITCHNETWORKS: 'switchNetworks',
   LINKED_PROVIDER: 'linkedProvider',
   LINKED_PROVIDERS: 'linkedProviders',
   REMOVE_LINKED_PROVIDER: 'removeLinkedProvider',
-  EXPORT_KEY: 'exportKey',
 
   NO_ASSETS_AVAILABLE: 'noAssetsAvailable',
   ASSET_INVENTORY: 'assetInventory',
@@ -58,6 +61,33 @@ export const routes = {
   BUY_PROCESSING: 'buyProcessing',
   BUY_COMPLETE: 'buyComplete',
   BUY_PROVIDER_SELECT: 'buyProviderSelect',
+
+  // ==========================================================================
+  // Ethereum-specific Routes (chain-prefixed)
+  // ==========================================================================
+  ETH_CONNECTED: 'eth:connected',
+  ETH_CREATE_WALLET: 'eth:createWallet',
+  ETH_RECOVER_WALLET: 'eth:recoverWallet',
+  ETH_SWITCH_NETWORKS: 'eth:switchNetworks',
+  ETH_SEND: 'eth:send',
+  ETH_RECEIVE: 'eth:receive',
+  ETH_BUY: 'eth:buy',
+  ETH_CONNECTORS: 'eth:connectors',
+
+  // ==========================================================================
+  // Solana-specific Routes (chain-prefixed)
+  // ==========================================================================
+  SOL_CONNECTED: 'sol:connected',
+  SOL_CREATE_WALLET: 'sol:createWallet',
+  SOL_RECOVER_WALLET: 'sol:recoverWallet',
+  SOL_SWITCH_CLUSTER: 'sol:switchCluster',
+  SOL_SEND: 'sol:send',
+  SOL_RECEIVE: 'sol:receive',
+
+  // ==========================================================================
+  // Multi-chain Routes
+  // ==========================================================================
+  WALLET_OVERVIEW: 'walletOverview',
 } as const
 
 type AllRoutes = (typeof routes)[keyof typeof routes]

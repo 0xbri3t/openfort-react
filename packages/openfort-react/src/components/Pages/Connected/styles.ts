@@ -93,6 +93,65 @@ export const DisconnectButton = styled(Button)`
   margin-top: 4px;
 `
 
+// =============================================================================
+// Solana-specific styles
+// =============================================================================
+
+export const ClusterBadge = styled.div<{ $cluster: string }>`
+  z-index: 3;
+  position: absolute;
+  bottom: 0px;
+  right: -16px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: ${(props) =>
+    props.$cluster === 'mainnet-beta'
+      ? 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)'
+      : props.$cluster === 'devnet'
+        ? 'var(--ck-body-color-warning, #f59e0b)'
+        : 'var(--ck-body-color-muted, #6b7280)'};
+  color: white;
+  white-space: nowrap;
+`
+
+// =============================================================================
+// Multi-chain styles
+// =============================================================================
+
+export const TabContainer = styled.div`
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--ck-body-background-secondary);
+  border-radius: 12px;
+  margin-bottom: 16px;
+`
+
+export const Tab = styled.button<{ $active: boolean }>`
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease;
+  background: ${(props) => (props.$active ? 'var(--ck-body-background)' : 'transparent')};
+  color: ${(props) => (props.$active ? 'var(--ck-body-color)' : 'var(--ck-body-color-muted)')};
+  box-shadow: ${(props) => (props.$active ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none')};
+
+  &:hover {
+    color: var(--ck-body-color);
+  }
+`
+
+// =============================================================================
+// Shared styles
+// =============================================================================
+
 export const LinkedProvidersToggle = styled.button`
   align-self: flex-start;
   display: inline-flex;
