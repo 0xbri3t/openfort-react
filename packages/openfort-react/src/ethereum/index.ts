@@ -39,8 +39,7 @@ export type {
 } from './types'
 
 // =============================================================================
-// Hooks (to be implemented in Phase 6)
+// Hooks
 // =============================================================================
 
-// TODO: Phase 6 - Implement useEthereumEmbeddedWallet
-// export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'
+export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'

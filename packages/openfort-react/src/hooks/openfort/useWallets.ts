@@ -199,8 +199,33 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
  *   console.error('Failed to export private key:', error);
  * }
  * ```
+ *
+ * @deprecated Use `useEthereumEmbeddedWallet` from '@openfort/react/ethereum' for a cleaner,
+ * more type-safe API with discriminated union states. This hook will be removed in a future version.
+ *
+ * @example Migration to useEthereumEmbeddedWallet:
+ * ```tsx
+ * // Before:
+ * import { useWallets } from '@openfort/react';
+ * const { wallets, createWallet } = useWallets();
+ *
+ * // After:
+ * import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
+ * const ethereum = useEthereumEmbeddedWallet();
+ * if (ethereum.status === 'connected') {
+ *   console.log(ethereum.activeWallet.address);
+ * }
+ * ```
  */
 export function useWallets(hookOptions: WalletOptions = {}) {
+  // Emit deprecation warning in development
+  if (process.env.NODE_ENV === 'development') {
+    logger.warn(
+      '[Openfort] useWallets is deprecated. ' +
+        "Use useEthereumEmbeddedWallet from '@openfort/react/ethereum' for a cleaner API with discriminated union states."
+    )
+  }
+
   const { client, embeddedAccounts, isLoadingAccounts: isLoadingWallets, updateEmbeddedAccounts } = useOpenfortCore()
   const { linkedAccounts, user } = useUser()
   const { walletConfig, setOpen, setRoute, setConnector, uiConfig } = useOpenfort()

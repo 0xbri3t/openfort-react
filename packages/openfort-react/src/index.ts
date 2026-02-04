@@ -20,6 +20,8 @@ export { PageLayout, type PageLayoutProps } from './components/PageLayout'
 export { embeddedWalletId } from './constants/openfort'
 export { default as getDefaultConfig } from './defaultConfig'
 export { default as getDefaultConnectors } from './defaultConnectors'
+// Convenience re-export for Ethereum hook (can also import from '@openfort/react/ethereum')
+export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
 export { useAuthCallback } from './hooks/openfort/auth/useAuthCallback'
 export { useEmailAuth } from './hooks/openfort/auth/useEmailAuth'
 export { useEmailOtpAuth } from './hooks/openfort/auth/useEmailOtpAuth'
