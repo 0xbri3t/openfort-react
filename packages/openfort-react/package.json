@@ -55,6 +55,9 @@
     "hooks",
     "Openfort",
     "ethereum",
+    "solana",
+    "web3",
+    "wallet",
     "react"
   ],
   "dependencies": {
@@ -78,6 +81,14 @@
     "react-dom": "17.x || 18.x || 19.x",
     "viem": "2.x",
     "wagmi": "2.x"
+  },
+  "peerDependenciesMeta": {
+    "wagmi": {
+      "optional": true
+    },
+    "viem": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
