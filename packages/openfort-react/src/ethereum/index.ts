@@ -5,10 +5,10 @@
  *
  * @example
  * ```tsx
- * import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
+ * import { useEthereumWallet } from '@openfort/react/ethereum';
  *
  * function MyComponent() {
- *   const ethereum = useEthereumEmbeddedWallet();
+ *   const ethereum = useEthereumWallet();
  *
  *   if (ethereum.status === 'connected') {
  *     console.log('Address:', ethereum.activeWallet.address);
@@ -18,6 +18,27 @@
  *
  * @packageDocumentation
  */
+
+// =============================================================================
+// Context (Optional)
+// =============================================================================
+
+export {
+  EthereumContextProvider,
+  type EthereumContextProviderProps,
+  type EthereumContextValue,
+  useEthereumContext,
+  useEthereumContextSafe,
+} from './EthereumContext'
+
+// =============================================================================
+// Hooks
+// =============================================================================
+
+// New hook (wagmi-free)
+// Deprecated alias for backwards compatibility
+/** @deprecated Use useEthereumWallet instead. Will be removed in v3.0. */
+export { useEthereumWallet, useEthereumWallet as useEthereumEmbeddedWallet } from './hooks/useEthereumWallet'
 
 // =============================================================================
 // Types
@@ -39,7 +60,7 @@ export type {
 } from './types'
 
 // =============================================================================
-// Hooks
+// Utils
 // =============================================================================
 
-export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'
+export { ethToWei, GWEI_PER_ETH, WEI_PER_ETH, weiToEth } from './hooks/utils'
