@@ -103,13 +103,10 @@ export {
 } from './signers/OpenfortSolanaSigner'
 
 // =============================================================================
-// Hooks (to be implemented in Phase 5)
+// Hooks
 // =============================================================================
 
-// TODO: Phase 5 - Implement useSolanaEmbeddedWallet
-// export { useSolanaEmbeddedWallet } from './hooks/useSolanaEmbeddedWallet'
-
-// TODO: Phase 5 - Implement useSolanaSigner and useSolanaMessageSigner
-// export { useSolanaSigner, useSolanaMessageSigner } from './hooks/useSolanaSigner'
+export { useSolanaEmbeddedWallet } from './hooks/useSolanaEmbeddedWallet'
+export { useSolanaMessageSigner, useSolanaSigner } from './hooks/useSolanaSigner'
 
 // Note: useSolanaBalance is intentionally NOT exported (internal only for UI)

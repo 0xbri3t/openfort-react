@@ -1,0 +1,149 @@
+/**
+ * Solana Hook Utilities
+ *
+ * Shared utilities for Solana wallet hooks.
+ */
+
+import { RecoveryMethod, type RecoveryParams } from '@openfort/openfort-js'
+import type { OpenfortWalletConfig } from '../../components/Openfort/types'
+import { OpenfortError, OpenfortReactErrorType } from '../../types'
+
+/**
+ * Recovery options for Solana wallet operations
+ */
+export type SolanaRecoveryOptions = {
+  /** Recovery method to use */
+  recoveryMethod?: RecoveryMethod
+  /** Password for PASSWORD recovery */
+  password?: string
+  /** OTP code for automatic recovery */
+  otpCode?: string
+}
+
+/**
+ * Build recovery params from recovery options
+ *
+ * @param options - Recovery options
+ * @param config - Build configuration
+ * @returns Recovery params for Openfort SDK
+ */
+export async function buildRecoveryParams(
+  options: SolanaRecoveryOptions | undefined,
+  config: {
+    walletConfig: OpenfortWalletConfig | undefined
+    getAccessToken: () => Promise<string | null>
+    getUserId: () => Promise<string | undefined>
+  }
+): Promise<RecoveryParams> {
+  const { walletConfig, getAccessToken, getUserId } = config
+  const recoveryMethod = options?.recoveryMethod ?? RecoveryMethod.AUTOMATIC
+
+  switch (recoveryMethod) {
+    case RecoveryMethod.AUTOMATIC: {
+      const accessToken = await getAccessToken()
+      if (!accessToken) {
+        throw new OpenfortError('Access token not found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
+      }
+
+      const userId = await getUserId()
+      if (!userId) {
+        throw new OpenfortError('User not found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
+      }
+
+      const encryptionSession = await getEncryptionSession({
+        accessToken,
+        userId,
+        otpCode: options?.otpCode,
+        walletConfig,
+      })
+
+      return {
+        recoveryMethod: RecoveryMethod.AUTOMATIC,
+        encryptionSession,
+      }
+    }
+
+    case RecoveryMethod.PASSWORD: {
+      if (!options?.password) {
+        throw new OpenfortError('Password is required', OpenfortReactErrorType.VALIDATION_ERROR)
+      }
+      return {
+        recoveryMethod: RecoveryMethod.PASSWORD,
+        password: options.password,
+      }
+    }
+
+    case RecoveryMethod.PASSKEY: {
+      return {
+        recoveryMethod: RecoveryMethod.PASSKEY,
+      }
+    }
+
+    default:
+      throw new OpenfortError(`Unsupported recovery method: ${recoveryMethod}`, OpenfortReactErrorType.VALIDATION_ERROR)
+  }
+}
+
+/**
+ * Get encryption session for automatic recovery
+ */
+async function getEncryptionSession(params: {
+  accessToken: string
+  userId: string
+  otpCode?: string
+  walletConfig: OpenfortWalletConfig | undefined
+}): Promise<string> {
+  const { accessToken, userId, otpCode, walletConfig } = params
+
+  if (!walletConfig) {
+    throw new OpenfortError('Wallet config not found', OpenfortReactErrorType.CONFIGURATION_ERROR)
+  }
+
+  // Use custom function if provided
+  if (walletConfig.getEncryptionSession) {
+    return await walletConfig.getEncryptionSession({ accessToken, userId, otpCode })
+  }
+
+  // Use endpoint if provided
+  if (walletConfig.createEncryptedSessionEndpoint) {
+    const response = await fetch(walletConfig.createEncryptedSessionEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, otp_code: otpCode }),
+    })
+
+    const data = await response.json()
+    if (!response.ok) {
+      if (data.error === 'OTP_REQUIRED') {
+        throw new OpenfortError('OTP_REQUIRED', OpenfortReactErrorType.VALIDATION_ERROR)
+      }
+      throw new OpenfortError('Failed to create encryption session', OpenfortReactErrorType.WALLET_ERROR)
+    }
+
+    return data.session
+  }
+
+  throw new OpenfortError(
+    'No encryption session method configured. Provide getEncryptionSession or createEncryptedSessionEndpoint in walletConfig.',
+    OpenfortReactErrorType.CONFIGURATION_ERROR
+  )
+}
+
+/**
+ * Format lamports to SOL
+ */
+export function lamportsToSol(lamports: bigint): number {
+  return Number(lamports) / 1_000_000_000
+}
+
+/**
+ * Format SOL to lamports
+ */
+export function solToLamports(sol: number): bigint {
+  return BigInt(Math.floor(sol * 1_000_000_000))
+}
+
+/**
+ * LAMPORTS_PER_SOL constant (1 SOL = 1 billion lamports)
+ */
+export const LAMPORTS_PER_SOL = BigInt(1_000_000_000)

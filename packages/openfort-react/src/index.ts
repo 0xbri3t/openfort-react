@@ -44,6 +44,9 @@ export { useChainIsSupported } from './hooks/useChainIsSupported'
 export { useChains } from './hooks/useChains'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useAvailableChains } from './shared/hooks/useAvailableChains'
+// Convenience re-exports for Solana hooks (can also import from '@openfort/react/solana')
+export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
+export { useSolanaMessageSigner, useSolanaSigner } from './solana/hooks/useSolanaSigner'
 export type { SolanaConfig } from './solana/types'
 export type { CustomTheme } from './styles/customTheme'
 export type {
