@@ -35,10 +35,7 @@ export {
 // Hooks
 // =============================================================================
 
-// New hook (wagmi-free)
-// Deprecated alias for backwards compatibility
-/** @deprecated Use useEthereumWallet instead. Will be removed in v3.0. */
-export { useEthereumWallet, useEthereumWallet as useEthereumEmbeddedWallet } from './hooks/useEthereumWallet'
+export { useEthereumWallet } from './hooks/useEthereumWallet'
 
 // =============================================================================
 // Types

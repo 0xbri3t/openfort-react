@@ -42,11 +42,9 @@
 // =============================================================================
 // Hooks
 // =============================================================================
+
 export { useSolanaMessageSigner, useSolanaSigner } from './hooks/useSolanaSigner'
-// New hook (uses new core module)
-// Deprecated alias for backwards compatibility
-/** @deprecated Use useSolanaWallet instead. Will be removed in v3.0. */
-export { useSolanaWallet, useSolanaWallet as useSolanaEmbeddedWallet } from './hooks/useSolanaWallet'
+export { useSolanaWallet } from './hooks/useSolanaWallet'
 
 export type { SolanaContextProviderProps, SolanaContextValue } from './providers/SolanaContextProvider'
 export { SolanaContextProvider, useSolanaContext, useSolanaContextSafe } from './providers/SolanaContextProvider'
