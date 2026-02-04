@@ -46,6 +46,8 @@ export { useChainIsSupported } from './hooks/useChainIsSupported'
 export { useChains } from './hooks/useChains'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useAvailableChains } from './shared/hooks/useAvailableChains'
+// SIWE utilities for direct SDK usage (no wagmi required)
+export { createSIWEMessage } from './siwe/create-siwe-message'
 // Convenience re-exports for Solana hooks (can also import from '@openfort/react/solana')
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 export { useSolanaMessageSigner, useSolanaSigner } from './solana/hooks/useSolanaSigner'

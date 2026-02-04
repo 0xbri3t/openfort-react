@@ -13,7 +13,32 @@ type ConnectWalletOptions = {
   connector: Connector | string
 } // onConnect is handled by the hookOptions because useConnect needs to finish the connection process
 
+/**
+ * @deprecated This hook requires wagmi as a peer dependency.
+ *
+ * For SIWE auth without wagmi, use the SDK directly:
+ * ```ts
+ * import { useOpenfortClient, createSIWEMessage } from '@openfort/react'
+ *
+ * const { client } = useOpenfortClient()
+ * const { nonce } = await client.auth.initSiwe({ address })
+ * const message = createSIWEMessage(address, nonce, chainId)
+ * const signature = await yourWallet.signMessage(message)
+ * await client.auth.loginWithSiwe({ signature, message, address, connectorType, walletClientType })
+ * ```
+ *
+ * For wagmi convenience hooks, use @openfort/wagmi package (coming soon).
+ */
 export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
+  // Deprecation warning in development
+  if (process.env.NODE_ENV !== 'production') {
+    logger.warn(
+      '[Openfort] useWalletAuth is deprecated. ' +
+        'This hook requires wagmi. For SIWE auth without wagmi, use client.auth.loginWithSiwe() directly with createSIWEMessage(). ' +
+        'For wagmi convenience, @openfort/wagmi package is coming soon.'
+    )
+  }
+
   const { updateUser } = useOpenfortCore()
   const siwe = useConnectWithSiwe()
   const availableWallets = useWagmiWallets() // TODO: Use this to get the wallet client type
