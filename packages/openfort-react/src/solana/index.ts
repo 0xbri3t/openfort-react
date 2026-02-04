@@ -75,6 +75,34 @@ export type { SolanaContextProviderProps, SolanaContextValue } from './providers
 export { SolanaContextProvider, useSolanaContext, useSolanaContextSafe } from './providers/SolanaContextProvider'
 
 // =============================================================================
+// Wallet Provider
+// =============================================================================
+
+export type { OpenfortSolanaProviderConfig } from './provider'
+export { createSolanaProvider, OpenfortSolanaProvider } from './provider'
+
+// =============================================================================
+// Kit Signers
+// =============================================================================
+
+export type {
+  Address,
+  MessagePartialSigner,
+  SignableMessage,
+  SignableTransaction,
+  TransactionMessageBytes,
+  TransactionPartialSigner,
+  TransactionPartialSignerConfig,
+  TransactionWithLifetime,
+} from './signers/OpenfortSolanaSigner'
+export {
+  createMessageSigner,
+  createTransactionSigner,
+  OpenfortMessagePartialSigner,
+  OpenfortTransactionPartialSigner,
+} from './signers/OpenfortSolanaSigner'
+
+// =============================================================================
 // Hooks (to be implemented in Phase 5)
 // =============================================================================
 
