@@ -23,8 +23,7 @@ export type {
 } from './types'
 
 // =============================================================================
-// Hooks (to be implemented in Phase 3)
+// Hooks
 // =============================================================================
 
-// TODO: Phase 3 - Implement useAvailableChains
-// export { useAvailableChains } from './hooks/useAvailableChains'
+export { useAvailableChains } from './hooks/useAvailableChains'

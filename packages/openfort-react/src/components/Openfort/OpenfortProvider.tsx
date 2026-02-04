@@ -1,12 +1,12 @@
 import { RecoveryMethod, type SDKOverrides, type ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
 import { Buffer } from 'buffer'
-import React, { createElement, useCallback, useEffect, useMemo, useState } from 'react'
-import { useAccount, WagmiContext } from 'wagmi'
-import { useChainIsSupported } from '../../hooks/useChainIsSupported'
+import type React from 'react'
+import { createElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
-import { useConnector } from '../../hooks/useConnectors'
 import { useThemeFont } from '../../hooks/useGoogleFont'
+import { useAccountSafe, useChainIsSupportedSafe, useConnectorSafe, useHasWagmi } from '../../hooks/useWagmiSafe'
 import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
+import { SolanaContextProvider } from '../../solana/providers/SolanaContextProvider'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import { isFamily } from '../../utils/wallets'
@@ -44,30 +44,75 @@ type OpenfortProviderProps = {
 /**
  * Provides Openfort configuration and context to descendant components.
  *
- * The provider must be rendered within a {@link WagmiContext} and should only be mounted once
- * to avoid conflicting global state. See {@link OpenfortProviderProps} for the supported options.
+ * The provider supports three modes:
+ * 1. **Ethereum only** - Wrap with WagmiProvider (required for Ethereum)
+ * 2. **Solana only** - Configure `walletConfig.solana` (no WagmiProvider needed)
+ * 3. **Both chains** - Wrap with WagmiProvider and configure `walletConfig.solana`
  *
  * @param props - Provider configuration including callbacks, UI options and the wrapped children.
  * @returns A React element that sets up the Openfort context.
- * @throws If the component is rendered outside of a Wagmi provider or mounted multiple times.
+ * @throws If neither WagmiProvider nor Solana config is provided, or if mounted multiple times.
  *
- * @example
+ * @example Ethereum only (existing behavior)
  * ```tsx
  * import { WagmiConfig, createConfig } from 'wagmi';
  * import { OpenfortProvider } from '@openfort/openfort-react';
  *
- * const config = createConfig({ YOU_WAGMI_CONFIG_HERE });
+ * const config = createConfig({ YOUR_WAGMI_CONFIG_HERE });
  *
  * export function App() {
  *   return (
  *     <WagmiConfig config={config}>
- *       <OpenfortProvider publishableKey={process.env.NEXT_PUBLIC_PUBLISHABLE_KEY!}>
+ *       <OpenfortProvider publishableKey="pk_...">
  *         <YourApp />
  *       </OpenfortProvider>
  *     </WagmiConfig>
  *   );
  * }
  * ```
+ *
+ * @example Solana only (no WagmiProvider required)
+ * ```tsx
+ * import { OpenfortProvider } from '@openfort/openfort-react';
+ *
+ * export function App() {
+ *   return (
+ *     <OpenfortProvider
+ *       publishableKey="pk_..."
+ *       walletConfig={{
+ *         shieldPublishableKey: 'shield_pk_...',
+ *         solana: { cluster: 'mainnet-beta' }
+ *       }}
+ *     >
+ *       <YourApp />
+ *     </OpenfortProvider>
+ *   );
+ * }
+ * ```
+ *
+ * @example Both Ethereum and Solana
+ * ```tsx
+ * import { WagmiConfig, createConfig } from 'wagmi';
+ * import { OpenfortProvider } from '@openfort/openfort-react';
+ *
+ * export function App() {
+ *   return (
+ *     <WagmiConfig config={wagmiConfig}>
+ *       <OpenfortProvider
+ *         publishableKey="pk_..."
+ *         walletConfig={{
+ *           shieldPublishableKey: 'shield_pk_...',
+ *           solana: { cluster: 'mainnet-beta' }
+ *         }}
+ *       >
+ *         <YourApp />
+ *       </OpenfortProvider>
+ *     </WagmiConfig>
+ *   );
+ * }
+ * ```
+ *
+ * @see RFC-0001 Section 1.2-1.4
  */
 export const OpenfortProvider = ({
   children,
@@ -81,14 +126,23 @@ export const OpenfortProvider = ({
   overrides,
   thirdPartyAuth,
 }: OpenfortProviderProps) => {
-  // OpenfortProvider must be within a WagmiProvider
-  if (!React.useContext(WagmiContext)) {
-    throw Error('OpenfortProvider must be within a WagmiProvider')
+  // Check if Wagmi is available (optional now for Solana-only mode)
+  const hasWagmi = useHasWagmi()
+
+  // Check if Solana is configured
+  const hasSolana = !!walletConfig?.solana
+
+  // Require at least one chain to be configured
+  if (!hasWagmi && !hasSolana) {
+    throw new Error(
+      'OpenfortProvider requires either WagmiProvider (for Ethereum) or walletConfig.solana (for Solana). ' +
+        'Wrap with WagmiProvider for Ethereum support, or pass walletConfig={{ solana: { cluster: "mainnet-beta" } }} for Solana-only mode.'
+    )
   }
 
   // Only allow for mounting OpenfortProvider once, so we avoid weird global
   // state collisions.
-  if (React.useContext(Openfortcontext)) {
+  if (useContext(Openfortcontext)) {
     throw new Error('Multiple, nested usages of OpenfortProvider detected. Please use only one.')
   }
 
@@ -122,7 +176,8 @@ export const OpenfortProvider = ({
     return debugModeOptions
   }, [debugMode])
 
-  const injectedConnector = useConnector('injected')
+  // Use safe hooks that work without WagmiProvider (for Solana-only mode)
+  const injectedConnector = useConnectorSafe('injected')
   const allowAutomaticRecovery = !!(walletConfig?.createEncryptedSessionEndpoint || walletConfig?.getEncryptionSession)
 
   // Default config options
@@ -226,22 +281,24 @@ export const OpenfortProvider = ({
   useEffect(() => setErrorMessage(null), [route, open])
 
   // Check if chain is supported, elsewise redirect to switches page
-  const { chain, isConnected } = useAccount()
-  const isChainSupported = useChainIsSupported(chain?.id)
+  // Uses safe hooks that work without WagmiProvider (for Solana-only mode)
+  const { chain, isConnected } = useAccountSafe()
+  const isChainSupported = useChainIsSupportedSafe(chain?.id)
 
+  // Ethereum-specific: enforce supported chains (only when Wagmi is available)
   useEffect(() => {
-    if (isConnected && safeUiConfig.enforceSupportedChains && !isChainSupported) {
+    if (hasWagmi && isConnected && safeUiConfig.enforceSupportedChains && !isChainSupported) {
       setOpen(true)
       setRoute({ route: routes.SWITCHNETWORKS })
     }
-  }, [isConnected, isChainSupported, chain, route, open])
+  }, [hasWagmi, isConnected, isChainSupported, chain, route, open])
 
-  // Autoconnect to Family wallet if available
+  // Ethereum-specific: autoconnect to Family wallet if available
   useEffect(() => {
-    if (isFamily()) {
+    if (hasWagmi && isFamily()) {
       injectedConnector?.connect()
     }
-  }, [injectedConnector])
+  }, [hasWagmi, injectedConnector])
 
   useEffect(() => {
     logger.log('ROUTE', route)
@@ -329,6 +386,13 @@ export const OpenfortProvider = ({
     setHeaderLeftSlot,
   }
 
+  // Wrap children with Solana provider if configured
+  const wrappedChildren = hasSolana ? (
+    <SolanaContextProvider config={walletConfig!.solana!}>{children}</SolanaContextProvider>
+  ) : (
+    children
+  )
+
   return createElement(
     Openfortcontext.Provider,
     { value },
@@ -382,7 +446,7 @@ export const OpenfortProvider = ({
         {/* <ThemeProvider
             theme={defaultTheme}
           > */}
-        {children}
+        {wrappedChildren}
         <ConnectKitModal lang={ckLang} theme={ckTheme} mode={safeUiConfig.mode ?? ckMode} customTheme={ckCustomTheme} />
         {/* </ThemeProvider> */}
       </CoreOpenfortProvider>

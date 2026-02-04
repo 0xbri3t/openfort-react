@@ -68,6 +68,13 @@ export type {
 } from './types'
 
 // =============================================================================
+// Providers
+// =============================================================================
+
+export type { SolanaContextProviderProps, SolanaContextValue } from './providers/SolanaContextProvider'
+export { SolanaContextProvider, useSolanaContext, useSolanaContextSafe } from './providers/SolanaContextProvider'
+
+// =============================================================================
 // Hooks (to be implemented in Phase 5)
 // =============================================================================
 
