@@ -115,6 +115,20 @@ export type {
 } from './types'
 
 // =============================================================================
+// Operations (pure functions for signing)
+// =============================================================================
+
+export {
+  getTransactionBytes,
+  type SignAllTransactionsParams,
+  type SignMessageParams,
+  type SignTransactionParams,
+  signAllTransactions,
+  signMessage,
+  signTransaction,
+} from './operations'
+
+// =============================================================================
 // Utils
 // =============================================================================
 

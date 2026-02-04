@@ -60,6 +60,20 @@ export type {
 } from './types'
 
 // =============================================================================
+// Operations (pure functions for signing/transactions)
+// =============================================================================
+
+export {
+  getEthereumProvider,
+  type SendTransactionParams,
+  type SignMessageParams,
+  type SignTypedDataParams,
+  sendTransaction,
+  signMessage,
+  signTypedData,
+} from './operations'
+
+// =============================================================================
 // Utils
 // =============================================================================
 

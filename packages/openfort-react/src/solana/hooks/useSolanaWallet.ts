@@ -21,6 +21,7 @@ import { useOpenfortClient } from '../../core/hooks/useOpenfortClient'
 import { buildRecoveryParams, type RecoveryContext } from '../../shared/utils/recovery'
 
 // Local imports
+import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import { useSolanaContext } from '../providers/SolanaContextProvider'
 import type {
@@ -430,24 +431,4 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
         activeWallet: null,
       } as EmbeddedSolanaWalletState
   }
-}
-
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/**
- * Extract message bytes from various transaction formats
- */
-function getTransactionBytes(transaction: SolanaTransaction): Uint8Array {
-  if (transaction instanceof Uint8Array) {
-    return transaction
-  }
-  if ('messageBytes' in transaction) {
-    return transaction.messageBytes
-  }
-  if ('serializeMessage' in transaction && typeof transaction.serializeMessage === 'function') {
-    return transaction.serializeMessage()
-  }
-  throw new OpenfortReactError('Unsupported transaction format', OpenfortErrorCode.INVALID_CONFIG)
 }
