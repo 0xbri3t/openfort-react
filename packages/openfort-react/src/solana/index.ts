@@ -47,7 +47,7 @@ export { useSolanaMessageSigner, useSolanaSigner } from './hooks/useSolanaSigner
 export { useSolanaWallet } from './hooks/useSolanaWallet'
 
 export type { SolanaContextProviderProps, SolanaContextValue } from './providers/SolanaContextProvider'
-export { SolanaContextProvider, useSolanaContext, useSolanaContextSafe } from './providers/SolanaContextProvider'
+export { SolanaContext, SolanaContextProvider, useSolanaContext } from './providers/SolanaContextProvider'
 // Other hooks
 
 // Note: useSolanaBalance is intentionally NOT exported (internal only for UI)

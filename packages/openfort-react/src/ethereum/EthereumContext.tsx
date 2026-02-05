@@ -179,9 +179,6 @@ export function EthereumContextProvider({
  * Access Ethereum context configuration.
  *
  * @throws Error if called outside of EthereumContextProvider
- *
- * NOTE: Most code should use useEthereumContextSafe() instead,
- * since EthereumContext is optional.
  */
 export function useEthereumContext(): EthereumContextValue {
   const context = useContext(EthereumContext)
@@ -192,14 +189,4 @@ export function useEthereumContext(): EthereumContextValue {
     )
   }
   return context
-}
-
-/**
- * Safely check if Ethereum context is available.
- *
- * Returns null if not in EthereumContextProvider (which is fine,
- * since the context is optional).
- */
-export function useEthereumContextSafe(): EthereumContextValue | null {
-  return useContext(EthereumContext)
 }

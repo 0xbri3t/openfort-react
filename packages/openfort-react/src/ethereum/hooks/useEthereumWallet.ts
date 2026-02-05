@@ -8,7 +8,7 @@
  */
 
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount } from '@openfort/openfort-js'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useContext, useMemo, useState } from 'react'
 
 // Existing context for walletConfig
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
@@ -21,7 +21,7 @@ import { useOpenfortClient } from '../../core/hooks/useOpenfortClient'
 import { buildRecoveryParams, type RecoveryContext } from '../../shared/utils/recovery'
 
 // Local imports
-import { useEthereumContextSafe } from '../EthereumContext'
+import { EthereumContext } from '../EthereumContext'
 import type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
@@ -97,7 +97,7 @@ type InternalState = {
  */
 export function useEthereumWallet(options?: UseEmbeddedEthereumWalletOptions): EmbeddedEthereumWalletState {
   // Get chainId: prop > context > default (mainnet)
-  const ethereumContext = useEthereumContextSafe()
+  const ethereumContext = useContext(EthereumContext)
   const chainId = options?.chainId ?? ethereumContext?.chainId ?? 1
 
   // Use new core module

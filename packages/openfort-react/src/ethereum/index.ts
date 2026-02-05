@@ -24,11 +24,11 @@
 // =============================================================================
 
 export {
+  EthereumContext,
   EthereumContextProvider,
   type EthereumContextProviderProps,
   type EthereumContextValue,
   useEthereumContext,
-  useEthereumContextSafe,
 } from './EthereumContext'
 
 // =============================================================================

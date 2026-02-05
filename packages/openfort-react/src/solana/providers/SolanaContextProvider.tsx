@@ -26,21 +26,20 @@ export interface SolanaContextValue {
 }
 
 // =============================================================================
-// Default RPC URLs
+// Default RPC URLs (Registry Pattern)
 // =============================================================================
+
+const DEFAULT_RPC_URLS: Record<SolanaCluster, string> = {
+  'mainnet-beta': 'https://api.mainnet-beta.solana.com',
+  devnet: 'https://api.devnet.solana.com',
+  testnet: 'https://api.testnet.solana.com',
+}
 
 /**
  * Get the default public RPC URL for a Solana cluster
  */
 function getDefaultRpcUrl(cluster: SolanaCluster): string {
-  switch (cluster) {
-    case 'mainnet-beta':
-      return 'https://api.mainnet-beta.solana.com'
-    case 'devnet':
-      return 'https://api.devnet.solana.com'
-    case 'testnet':
-      return 'https://api.testnet.solana.com'
-  }
+  return DEFAULT_RPC_URLS[cluster]
 }
 
 // =============================================================================
@@ -127,23 +126,4 @@ export function useSolanaContext(): SolanaContextValue {
     )
   }
   return context
-}
-
-/**
- * Safely check if Solana context is available without throwing.
- *
- * @returns The Solana context value, or null if not in a SolanaContextProvider
- *
- * @example
- * ```tsx
- * function MyComponent() {
- *   const solanaContext = useSolanaContextSafe();
- *   if (solanaContext) {
- *     // Solana is available
- *   }
- * }
- * ```
- */
-export function useSolanaContextSafe(): SolanaContextValue | null {
-  return useContext(SolanaContext)
 }
