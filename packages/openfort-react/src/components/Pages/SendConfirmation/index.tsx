@@ -1,20 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+/**
+ * SendConfirmation Page
+ *
+ * Wagmi-free transaction confirmation page.
+ * Uses viem-based hooks for balance, transactions, and receipts.
+ *
+ * @see Phase E3
+ */
+
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { Address } from 'viem'
 import { encodeFunctionData, isAddress, parseUnits } from 'viem'
-import {
-  useAccount,
-  useBalance,
-  useReadContract,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from 'wagmi'
 import { TickIcon } from '../../../assets/icons'
 import { erc20Abi } from '../../../constants/erc20'
+import { EthereumContext } from '../../../ethereum/EthereumContext'
 import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useBalance } from '../../../hooks/useBalance'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
+import { useSendTransaction } from '../../../hooks/useSendTransaction'
+import { useTokenBalance } from '../../../hooks/useTokenBalance'
+import { useWaitForTransactionReceipt } from '../../../hooks/useWaitForTransactionReceipt'
+import { useWriteContract } from '../../../hooks/useWriteContract'
 import { truncateEthAddress } from '../../../utils'
 import { parseTransactionError } from '../../../utils/errorHandling'
 import { logger } from '../../../utils/logger'
+import { getChainName } from '../../../utils/rpc'
 import Button from '../../Common/Button'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
@@ -39,20 +48,66 @@ import {
   SummaryList,
 } from './styles'
 
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/** Get block explorer URL for chain */
+function getBlockExplorerUrl(chainId: number): string {
+  const explorers: Record<number, string> = {
+    1: 'https://etherscan.io',
+    10: 'https://optimistic.etherscan.io',
+    137: 'https://polygonscan.com',
+    8453: 'https://basescan.org',
+    42161: 'https://arbiscan.io',
+    43114: 'https://snowtrace.io',
+    56: 'https://bscscan.com',
+    // Testnets
+    5: 'https://goerli.etherscan.io',
+    11155111: 'https://sepolia.etherscan.io',
+    80001: 'https://mumbai.polygonscan.com',
+    84532: 'https://sepolia.basescan.org',
+    421614: 'https://sepolia.arbiscan.io',
+  }
+  return explorers[chainId] ?? 'https://etherscan.io'
+}
+
+/** Check if chain is a testnet */
+function isTestnetChain(chainId: number): boolean {
+  const testnets = new Set([5, 11155111, 80001, 84532, 421614, 97, 4002])
+  return testnets.has(chainId)
+}
+
+// =============================================================================
+// Component
+// =============================================================================
+
 const SendConfirmation = () => {
-  const { address, chain } = useAccount()
+  // Use wagmi-free hooks
+  const wallet = useConnectedWallet()
+  const ethereumContext = useContext(EthereumContext)
   const { sendForm, setRoute, triggerResize, walletConfig } = useOpenfort()
-  const chainId = chain?.id
+
+  // Derive address and chainId from new hooks
+  const address = wallet.status === 'connected' ? (wallet.address as `0x${string}`) : undefined
+  const chainId = ethereumContext?.chainId
+
+  // Build chain info for block explorer
+  const chain = chainId
+    ? {
+        id: chainId,
+        name: getChainName(chainId),
+        blockExplorers: {
+          default: {
+            url: getBlockExplorerUrl(chainId),
+          },
+        },
+        testnet: isTestnetChain(chainId),
+      }
+    : undefined
 
   const recipientAddress = isAddress(sendForm.recipient) ? (sendForm.recipient as Address) : undefined
   const normalisedAmount = sanitizeForParsing(sendForm.amount)
-
-  const { data: nativeBalance, refetch: refetchNativeBalance } = useBalance({
-    address,
-    query: {
-      enabled: !!address,
-    },
-  })
 
   const { data: assets } = useWalletAssets()
   const matchedToken = useMemo(
@@ -65,16 +120,25 @@ const SendConfirmation = () => {
 
   const isErc20 = token.type === 'erc20'
 
-  const { data: erc20Balance, refetch: refetchErc20Balance } = useReadContract({
-    abi: erc20Abi,
-    address: isErc20 ? token.address : undefined,
-    functionName: 'balanceOf',
-    args: isErc20 && address ? [address] : undefined,
-    chainId,
-    query: {
-      enabled: Boolean(isErc20 && address),
-    },
+  // Native balance using wagmi-free hook
+  const nativeBalance = useBalance({
+    address: address ?? '',
+    chainType: 'ethereum',
+    chainId: chainId ?? 1,
+    enabled: !!address && !isErc20,
   })
+
+  const refetchNativeBalance = nativeBalance.refetch
+
+  // ERC20 balance using wagmi-free hook (skipped when native send; no placeholder address)
+  const erc20Balance = useTokenBalance({
+    tokenAddress: isErc20 ? (token.address as `0x${string}`) : undefined,
+    ownerAddress: address,
+    chainId: chainId ?? 1,
+    enabled: Boolean(isErc20 && address),
+  })
+
+  const refetchErc20Balance = erc20Balance.refetch
 
   const parsedAmount =
     normalisedAmount && token && getAssetDecimals(token) !== undefined
@@ -94,7 +158,11 @@ const SendConfirmation = () => {
     }
   }, [recipientAddress, parsedAmount, setRoute])
 
-  const currentBalance = isErc20 ? erc20Balance : nativeBalance?.value
+  // Get current balance value from discriminated unions
+  const nativeBalanceValue = nativeBalance.status === 'success' ? nativeBalance.value : undefined
+  const erc20BalanceValue = erc20Balance.status === 'success' ? erc20Balance.value : undefined
+  const currentBalance = isErc20 ? erc20BalanceValue : nativeBalanceValue
+  const nativeSymbol = nativeBalance.status === 'success' ? nativeBalance.symbol : 'ETH'
 
   const insufficientBalance =
     parsedAmount !== null && currentBalance !== undefined ? parsedAmount > currentBalance : false
@@ -125,19 +193,17 @@ const SendConfirmation = () => {
         : undefined
       : undefined
 
-  const {
-    data: receipt,
-    isLoading: isWaitingForReceipt,
-    isSuccess,
-    isError: _receiptError,
-    error: waitError,
-  } = useWaitForTransactionReceipt({
+  // Wait for transaction receipt using wagmi-free hook
+  const receiptState = useWaitForTransactionReceipt({
     hash: transactionHash,
     chainId,
-    query: {
-      enabled: Boolean(transactionHash),
-    },
+    enabled: Boolean(transactionHash),
   })
+
+  const receipt = receiptState.status === 'success' ? receiptState.data : undefined
+  const isWaitingForReceipt = receiptState.status === 'loading'
+  const isSuccess = receiptState.status === 'success' && receiptState.isSuccess
+  const waitError = receiptState.status === 'error' ? receiptState.error : null
 
   const isSubmitting = isNativePending || isTokenPending
   const isLoading = isSubmitting || isWaitingForReceipt
@@ -202,7 +268,7 @@ const SendConfirmation = () => {
       } else {
         await writeContractAsync({
           abi: erc20Abi,
-          address: token.address,
+          address: token.address as `0x${string}`,
           functionName: 'transfer',
           args: [recipientAddress, parsedAmount],
           chainId,
@@ -227,8 +293,6 @@ const SendConfirmation = () => {
     setIsPollingBalance(false)
 
     // Don't reset the form - keep amount, token, and recipient for easier repeat transactions
-    // Clear cached token after successful transaction
-    // clearSelectedToken()
     setRoute(routes.CONNECTED)
   }
 
@@ -245,7 +309,7 @@ const SendConfirmation = () => {
 
   useEffect(() => {
     setTimeout(triggerResize, 10) // delay required here for modal to resize
-  }, [errorDetails, insufficientBalance, receipt?.transactionHash, isLoading])
+  }, [errorDetails, insufficientBalance, receipt?.transactionHash, isLoading, triggerResize])
 
   const isSponsored = useMemo(() => {
     if (!walletConfig?.ethereumProviderPolicyId) return false
@@ -298,11 +362,11 @@ const SendConfirmation = () => {
             <FeesValue $completed={isSponsored}>
               <EstimatedFees
                 account={address}
-                to={token.type === 'erc20' ? token.address : recipientAddress}
+                to={token.type === 'erc20' ? (token.address as `0x${string}`) : recipientAddress}
                 value={token.type === 'native' && parsedAmount ? parsedAmount : undefined}
                 data={transferData}
                 chainId={chainId}
-                nativeSymbol={nativeBalance?.symbol || 'ETH'}
+                nativeSymbol={nativeSymbol}
                 enabled={Boolean(address && recipientAddress && parsedAmount && parsedAmount > BigInt(0))}
                 hideInfoIcon={isSponsored}
               />
@@ -365,7 +429,4 @@ const SendConfirmation = () => {
   )
 }
 
-// const SendConfirmation = () => {
-//   return <div>Send Confirmation - TODO</div>
-// }
 export default SendConfirmation

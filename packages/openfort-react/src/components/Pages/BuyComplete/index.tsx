@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
-import { useAccount, useChainId } from 'wagmi'
+
 import { ExternalLinkIcon } from '../../../assets/icons'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalH1 } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
@@ -10,8 +11,12 @@ import { ContinueButtonWrapper, Section } from '../Buy/styles'
 
 const BuyComplete = () => {
   const { setRoute, triggerResize } = useOpenfort()
-  const { address } = useAccount()
-  const chainId = useChainId()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
 
   // Trigger resize on mount
   useEffect(() => {
@@ -44,7 +49,7 @@ const BuyComplete = () => {
     return `${baseUrl}/address/${address}`
   }
 
-  const blockExplorerUrl = address ? getBlockExplorerUrl(chainId, address) : ''
+  const blockExplorerUrl = address && chainId ? getBlockExplorerUrl(chainId, address) : ''
 
   return (
     <PageContent onBack={handleBack}>

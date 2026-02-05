@@ -1,6 +1,6 @@
-import { useChainId } from 'wagmi'
 import { BuyIcon, DollarIcon, ReceiveIcon } from '../../../assets/icons'
 import { useChains } from '../../../hooks/useChains'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalH1 } from '../../Common/Modal/styles'
 import { FloatingGraphic } from '../../FloatingGraphic'
@@ -11,8 +11,12 @@ import { ButtonsContainer } from './styles'
 
 export const NoAssetsAvailable = () => {
   const { setRoute } = useOpenfort()
-  const chainId = useChainId()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
   const chains = useChains()
+
+  const chainId = wallet.status === 'connected' ? wallet.chainId : undefined
   const chain = chains.find((c) => c.id === chainId)
   const showBuyOption = chain && !chain.testnet
 

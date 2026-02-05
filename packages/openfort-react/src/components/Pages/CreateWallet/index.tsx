@@ -1,10 +1,11 @@
 import { EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useAccount } from 'wagmi'
+
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, PlusIcon, ShieldIcon } from '../../../assets/icons'
 import Logos from '../../../assets/logos'
 import { type RequestWalletRecoverOTPResponse, useWallets } from '../../../hooks/openfort/useWallets'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
@@ -508,11 +509,14 @@ const CreateOrConnectWallet = () => {
 const CreateWallet: React.FC = () => {
   const { uiConfig, walletConfig, setRoute } = useOpenfort()
   const { user } = useOpenfortCore()
-  const { isConnected } = useAccount()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
 
   useEffect(() => {
     if (isConnected && user) setRoute(routes.CONNECTED_SUCCESS)
-  }, [isConnected, user])
+  }, [isConnected, user, setRoute])
 
   if (uiConfig.linkWalletOnSignUp === LinkWalletOnSignUpOption.OPTIONAL) {
     return <CreateOrConnectWallet />

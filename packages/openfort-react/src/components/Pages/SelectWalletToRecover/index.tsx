@@ -1,9 +1,9 @@
 import { RecoveryMethod } from '@openfort/openfort-js'
-import { useEnsName } from 'wagmi'
+
 import { FingerPrintIcon, KeyIcon, LockIcon } from '../../../assets/icons'
 import { embeddedWalletId } from '../../../constants/openfort'
 import { type UserWallet, useWallets } from '../../../hooks/openfort/useWallets'
-import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
+import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { truncateEthAddress } from '../../../utils'
 import { walletConfigs } from '../../../wallets/walletConfigs'
 import Button from '../../Common/Button'
@@ -26,12 +26,13 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 const SelectWalletButton = ({ wallet }: { wallet: UserWallet }) => {
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
+  // Use new abstraction hooks (no wagmi)
+  const identity = useResolvedIdentity({
     address: wallet.address,
-    config: ensFallbackConfig,
+    chainType: 'ethereum',
+    enabled: !!wallet.address,
   })
+  const ensName = identity.status === 'success' ? identity.name : undefined
   const walletDisplay = ensName ?? truncateEthAddress(wallet.address)
   const { setRoute, setConnector } = useOpenfort()
 

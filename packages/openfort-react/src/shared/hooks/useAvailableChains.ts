@@ -27,7 +27,7 @@ import type { AvailableChainsResult, ChainMode } from '../types'
  *   const { hasEthereum, hasSolana, mode } = useAvailableChains();
  *
  *   if (mode === 'multi-chain') {
- *     return <MultiChainConnected />;
+ *     return <EthereumConnected />;  // or SolanaConnected, or a tab view
  *   } else if (mode === 'solana-only') {
  *     return <SolanaConnected />;
  *   } else {

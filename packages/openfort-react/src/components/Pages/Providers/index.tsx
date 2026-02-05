@@ -3,10 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useMemo } from 'react'
 import { PhoneInput } from 'react-international-phone'
-import { useAccount, useDisconnect } from 'wagmi'
+
 import { EmailIcon, GuestIcon, PhoneIcon } from '../../../assets/icons'
 import Logos, { OtherSocials, providersLogos } from '../../../assets/logos'
+import { useAuthContext } from '../../../core/AuthContext'
 import { useProviders } from '../../../hooks/openfort/useProviders'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { logger } from '../../../utils/logger'
 import { isValidEmail as isValidEmailFn } from '../../../utils/validation'
@@ -311,17 +313,17 @@ export const ProviderButton: React.FC<{ provider: UIAuthProvider }> = ({ provide
 // This accounts for the case where the user has an address but no user, which can happen if the user has not signed up yet, but logged in with a wallet
 const AddressButNoUserCase: React.FC = () => {
   const { updateUser } = useOpenfortCore()
-  const { disconnect } = useDisconnect()
+  const { logout } = useAuthContext()
 
   useEffect(() => {
     updateUser()
       .then((user) => {
-        if (!user) disconnect()
+        if (!user) logout()
       })
       .catch(() => {
         logger.error('Failed to update user')
       })
-  }, [])
+  }, [updateUser, logout])
 
   return (
     <PageContent>
@@ -341,16 +343,20 @@ const SocialProvidersButton = ({ thereAreSocialsAlready }: { thereAreSocialsAlre
 
 const Providers: React.FC = () => {
   const { user } = useOpenfortCore()
-  const { address } = useAccount()
   const { previousRoute } = useOpenfort()
   const { mainProviders, hasExcessProviders } = useProviders()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
 
   const onBack: SetOnBackFunction = useMemo(() => {
     if (user) {
       return 'back'
     }
     return null
-  }, [previousRoute])
+  }, [previousRoute, user])
 
   if (address && !user) {
     return <AddressButNoUserCase />

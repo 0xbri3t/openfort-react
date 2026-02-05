@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
-import { useAccount } from 'wagmi'
-import { useOpenfortCore } from '../../../openfort/useOpenfort'
+
+import { useAuthContext } from '../../../core/AuthContext'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import Loader from '../../Common/Loading'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -8,15 +9,20 @@ import { PageContent } from '../../PageContent'
 
 const Loading: React.FC = () => {
   const { setRoute, walletConfig } = useOpenfort()
-  const { isLoading, user, needsRecovery } = useOpenfortCore()
-  const { address } = useAccount()
+  const { user, isLoadingAccounts, needsRecovery } = useAuthContext()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+
   const [isFirstFrame, setIsFirstFrame] = React.useState(true)
   const [retryCount, setRetryCount] = React.useState(0)
 
   useEffect(() => {
     if (isFirstFrame) return
 
-    if (isLoading) return
+    if (isLoadingAccounts) return
     else if (!user) setRoute(routes.PROVIDERS)
     else if (!address) {
       if (!walletConfig) setRoute({ route: routes.CONNECTORS, connectType: 'connect' })
@@ -25,7 +31,7 @@ const Loading: React.FC = () => {
       if (!walletConfig) setRoute({ route: routes.CONNECTORS, connectType: 'connect' })
       else setRoute(routes.LOAD_WALLETS)
     } else setRoute(routes.CONNECTED)
-  }, [isLoading, user, address, needsRecovery, isFirstFrame, retryCount])
+  }, [isLoadingAccounts, user, address, needsRecovery, isFirstFrame, retryCount])
 
   // Retry every 250ms
   useEffect(() => {

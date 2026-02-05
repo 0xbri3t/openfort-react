@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import type { Hex } from 'viem'
-import { useEnsName } from 'wagmi'
+
 import { useUser } from '../../../hooks/openfort/useUser'
-import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
+import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import type { UserAccount } from '../../../openfortCustomTypes'
 import styled from '../../../styles/styled'
 import { truncateEthAddress } from '../../../utils'
@@ -45,14 +45,16 @@ const ProviderIconInner = styled.div`
 
 const SiweContent = ({ provider }: { provider: UserAccount }) => {
   const address = provider.accountId as Hex
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address,
-    config: ensFallbackConfig,
-  })
   const context = useOpenfort()
   const themeContext = useThemeContext()
+
+  // Use new abstraction hooks (no wagmi)
+  const identity = useResolvedIdentity({
+    address,
+    chainType: 'ethereum',
+    enabled: !!address,
+  })
+  const ensName = identity.status === 'success' ? identity.name : undefined
 
   const separator = ['web95', 'rounded', 'minimal'].includes(themeContext.theme ?? context.uiConfig.theme ?? '')
     ? '....'

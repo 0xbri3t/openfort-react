@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useAccount, useChainId } from 'wagmi'
+
 import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
@@ -29,8 +30,13 @@ import { getAssetSymbol, isSameToken } from '../Send/utils'
 
 const BuySelectProvider = () => {
   const { buyForm, setBuyForm, setRoute, triggerResize, publishableKey } = useOpenfort()
-  const { address } = useAccount()
-  const chainId = useChainId()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
+
   const [quotes, setQuotes] = useState<Record<string, OnrampQuote>>({})
   const [isLoadingQuote, setIsLoadingQuote] = useState(false)
   const [coinbaseError, setCoinbaseError] = useState<boolean>(false)
@@ -91,7 +97,7 @@ const BuySelectProvider = () => {
   // Fetch quotes from all providers
   useEffect(() => {
     const fetchQuotes = async () => {
-      if (!address || !fiatAmount || fiatAmount <= 0) {
+      if (!address || !chainId || !fiatAmount || fiatAmount <= 0) {
         setQuotes({})
         setCoinbaseError(false)
         setStripeError(false)

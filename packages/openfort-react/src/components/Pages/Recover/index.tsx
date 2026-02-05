@@ -3,11 +3,11 @@ import { motion } from 'framer-motion'
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Hex } from 'viem'
-import { useEnsName } from 'wagmi'
+
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, ShieldIcon } from '../../../assets/icons'
 import { embeddedWalletId } from '../../../constants/openfort'
 import { type RequestWalletRecoverOTPResponse, type UserWallet, useWallets } from '../../../hooks/openfort/useWallets'
-import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
+import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useRouteProps } from '../../../hooks/useRouteProps'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { truncateEthAddress } from '../../../utils'
@@ -66,10 +66,13 @@ const RecoverPasswordWallet = ({
     if (recoveryError) triggerResize()
   }, [recoveryError])
 
-  const { data: ensName } = useEnsName({
-    chainId: 1,
+  // Use new abstraction hooks (no wagmi)
+  const identity = useResolvedIdentity({
     address: wallet.address,
+    chainType: 'ethereum',
+    enabled: !!wallet.address,
   })
+  const ensName = identity.status === 'success' ? identity.name : undefined
 
   return (
     <PageContent onBack={onBack} logoutOnBack={logoutOnBack}>
@@ -165,12 +168,13 @@ const RecoverPasskeyWallet = ({
     if (recoveryError) triggerResize()
   }, [recoveryError])
 
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
+  // Use new abstraction hooks (no wagmi)
+  const identity = useResolvedIdentity({
     address: wallet.address,
-    config: ensFallbackConfig,
+    chainType: 'ethereum',
+    enabled: !!wallet.address,
   })
+  const ensName = identity.status === 'success' ? identity.name : undefined
   const walletDisplay = ensName ?? truncateEthAddress(wallet.address)
 
   return (
@@ -262,12 +266,13 @@ const RecoverAutomaticWallet = ({
     }
   }
 
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
+  // Use new abstraction hooks (no wagmi)
+  const identity = useResolvedIdentity({
     address: walletAddress,
-    config: ensFallbackConfig,
+    chainType: 'ethereum',
+    enabled: !!walletAddress,
   })
+  const ensName = identity.status === 'success' ? identity.name : undefined
   const walletDisplay = ensName ?? truncateEthAddress(walletAddress)
   const [canSendOtp, setCanSendOtp] = useState(true)
 

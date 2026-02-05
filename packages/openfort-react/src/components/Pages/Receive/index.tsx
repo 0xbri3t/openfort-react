@@ -1,5 +1,6 @@
-import { useAccount } from 'wagmi'
 import Logos from '../../../assets/logos'
+import { useChains } from '../../../hooks/useChains'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { CopyIconButton } from '../../Common/CopyToClipboard/CopyIconButton'
 import CustomQRCode from '../../Common/CustomQRCode'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
@@ -9,14 +10,21 @@ import { PageContent } from '../../PageContent'
 import { AddressField, AddressRow, AddressSection, Label, NetworkInfo, QRWrapper } from './styles'
 
 const Receive = () => {
-  const { address, chain } = useAccount()
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const chains = useChains()
+
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
+  const chain = chains.find((c) => c.id === chainId)
 
   const qrValue = address || ''
 
   const networkLabel = chain?.name
-    ? `${chain.name}${chain?.id ? ` · Chain ID: ${chain.id}` : ''}`
-    : chain?.id
-      ? `Chain ID: ${chain.id}`
+    ? `${chain.name}${chainId ? ` · Chain ID: ${chainId}` : ''}`
+    : chainId
+      ? `Chain ID: ${chainId}`
       : null
 
   const { uiConfig: options } = useOpenfort()

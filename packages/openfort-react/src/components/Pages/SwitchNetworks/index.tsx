@@ -1,10 +1,10 @@
 import type React from 'react'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
-import { DisconnectIcon } from '../../../assets/icons'
-import { useChainIsSupported } from '../../../hooks/useChainIsSupported'
 
+import { DisconnectIcon } from '../../../assets/icons'
+import { useAuthContext } from '../../../core/AuthContext'
+import { useChainIsSupported } from '../../../hooks/useChainIsSupported'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
-import { isSafeConnector } from '../../../utils'
 import Button from '../../Common/Button'
 import ChainSelectList from '../../Common/ChainSelectList'
 import { OrDivider } from '../../Common/Modal'
@@ -12,16 +12,19 @@ import { ModalBody, ModalContent } from '../../Common/Modal/styles'
 import { PageContent } from '../../PageContent'
 
 const SwitchNetworks: React.FC = () => {
-  const { reset } = useConnect()
-  const { disconnect } = useDisconnect()
-  const { connector, chain } = useAccount()
-  const isChainSupported = useChainIsSupported(chain?.id)
+  const { logout } = useAuthContext()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+
+  const isConnected = wallet.status === 'connected'
+  const chainId = isConnected ? wallet.chainId : undefined
+  const isChainSupported = useChainIsSupported(chainId)
 
   const locales = useLocales({})
 
   const onDisconnect = () => {
-    disconnect()
-    reset()
+    logout()
   }
 
   return (
@@ -37,7 +40,7 @@ const SwitchNetworks: React.FC = () => {
           <ChainSelectList variant="secondary" />
         </div>
 
-        {!isChainSupported && !isSafeConnector(connector?.id) && (
+        {!isChainSupported && (
           <div style={{ paddingTop: 12 }}>
             <OrDivider />
             <Button icon={<DisconnectIcon />} variant="secondary" onClick={onDisconnect}>
