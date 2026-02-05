@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
+import type { Transport } from 'viem'
 import { createWalletClient, custom, numberToHex } from 'viem'
 import type { getAssets } from 'viem/_types/experimental/erc7811/actions/getAssets'
 import { erc7811Actions } from 'viem/experimental'
-import { type Transport, useAccount, useChainId, useWalletClient } from 'wagmi'
+
 import type { Asset } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { OpenfortError, OpenfortReactErrorType, type OpenfortWalletConfig } from '../../types'
+import { useChains } from '../useChains'
+import { useConnectedWallet } from '../useConnectedWallet'
 import { useUser } from './useUser'
 
 type WalletAssetsHookOptions = {
@@ -15,11 +18,19 @@ type WalletAssetsHookOptions = {
 }
 
 export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }: WalletAssetsHookOptions = {}) => {
-  const chainId = useChainId()
-  const { data: walletClient } = useWalletClient()
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const chains = useChains()
+
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected && wallet.chainType === 'ethereum' ? wallet.chainId : undefined
+
   const { walletConfig, publishableKey, overrides, thirdPartyAuth } = useOpenfort()
-  const { address } = useAccount()
   const { getAccessToken } = useUser()
+
+  // Find current chain config
+  const chain = chains.find((c) => c.id === chainId)
 
   const buildHeaders = useCallback(async () => {
     if (thirdPartyAuth) {
@@ -73,10 +84,11 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
         },
       })
     },
-    [publishableKey, getAccessToken]
+    [buildHeaders, overrides?.backendUrl]
   )
 
   const customAssetsToFetch = useMemo(() => {
+    if (!chainId) return []
     const assetsFromConfig = walletConfig?.assets ? walletConfig.assets[chainId] || [] : []
     const assetsFromHook = hookCustomAssets ? hookCustomAssets[chainId] || [] : []
     const allAssets = [...assetsFromConfig, ...assetsFromHook]
@@ -86,15 +98,15 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
   const { data, error, isLoading, isError, isSuccess, refetch } = useQuery({
     queryKey: ['wallet-assets', chainId, customAssetsToFetch, address],
     queryFn: async () => {
-      if (!walletClient) {
-        throw new OpenfortError('No wallet client available', OpenfortReactErrorType.UNEXPECTED_ERROR, {
-          error: new Error('Wallet client not initialized'),
+      if (!address || !chainId || !chain) {
+        throw new OpenfortError('Wallet not connected', OpenfortReactErrorType.UNEXPECTED_ERROR, {
+          error: new Error('Address, chainId, or chain not available'),
         })
       }
 
       const customClient = createWalletClient({
-        account: walletClient.account,
-        chain: walletClient.chain,
+        account: address as `0x${string}`,
+        chain,
         transport: customTransport(),
       })
 
@@ -186,7 +198,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
 
       return mergedAssets as readonly Asset[]
     },
-    enabled: !!walletClient,
+    enabled: isConnected && !!chainId && !!chain && !!address,
     retry: 2,
     staleTime, // Data fresh for 30 seconds
     throwOnError: false,
@@ -208,7 +220,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
     isLoading,
     isError,
     isSuccess,
-    isIdle: !walletClient,
+    isIdle: !isConnected || !chainId || !chain,
     error: mappedError,
     refetch,
   }

@@ -9,12 +9,13 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { formatUnits } from 'viem'
-import { useAccount, useChainId, useEnsName } from 'wagmi'
+
 import { BuyIcon, ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
 import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
 import { useChains } from '../../../hooks/useChains'
-import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
+import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { nFormatter, truncateEthAddress } from '../../../utils'
 import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
@@ -46,16 +47,22 @@ const EthereumConnected: React.FC = () => {
   const themeContext = useThemeContext()
   const { setHeaderLeftSlot, setRoute } = context
 
-  const { address } = useAccount()
-  const chainId = useChainId()
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? (wallet.address as `0x${string}`) : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
+
   const chains = useChains()
   const chain = chains.find((c) => c.id === chainId)
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address: address,
-    config: ensFallbackConfig,
+
+  // ENS resolution using new hook (always call, use enabled option)
+  const identity = useResolvedIdentity({
+    address: address ?? '',
+    chainType: 'ethereum',
+    enabled: isConnected && !!address,
   })
+  const ensName = identity.status === 'success' ? identity.name : undefined
 
   const { data: assets, isLoading, refetch } = useWalletAssets()
   const totalBalanceUsd = useMemo(() => {

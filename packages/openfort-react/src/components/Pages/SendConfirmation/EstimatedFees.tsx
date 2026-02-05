@@ -1,7 +1,8 @@
 import type { Address } from 'viem'
 import { formatUnits } from 'viem'
-import { useEstimateFeesPerGas, useEstimateGas } from 'wagmi'
+
 import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useGasEstimate } from '../../../hooks/useGasEstimate'
 import Tooltip from '../../Common/Tooltip'
 import { formatBalance } from '../Send/utils'
 import { InfoIconWrapper } from './styles'
@@ -44,30 +45,23 @@ export const EstimatedFees = ({
   const { data: assets } = useWalletAssets()
   const pricePerToken = assets?.find((a) => a.type === 'native')?.metadata?.fiat?.value as number | undefined
 
-  const { data: gasEstimate } = useEstimateGas({
-    account,
-    to,
-    value,
-    data,
-    chainId,
-    query: {
-      enabled,
-    },
+  // Use new useGasEstimate hook (no wagmi)
+  const gas = useGasEstimate({
+    from: account,
+    to: to ?? ('0x0000000000000000000000000000000000000000' as `0x${string}`),
+    value: value ?? BigInt(0),
+    data: data ?? '0x',
+    chainId: chainId ?? 1,
+    enabled: enabled && !!account && !!to,
   })
 
-  const { data: feeData } = useEstimateFeesPerGas({
-    chainId,
-    query: {
-      enabled: Boolean(chainId),
-    },
-  })
-
-  const gasPrice = feeData?.gasPrice ?? feeData?.maxFeePerGas
-  const gasCost = gasEstimate && gasPrice ? gasEstimate * gasPrice : undefined
-
-  if (!gasCost) {
+  // Handle discriminated union states
+  if (gas.status === 'idle' || gas.status === 'loading' || gas.status === 'error') {
     return <>--</>
   }
+
+  const gasCost = gas.estimatedCost
+  const gasUnits = gas.gasLimit
 
   if (pricePerToken !== undefined) {
     const gasCostInEth = Number.parseFloat(formatUnits(gasCost, 18))
@@ -77,7 +71,7 @@ export const EstimatedFees = ({
       <>
         ≈ {usdFormatter.format(gasCostInUsd)}
         {!hideInfoIcon && (
-          <Tooltip message={`${gasEstimate?.toString()} gas units (paid in ${nativeSymbol})`} delay={0.2}>
+          <Tooltip message={`${gasUnits.toString()} gas units (paid in ${nativeSymbol})`} delay={0.2}>
             <InfoIconWrapper>
               <InfoIcon />
             </InfoIconWrapper>
@@ -92,7 +86,7 @@ export const EstimatedFees = ({
     <>
       ≈ {formatBalance(gasCost, 18)} {nativeSymbol}
       {!hideInfoIcon && (
-        <Tooltip message={`${gasEstimate?.toString()} gas units`} delay={0.2}>
+        <Tooltip message={`${gasUnits.toString()} gas units`} delay={0.2}>
           <InfoIconWrapper>
             <InfoIcon />
           </InfoIconWrapper>

@@ -1,16 +1,15 @@
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import type React from 'react'
-import type { Chain } from 'viem'
-import { useAccount, useEnsName } from 'wagmi'
+
+import { useAuthContext } from '../../core/AuthContext'
 import { useUI } from '../../hooks/openfort/useUI'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
-import { useEnsFallbackConfig } from '../../hooks/useEnsFallbackConfig'
+import { useConnectedWallet } from '../../hooks/useConnectedWallet'
 import useIsMounted from '../../hooks/useIsMounted'
 import useLocales from '../../hooks/useLocales'
-import { useOpenfortCore } from '../../openfort/useOpenfort'
+import { useResolvedIdentity } from '../../hooks/useResolvedIdentity'
 import { ResetContainer } from '../../styles'
 import type { CustomTheme, Mode, Theme } from '../../types'
-import { truncateEthAddress } from '../../utils'
 import { Balance } from '../BalanceButton'
 import Avatar from '../Common/Avatar'
 import ThemedButton, { ThemeContainer } from '../Common/ThemedButton'
@@ -99,15 +98,13 @@ type ConnectButtonRendererProps = {
   children?: (renderProps: {
     show?: () => void
     hide?: () => void
-    chain?: Chain & {
-      unsupported?: boolean
-    }
     unsupported: boolean
     isConnected: boolean
     isConnecting: boolean
     address?: Hash
     truncatedAddress?: string
     ensName?: string
+    chainId?: number
   }) => React.ReactNode
 }
 
@@ -116,15 +113,21 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
   const context = useOpenfort()
   const { open, close, isOpen } = useUI()
 
-  const { address, isConnected, chain } = useAccount()
-  const isChainSupported = useChainIsSupported(chain?.id)
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? (wallet.address as Hash) : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
 
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address: address,
-    config: ensFallbackConfig,
+  const isChainSupported = useChainIsSupported(chainId)
+
+  // ENS resolution using new hook (always call, use enabled option)
+  const identity = useResolvedIdentity({
+    address: address ?? '',
+    chainType: 'ethereum',
+    enabled: isConnected && !!address,
   })
+  const ensName = identity.status === 'success' ? identity.name : undefined
 
   function hide() {
     close()
@@ -143,13 +146,13 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
       {children({
         show,
         hide,
-        chain: chain,
         unsupported: !isChainSupported,
-        isConnected: !!address,
-        isConnecting: isOpen, // Using `open` to determine if connecting as wagmi isConnecting only is set to true when an active connector is awaiting connection
+        isConnected: isConnected,
+        isConnecting: isOpen,
         address: address,
-        truncatedAddress: address ? truncateEthAddress(address) : undefined,
-        ensName: ensName?.toString(),
+        truncatedAddress: isConnected ? wallet.displayAddress : undefined,
+        ensName: ensName ?? undefined,
+        chainId,
       })}
     </>
   )
@@ -158,15 +161,24 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
 ConnectButtonRenderer.displayName = 'OpenfortButton.Custom'
 
 const ConnectedLabel = ({ separator }: { separator?: string }) => {
-  const { user, isLoading } = useOpenfortCore()
-  const { address } = useAccount()
+  const { user } = useAuthContext()
+  const wallet = useConnectedWallet()
 
-  if (address && (user || isLoading)) return truncateEthAddress(address, separator)
-
-  if (!user) return 'Loading user...'
-  if (!address) return 'Not connected'
-
-  return 'Loading...'
+  // Use discriminated union pattern
+  switch (wallet.status) {
+    case 'loading':
+      return 'Loading...'
+    case 'disconnected':
+      if (!user) return 'Loading user...'
+      return 'Not connected'
+    case 'connected': {
+      // Format address with optional separator
+      const formatted = separator
+        ? `${wallet.address.slice(0, 6)}${separator}${wallet.address.slice(-4)}`
+        : wallet.displayAddress
+      return formatted
+    }
+  }
 }
 
 function OpenfortButtonInner({
@@ -179,23 +191,29 @@ function OpenfortButtonInner({
   separator?: string
 }) {
   const locales = useLocales({})
+  const { user } = useAuthContext()
 
-  const { user } = useOpenfortCore()
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? (wallet.address as `0x${string}`) : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
 
-  const { address, chain } = useAccount()
-  const isChainSupported = useChainIsSupported(chain?.id)
+  const isChainSupported = useChainIsSupported(chainId)
 
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address: address,
-    config: ensFallbackConfig,
+  // ENS resolution using new hook (always call, use enabled option)
+  const identity = useResolvedIdentity({
+    address: address ?? '',
+    chainType: 'ethereum',
+    enabled: isConnected && !!address,
   })
+  const ensName = identity.status === 'success' ? identity.name : undefined
+
   const defaultLabel = locales.connectWallet
 
   return (
     <AnimatePresence initial={false}>
-      {user || address ? (
+      {user || isConnected ? (
         <TextContainer
           key={'connectedText'}
           initial={'initial'}
@@ -204,7 +222,6 @@ function OpenfortButtonInner({
           variants={addressVariants}
           style={{
             height: 40,
-            //padding: !showAvatar ? '0 5px' : undefined,
           }}
         >
           {showAvatar && (
@@ -233,22 +250,6 @@ function OpenfortButtonInner({
             }}
           >
             <AnimatePresence initial={false}>
-              {/* {ensName ? (
-                <TextContainer
-                  key="ckEnsName"
-                  initial={'initial'}
-                  animate={'animate'}
-                  exit={'exit'}
-                  variants={textVariants}
-                  style={{
-                    position: ensName ? 'relative' : 'absolute',
-                  }}
-                >
-                  {context.options?.truncateLongENSAddress
-                    ? truncateENSAddress(ensName, 20)
-                    : ensName}
-                </TextContainer>
-              ) : ( */}
               <TextContainer
                 key="ckTruncatedAddress"
                 initial={'initial'}
@@ -261,7 +262,6 @@ function OpenfortButtonInner({
               >
                 <ConnectedLabel separator={separator} />
               </TextContainer>
-              {/* )} */}
             </AnimatePresence>
           </div>
         </TextContainer>
@@ -274,7 +274,6 @@ function OpenfortButtonInner({
           variants={contentVariants}
           style={{
             height: 40,
-            //padding: '0 5px',
           }}
         >
           {label ? label : defaultLabel}
@@ -314,20 +313,22 @@ export function OpenfortButton({
   onClick,
 }: OpenfortButtonProps) {
   const isMounted = useIsMounted()
-
   const context = useOpenfort()
-
-  const { address, chain } = useAccount()
-  const chainIsSupported = useChainIsSupported(chain?.id)
-
   const { open } = useUI()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const chainId = isConnected ? wallet.chainId : undefined
+
+  const chainIsSupported = useChainIsSupported(chainId)
 
   const separator = ['web95', 'rounded', 'minimal'].includes(theme ?? context.uiConfig.theme ?? '') ? '....' : undefined
 
   if (!isMounted) return null
 
   const shouldShowBalance = showBalance && chainIsSupported
-  const willShowBalance = address && shouldShowBalance
+  const willShowBalance = isConnected && shouldShowBalance
 
   return (
     <ResetContainer
@@ -396,7 +397,7 @@ export function OpenfortButton({
           mode={mode ?? context.mode}
           customTheme={customTheme ?? context.uiConfig.customTheme}
           style={
-            shouldShowBalance && showBalance && address && (theme === 'retro' || context.uiConfig.theme === 'retro')
+            shouldShowBalance && showBalance && isConnected && (theme === 'retro' || context.uiConfig.theme === 'retro')
               ? {
                   /* Special fix for the retro theme... not happy about this one */
                   boxShadow: 'var(--ck-connectbutton-balance-connectbutton-box-shadow)',

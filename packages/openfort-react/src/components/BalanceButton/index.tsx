@@ -1,12 +1,12 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { keyframes } from 'styled-components'
-import { useAccount, useBalance, useBlockNumber } from 'wagmi'
+
 import { chainConfigs } from '../../constants/chainConfigs'
+import { useBalance } from '../../hooks/useBalance'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
-import { useChains } from '../../hooks/useChains'
+import { useConnectedWallet } from '../../hooks/useConnectedWallet'
 import useIsMounted from '../../hooks/useIsMounted'
 import styled from '../../styles/styled'
 import type { All } from '../../types'
@@ -49,26 +49,30 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
   const isMounted = useIsMounted()
   const [isInitial, setIsInitial] = useState(true)
 
-  const { address, chain } = useAccount()
-  const _chains = useChains()
-  const isChainSupported = useChainIsSupported(chain?.id)
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
+  const chainType = isConnected ? wallet.chainType : 'ethereum'
 
-  const queryClient = useQueryClient()
-  const { data: blockNumber } = useBlockNumber({ watch: true })
-  const { data: balance, queryKey } = useBalance({
-    address,
-    chainId: chain?.id,
+  const isChainSupported = useChainIsSupported(chainId)
+
+  // Use new useBalance hook (always call, use enabled option - React rules compliant)
+  const balance = useBalance({
+    address: address ?? '',
+    chainType,
+    chainId: chainId ?? 1,
+    enabled: isConnected && !!address,
+    refetchInterval: 30_000, // Replaces blockNumber-based invalidation
   })
 
-  useEffect(() => {
-    if (blockNumber ?? 0 % 5 === 0) queryClient.invalidateQueries({ queryKey })
-  }, [blockNumber, queryKey])
+  const currentChain = chainConfigs.find((c) => c.id === chainId)
+  const balanceFormatted = balance.status === 'success' ? balance.formatted : undefined
+  const balanceSymbol = balance.status === 'success' ? balance.symbol : undefined
 
-  const currentChain = chainConfigs.find((c) => c.id === chain?.id)
   const state = `${
-    !isMounted || balance?.formatted === undefined
-      ? `balance-loading`
-      : `balance-${currentChain?.id}-${balance?.formatted}`
+    !isMounted || balanceFormatted === undefined ? `balance-loading` : `balance-${currentChain?.id}-${balanceFormatted}`
   }`
 
   useEffect(() => {
@@ -81,7 +85,7 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
         <motion.div
           key={state}
           initial={
-            balance?.formatted !== undefined && isInitial
+            balanceFormatted !== undefined && isInitial
               ? {
                   opacity: 1,
                 }
@@ -101,9 +105,9 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
             delay: 0.4,
           }}
         >
-          {!address || !isMounted || balance?.formatted === undefined ? (
+          {!isConnected || !isMounted || balanceFormatted === undefined ? (
             <Container>
-              {!hideIcon && <Chain id={chain?.id} />}
+              {!hideIcon && <Chain id={chainId} />}
               <span style={{ minWidth: 32 }}>
                 <PulseContainer>
                   <span style={{ animationDelay: '0ms' }} />
@@ -114,41 +118,18 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
             </Container>
           ) : !isChainSupported ? (
             <Container>
-              {!hideIcon && <Chain id={chain?.id} />}
+              {!hideIcon && <Chain id={chainId} />}
               <span style={{ minWidth: 32 }}>???</span>
             </Container>
           ) : (
             <Container>
-              {!hideIcon && <Chain id={chain?.id} />}
-              <span style={{ minWidth: 32 }}>{nFormatter(Number(balance?.formatted))}</span>
-              {!hideSymbol && ` ${balance?.symbol}`}
+              {!hideIcon && <Chain id={chainId} />}
+              <span style={{ minWidth: 32 }}>{nFormatter(Number(balanceFormatted))}</span>
+              {!hideSymbol && balanceSymbol && ` ${balanceSymbol}`}
             </Container>
           )}
         </motion.div>
       </AnimatePresence>
-      {/* <Container
-        style={{
-          position: 'absolute',
-          x: 'calc(-50% - 12px)',
-          y: '-50%',
-          left: '50%',
-          top: '50%',
-        }}
-        initial={{
-          opacity: 0,
-        }}
-        animate={{
-          opacity: balance?.formatted !== undefined ? 1 : 0,
-        }}
-        transition={{
-          duration: balance && isInitial ? 0 : 0.4,
-          ease: [0.25, 1, 0.5, 1],
-        }}
-      >
-        {!hideIcon && <Chain id={chain?.id} />}
-        {nFormatter(Number(balance?.formatted))}
-        {!hideSymbol && ` ${balance?.symbol}`}
-      </Container> */}
     </div>
   )
 }
