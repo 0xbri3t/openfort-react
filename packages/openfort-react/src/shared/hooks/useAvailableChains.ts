@@ -8,16 +8,16 @@
  */
 
 import { useContext } from 'react'
-import { WagmiContext } from 'wagmi'
-import { Openfortcontext } from '../../components/Openfort/context'
+import { EthereumContext } from '../../ethereum/EthereumContext'
+import { SolanaContext } from '../../solana/providers/SolanaContextProvider'
 import type { AvailableChainsResult, ChainMode } from '../types'
 
 /**
  * Detect which chains are available based on provider configuration.
  *
  * Checks for:
- * - Ethereum: WagmiContext presence
- * - Solana: walletConfig.solana configuration
+ * - Ethereum: EthereumContext presence
+ * - Solana: SolanaContext presence
  *
  * @returns Object with hasEthereum, hasSolana, and mode
  *
@@ -37,20 +37,27 @@ import type { AvailableChainsResult, ChainMode } from '../types'
  * ```
  */
 export function useAvailableChains(): AvailableChainsResult {
-  // Check for Wagmi context (Ethereum support)
-  const wagmiContext = useContext(WagmiContext)
-  const hasEthereum = !!wagmiContext
+  // Check for Ethereum context
+  const ethereumContext = useContext(EthereumContext)
+  const hasEthereum = !!ethereumContext
 
-  // Check for Solana configuration
-  const openfortContext = useContext(Openfortcontext)
-  const hasSolana = !!openfortContext?.walletConfig?.solana
+  // Check for Solana context
+  const solanaContext = useContext(SolanaContext)
+  const hasSolana = !!solanaContext
 
   // Determine mode
   const mode: ChainMode = hasEthereum && hasSolana ? 'multi-chain' : hasSolana ? 'solana-only' : 'ethereum-only'
 
+  // Build availableChains with proper type narrowing
+  const availableChains: readonly ('ethereum' | 'solana')[] = [
+    ...(hasEthereum ? (['ethereum'] as const) : []),
+    ...(hasSolana ? (['solana'] as const) : []),
+  ]
+
   return {
     hasEthereum,
     hasSolana,
+    availableChains,
     mode,
   }
 }

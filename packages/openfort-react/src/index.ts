@@ -11,6 +11,8 @@ export {
   SignedMessagePayload,
   User,
 } from '@openfort/openfort-js'
+// Compat layer (deprecated hooks)
+export { useOpenfortCore } from './compat/useOpenfortCore'
 export { default as Avatar } from './components/Common/Avatar'
 export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
@@ -20,6 +22,8 @@ export { PageLayout, type PageLayoutProps } from './components/PageLayout'
 export { embeddedWalletId } from './constants/openfort'
 export { default as getDefaultConfig } from './defaultConfig'
 export { default as getDefaultConnectors } from './defaultConnectors'
+// Ethereum context types
+export type { ChainId, SetChainResult } from './ethereum/EthereumContext'
 // Convenience re-export for Ethereum hook (can also import from '@openfort/react/ethereum')
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
 export { useAuthCallback } from './hooks/openfort/auth/useAuthCallback'
@@ -71,6 +75,8 @@ export {
   SDKOverrides,
   ThirdPartyOAuthProvider,
 } from './types'
+// UI hooks (new clean API)
+export { type ConnectUIValue, useConnectUI } from './ui/ConnectUIContext'
 export { OPENFORT_VERSION } from './version'
 export { wallets } from './wallets'
 

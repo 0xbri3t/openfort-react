@@ -47,7 +47,7 @@ function getDefaultRpcUrl(cluster: SolanaCluster): string {
 // Context
 // =============================================================================
 
-const SolanaContext = createContext<SolanaContextValue | null>(null)
+export const SolanaContext = createContext<SolanaContextValue | null>(null)
 
 // =============================================================================
 // Provider Props

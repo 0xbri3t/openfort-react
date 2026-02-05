@@ -1,0 +1,99 @@
+/**
+ * Connect UI Context
+ *
+ * Provides clean UI state management separate from SDK configuration.
+ * This context handles modal control, navigation, theme, and form state.
+ *
+ * @see Phase E0.2 - Split UI Context from SDK Context
+ */
+
+import { createContext, useContext } from 'react'
+import type { BuyFormState, RouteOptions, SendFormState, SetRouteOptions } from '../components/Openfort/types'
+import { ProviderNotFoundError } from '../core/errors'
+import type { Mode, Theme } from '../types'
+
+// =============================================================================
+// Context Types
+// =============================================================================
+
+/**
+ * Clean UI context value for modal control, navigation, and theme management.
+ */
+export interface ConnectUIValue {
+  // Modal control
+  /** Whether the connect modal is open */
+  isOpen: boolean
+  /** Open the connect modal */
+  openModal: () => void
+  /** Close the connect modal */
+  closeModal: () => void
+
+  // Navigation
+  /** Current route in the modal */
+  currentRoute: RouteOptions
+  /** Navigate to a new route */
+  navigate: (route: SetRouteOptions) => void
+  /** Go back to the previous route */
+  goBack: () => void
+  /** Route history stack */
+  routeHistory: RouteOptions[]
+
+  // Theme
+  /** Current theme */
+  theme: Theme
+  /** Current color mode */
+  mode: Mode
+  /** Update theme */
+  setTheme: (theme: Theme) => void
+  /** Update color mode */
+  setMode: (mode: Mode) => void
+
+  // Forms (send/buy state)
+  /** Form states */
+  forms: {
+    send: SendFormState
+    buy: BuyFormState
+  }
+  /** Update send form state */
+  updateSendForm: (updates: Partial<SendFormState>) => void
+  /** Update buy form state */
+  updateBuyForm: (updates: Partial<BuyFormState>) => void
+
+  // Resize trigger (for layout adjustments)
+  /** Trigger a resize calculation */
+  triggerResize: () => void
+}
+
+// =============================================================================
+// Context
+// =============================================================================
+
+export const ConnectUIContext = createContext<ConnectUIValue | null>(null)
+
+// =============================================================================
+// Hook
+// =============================================================================
+
+/**
+ * Access the Connect UI context for modal control, navigation, and theme.
+ *
+ * @throws ProviderNotFoundError if called outside of OpenfortProvider
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { openModal, closeModal, currentRoute } = useConnectUI();
+ *
+ *   return (
+ *     <button onClick={openModal}>Connect Wallet</button>
+ *   );
+ * }
+ * ```
+ */
+export function useConnectUI(): ConnectUIValue {
+  const context = useContext(ConnectUIContext)
+  if (!context) {
+    throw new ProviderNotFoundError('useConnectUI')
+  }
+  return context
+}

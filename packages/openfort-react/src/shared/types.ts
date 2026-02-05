@@ -83,10 +83,12 @@ export type ChainMode = 'ethereum-only' | 'solana-only' | 'multi-chain'
  * Available chains result from useAvailableChains hook
  */
 export type AvailableChainsResult = {
-  /** Whether Ethereum is available (Wagmi context detected) */
+  /** Whether Ethereum is available (EthereumContext present) */
   hasEthereum: boolean
-  /** Whether Solana is available (solana config provided) */
+  /** Whether Solana is available (SolanaContext present) */
   hasSolana: boolean
+  /** List of available chain identifiers */
+  availableChains: readonly ('ethereum' | 'solana')[]
   /** Current chain mode */
   mode: ChainMode
 }
