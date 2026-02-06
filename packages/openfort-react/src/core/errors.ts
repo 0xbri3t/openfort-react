@@ -5,10 +5,6 @@
  * Maintains backwards compatibility with existing OpenfortError.
  */
 
-// =============================================================================
-// Error Codes
-// =============================================================================
-
 /**
  * Error codes for Openfort React SDK
  */
@@ -41,10 +37,6 @@ export const OpenfortErrorCode = {
 } as const
 
 export type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCode]
-
-// =============================================================================
-// Error Classes
-// =============================================================================
 
 /**
  * Base error class for Openfort React SDK (new architecture)
@@ -99,10 +91,6 @@ export class OpenfortReactError extends Error {
   }
 }
 
-// =============================================================================
-// Specialized Error Classes
-// =============================================================================
-
 /**
  * Error thrown when provider context is missing
  */
@@ -153,10 +141,6 @@ export class WalletError extends OpenfortReactError {
     this.address = options?.address
   }
 }
-
-// =============================================================================
-// Error Helpers
-// =============================================================================
 
 /**
  * Check if error is an Openfort error

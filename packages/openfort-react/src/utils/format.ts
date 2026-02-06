@@ -2,16 +2,9 @@
  * Format Utilities
  *
  * Address formatting utilities for different chain types.
- * Uses registry pattern for extensibility.
- *
- * @see Phase E1.7
  */
 
 import type { ChainType } from './chains'
-
-// =============================================================================
-// Address Formatters
-// =============================================================================
 
 /**
  * Format EVM address: 0x1234...abcd
@@ -29,9 +22,6 @@ export function formatSolanaAddress(address: string): string {
   return `${address.slice(0, 4)}...${address.slice(-4)}`
 }
 
-/**
- * Registry pattern for chain-specific formatting
- */
 export const addressFormatters: Record<ChainType, (address: string) => string> = {
   ethereum: formatEVMAddress,
   solana: formatSolanaAddress,
@@ -44,10 +34,6 @@ export function formatAddress(address: string, chainType: ChainType): string {
   const formatter = addressFormatters[chainType]
   return formatter(address)
 }
-
-// =============================================================================
-// Balance Formatters
-// =============================================================================
 
 /**
  * Format balance with specified decimals

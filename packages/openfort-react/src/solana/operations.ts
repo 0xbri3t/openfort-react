@@ -14,10 +14,6 @@ import { OpenfortErrorCode, OpenfortReactError } from '../core/errors'
 
 import type { SignedSolanaTransaction, SolanaTransaction } from './types'
 
-// =============================================================================
-// Types
-// =============================================================================
-
 export interface SignMessageParams {
   /** Message to sign (string or Uint8Array) */
   message: string | Uint8Array
@@ -42,10 +38,6 @@ export interface SignAllTransactionsParams {
   /** Openfort client */
   client: Openfort
 }
-
-// =============================================================================
-// Sign Message
-// =============================================================================
 
 /**
  * Sign a message using Ed25519 (Solana standard)
@@ -80,10 +72,6 @@ export async function signMessage(params: SignMessageParams): Promise<string> {
     throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
   }
 }
-
-// =============================================================================
-// Sign Transaction
-// =============================================================================
 
 /**
  * Sign a Solana transaction
@@ -120,10 +108,6 @@ export async function signTransaction(params: SignTransactionParams): Promise<Si
   }
 }
 
-// =============================================================================
-// Sign All Transactions
-// =============================================================================
-
 /**
  * Sign multiple Solana transactions
  *
@@ -154,10 +138,6 @@ export async function signAllTransactions(params: SignAllTransactionsParams): Pr
     throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
   }
 }
-
-// =============================================================================
-// Helpers
-// =============================================================================
 
 /**
  * Extract message bytes from various Solana transaction formats

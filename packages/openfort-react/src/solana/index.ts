@@ -35,34 +35,28 @@
  * @packageDocumentation
  */
 
-// =============================================================================
-// Providers
-// =============================================================================
-
-// =============================================================================
-// Hooks
-// =============================================================================
-
 export { useSolanaMessageSigner, useSolanaSigner } from './hooks/useSolanaSigner'
 export { useSolanaWallet } from './hooks/useSolanaWallet'
 
 export type { SolanaContextProviderProps, SolanaContextValue } from './providers/SolanaContextProvider'
 export { SolanaContext, SolanaContextProvider, useSolanaContext } from './providers/SolanaContextProvider'
+
 // Other hooks
 
 // Note: useSolanaBalance is intentionally NOT exported (internal only for UI)
 
-// =============================================================================
-// Wallet Provider
-// =============================================================================
-
+export { LAMPORTS_PER_SOL, lamportsToSol, solToLamports } from './hooks/utils'
+export {
+  getTransactionBytes,
+  type SignAllTransactionsParams,
+  type SignMessageParams,
+  type SignTransactionParams,
+  signAllTransactions,
+  signMessage,
+  signTransaction,
+} from './operations'
 export type { OpenfortSolanaProviderConfig } from './provider'
 export { createSolanaProvider, OpenfortSolanaProvider } from './provider'
-
-// =============================================================================
-// Kit Signers
-// =============================================================================
-
 export type {
   Address,
   MessagePartialSigner,
@@ -79,11 +73,6 @@ export {
   OpenfortMessagePartialSigner,
   OpenfortTransactionPartialSigner,
 } from './signers/OpenfortSolanaSigner'
-
-// =============================================================================
-// Types
-// =============================================================================
-
 export type {
   // Wallet types
   ConnectedEmbeddedSolanaWallet,
@@ -111,23 +100,3 @@ export type {
   SolanaWalletActions,
   UseEmbeddedSolanaWalletOptions,
 } from './types'
-
-// =============================================================================
-// Operations (pure functions for signing)
-// =============================================================================
-
-export {
-  getTransactionBytes,
-  type SignAllTransactionsParams,
-  type SignMessageParams,
-  type SignTransactionParams,
-  signAllTransactions,
-  signMessage,
-  signTransaction,
-} from './operations'
-
-// =============================================================================
-// Utils
-// =============================================================================
-
-export { LAMPORTS_PER_SOL, lamportsToSol, solToLamports } from './hooks/utils'

@@ -3,15 +3,9 @@
  *
  * Provides @solana/kit compatible signers that wrap the OpenfortSolanaProvider.
  * These signers can be used directly with @solana/kit and @solana/react-hooks.
- *
- * @see RFC-0001 Section 4.3
  */
 
 import type { OpenfortEmbeddedSolanaWalletProvider, SignatureDictionary } from '../types'
-
-// =========================================================================
-// Types from @solana/kit (minimal interface for compatibility)
-// =========================================================================
 
 /**
  * Solana address type (Base58 encoded string)
@@ -94,10 +88,6 @@ export interface MessagePartialSigner<TAddress extends string = string> {
    */
   signMessages(messages: readonly SignableMessage[]): Promise<readonly SignatureDictionary[]>
 }
-
-// =========================================================================
-// Openfort Kit Signer Implementations
-// =========================================================================
 
 /**
  * Openfort Transaction Partial Signer
@@ -215,10 +205,6 @@ export class OpenfortMessagePartialSigner implements MessagePartialSigner {
     })) as readonly SignatureDictionary[]
   }
 }
-
-// =========================================================================
-// Factory Functions
-// =========================================================================
 
 /**
  * Creates a TransactionPartialSigner from an Openfort provider

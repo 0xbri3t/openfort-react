@@ -3,8 +3,6 @@
  *
  * Wagmi-free transaction confirmation page.
  * Uses viem-based hooks for balance, transactions, and receipts.
- *
- * @see Phase E3
  */
 
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
@@ -48,10 +46,6 @@ import {
   SummaryList,
 } from './styles'
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
 /** Get block explorer URL for chain */
 function getBlockExplorerUrl(chainId: number): string {
   const explorers: Record<number, string> = {
@@ -77,10 +71,6 @@ function isTestnetChain(chainId: number): boolean {
   const testnets = new Set([5, 11155111, 80001, 84532, 421614, 97, 4002])
   return testnets.has(chainId)
 }
-
-// =============================================================================
-// Component
-// =============================================================================
 
 const SendConfirmation = () => {
   // Use wagmi-free hooks

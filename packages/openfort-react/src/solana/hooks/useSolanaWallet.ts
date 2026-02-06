@@ -1,26 +1,11 @@
-/**
- * Solana Wallet Hook
- *
- * Main hook for managing Solana embedded wallets.
- * Uses the new core module (Phase A) and shared recovery utilities.
- *
- * Returns a discriminated union with 8 possible states.
- */
-
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount } from '@openfort/openfort-js'
 import { useCallback, useMemo, useState } from 'react'
 
-// Existing context for walletConfig
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
-// Core module (Phase A)
 import { useAuthContext } from '../../core/AuthContext'
 import { OpenfortErrorCode, OpenfortReactError } from '../../core/errors'
 import { useOpenfortClient } from '../../core/hooks/useOpenfortClient'
-
-// Shared utilities
 import { buildRecoveryParams, type RecoveryContext } from '../../shared/utils/recovery'
-
-// Local imports
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import { useSolanaContext } from '../providers/SolanaContextProvider'
@@ -35,10 +20,6 @@ import type {
   SolanaTransaction,
   UseEmbeddedSolanaWalletOptions,
 } from '../types'
-
-// =============================================================================
-// Internal Types
-// =============================================================================
 
 type WalletStatus =
   | 'disconnected'
@@ -57,44 +38,14 @@ type InternalState = {
   error: string | null
 }
 
-// =============================================================================
-// Hook Implementation
-// =============================================================================
-
-/**
- * Hook for managing Solana embedded wallets
- *
- * Requires SolanaContext to be configured (via walletConfig.solana).
- *
- * @param options - Hook options including recovery params
- * @returns Discriminated union of wallet states with actions
- *
- * @example
- * ```tsx
- * const solana = useSolanaWallet();
- *
- * switch (solana.status) {
- *   case 'disconnected':
- *     return <button onClick={() => solana.create()}>Create Wallet</button>;
- *   case 'connected':
- *     return <p>Address: {solana.activeWallet.address}</p>;
- *   case 'error':
- *     return <p>Error: {solana.error}</p>;
- * }
- * ```
- */
+/** Hook for managing Solana embedded wallets. Requires SolanaContext. */
 export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): EmbeddedSolanaWalletState {
-  // Ensure Solana context is available (required for Solana)
   useSolanaContext()
 
-  // Use new core module
   const { client } = useOpenfortClient()
   const { embeddedAccounts, isLoadingAccounts, refetchAccounts } = useAuthContext()
-
-  // Get walletConfig from existing context (for recovery)
   const { walletConfig } = useOpenfort()
 
-  // Build recovery context for buildRecoveryParams
   const recoveryContext: RecoveryContext = useMemo(
     () => ({
       walletConfig,
@@ -107,7 +58,6 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
     [walletConfig, client]
   )
 
-  // Internal state
   const [state, setState] = useState<InternalState>({
     status: 'disconnected',
     activeWallet: null,
@@ -115,18 +65,10 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
     error: null,
   })
 
-  // ==========================================================================
-  // Filter Solana wallets from embedded accounts
-  // ==========================================================================
-
   const solanaAccounts = useMemo(() => {
     if (!embeddedAccounts) return []
     return embeddedAccounts.filter((acc) => acc.chainType === ChainTypeEnum.SVM)
   }, [embeddedAccounts])
-
-  // ==========================================================================
-  // Convert embedded accounts to ConnectedEmbeddedSolanaWallet
-  // ==========================================================================
 
   const wallets = useMemo<ConnectedEmbeddedSolanaWallet[]>(() => {
     return solanaAccounts.map((acc, index) => ({
@@ -139,10 +81,6 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
       },
     }))
   }, [solanaAccounts])
-
-  // ==========================================================================
-  // Create provider for account
-  // ==========================================================================
 
   const createProviderForAccount = useCallback(
     (account: EmbeddedAccount): OpenfortEmbeddedSolanaWalletProvider => {
@@ -187,13 +125,6 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
     [client]
   )
 
-  // ==========================================================================
-  // Actions
-  // ==========================================================================
-
-  /**
-   * Create a new Solana embedded wallet
-   */
   const create = useCallback(
     async (createOptions?: CreateSolanaWalletOptions): Promise<EmbeddedAccount> => {
       setState((s) => ({ ...s, status: 'creating', error: null }))
@@ -257,9 +188,6 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
     [client, walletConfig, createProviderForAccount, refetchAccounts, recoveryContext]
   )
 
-  /**
-   * Set the active Solana wallet
-   */
   const setActive = useCallback(
     async (activeOptions: SetActiveSolanaWalletOptions): Promise<void> => {
       setState((s) => ({ ...s, status: 'connecting', error: null }))
@@ -313,9 +241,6 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
     [client, solanaAccounts, createProviderForAccount]
   )
 
-  /**
-   * Set recovery method for the wallet
-   */
   const setRecovery = useCallback(
     async (recoveryOptions: SetRecoveryOptions): Promise<void> => {
       try {
@@ -329,16 +254,9 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
     [client, refetchAccounts]
   )
 
-  /**
-   * Export the private key
-   */
   const exportPrivateKey = useCallback(async (): Promise<string> => {
     return await client.embeddedWallet.exportPrivateKey()
   }, [client])
-
-  // ==========================================================================
-  // Build actions object
-  // ==========================================================================
 
   const actions = useMemo(
     () => ({
@@ -350,10 +268,6 @@ export function useSolanaWallet(_options?: UseEmbeddedSolanaWalletOptions): Embe
     }),
     [create, wallets, setActive, setRecovery, exportPrivateKey]
   )
-
-  // ==========================================================================
-  // Determine current status based on state
-  // ==========================================================================
 
   // Handle loading state
   if (isLoadingAccounts) {

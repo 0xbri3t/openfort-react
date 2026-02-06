@@ -9,10 +9,6 @@ import type { EmbeddedAccount, Openfort, OpenfortSDKConfiguration, User } from '
 
 import type { SolanaConfig } from '../solana/types'
 
-// =============================================================================
-// Configuration Types
-// =============================================================================
-
 /**
  * RPC URL configuration for Ethereum chains
  * Maps chainId to RPC URL
@@ -94,10 +90,6 @@ export type OpenfortConfig = CoreProviderConfig & {
   _sdkConfig: OpenfortSDKConfiguration
 }
 
-// =============================================================================
-// Context Value Types
-// =============================================================================
-
 /**
  * Core context value
  * Provides access to the Openfort client and configuration
@@ -112,10 +104,6 @@ export type CoreContextValue = {
   /** Whether debug mode is enabled */
   debug: boolean
 }
-
-// =============================================================================
-// Hook Return Types
-// =============================================================================
 
 /**
  * Standard async operation status
@@ -135,10 +123,6 @@ export type AsyncState<T> = {
   isIdle: boolean
 }
 
-// =============================================================================
-// Event Types
-// =============================================================================
-
 /**
  * Callback for successful authentication
  */
@@ -153,10 +137,6 @@ export type OnAuthError = (error: Error) => void
  * Callback for wallet operations
  */
 export type OnWalletEvent = (account: EmbeddedAccount) => void
-
-// =============================================================================
-// Re-exports from existing types (backwards compatibility)
-// =============================================================================
 
 export type { OpenfortHookOptions } from '../types'
 export { OpenfortError, OpenfortReactErrorType } from '../types'

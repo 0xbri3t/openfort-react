@@ -3,8 +3,6 @@
  *
  * Hook for writing to smart contracts using EIP-1193 provider.
  * Wagmi-free - uses Openfort's embedded wallet provider.
- *
- * @see Phase E3
  */
 
 import { useCallback, useState } from 'react'
@@ -12,10 +10,6 @@ import { type Abi, type ContractFunctionArgs, type ContractFunctionName, encodeF
 
 import { OpenfortErrorCode, OpenfortReactError } from '../core/errors'
 import { useEthereumWallet } from '../ethereum/hooks/useEthereumWallet'
-
-// =============================================================================
-// Types
-// =============================================================================
 
 /** State-mutating ABI functions (payable or nonpayable) */
 type WriteableMutability = 'payable' | 'nonpayable'
@@ -57,10 +51,6 @@ export interface UseWriteContractReturn {
   /** Reset the state */
   reset: () => void
 }
-
-// =============================================================================
-// Hook Implementation
-// =============================================================================
 
 /**
  * Hook for writing to smart contracts.

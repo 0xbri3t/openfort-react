@@ -1,17 +1,10 @@
 /**
  * RPC Utilities
  *
- * Default RPC URLs and chain metadata using registry pattern.
- * NO switch/case or if/else - all lookups via Record.
- *
- * @see Phase E1.0
+ * Default RPC URLs and chain metadata.
  */
 
 import type { SolanaCluster } from './chains'
-
-// =============================================================================
-// Default RPC URLs (Registry Pattern)
-// =============================================================================
 
 /**
  * Default Ethereum RPC URLs by chain ID
@@ -37,10 +30,6 @@ export const DEFAULT_SOLANA_RPC_URLS: Record<SolanaCluster, string> = {
   testnet: 'https://api.testnet.solana.com',
 }
 
-// =============================================================================
-// RPC URL Resolvers
-// =============================================================================
-
 /**
  * Get default Ethereum RPC URL for a chain ID
  * Falls back to mainnet if chain not configured
@@ -56,10 +45,6 @@ export function getDefaultEthereumRpcUrl(chainId: number): string {
 export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string {
   return DEFAULT_SOLANA_RPC_URLS[cluster] ?? DEFAULT_SOLANA_RPC_URLS['mainnet-beta']
 }
-
-// =============================================================================
-// Chain Metadata (Registry Pattern)
-// =============================================================================
 
 /**
  * Chain names by chain ID
@@ -103,10 +88,6 @@ export const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
  */
 const DEFAULT_NATIVE_CURRENCY: NativeCurrency = { name: 'Ether', symbol: 'ETH', decimals: 18 }
 
-// =============================================================================
-// Metadata Resolvers
-// =============================================================================
-
 /**
  * Get chain name by chain ID
  */
@@ -120,10 +101,6 @@ export function getChainName(chainId: number): string {
 export function getNativeCurrency(chainId: number): NativeCurrency {
   return NATIVE_CURRENCIES[chainId] ?? DEFAULT_NATIVE_CURRENCY
 }
-
-// =============================================================================
-// Block Explorer URLs (Registry Pattern)
-// =============================================================================
 
 /**
  * Block explorer URLs by chain ID

@@ -3,18 +3,12 @@
  *
  * Hook for sending native token transactions using EIP-1193 provider.
  * Wagmi-free - uses Openfort's embedded wallet provider.
- *
- * @see Phase E3
  */
 
 import { useCallback, useState } from 'react'
 
 import { OpenfortErrorCode, OpenfortReactError } from '../core/errors'
 import { useEthereumWallet } from '../ethereum/hooks/useEthereumWallet'
-
-// =============================================================================
-// Types
-// =============================================================================
 
 export interface SendTransactionParams {
   /** Target address */
@@ -41,10 +35,6 @@ export interface UseSendTransactionReturn {
   /** Reset the state */
   reset: () => void
 }
-
-// =============================================================================
-// Hook Implementation
-// =============================================================================
 
 /**
  * Hook for sending native token transactions.

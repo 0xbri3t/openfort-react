@@ -24,20 +24,12 @@ import { useCoreContext } from './CoreContext'
 import { ProviderNotFoundError } from './errors'
 import type { OnAuthError, OnAuthSuccess } from './types'
 
-// =============================================================================
-// Query Keys
-// =============================================================================
-
 export const authQueryKeys = {
   all: ['openfort', 'auth'] as const,
   user: () => [...authQueryKeys.all, 'user'] as const,
   embeddedAccounts: (accountType?: AccountTypeEnum) =>
     [...authQueryKeys.all, 'accounts', accountType ?? 'all'] as const,
 }
-
-// =============================================================================
-// Context Value Type
-// =============================================================================
 
 export type AuthContextValue = {
   // User state
@@ -58,15 +50,7 @@ export type AuthContextValue = {
   needsRecovery: boolean
 }
 
-// =============================================================================
-// Context
-// =============================================================================
-
 const AuthContext = createContext<AuthContextValue | null>(null)
-
-// =============================================================================
-// Provider Props
-// =============================================================================
 
 export type AuthProviderProps = PropsWithChildren<{
   /**
@@ -91,10 +75,6 @@ export type AuthProviderProps = PropsWithChildren<{
    */
   embeddedStatePollingInterval?: number
 
-  // ===========================================================================
-  // Deprecated callbacks (for backwards compatibility)
-  // ===========================================================================
-
   /**
    * @deprecated Use `onAuthSuccess` instead. Will be removed in v3.0.
    * For wagmi-specific connect events, use `@openfort/wagmi` package.
@@ -107,10 +87,6 @@ export type AuthProviderProps = PropsWithChildren<{
    */
   onDisconnect?: () => void
 }>
-
-// =============================================================================
-// Provider Component
-// =============================================================================
 
 /**
  * Auth provider that manages user state and embedded accounts
@@ -158,10 +134,6 @@ export function AuthProvider({
     }
   }, [onConnect, onDisconnect])
 
-  // ==========================================================================
-  // Embedded State Polling
-  // ==========================================================================
-
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const previousStateRef = useRef<EmbeddedState>(EmbeddedState.NONE)
@@ -201,10 +173,6 @@ export function AuthProvider({
     }
   }, [pollEmbeddedState, embeddedStatePollingInterval])
 
-  // ==========================================================================
-  // User State
-  // ==========================================================================
-
   const [user, setUser] = useState<User | null>(null)
 
   const updateUser = useCallback(
@@ -241,10 +209,6 @@ export function AuthProvider({
     [client, debug, onAuthSuccess, onAuthError, onConnect]
   )
 
-  // ==========================================================================
-  // React to Embedded State Changes
-  // ==========================================================================
-
   useEffect(() => {
     switch (embeddedState) {
       case EmbeddedState.UNAUTHENTICATED:
@@ -260,10 +224,6 @@ export function AuthProvider({
         break
     }
   }, [embeddedState, user, updateUser])
-
-  // ==========================================================================
-  // Embedded Accounts Query
-  // ==========================================================================
 
   const accountsQuery = useQuery({
     queryKey: authQueryKeys.embeddedAccounts(accountType),
@@ -282,10 +242,6 @@ export function AuthProvider({
   const refetchAccounts = useCallback(async () => {
     await accountsQuery.refetch()
   }, [accountsQuery])
-
-  // ==========================================================================
-  // Logout
-  // ==========================================================================
 
   const logout = useCallback(async () => {
     try {
@@ -309,19 +265,11 @@ export function AuthProvider({
     }
   }, [client, queryClient, debug, onDisconnect])
 
-  // ==========================================================================
-  // Derived State
-  // ==========================================================================
-
   const isAuthenticated = useMemo(() => {
     return embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
   }, [embeddedState])
 
   const needsRecovery = embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED
-
-  // ==========================================================================
-  // Context Value
-  // ==========================================================================
 
   const value: AuthContextValue = useMemo(
     () => ({
@@ -353,10 +301,6 @@ export function AuthProvider({
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
-
-// =============================================================================
-// Hooks
-// =============================================================================
 
 /**
  * Hook to access auth context

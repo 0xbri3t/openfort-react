@@ -10,10 +10,6 @@ import { RecoveryMethod, type RecoveryParams } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import { OpenfortErrorCode, OpenfortReactError } from '../../core/errors'
 
-// =============================================================================
-// Types
-// =============================================================================
-
 /**
  * Recovery options for wallet operations
  */
@@ -38,10 +34,6 @@ export type RecoveryContext = {
   /** Function to get current user ID */
   getUserId: () => Promise<string | undefined>
 }
-
-// =============================================================================
-// Main Function
-// =============================================================================
 
 /**
  * Build recovery params from options
@@ -102,10 +94,6 @@ export async function buildRecoveryParams(
       throw new OpenfortReactError(`Unsupported recovery method: ${recoveryMethod}`, OpenfortErrorCode.INVALID_CONFIG)
   }
 }
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
 
 /**
  * Get encryption session for automatic recovery

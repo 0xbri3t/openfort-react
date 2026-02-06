@@ -93,10 +93,6 @@ export const DisconnectButton = styled(Button)`
   margin-top: 4px;
 `
 
-// =============================================================================
-// Solana-specific styles
-// =============================================================================
-
 export const ClusterBadge = styled.div<{ $cluster: string }>`
   z-index: 3;
   position: absolute;
@@ -116,10 +112,6 @@ export const ClusterBadge = styled.div<{ $cluster: string }>`
   color: white;
   white-space: nowrap;
 `
-
-// =============================================================================
-// Multi-chain styles
-// =============================================================================
 
 export const TabContainer = styled.div`
   display: flex;
@@ -147,10 +139,6 @@ export const Tab = styled.button<{ $active: boolean }>`
     color: var(--ck-body-color);
   }
 `
-
-// =============================================================================
-// Shared styles
-// =============================================================================
 
 export const LinkedProvidersToggle = styled.button`
   align-self: flex-start;

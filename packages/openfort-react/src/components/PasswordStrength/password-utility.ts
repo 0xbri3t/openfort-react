@@ -6,10 +6,6 @@
 
 import calculateEntropy from 'fast-password-entropy'
 
-// ============================================================================
-// Constants and Regular Expressions
-// ============================================================================
-
 /**
  * Regular expression to match lowercase letters.
  */
@@ -73,10 +69,6 @@ export const MEDIUM_SCORE_THRESHOLD = 0.5
 const STRONG_SCORE_THRESHOLD = 0.75
 const VERY_STRONG_SCORE_THRESHOLD = 0.9
 
-// ============================================================================
-// Types
-// ============================================================================
-
 /**
  * Password strength levels.
  */
@@ -89,10 +81,6 @@ interface PasswordSummary {
   value: number
   label: PasswordStrengthLabel
 }
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
 
 /**
  * Gets a list of invalid characters in the provided text.

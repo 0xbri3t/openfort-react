@@ -3,8 +3,6 @@
  *
  * Get chain configuration and available chains.
  * Replaces wagmi's useChains for wagmi-free architecture.
- *
- * @see Phase E1.8
  */
 
 import { useContext, useMemo } from 'react'
@@ -14,10 +12,6 @@ import { EthereumContext } from '../ethereum/EthereumContext'
 import { SolanaContext } from '../solana/providers/SolanaContextProvider'
 import type { ChainType, SolanaCluster } from '../utils/chains'
 import { getChainName, getNativeCurrency, type NativeCurrency } from '../utils/rpc'
-
-// =============================================================================
-// Types
-// =============================================================================
 
 /**
  * Chain info for Ethereum chains
@@ -46,10 +40,6 @@ export interface ChainConfig {
   /** Current Solana cluster (if configured) */
   currentSolanaCluster: SolanaCluster | null
 }
-
-// =============================================================================
-// Hook Implementation
-// =============================================================================
 
 /**
  * Hook for getting chain configuration.
@@ -113,7 +103,6 @@ export function useChainConfig(): ChainConfig {
 
   const solanaClusters = useMemo<SolanaCluster[]>(() => (solContext ? [solContext.cluster] : []), [solContext])
 
-  // Registry pattern for available chain detection
   const availableChainTypes = useMemo(() => {
     const chainContexts: Record<ChainType, unknown | null> = {
       ethereum: ethContext,

@@ -3,18 +3,12 @@
  *
  * Provides clean UI state management separate from SDK configuration.
  * This context handles modal control, navigation, theme, and form state.
- *
- * @see Phase E0.2 - Split UI Context from SDK Context
  */
 
 import { createContext, useContext } from 'react'
 import type { BuyFormState, RouteOptions, SendFormState, SetRouteOptions } from '../components/Openfort/types'
 import { ProviderNotFoundError } from '../core/errors'
 import type { Mode, Theme } from '../types'
-
-// =============================================================================
-// Context Types
-// =============================================================================
 
 /**
  * Clean UI context value for modal control, navigation, and theme management.
@@ -64,15 +58,7 @@ export interface ConnectUIValue {
   triggerResize: () => void
 }
 
-// =============================================================================
-// Context
-// =============================================================================
-
 export const ConnectUIContext = createContext<ConnectUIValue | null>(null)
-
-// =============================================================================
-// Hook
-// =============================================================================
 
 /**
  * Access the Connect UI context for modal control, navigation, and theme.

@@ -3,8 +3,6 @@
  *
  * Estimate gas costs for Ethereum transactions using viem.
  * Includes refetch for fresh estimates before confirming transactions.
- *
- * @see Phase E1.6
  */
 
 import { useQuery } from '@tanstack/react-query'
@@ -12,10 +10,6 @@ import { createPublicClient, formatEther, http } from 'viem'
 
 import { useCoreContext } from '../core/CoreContext'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
-
-// =============================================================================
-// Types
-// =============================================================================
 
 /**
  * Gas estimate state - discriminated union with refetch in all states
@@ -48,10 +42,6 @@ export interface UseGasEstimateOptions {
   /** Enable/disable the query */
   enabled?: boolean
 }
-
-// =============================================================================
-// Hook Implementation
-// =============================================================================
 
 /**
  * Hook for estimating gas costs for Ethereum transactions.

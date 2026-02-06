@@ -12,15 +12,7 @@ import { createContext, type PropsWithChildren, type ReactNode, useContext, useM
 import { ConfigurationError, ProviderNotFoundError } from './errors'
 import type { CoreContextValue, CoreProviderConfig, OpenfortConfig } from './types'
 
-// =============================================================================
-// Context
-// =============================================================================
-
 const CoreContext = createContext<CoreContextValue | null>(null)
-
-// =============================================================================
-// Internal Query Client
-// =============================================================================
 
 /**
  * Create a query client with Openfort-optimized defaults
@@ -36,10 +28,6 @@ function createQueryClient(): QueryClient {
     },
   })
 }
-
-// =============================================================================
-// Build SDK Configuration
-// =============================================================================
 
 /**
  * Transform user config into full SDK configuration
@@ -70,10 +58,6 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   }
 }
 
-// =============================================================================
-// Provider Props
-// =============================================================================
-
 export type CoreProviderProps = PropsWithChildren<
   CoreProviderConfig & {
     /**
@@ -83,10 +67,6 @@ export type CoreProviderProps = PropsWithChildren<
     queryClient?: QueryClient
   }
 >
-
-// =============================================================================
-// Provider Component
-// =============================================================================
 
 /**
  * Core provider that initializes the Openfort SDK client
@@ -152,10 +132,6 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
     </QueryClientProvider>
   )
 }
-
-// =============================================================================
-// Hooks
-// =============================================================================
 
 /**
  * Hook to access the core context

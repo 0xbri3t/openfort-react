@@ -2,16 +2,10 @@
  * Solana Context Provider
  *
  * Provides Solana configuration (cluster, RPC URL, commitment) to descendant components.
- *
- * @see RFC-0001 Section 1.8
  */
 
 import { createContext, type ReactNode, useContext, useMemo } from 'react'
 import type { SolanaCluster, SolanaCommitment, SolanaConfig } from '../types'
-
-// =============================================================================
-// Context Types
-// =============================================================================
 
 /**
  * Solana context value with resolved configuration
@@ -24,10 +18,6 @@ export interface SolanaContextValue {
   /** Transaction commitment level */
   commitment: SolanaCommitment
 }
-
-// =============================================================================
-// Default RPC URLs (Registry Pattern)
-// =============================================================================
 
 const DEFAULT_RPC_URLS: Record<SolanaCluster, string> = {
   'mainnet-beta': 'https://api.mainnet-beta.solana.com',
@@ -42,15 +32,7 @@ function getDefaultRpcUrl(cluster: SolanaCluster): string {
   return DEFAULT_RPC_URLS[cluster]
 }
 
-// =============================================================================
-// Context
-// =============================================================================
-
 export const SolanaContext = createContext<SolanaContextValue | null>(null)
-
-// =============================================================================
-// Provider Props
-// =============================================================================
 
 export interface SolanaContextProviderProps {
   /** Solana configuration from OpenfortWalletConfig */
@@ -58,10 +40,6 @@ export interface SolanaContextProviderProps {
   /** Child components */
   children: ReactNode
 }
-
-// =============================================================================
-// Provider Component
-// =============================================================================
 
 /**
  * Provides Solana configuration context to descendant components.
@@ -98,10 +76,6 @@ export function SolanaContextProvider({ config, children }: SolanaContextProvide
 
   return <SolanaContext.Provider value={value}>{children}</SolanaContext.Provider>
 }
-
-// =============================================================================
-// Hook
-// =============================================================================
 
 /**
  * Access the Solana context configuration.

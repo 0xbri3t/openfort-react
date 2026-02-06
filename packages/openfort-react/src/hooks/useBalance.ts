@@ -1,12 +1,3 @@
-/**
- * useBalance Hook
- *
- * Fetch native token balance using viem.
- * Uses registry pattern for chain-specific balance fetching.
- *
- * @see Phase E1.5
- */
-
 import { useQuery } from '@tanstack/react-query'
 import { createPublicClient, formatEther, http } from 'viem'
 
@@ -15,13 +6,6 @@ import { lamportsToSol } from '../solana/hooks/utils'
 import type { ChainType, SolanaCluster } from '../utils/chains'
 import { getDefaultEthereumRpcUrl, getDefaultSolanaRpcUrl, getNativeCurrency } from '../utils/rpc'
 
-// =============================================================================
-// Types
-// =============================================================================
-
-/**
- * Balance state - discriminated union with refetch in all states
- */
 export type BalanceState =
   | { status: 'idle'; refetch: () => void }
   | { status: 'loading'; refetch: () => void }
@@ -44,10 +28,6 @@ export interface UseBalanceOptions {
   /** Refetch interval in ms (default: 30000) */
   refetchInterval?: number
 }
-
-// =============================================================================
-// Balance Fetchers (Registry Pattern)
-// =============================================================================
 
 type BalanceResult = { value: bigint; formatted: string; symbol: string; decimals: number }
 type BalanceFetcher = (address: string, rpcUrl: string, commitment?: string) => Promise<BalanceResult>
@@ -99,7 +79,6 @@ const balanceFetchers: Record<ChainType, (chainId: number, cluster: SolanaCluste
     },
 }
 
-// RPC URL resolvers (registry pattern)
 const rpcResolvers: Record<
   ChainType,
   (
@@ -112,43 +91,7 @@ const rpcResolvers: Record<
   solana: (config, _chainId, cluster) => config.rpcUrls?.solana?.[cluster] ?? getDefaultSolanaRpcUrl(cluster),
 }
 
-// =============================================================================
-// Hook Implementation
-// =============================================================================
-
-/**
- * Hook for fetching native token balance.
- *
- * Uses registry pattern for chain-specific balance fetching.
- * Includes refetch in all states for manual refresh.
- *
- * @example Basic usage
- * ```tsx
- * function Balance({ address }: { address: string }) {
- *   const balance = useBalance({
- *     address,
- *     chainType: 'ethereum',
- *     chainId: 1,
- *   });
- *
- *   switch (balance.status) {
- *     case 'idle':
- *       return null;
- *     case 'loading':
- *       return <p>Loading...</p>;
- *     case 'error':
- *       return <p>Error: {balance.error.message}</p>;
- *     case 'success':
- *       return (
- *         <p>
- *           {balance.formatted} {balance.symbol}
- *           <button onClick={balance.refetch}>Refresh</button>
- *         </p>
- *       );
- *   }
- * }
- * ```
- */
+/** Hook for fetching native token balance. */
 export function useBalance(options: UseBalanceOptions): BalanceState {
   const {
     address,
@@ -161,8 +104,6 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
   } = options
 
   const { config } = useCoreContext()
-
-  // Get RPC URL using registry pattern (no if/else)
   const rpcUrl = rpcResolvers[chainType](config, chainId, cluster)
 
   const isEnabled = enabled && !!address && address.length > 0
@@ -176,7 +117,6 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
 
   const refetch = query.refetch
 
-  // Discriminated union return - status-based
   if (!isEnabled) {
     return { status: 'idle', refetch }
   }

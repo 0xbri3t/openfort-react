@@ -11,10 +11,6 @@ import { OpenfortErrorCode, OpenfortReactError } from '../core/errors'
 
 import type { OpenfortEmbeddedEthereumWalletProvider } from './types'
 
-// =============================================================================
-// Types
-// =============================================================================
-
 export interface SignMessageParams {
   /** Message to sign */
   message: string
@@ -56,10 +52,6 @@ export interface SendTransactionParams {
   provider: OpenfortEmbeddedEthereumWalletProvider
 }
 
-// =============================================================================
-// Sign Message
-// =============================================================================
-
 /**
  * Sign a message using EIP-191 personal_sign
  *
@@ -86,10 +78,6 @@ export async function signMessage(params: SignMessageParams): Promise<`0x${strin
     throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
   }
 }
-
-// =============================================================================
-// Sign Typed Data (EIP-712)
-// =============================================================================
 
 /**
  * Sign typed data using EIP-712
@@ -118,10 +106,6 @@ export async function signTypedData(params: SignTypedDataParams): Promise<`0x${s
     throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
   }
 }
-
-// =============================================================================
-// Send Transaction
-// =============================================================================
 
 /**
  * Send a transaction via the EIP-1193 provider
@@ -168,10 +152,6 @@ export async function sendTransaction(params: SendTransactionParams): Promise<`0
     throw OpenfortReactError.from(error, OpenfortErrorCode.TRANSACTION_FAILED)
   }
 }
-
-// =============================================================================
-// Get Provider
-// =============================================================================
 
 /**
  * Get the EIP-1193 provider from Openfort client

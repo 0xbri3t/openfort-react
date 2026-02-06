@@ -4,8 +4,6 @@
  * Manages UI state (modals, navigation, theme, forms) and provides both:
  * - New clean API via ConnectUIContext
  * - Legacy compatibility via Openfortcontext
- *
- * @see Phase E0.2 - Split UI Context from SDK Context
  */
 
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
@@ -22,10 +20,6 @@ import {
 import type { Mode, Theme } from '../types'
 import { ConnectUIContext, type ConnectUIValue } from './ConnectUIContext'
 
-// =============================================================================
-// Provider Props
-// =============================================================================
-
 export interface UIProviderProps {
   /** Child components */
   children: ReactNode
@@ -37,20 +31,12 @@ export interface UIProviderProps {
   initialRoute?: RouteOptions
 }
 
-// =============================================================================
-// Helper: Normalize route
-// =============================================================================
-
 function normalizeRoute(route: SetRouteOptions): RouteOptions {
   if (typeof route === 'string') {
     return { route }
   }
   return route
 }
-
-// =============================================================================
-// Provider Component
-// =============================================================================
 
 /**
  * Provides UI state management for the Connect modal.

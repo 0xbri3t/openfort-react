@@ -7,8 +7,6 @@
  *
  * CRITICAL: Ed25519 signing is used for Solana (no keccak256 hashing).
  * When calling the Openfort SDK, always use hashMessage: false.
- *
- * @see RFC-0001 Section 4.2
  */
 
 import type { EmbeddedAccount } from '@openfort/openfort-js'
@@ -92,10 +90,6 @@ export class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvi
     return this._account.address
   }
 
-  // =========================================================================
-  // Direct Methods
-  // =========================================================================
-
   /**
    * Sign a message
    *
@@ -125,10 +119,6 @@ export class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvi
   async signAllTransactions(transactions: SolanaTransaction[]): Promise<SignedSolanaTransaction[]> {
     return await this._signAllTransactions(transactions)
   }
-
-  // =========================================================================
-  // Request-based API (EIP-1193 style)
-  // =========================================================================
 
   /**
    * Request-based API for wallet operations
@@ -161,10 +151,6 @@ export class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvi
     }
   }
 
-  // =========================================================================
-  // Utility Methods
-  // =========================================================================
-
   /**
    * Pretty log output for when an instance of this class is console.log'd
    */
@@ -179,10 +165,6 @@ export class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvi
     return this.toJSON()
   }
 }
-
-// =========================================================================
-// Factory Function
-// =========================================================================
 
 /**
  * Creates a new OpenfortSolanaProvider instance

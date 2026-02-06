@@ -19,10 +19,6 @@
  * @packageDocumentation
  */
 
-// =============================================================================
-// Context (Optional)
-// =============================================================================
-
 export {
   EthereumContext,
   EthereumContextProvider,
@@ -31,16 +27,18 @@ export {
   useEthereumContext,
 } from './EthereumContext'
 
-// =============================================================================
-// Hooks
-// =============================================================================
-
 export { useEthereumWallet } from './hooks/useEthereumWallet'
+export { ethToWei, GWEI_PER_ETH, WEI_PER_ETH, weiToEth } from './hooks/utils'
 
-// =============================================================================
-// Types
-// =============================================================================
-
+export {
+  getEthereumProvider,
+  type SendTransactionParams,
+  type SignMessageParams,
+  type SignTypedDataParams,
+  sendTransaction,
+  signMessage,
+  signTypedData,
+} from './operations'
 export type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
@@ -55,23 +53,3 @@ export type {
   SetRecoveryOptions,
   UseEmbeddedEthereumWalletOptions,
 } from './types'
-
-// =============================================================================
-// Operations (pure functions for signing/transactions)
-// =============================================================================
-
-export {
-  getEthereumProvider,
-  type SendTransactionParams,
-  type SignMessageParams,
-  type SignTypedDataParams,
-  sendTransaction,
-  signMessage,
-  signTypedData,
-} from './operations'
-
-// =============================================================================
-// Utils
-// =============================================================================
-
-export { ethToWei, GWEI_PER_ETH, WEI_PER_ETH, weiToEth } from './hooks/utils'

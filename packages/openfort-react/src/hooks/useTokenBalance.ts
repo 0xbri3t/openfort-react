@@ -3,8 +3,6 @@
  *
  * Hook for fetching ERC20 token balances using viem.
  * Wagmi-free - uses viem's public client for reading contracts.
- *
- * @see Phase E3
  */
 
 import { useQuery } from '@tanstack/react-query'
@@ -14,10 +12,6 @@ import { createPublicClient, formatUnits, http, parseAbi } from 'viem'
 import { useCoreContext } from '../core/CoreContext'
 import { EthereumContext } from '../ethereum/EthereumContext'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
-
-// =============================================================================
-// Types
-// =============================================================================
 
 export interface UseTokenBalanceOptions {
   /** Token contract address (omit or null when not fetching ERC20, e.g. native send) */
@@ -43,18 +37,10 @@ export type TokenBalanceState =
   | { status: 'error'; error: Error; refetch: () => void }
   | { status: 'success'; value: bigint; formatted: string; decimals: number; refetch: () => void }
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const erc20Abi = parseAbi([
   'function balanceOf(address owner) view returns (uint256)',
   'function decimals() view returns (uint8)',
 ])
-
-// =============================================================================
-// Hook Implementation
-// =============================================================================
 
 /**
  * Hook for fetching ERC20 token balances.

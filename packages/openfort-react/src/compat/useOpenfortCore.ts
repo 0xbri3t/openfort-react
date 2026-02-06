@@ -3,8 +3,6 @@
  *
  * Provides backwards compatibility while encouraging migration to new hooks.
  * Shows a single deprecation warning per session in development mode.
- *
- * @see Phase E0.3 - Create Deprecation Wrapper
  */
 
 import { useContext } from 'react'

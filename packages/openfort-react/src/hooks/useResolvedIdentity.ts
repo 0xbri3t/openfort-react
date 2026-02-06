@@ -3,8 +3,6 @@
  *
  * Resolve ENS names and avatars using viem.
  * Uses discriminated union for type-safe status handling.
- *
- * @see Phase E1.4
  */
 
 import { useQuery } from '@tanstack/react-query'
@@ -15,10 +13,6 @@ import { normalize } from 'viem/ens'
 import { useCoreContext } from '../core/CoreContext'
 import type { ChainType } from '../utils/chains'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
-
-// =============================================================================
-// Types
-// =============================================================================
 
 /**
  * Resolved identity state - discriminated union
@@ -39,10 +33,6 @@ export interface UseResolvedIdentityOptions {
   /** Enable/disable the query (for conditional fetching without breaking React rules) */
   enabled?: boolean
 }
-
-// =============================================================================
-// Resolution Strategies (Registry Pattern)
-// =============================================================================
 
 type IdentityResolver = (address: string, rpcUrl: string) => Promise<{ name: string | null; avatar: string | null }>
 
@@ -72,10 +62,6 @@ const resolvers: Record<ChainType, IdentityResolver> = {
     return { name: null, avatar: null }
   },
 }
-
-// =============================================================================
-// Hook Implementation
-// =============================================================================
 
 /**
  * Hook for resolving addresses to ENS names and avatars.

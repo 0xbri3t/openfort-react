@@ -8,10 +8,7 @@
  * @packageDocumentation
  */
 
-// =============================================================================
-// Types
-// =============================================================================
-
+export { useAvailableChains } from './hooks/useAvailableChains'
 export type {
   AvailableChainsResult,
   BaseCreateWalletOptions,
@@ -21,9 +18,3 @@ export type {
   ChainMode,
   WalletStatus,
 } from './types'
-
-// =============================================================================
-// Hooks
-// =============================================================================
-
-export { useAvailableChains } from './hooks/useAvailableChains'

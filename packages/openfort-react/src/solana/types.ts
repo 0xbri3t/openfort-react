@@ -2,15 +2,10 @@
  * Solana-specific types for @openfort/react/solana
  *
  * These types define the Solana wallet state machine and related interfaces.
- * @see RFC-0001 Section 3-5
  */
 
 import type { ChainTypeEnum, EmbeddedAccount, RecoveryParams } from '@openfort/openfort-js'
 import type { OpenfortHookOptions } from '../types'
-
-// =============================================================================
-// Configuration Types
-// =============================================================================
 
 /**
  * Solana cluster configuration
@@ -48,10 +43,6 @@ export type SolanaConfig = {
   commitment?: SolanaCommitment
 }
 
-// =============================================================================
-// Transaction Types
-// =============================================================================
-
 /**
  * Solana transaction formats supported by the provider
  *
@@ -71,10 +62,6 @@ export type SignedSolanaTransaction = {
   /** Base58 encoded public key of signer */
   publicKey: string
 }
-
-// =============================================================================
-// Provider Request Types
-// =============================================================================
 
 /**
  * Request to sign a message
@@ -104,10 +91,6 @@ export type SolanaProviderRequest =
   | SolanaSignMessageRequest
   | SolanaSignTransactionRequest
   | SolanaSignAllTransactionsRequest
-
-// =============================================================================
-// Provider Interface
-// =============================================================================
 
 /**
  * Solana embedded wallet provider
@@ -163,10 +146,6 @@ export interface OpenfortEmbeddedSolanaWalletProvider {
   request(args: SolanaSignAllTransactionsRequest): Promise<{ signedTransactions: SignedSolanaTransaction[] }>
 }
 
-// =============================================================================
-// Connected Wallet Types
-// =============================================================================
-
 /**
  * Connected Solana embedded wallet
  */
@@ -180,10 +159,6 @@ export type ConnectedEmbeddedSolanaWallet = {
   /** Get the Solana wallet provider */
   getProvider(): Promise<OpenfortEmbeddedSolanaWalletProvider>
 }
-
-// =============================================================================
-// Wallet Actions
-// =============================================================================
 
 /**
  * Result of creating a Solana wallet
@@ -240,17 +215,11 @@ export interface SolanaWalletActions {
   exportPrivateKey(): Promise<string>
 }
 
-// =============================================================================
-// Wallet State (Discriminated Union)
-// =============================================================================
-
 /**
  * Solana embedded wallet state machine
  *
  * Uses discriminated union pattern for type-safe state handling.
  * Mirrors the Ethereum state machine for API consistency.
- *
- * @see RFC-0001 Section 3
  *
  * @example
  * ```tsx
@@ -285,10 +254,6 @@ export type EmbeddedSolanaWalletState =
       error: string
     })
 
-// =============================================================================
-// Hook Options
-// =============================================================================
-
 /**
  * Options for useSolanaEmbeddedWallet hook
  */
@@ -296,10 +261,6 @@ export type UseEmbeddedSolanaWalletOptions = {
   /** Recovery params for wallet access */
   recoveryParams?: RecoveryParams
 }
-
-// =============================================================================
-// Kit Signer Types (for @solana/kit compatibility)
-// =============================================================================
 
 /**
  * Address type (Base58 encoded string branded type)

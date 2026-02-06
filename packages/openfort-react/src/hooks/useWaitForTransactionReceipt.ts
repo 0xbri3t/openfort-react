@@ -3,8 +3,6 @@
  *
  * Hook for waiting for transaction confirmation using viem.
  * Wagmi-free - uses viem's public client for polling.
- *
- * @see Phase E3
  */
 
 import { useQuery } from '@tanstack/react-query'
@@ -14,10 +12,6 @@ import { createPublicClient, http, type TransactionReceipt } from 'viem'
 import { useCoreContext } from '../core/CoreContext'
 import { EthereumContext } from '../ethereum/EthereumContext'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
-
-// =============================================================================
-// Types
-// =============================================================================
 
 export interface UseWaitForTransactionReceiptOptions {
   /** Transaction hash to wait for */
@@ -40,10 +34,6 @@ export type WaitForTransactionReceiptState =
   | { status: 'loading' }
   | { status: 'error'; error: Error }
   | { status: 'success'; data: TransactionReceipt; isSuccess: boolean; isError: boolean }
-
-// =============================================================================
-// Hook Implementation
-// =============================================================================
 
 /**
  * Hook for waiting for transaction confirmation.

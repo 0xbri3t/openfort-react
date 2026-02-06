@@ -2,15 +2,10 @@
  * Shared types for @openfort/react
  *
  * Base types and interfaces shared between Ethereum and Solana implementations.
- * @see RFC-0001 Section 3.3
  */
 
 import type { EmbeddedAccount, RecoveryParams } from '@openfort/openfort-js'
 import type { OpenfortHookOptions } from '../types'
-
-// =============================================================================
-// Base Wallet Actions Interface
-// =============================================================================
 
 /**
  * Base wallet actions interface
@@ -51,10 +46,6 @@ export type BaseSetRecoveryOptions = {
   newRecovery: RecoveryParams
 }
 
-// =============================================================================
-// Wallet Status Types
-// =============================================================================
-
 /**
  * Common wallet statuses across all chain types
  */
@@ -68,14 +59,8 @@ export type WalletStatus =
   | 'connected'
   | 'error'
 
-// =============================================================================
-// Chain Mode Types
-// =============================================================================
-
 /**
  * Chain mode detected by the provider
- *
- * @see RFC-0001 Section 1
  */
 export type ChainMode = 'ethereum-only' | 'solana-only' | 'multi-chain'
 
@@ -92,10 +77,6 @@ export type AvailableChainsResult = {
   /** Current chain mode */
   mode: ChainMode
 }
-
-// =============================================================================
-// Hook Options Base Types
-// =============================================================================
 
 /**
  * Base create wallet options (shared between chains)

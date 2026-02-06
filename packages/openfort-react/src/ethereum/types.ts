@@ -2,15 +2,10 @@
  * Ethereum-specific types for @openfort/react/ethereum
  *
  * These types define the Ethereum wallet state machine and related interfaces.
- * @see RFC-0001 Section 3.1-3.4
  */
 
 import type { ChainTypeEnum, EmbeddedAccount, RecoveryParams } from '@openfort/openfort-js'
 import type { OpenfortHookOptions } from '../types'
-
-// =============================================================================
-// Connected Wallet Types
-// =============================================================================
 
 /**
  * EIP-1193 Provider interface for Ethereum wallets
@@ -47,10 +42,6 @@ export type ConnectedEmbeddedEthereumWallet = {
   /** Get the EIP-1193 provider */
   getProvider(): Promise<OpenfortEmbeddedEthereumWalletProvider>
 }
-
-// =============================================================================
-// Wallet Actions
-// =============================================================================
 
 /**
  * Result of creating an Ethereum wallet
@@ -112,15 +103,10 @@ export type SetRecoveryOptions = {
   newRecovery: RecoveryParams
 }
 
-// =============================================================================
-// Wallet State (Discriminated Union)
-// =============================================================================
-
 /**
  * Ethereum embedded wallet state machine
  *
  * Uses discriminated union pattern for type-safe state handling.
- * @see RFC-0001 Section 3.2
  */
 export type EmbeddedEthereumWalletState =
   | (EthereumWalletActions & { status: 'disconnected'; activeWallet: null })
@@ -139,10 +125,6 @@ export type EmbeddedEthereumWalletState =
       activeWallet: ConnectedEmbeddedEthereumWallet | null
       error: string
     })
-
-// =============================================================================
-// Hook Options
-// =============================================================================
 
 /**
  * Options for useEthereumEmbeddedWallet hook

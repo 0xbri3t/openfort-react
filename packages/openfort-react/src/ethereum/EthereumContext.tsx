@@ -13,10 +13,6 @@
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 import { logger } from '../utils/logger'
 
-// =============================================================================
-// Chain Types
-// =============================================================================
-
 /**
  * Common chain IDs for type hints (IDE autocomplete)
  * Users can still pass any number for custom chains.
@@ -29,10 +25,6 @@ export type ChainId = 1 | 10 | 137 | 8453 | 42161 | 43114 | 56 | 250
 export type SetChainResult =
   | { success: true; chainId: number }
   | { success: false; error: 'CHAIN_NOT_CONFIGURED'; requested: number; available: number[] }
-
-// =============================================================================
-// Context Types
-// =============================================================================
 
 /**
  * Ethereum context value with resolved configuration
@@ -58,15 +50,7 @@ export interface EthereumContextValue {
   availableChainIds: number[]
 }
 
-// =============================================================================
-// Context
-// =============================================================================
-
 export const EthereumContext = createContext<EthereumContextValue | null>(null)
-
-// =============================================================================
-// Provider Props
-// =============================================================================
 
 export interface EthereumContextProviderProps {
   /** Default chain ID for descendant hooks */
@@ -76,10 +60,6 @@ export interface EthereumContextProviderProps {
   /** Child components */
   children: ReactNode
 }
-
-// =============================================================================
-// Provider Component
-// =============================================================================
 
 /**
  * Provides default Ethereum configuration to descendant components.
@@ -170,10 +150,6 @@ export function EthereumContextProvider({
 
   return <EthereumContext.Provider value={value}>{children}</EthereumContext.Provider>
 }
-
-// =============================================================================
-// Hooks
-// =============================================================================
 
 /**
  * Access Ethereum context configuration.

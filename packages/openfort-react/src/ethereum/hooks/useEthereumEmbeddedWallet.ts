@@ -1,12 +1,3 @@
-/**
- * Ethereum Embedded Wallet Hook
- *
- * Main hook for managing Ethereum embedded wallets.
- * Returns a discriminated union with 8 possible states.
- *
- * @see RFC-0001 Section 5.1
- */
-
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount } from '@openfort/openfort-js'
 import { useCallback, useContext, useMemo, useState } from 'react'
 import { useChainId, WagmiContext } from 'wagmi'
@@ -23,10 +14,6 @@ import type {
   UseEmbeddedEthereumWalletOptions,
 } from '../types'
 import { buildRecoveryParams } from './utils'
-
-// =============================================================================
-// Internal Types
-// =============================================================================
 
 type WalletStatus =
   | 'disconnected'
@@ -45,32 +32,9 @@ type InternalState = {
   error: string | null
 }
 
-// =============================================================================
-// Hook Implementation
-// =============================================================================
-
 /**
- * Hook for managing Ethereum embedded wallets
- *
- * IMPORTANT: This hook requires WagmiProvider to be present in the component tree.
- * It will throw an error if used without WagmiProvider.
- *
- * @param options - Hook options including chainId and recovery params
- * @returns Discriminated union of wallet states with actions
- *
- * @example
- * ```tsx
- * const ethereum = useEthereumEmbeddedWallet();
- *
- * switch (ethereum.status) {
- *   case 'disconnected':
- *     return <button onClick={() => ethereum.create()}>Create Wallet</button>;
- *   case 'connected':
- *     return <p>Address: {ethereum.activeWallet.address}</p>;
- *   case 'error':
- *     return <p>Error: {ethereum.error}</p>;
- * }
- * ```
+ * Hook for managing Ethereum embedded wallets.
+ * Requires WagmiProvider in the component tree.
  */
 export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOptions): EmbeddedEthereumWalletState {
   // Guard: Ensure WagmiProvider is present
@@ -98,18 +62,10 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     error: null,
   })
 
-  // ==========================================================================
-  // Filter Ethereum wallets from embedded accounts
-  // ==========================================================================
-
   const ethereumAccounts = useMemo(() => {
     if (!embeddedAccounts) return []
     return embeddedAccounts.filter((acc) => acc.chainType === ChainTypeEnum.EVM)
   }, [embeddedAccounts])
-
-  // ==========================================================================
-  // Convert embedded accounts to ConnectedEmbeddedEthereumWallet
-  // ==========================================================================
 
   const wallets = useMemo<ConnectedEmbeddedEthereumWallet[]>(() => {
     // Deduplicate by address (same address can have multiple chainIds for Smart Accounts)
@@ -133,10 +89,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     }))
   }, [ethereumAccounts])
 
-  // ==========================================================================
-  // Create provider for account
-  // ==========================================================================
-
   const createProviderForAccount = useCallback(
     async (_account: EmbeddedAccount): Promise<OpenfortEmbeddedEthereumWalletProvider> => {
       // Get the EIP-1193 provider from the Openfort client
@@ -147,13 +99,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     [client]
   )
 
-  // ==========================================================================
-  // Actions
-  // ==========================================================================
-
-  /**
-   * Create a new Ethereum embedded wallet
-   */
   const create = useCallback(
     async (createOptions?: CreateEthereumWalletOptions): Promise<EmbeddedAccount> => {
       setState((s) => ({ ...s, status: 'creating', error: null }))
@@ -238,9 +183,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     [client, walletConfig, chainId, createProviderForAccount, updateEmbeddedAccounts]
   )
 
-  /**
-   * Set the active Ethereum wallet
-   */
   const setActive = useCallback(
     async (activeOptions: SetActiveEthereumWalletOptions): Promise<void> => {
       setState((s) => ({ ...s, status: 'connecting', error: null }))
@@ -303,9 +245,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     [client, ethereumAccounts, createProviderForAccount]
   )
 
-  /**
-   * Set recovery method for the wallet
-   */
   const setRecovery = useCallback(
     async (recoveryOptions: SetRecoveryOptions): Promise<void> => {
       try {
@@ -324,16 +263,9 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     [client, updateEmbeddedAccounts]
   )
 
-  /**
-   * Export the private key
-   */
   const exportPrivateKey = useCallback(async (): Promise<string> => {
     return await client.embeddedWallet.exportPrivateKey()
   }, [client])
-
-  // ==========================================================================
-  // Build actions object
-  // ==========================================================================
 
   const actions = useMemo(
     () => ({
@@ -345,10 +277,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     }),
     [create, wallets, setActive, setRecovery, exportPrivateKey]
   )
-
-  // ==========================================================================
-  // Determine current status based on state
-  // ==========================================================================
 
   // Handle loading state
   if (isLoadingAccounts) {
