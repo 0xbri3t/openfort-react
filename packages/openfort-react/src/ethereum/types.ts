@@ -4,7 +4,8 @@
  * These types define the Ethereum wallet state machine and related interfaces.
  */
 
-import type { ChainTypeEnum, EmbeddedAccount, RecoveryParams } from '@openfort/openfort-js'
+import type { ChainTypeEnum, EmbeddedAccount, RecoveryMethod, RecoveryParams } from '@openfort/openfort-js'
+import type { SetRecoveryOptions as SharedSetRecoveryOptions } from '../shared/types'
 import type { OpenfortHookOptions } from '../types'
 
 /**
@@ -29,6 +30,8 @@ export type EIP1193EventHandler = (...args: unknown[]) => void
  * Connected Ethereum embedded wallet
  */
 export type ConnectedEmbeddedEthereumWallet = {
+  /** Embedded account id (from Openfort) */
+  id: string
   /** Ethereum address in hex format */
   address: `0x${string}`
   /** Owner address for Smart Accounts */
@@ -39,6 +42,8 @@ export type ConnectedEmbeddedEthereumWallet = {
   chainType: typeof ChainTypeEnum.EVM
   /** Wallet index (for multiple wallets) */
   walletIndex: number
+  /** Recovery method for this wallet */
+  recoveryMethod?: RecoveryMethod
   /** Get the EIP-1193 provider */
   getProvider(): Promise<OpenfortEmbeddedEthereumWalletProvider>
 }
@@ -57,6 +62,10 @@ export type CreateEthereumWalletResult = {
 export type CreateEthereumWalletOptions = {
   /** Target chain ID for deployment */
   chainId?: number
+  /** Recovery method for key encryption */
+  recoveryMethod?: RecoveryMethod
+  /** Passkey ID for PASSKEY recovery */
+  passkeyId?: string
   /** Recovery password for key encryption */
   recoveryPassword?: string
   /** OTP code for verification */
@@ -75,8 +84,16 @@ export type SetActiveEthereumWalletOptions = {
   address: `0x${string}`
   /** Chain ID (required for Smart Accounts) */
   chainId?: number
-  /** Recovery params for wallet access */
+  /** Recovery params for wallet access (escape hatch; prefer named options) */
   recoveryParams?: RecoveryParams
+  /** Recovery method when recoveryParams not provided */
+  recoveryMethod?: RecoveryMethod
+  /** Passkey ID for PASSKEY recovery */
+  passkeyId?: string
+  /** Password for PASSWORD recovery */
+  recoveryPassword?: string
+  /** OTP code for AUTOMATIC recovery */
+  otpCode?: string
 }
 
 /**
@@ -90,18 +107,13 @@ export interface EthereumWalletActions {
   /** Set the active wallet */
   setActive(options: SetActiveEthereumWalletOptions): Promise<void>
   /** Update recovery method */
-  setRecovery(options: SetRecoveryOptions): Promise<void>
+  setRecovery(options: SharedSetRecoveryOptions): Promise<void>
   /** Export the private key (requires user confirmation) */
   exportPrivateKey(): Promise<string>
 }
 
-/**
- * Options for setting recovery method
- */
-export type SetRecoveryOptions = {
-  previousRecovery: RecoveryParams
-  newRecovery: RecoveryParams
-}
+/** Re-export for backward compatibility */
+export type SetRecoveryOptions = SharedSetRecoveryOptions
 
 /**
  * Ethereum embedded wallet state machine

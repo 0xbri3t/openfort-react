@@ -1,7 +1,8 @@
-import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount } from '@openfort/openfort-js'
-import { useCallback, useMemo, useState } from 'react'
+import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
+import type { SetRecoveryOptions } from '../../shared/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
 import { createSolanaProvider } from '../provider'
 import { useSolanaContext } from '../providers/SolanaContextProvider'
@@ -11,7 +12,6 @@ import type {
   EmbeddedSolanaWalletState,
   OpenfortEmbeddedSolanaWalletProvider,
   SetActiveSolanaWalletOptions,
-  SetRecoveryOptions,
   SignedSolanaTransaction,
   SolanaTransaction,
   UseEmbeddedSolanaWalletOptions,
@@ -43,7 +43,9 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
   const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
 
-  // Internal state
+  const setActiveInProgressRef = useRef<Promise<void> | null>(null)
+  const autoReconnectAttemptedRef = useRef(false)
+
   const [state, setState] = useState<InternalState>({
     status: 'disconnected',
     activeWallet: null,
@@ -55,18 +57,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     if (!embeddedAccounts) return []
     return embeddedAccounts.filter((acc) => acc.chainType === ChainTypeEnum.SVM)
   }, [embeddedAccounts])
-
-  const wallets = useMemo<ConnectedEmbeddedSolanaWallet[]>(() => {
-    return solanaAccounts.map((acc, index) => ({
-      address: acc.address,
-      chainType: ChainTypeEnum.SVM,
-      walletIndex: index,
-      getProvider: async () => {
-        // Create provider when requested
-        return createProviderForAccount(acc)
-      },
-    }))
-  }, [solanaAccounts])
 
   const createProviderForAccount = useCallback(
     (account: EmbeddedAccount): OpenfortEmbeddedSolanaWalletProvider => {
@@ -111,6 +101,17 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     [client]
   )
 
+  const wallets = useMemo<ConnectedEmbeddedSolanaWallet[]>(() => {
+    return solanaAccounts.map((acc, index) => ({
+      id: acc.id,
+      address: acc.address,
+      chainType: ChainTypeEnum.SVM,
+      walletIndex: index,
+      recoveryMethod: acc.recoveryMethod,
+      getProvider: async () => createProviderForAccount(acc),
+    }))
+  }, [solanaAccounts, createProviderForAccount])
+
   const create = useCallback(
     async (createOptions?: CreateSolanaWalletOptions): Promise<EmbeddedAccount> => {
       setState((s) => ({ ...s, status: 'creating', error: null }))
@@ -120,10 +121,10 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           throw new OpenfortError('Wallet config not found', OpenfortReactErrorType.CONFIGURATION_ERROR)
         }
 
-        // Build recovery params
         const recoveryParams = await buildRecoveryParams(
           {
-            recoveryMethod: undefined, // Use default
+            recoveryMethod: createOptions?.recoveryMethod,
+            passkeyId: createOptions?.passkeyId,
             password: createOptions?.recoveryPassword,
             otpCode: createOptions?.otpCode,
           },
@@ -141,15 +142,16 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           recoveryParams,
         })
 
-        // Refresh embedded accounts
-        await updateEmbeddedAccounts()
+        await updateEmbeddedAccounts({ silent: true })
 
         // Create provider and update state
         const provider = createProviderForAccount(account)
         const connectedWallet: ConnectedEmbeddedSolanaWallet = {
+          id: account.id,
           address: account.address,
           chainType: ChainTypeEnum.SVM,
           walletIndex: 0,
+          recoveryMethod: account.recoveryMethod,
           getProvider: async () => provider,
         }
 
@@ -185,67 +187,120 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
 
   const setActive = useCallback(
     async (activeOptions: SetActiveSolanaWalletOptions): Promise<void> => {
-      setState((s) => ({ ...s, status: 'connecting', error: null }))
+      const run = async (): Promise<void> => {
+        setState((s) => ({ ...s, status: 'connecting', error: null }))
 
-      try {
-        // Find the account
-        const account = solanaAccounts.find((acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase())
-
-        if (!account) {
-          throw new OpenfortError(
-            `Solana wallet not found: ${activeOptions.address}`,
-            OpenfortReactErrorType.WALLET_ERROR
+        try {
+          const account = solanaAccounts.find(
+            (acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase()
           )
-        }
 
-        // Recover if needed
-        if (activeOptions.recoveryParams) {
-          await client.embeddedWallet.recover({
-            account: account.id,
-            recoveryParams: activeOptions.recoveryParams,
+          if (!account) {
+            throw new OpenfortError(
+              `Solana wallet not found: ${activeOptions.address}`,
+              OpenfortReactErrorType.WALLET_ERROR
+            )
+          }
+
+          const password = activeOptions.password ?? activeOptions.recoveryPassword
+          const hasExplicitRecovery =
+            activeOptions.recoveryParams != null || password != null || activeOptions.recoveryMethod !== undefined
+
+          let recoveryParams = activeOptions.recoveryParams
+          if (!recoveryParams && !hasExplicitRecovery) {
+            if (account.recoveryMethod === RecoveryMethod.PASSKEY) {
+              recoveryParams = { recoveryMethod: RecoveryMethod.PASSKEY }
+              if (activeOptions.passkeyId)
+                (recoveryParams as typeof recoveryParams & { passkeyId?: string }).passkeyId = activeOptions.passkeyId
+            } else if (account.recoveryMethod === RecoveryMethod.PASSWORD) {
+              setState((s) => ({ ...s, status: 'needs-recovery', error: null }))
+              return
+            } else {
+              recoveryParams = await buildRecoveryParams(
+                { recoveryMethod: undefined, otpCode: activeOptions.otpCode },
+                {
+                  walletConfig,
+                  getAccessToken: () => client.getAccessToken(),
+                  getUserId: () => client.user.get().then((u) => u?.id),
+                }
+              )
+            }
+          } else if (!recoveryParams && hasExplicitRecovery) {
+            recoveryParams = await buildRecoveryParams(
+              {
+                recoveryMethod:
+                  activeOptions.recoveryMethod ?? (password != null ? RecoveryMethod.PASSWORD : undefined),
+                passkeyId: activeOptions.passkeyId,
+                password,
+                otpCode: activeOptions.otpCode,
+              },
+              {
+                walletConfig,
+                getAccessToken: () => client.getAccessToken(),
+                getUserId: () => client.user.get().then((u) => u?.id),
+              }
+            )
+          }
+
+          if (recoveryParams) {
+            await client.embeddedWallet.recover({
+              account: account.id,
+              recoveryParams,
+            })
+          }
+
+          const provider = createProviderForAccount(account)
+          const connectedWallet: ConnectedEmbeddedSolanaWallet = {
+            id: account.id,
+            address: account.address,
+            chainType: ChainTypeEnum.SVM,
+            walletIndex: solanaAccounts.indexOf(account),
+            recoveryMethod: account.recoveryMethod,
+            getProvider: async () => provider,
+          }
+
+          setState({
+            status: 'connected',
+            activeWallet: connectedWallet,
+            provider,
+            error: null,
           })
+        } catch (err) {
+          const error =
+            err instanceof OpenfortError
+              ? err
+              : new OpenfortError('Failed to set active Solana wallet', OpenfortReactErrorType.WALLET_ERROR, {
+                  error: err,
+                })
+
+          setState((s) => ({
+            ...s,
+            status: 'error',
+            error: error.message,
+          }))
+
+          throw error
         }
+      }
 
-        // Create provider
-        const provider = createProviderForAccount(account)
-        const connectedWallet: ConnectedEmbeddedSolanaWallet = {
-          address: account.address,
-          chainType: ChainTypeEnum.SVM,
-          walletIndex: solanaAccounts.indexOf(account),
-          getProvider: async () => provider,
-        }
-
-        setState({
-          status: 'connected',
-          activeWallet: connectedWallet,
-          provider,
-          error: null,
-        })
-      } catch (err) {
-        const error =
-          err instanceof OpenfortError
-            ? err
-            : new OpenfortError('Failed to set active Solana wallet', OpenfortReactErrorType.WALLET_ERROR, {
-                error: err,
-              })
-
-        setState((s) => ({
-          ...s,
-          status: 'error',
-          error: error.message,
-        }))
-
-        throw error
+      const prev = setActiveInProgressRef.current
+      if (prev) await prev
+      const promise = run()
+      setActiveInProgressRef.current = promise
+      try {
+        await promise
+      } finally {
+        if (setActiveInProgressRef.current === promise) setActiveInProgressRef.current = null
       }
     },
-    [client, solanaAccounts, createProviderForAccount]
+    [client, walletConfig, solanaAccounts, createProviderForAccount]
   )
 
   const setRecovery = useCallback(
     async (recoveryOptions: SetRecoveryOptions): Promise<void> => {
       try {
         await client.embeddedWallet.setRecoveryMethod(recoveryOptions.previousRecovery, recoveryOptions.newRecovery)
-        await updateEmbeddedAccounts()
+        await updateEmbeddedAccounts({ silent: true })
       } catch (err) {
         const error =
           err instanceof OpenfortError
@@ -273,6 +328,49 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     }),
     [create, wallets, setActive, setRecovery, exportPrivateKey]
   )
+
+  useEffect(() => {
+    if (
+      isLoadingAccounts ||
+      state.status !== 'disconnected' ||
+      solanaAccounts.length === 0 ||
+      autoReconnectAttemptedRef.current
+    ) {
+      return
+    }
+    autoReconnectAttemptedRef.current = true
+    let cancelled = false
+    client.embeddedWallet
+      .get()
+      .then((active: EmbeddedAccount | null | undefined) => {
+        if (cancelled || !active || active.chainType !== ChainTypeEnum.SVM) return
+        const account = solanaAccounts.find((acc) => acc.address.toLowerCase() === active.address.toLowerCase())
+        if (!account) return
+        const provider = createProviderForAccount(account)
+        const connectedWallet: ConnectedEmbeddedSolanaWallet = {
+          id: account.id,
+          address: account.address,
+          chainType: ChainTypeEnum.SVM,
+          walletIndex: solanaAccounts.indexOf(account),
+          recoveryMethod: account.recoveryMethod,
+          getProvider: async () => provider,
+        }
+        if (!cancelled) {
+          setState({
+            status: 'connected',
+            activeWallet: connectedWallet,
+            provider,
+            error: null,
+          })
+        }
+      })
+      .catch(() => {
+        autoReconnectAttemptedRef.current = false
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isLoadingAccounts, state.status, solanaAccounts, client, createProviderForAccount])
 
   // Handle loading state
   if (isLoadingAccounts) {

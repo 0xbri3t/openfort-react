@@ -7,7 +7,7 @@
 
 import type { Openfort } from '@openfort/openfort-js'
 
-import { OpenfortErrorCode, OpenfortReactError } from '../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../types'
 
 import type { OpenfortEmbeddedEthereumWalletProvider } from './types'
 
@@ -75,7 +75,9 @@ export async function signMessage(params: SignMessageParams): Promise<`0x${strin
     })
     return signature as `0x${string}`
   } catch (error) {
-    throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
+    throw error instanceof OpenfortError
+      ? error
+      : new OpenfortError('Signing failed', OpenfortReactErrorType.WALLET_ERROR, { error })
   }
 }
 
@@ -103,7 +105,9 @@ export async function signTypedData(params: SignTypedDataParams): Promise<`0x${s
     const signature = await client.embeddedWallet.signTypedData(domain, types, message)
     return signature as `0x${string}`
   } catch (error) {
-    throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
+    throw error instanceof OpenfortError
+      ? error
+      : new OpenfortError('Signing failed', OpenfortReactErrorType.WALLET_ERROR, { error })
   }
 }
 
@@ -128,7 +132,7 @@ export async function sendTransaction(params: SendTransactionParams): Promise<`0
   try {
     const accounts = (await provider.request({ method: 'eth_accounts' })) as `0x${string}`[]
     if (!accounts || accounts.length === 0) {
-      throw new OpenfortReactError('No accounts available', OpenfortErrorCode.WALLET_NOT_FOUND)
+      throw new OpenfortError('No accounts available', OpenfortReactErrorType.WALLET_ERROR)
     }
 
     const from = accounts[0]
@@ -149,7 +153,9 @@ export async function sendTransaction(params: SendTransactionParams): Promise<`0
 
     return txHash as `0x${string}`
   } catch (error) {
-    throw OpenfortReactError.from(error, OpenfortErrorCode.TRANSACTION_FAILED)
+    throw error instanceof OpenfortError
+      ? error
+      : new OpenfortError('Transaction failed', OpenfortReactErrorType.WALLET_ERROR, { error })
   }
 }
 
@@ -164,6 +170,8 @@ export async function getEthereumProvider(client: Openfort): Promise<OpenfortEmb
     const provider = await client.embeddedWallet.getEthereumProvider()
     return provider as OpenfortEmbeddedEthereumWalletProvider
   } catch (error) {
-    throw OpenfortReactError.from(error, OpenfortErrorCode.WALLET_NOT_FOUND)
+    throw error instanceof OpenfortError
+      ? error
+      : new OpenfortError('Wallet not found', OpenfortReactErrorType.WALLET_ERROR, { error })
   }
 }

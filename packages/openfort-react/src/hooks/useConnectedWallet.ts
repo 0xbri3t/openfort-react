@@ -1,10 +1,11 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
-import { useContext, useMemo } from 'react'
+import { useContext } from 'react'
 
 import { useAuthContext } from '../core/AuthContext'
 import { EthereumContext } from '../ethereum/EthereumContext'
+import { useChain } from '../shared/hooks/useChain'
 import { SolanaContext } from '../solana/providers/SolanaContextProvider'
-import type { ChainType, SolanaCluster } from '../utils/chains'
+import type { SolanaCluster } from '../solana/types'
 import { formatEVMAddress, formatSolanaAddress } from '../utils/format'
 
 export type ConnectedWalletState =
@@ -13,16 +14,11 @@ export type ConnectedWalletState =
   | {
       status: 'connected'
       address: string
-      chainType: ChainType
+      chainType: ChainTypeEnum
       chainId?: number
       cluster?: SolanaCluster
       displayAddress: string
     }
-
-export interface UseConnectedWalletOptions {
-  /** Preferred chain when multiple wallets are connected */
-  preferredChain?: ChainType
-}
 
 interface WalletInternalState {
   status: 'not-created' | 'loading' | 'connected' | 'error'
@@ -35,10 +31,8 @@ function useEthereumWalletInternal(): WalletInternalState | null {
   const context = useContext(EthereumContext)
   const { embeddedAccounts, isLoadingAccounts } = useAuthContext()
 
-  // No context = Ethereum not configured
   if (!context) return null
 
-  // Get Ethereum embedded accounts
   const ethAccounts = embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.EVM) ?? []
 
   if (isLoadingAccounts) {
@@ -61,10 +55,8 @@ function useSolanaWalletInternal(): WalletInternalState | null {
   const context = useContext(SolanaContext)
   const { embeddedAccounts, isLoadingAccounts } = useAuthContext()
 
-  // No context = Solana not configured
   if (!context) return null
 
-  // Get Solana embedded accounts
   const solAccounts = embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.SVM) ?? []
 
   if (isLoadingAccounts) {
@@ -83,62 +75,34 @@ function useSolanaWalletInternal(): WalletInternalState | null {
   }
 }
 
-/** Hook for getting unified wallet state across chains. */
-export function useConnectedWallet(options?: UseConnectedWalletOptions): ConnectedWalletState {
-  const preferredChain = options?.preferredChain ?? 'ethereum'
-
+export function useConnectedWallet(): ConnectedWalletState {
+  const { chainType } = useChain()
   const ethWallet = useEthereumWalletInternal()
   const solWallet = useSolanaWalletInternal()
 
-  const walletRegistry = useMemo(() => {
-    const registry: [ChainType, WalletInternalState | null, (addr: string) => string][] = []
-    if (ethWallet !== null) {
-      registry.push(['ethereum', ethWallet, formatEVMAddress])
-    }
-    if (solWallet !== null) {
-      registry.push(['solana', solWallet, formatSolanaAddress])
-    }
-
-    return registry
-  }, [ethWallet, solWallet])
-
-  const chainPriorities: Record<ChainType, Record<ChainType, number>> = {
-    ethereum: { ethereum: 0, solana: 1 },
-    solana: { solana: 0, ethereum: 1 },
-  }
-
-  const sortedRegistry = useMemo(() => {
-    const priorityMap = chainPriorities[preferredChain]
-    return [...walletRegistry].sort(([typeA], [typeB]) => {
-      return (priorityMap[typeA] ?? 99) - (priorityMap[typeB] ?? 99)
-    })
-  }, [walletRegistry, preferredChain])
-
-  const chainFieldExtractors: Record<
-    ChainType,
-    (state: WalletInternalState) => { chainId?: number; cluster?: SolanaCluster }
-  > = {
-    ethereum: (state) => ({ chainId: state.chainId }),
-    solana: (state) => ({ cluster: state.cluster }),
-  }
-
-  const connectedEntry = sortedRegistry.find(([_, state]) => state?.status === 'connected' && state?.address)
-
-  if (connectedEntry) {
-    const [chainType, state, formatFn] = connectedEntry
-    if (state?.address) {
-      const chainFields = chainFieldExtractors[chainType](state)
+  if (chainType === ChainTypeEnum.EVM) {
+    if (ethWallet?.status === 'connected' && ethWallet.address) {
       return {
         status: 'connected',
-        address: state.address,
-        chainType,
-        ...chainFields,
-        displayAddress: formatFn(state.address),
+        address: ethWallet.address,
+        chainType: ChainTypeEnum.EVM,
+        chainId: ethWallet.chainId,
+        displayAddress: formatEVMAddress(ethWallet.address),
       }
     }
+    if (ethWallet?.status === 'loading') return { status: 'loading' }
+    return { status: 'disconnected' }
   }
 
-  const isLoading = sortedRegistry.some(([_, state]) => state?.status === 'loading')
-
-  return isLoading ? { status: 'loading' } : { status: 'disconnected' }
+  if (solWallet?.status === 'connected' && solWallet.address) {
+    return {
+      status: 'connected',
+      address: solWallet.address,
+      chainType: ChainTypeEnum.SVM,
+      cluster: solWallet.cluster,
+      displayAddress: formatSolanaAddress(solWallet.address),
+    }
+  }
+  if (solWallet?.status === 'loading') return { status: 'loading' }
+  return { status: 'disconnected' }
 }

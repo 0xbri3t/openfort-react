@@ -14,6 +14,8 @@ import { OpenfortError, OpenfortReactErrorType } from '../../types'
 export type SolanaRecoveryOptions = {
   /** Recovery method to use */
   recoveryMethod?: RecoveryMethod
+  /** Passkey ID for PASSKEY recovery */
+  passkeyId?: string
   /** Password for PASSWORD recovery */
   password?: string
   /** OTP code for automatic recovery */
@@ -65,7 +67,7 @@ export async function buildRecoveryParams(
 
     case RecoveryMethod.PASSWORD: {
       if (!options?.password) {
-        throw new OpenfortError('Password is required', OpenfortReactErrorType.VALIDATION_ERROR)
+        throw new OpenfortError('Password is required', OpenfortReactErrorType.UNEXPECTED_ERROR)
       }
       return {
         recoveryMethod: RecoveryMethod.PASSWORD,
@@ -73,14 +75,14 @@ export async function buildRecoveryParams(
       }
     }
 
-    case RecoveryMethod.PASSKEY: {
+    case RecoveryMethod.PASSKEY:
       return {
         recoveryMethod: RecoveryMethod.PASSKEY,
-      }
-    }
+        ...(options?.passkeyId && { passkeyId: options.passkeyId }),
+      } as RecoveryParams
 
     default:
-      throw new OpenfortError(`Unsupported recovery method: ${recoveryMethod}`, OpenfortReactErrorType.VALIDATION_ERROR)
+      throw new OpenfortError(`Unsupported recovery method: ${recoveryMethod}`, OpenfortReactErrorType.UNEXPECTED_ERROR)
   }
 }
 
@@ -115,7 +117,7 @@ async function getEncryptionSession(params: {
     const data = await response.json()
     if (!response.ok) {
       if (data.error === 'OTP_REQUIRED') {
-        throw new OpenfortError('OTP_REQUIRED', OpenfortReactErrorType.VALIDATION_ERROR)
+        throw new OpenfortError('OTP_REQUIRED', OpenfortReactErrorType.UNEXPECTED_ERROR)
       }
       throw new OpenfortError('Failed to create encryption session', OpenfortReactErrorType.WALLET_ERROR)
     }

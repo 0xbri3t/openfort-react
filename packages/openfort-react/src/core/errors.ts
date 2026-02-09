@@ -33,8 +33,19 @@ export const OpenfortErrorCode = {
 
   // General errors
   NETWORK_ERROR: 'NETWORK_ERROR',
+  POLLING_FAILED: 'POLLING_FAILED',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 } as const
+
+export const TransactionErrorCode = {
+  USER_REJECTED: 'USER_REJECTED',
+  INSUFFICIENT_FUNDS: 'INSUFFICIENT_FUNDS',
+  RPC_ERROR: 'RPC_ERROR',
+  SIGNING_FAILED: 'SIGNING_FAILED',
+  UNKNOWN: 'UNKNOWN',
+} as const
+
+export type TransactionErrorCode = (typeof TransactionErrorCode)[keyof typeof TransactionErrorCode]
 
 export type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCode]
 
@@ -139,6 +150,19 @@ export class WalletError extends OpenfortReactError {
     super(message, code, { cause: options?.cause })
     this.name = 'WalletError'
     this.address = options?.address
+  }
+}
+
+/**
+ * Transaction-specific error. Extends OpenfortReactError for single catch surface.
+ */
+export class OpenfortTransactionError extends OpenfortReactError {
+  readonly txCode: TransactionErrorCode
+
+  constructor(message: string, txCode: TransactionErrorCode, options?: { cause?: unknown }) {
+    super(message, OpenfortErrorCode.TRANSACTION_FAILED, { cause: options?.cause })
+    this.name = 'OpenfortTransactionError'
+    this.txCode = txCode
   }
 }
 

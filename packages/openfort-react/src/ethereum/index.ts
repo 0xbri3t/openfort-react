@@ -3,19 +3,6 @@
  *
  * Import from '@openfort/react/ethereum' for Ethereum-only features.
  *
- * @example
- * ```tsx
- * import { useEthereumWallet } from '@openfort/react/ethereum';
- *
- * function MyComponent() {
- *   const ethereum = useEthereumWallet();
- *
- *   if (ethereum.status === 'connected') {
- *     console.log('Address:', ethereum.activeWallet.address);
- *   }
- * }
- * ```
- *
  * @packageDocumentation
  */
 
@@ -27,7 +14,32 @@ export {
   useEthereumContext,
 } from './EthereumContext'
 
-export { useEthereumWallet } from './hooks/useEthereumWallet'
+export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'
+export {
+  type EthereumGasEstimate,
+  type UseEthereumGasEstimateOptions,
+  useEthereumGasEstimate,
+} from './hooks/useEthereumGasEstimate'
+export {
+  type EthereumSendTransactionParams,
+  type UseEthereumSendTransactionReturn,
+  useEthereumSendTransaction,
+} from './hooks/useEthereumSendTransaction'
+export {
+  type EthereumTokenBalanceState,
+  type UseEthereumTokenBalanceOptions,
+  useEthereumTokenBalance,
+} from './hooks/useEthereumTokenBalance'
+export {
+  type EthereumWaitForTransactionReceiptState,
+  type UseEthereumWaitForTransactionReceiptOptions,
+  useEthereumWaitForTransactionReceipt,
+} from './hooks/useEthereumWaitForTransactionReceipt'
+export {
+  type EthereumWriteContractParams,
+  type UseEthereumWriteContractReturn,
+  useEthereumWriteContract,
+} from './hooks/useEthereumWriteContract'
 export { ethToWei, GWEI_PER_ETH, WEI_PER_ETH, weiToEth } from './hooks/utils'
 
 export {

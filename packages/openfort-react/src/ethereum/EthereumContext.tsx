@@ -2,7 +2,7 @@
  * Ethereum Context Provider (OPTIONAL)
  *
  * Provides default Ethereum configuration to descendant components.
- * NOT required - useEthereumWallet defaults to chainId: 1 without it.
+ * NOT required - useEthereumEmbeddedWallet defaults to chainId: 1 without it.
  *
  * Use this when:
  * - Your app uses a non-mainnet chain by default
@@ -64,12 +64,12 @@ export interface EthereumContextProviderProps {
 /**
  * Provides default Ethereum configuration to descendant components.
  *
- * OPTIONAL - useEthereumWallet works without it (defaults to mainnet).
+ * OPTIONAL - useEthereumEmbeddedWallet works without it (defaults to mainnet).
  *
  * @example Polygon as default chain
  * ```tsx
  * <EthereumContextProvider chainId={137}>
- *   <App /> {// useEthereumWallet() defaults to Polygon }
+ *   <App />
  * </EthereumContextProvider>
  * ```
  *
@@ -161,7 +161,7 @@ export function useEthereumContext(): EthereumContextValue {
   if (!context) {
     throw new Error(
       'useEthereumContext must be used within EthereumContextProvider. ' +
-        "If you don't need context, use useEthereumWallet({ chainId }) directly."
+        "If you don't need context, use useEthereumEmbeddedWallet({ chainId }) directly."
     )
   }
   return context

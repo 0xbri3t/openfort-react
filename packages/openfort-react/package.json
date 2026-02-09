@@ -42,6 +42,7 @@
     "build",
     "README.md"
   ],
+  "sideEffects": false,
   "scripts": {
     "start": "rollup --config rollup.config.dev.js -w",
     "dev": "rollup --config rollup.config.dev.js -w",
@@ -76,6 +77,7 @@
     "styled-components": "^5.3.5"
   },
   "peerDependencies": {
+    "@solana/kit": "^2.0.0 || ^5.0.0",
     "@tanstack/react-query": ">=5.0.0",
     "react": "17.x || 18.x || 19.x",
     "react-dom": "17.x || 18.x || 19.x",
@@ -84,9 +86,6 @@
   },
   "peerDependenciesMeta": {
     "wagmi": {
-      "optional": true
-    },
-    "viem": {
       "optional": true
     }
   },

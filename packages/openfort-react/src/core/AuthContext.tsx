@@ -18,17 +18,18 @@ import {
   useRef,
   useState,
 } from 'react'
-
+import type { OpenfortCoreContextValue } from '../openfort/CoreOpenfortProvider'
+import { Context as OpenfortCoreContext } from '../openfort/context'
+import { OpenfortError, OpenfortReactErrorType } from '../types'
 import { logger } from '../utils/logger'
 import { useCoreContext } from './CoreContext'
-import { ProviderNotFoundError } from './errors'
+import { queryKeys } from './queryKeys'
 import type { OnAuthError, OnAuthSuccess } from './types'
 
 export const authQueryKeys = {
   all: ['openfort', 'auth'] as const,
   user: () => [...authQueryKeys.all, 'user'] as const,
-  embeddedAccounts: (accountType?: AccountTypeEnum) =>
-    [...authQueryKeys.all, 'accounts', accountType ?? 'all'] as const,
+  embeddedAccounts: (accountType?: AccountTypeEnum) => queryKeys.accounts.embedded(accountType as string | undefined),
 }
 
 export type AuthContextValue = {
@@ -40,7 +41,7 @@ export type AuthContextValue = {
   // Embedded accounts
   embeddedAccounts: EmbeddedAccount[] | undefined
   isLoadingAccounts: boolean
-  refetchAccounts: () => Promise<void>
+  refetchAccounts: (options?: { silent?: boolean }) => Promise<void>
 
   // Actions
   logout: () => Promise<void>
@@ -89,7 +90,8 @@ export type AuthProviderProps = PropsWithChildren<{
 }>
 
 /**
- * Auth provider that manages user state and embedded accounts
+ * Auth provider for the legacy tree (CoreProvider + AuthProvider without OpenfortProvider).
+ * When using OpenfortProvider, do not wrap with AuthProvider — the core provider supplies auth state.
  *
  * @example
  * ```tsx
@@ -226,7 +228,7 @@ export function AuthProvider({
   }, [embeddedState, user, updateUser])
 
   const accountsQuery = useQuery({
-    queryKey: authQueryKeys.embeddedAccounts(accountType),
+    queryKey: queryKeys.accounts.embedded(accountType as string | undefined),
     queryFn: async () => {
       return client.embeddedWallet.list({
         limit: 100,
@@ -239,9 +241,21 @@ export function AuthProvider({
     retry: false,
   })
 
-  const refetchAccounts = useCallback(async () => {
-    await accountsQuery.refetch()
-  }, [accountsQuery])
+  const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
+
+  const refetchAccounts = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (options?.silent) setSilentRefetchInProgress(true)
+      try {
+        await accountsQuery.refetch()
+      } finally {
+        if (options?.silent) setSilentRefetchInProgress(false)
+      }
+    },
+    [accountsQuery]
+  )
+
+  const isLoadingAccounts = accountsQuery.isPending && !silentRefetchInProgress
 
   const logout = useCallback(async () => {
     try {
@@ -278,7 +292,7 @@ export function AuthProvider({
       embeddedState,
 
       embeddedAccounts: accountsQuery.data,
-      isLoadingAccounts: accountsQuery.isPending,
+      isLoadingAccounts,
       refetchAccounts,
 
       logout,
@@ -291,7 +305,7 @@ export function AuthProvider({
       isAuthenticated,
       embeddedState,
       accountsQuery.data,
-      accountsQuery.isPending,
+      isLoadingAccounts,
       refetchAccounts,
       logout,
       updateUser,
@@ -303,13 +317,41 @@ export function AuthProvider({
 }
 
 /**
- * Hook to access auth context
+ * Hook to access auth context.
+ * When inside OpenfortProvider (CoreOpenfortProvider), reads from the core context and maps to AuthContextValue.
+ * Otherwise uses the legacy AuthContext from AuthProvider.
  * @internal Use useAuth() instead for public API
  */
 export function useAuthContext(): AuthContextValue {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new ProviderNotFoundError('useAuthContext')
+  const openfortCoreContext = useContext(OpenfortCoreContext) as OpenfortCoreContextValue | null
+  const legacyContext = useContext(AuthContext)
+
+  if (openfortCoreContext) {
+    const isAuthenticated =
+      openfortCoreContext.embeddedState !== EmbeddedState.NONE &&
+      openfortCoreContext.embeddedState !== EmbeddedState.UNAUTHENTICATED
+    return {
+      user: openfortCoreContext.user,
+      isAuthenticated,
+      embeddedState: openfortCoreContext.embeddedState,
+      embeddedAccounts: openfortCoreContext.embeddedAccounts,
+      isLoadingAccounts: openfortCoreContext.isLoadingAccounts,
+      refetchAccounts: async (options) => {
+        await openfortCoreContext.updateEmbeddedAccounts(options)
+      },
+      logout: async () => {
+        await (openfortCoreContext.logout() as unknown as Promise<void>)
+      },
+      updateUser: (user) => openfortCoreContext.updateUser(user),
+      needsRecovery: openfortCoreContext.needsRecovery,
+    }
   }
-  return context
+
+  if (!legacyContext) {
+    throw new OpenfortError(
+      'useAuthContext must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.',
+      OpenfortReactErrorType.CONFIGURATION_ERROR
+    )
+  }
+  return legacyContext
 }

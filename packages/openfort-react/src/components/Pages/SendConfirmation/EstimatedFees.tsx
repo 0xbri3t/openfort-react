@@ -1,8 +1,7 @@
 import type { Address } from 'viem'
 import { formatUnits } from 'viem'
-
+import { useEthereumGasEstimate } from '../../../ethereum/hooks/useEthereumGasEstimate'
 import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
-import { useGasEstimate } from '../../../hooks/useGasEstimate'
 import Tooltip from '../../Common/Tooltip'
 import { formatBalance } from '../Send/utils'
 import { InfoIconWrapper } from './styles'
@@ -45,8 +44,7 @@ export const EstimatedFees = ({
   const { data: assets } = useWalletAssets()
   const pricePerToken = assets?.find((a) => a.type === 'native')?.metadata?.fiat?.value as number | undefined
 
-  // Use new useGasEstimate hook (no wagmi)
-  const gas = useGasEstimate({
+  const gas = useEthereumGasEstimate({
     from: account,
     to: to ?? ('0x0000000000000000000000000000000000000000' as `0x${string}`),
     value: value ?? BigInt(0),

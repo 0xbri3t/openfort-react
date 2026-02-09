@@ -1,8 +1,9 @@
-import { type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import { AccountTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../../constants/openfort'
+import { queryKeys } from '../../../core/queryKeys'
 import { logger } from '../../../utils/logger'
 import { type UserWallet, useWallets } from '../useWallets'
 import { useSignOut } from './useSignOut'
@@ -69,8 +70,9 @@ export const useConnectToWalletPostAuth = () => {
         return {}
       }
 
+      const accountType = walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT
       const wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({
-        queryKey: ['openfortEmbeddedAccountsList'],
+        queryKey: queryKeys.accounts.embedded(accountType),
       })
 
       let wallet: UserWallet | undefined

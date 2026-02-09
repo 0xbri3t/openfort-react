@@ -72,8 +72,10 @@ const SolanaConnected: React.FC = () => {
     }
   }, [address, setHeaderLeftSlot, setRoute])
 
-  // Format cluster name for display
+  const solanaUI = context.walletConfig?.solana?.ui
   const clusterDisplay = cluster === 'mainnet-beta' ? 'Mainnet' : cluster.charAt(0).toUpperCase() + cluster.slice(1)
+  const showClusterSelector = !solanaUI?.hideClusterSelector
+  const CustomAvatar = solanaUI?.customAvatar
 
   return (
     <PageContent onBack={null} header={locales.profileScreen_heading}>
@@ -82,9 +84,19 @@ const SolanaConnected: React.FC = () => {
           <>
             <AvatarContainer>
               <AvatarInner>
-                <ClusterBadge $cluster={cluster}>{clusterDisplay}</ClusterBadge>
-                {/* Solana address passed as name since Avatar expects 0x addresses */}
-                <Avatar name={address} />
+                {showClusterSelector ? (
+                  <ClusterBadge
+                    $cluster={cluster}
+                    as="button"
+                    type="button"
+                    onClick={() => setRoute(routes.SOL_SWITCH_CLUSTER)}
+                    title="Switch cluster"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {clusterDisplay}
+                  </ClusterBadge>
+                ) : null}
+                {CustomAvatar ? <CustomAvatar address={address} /> : <Avatar name={address} />}
               </AvatarInner>
             </AvatarContainer>
             <ModalH1>

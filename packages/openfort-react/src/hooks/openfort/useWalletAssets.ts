@@ -4,7 +4,6 @@ import type { Transport } from 'viem'
 import { createWalletClient, custom, numberToHex } from 'viem'
 import type { getAssets } from 'viem/_types/experimental/erc7811/actions/getAssets'
 import { erc7811Actions } from 'viem/experimental'
-
 import type { Asset } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { OpenfortError, OpenfortReactErrorType, type OpenfortWalletConfig } from '../../types'
@@ -24,7 +23,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
 
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
-  const chainId = isConnected && wallet.chainType === 'ethereum' ? wallet.chainId : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
 
   const { walletConfig, publishableKey, overrides, thirdPartyAuth } = useOpenfort()
   const { getAccessToken } = useUser()

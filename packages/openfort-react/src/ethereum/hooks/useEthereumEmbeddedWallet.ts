@@ -1,5 +1,5 @@
-import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount } from '@openfort/openfort-js'
-import { useCallback, useContext, useMemo, useState } from 'react'
+import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useChainId, WagmiContext } from 'wagmi'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
@@ -54,7 +54,9 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   // Use provided chainId or fall back to wagmi chainId
   const chainId = options?.chainId ?? wagmiChainId
 
-  // Internal state
+  const setActiveInProgressRef = useRef<Promise<void> | null>(null)
+  const autoReconnectAttemptedRef = useRef(false)
+
   const [state, setState] = useState<InternalState>({
     status: 'disconnected',
     activeWallet: null,
@@ -67,8 +69,15 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     return embeddedAccounts.filter((acc) => acc.chainType === ChainTypeEnum.EVM)
   }, [embeddedAccounts])
 
+  const createProviderForAccount = useCallback(
+    async (_account: EmbeddedAccount): Promise<OpenfortEmbeddedEthereumWalletProvider> => {
+      const provider = await client.embeddedWallet.getEthereumProvider()
+      return provider as OpenfortEmbeddedEthereumWalletProvider
+    },
+    [client]
+  )
+
   const wallets = useMemo<ConnectedEmbeddedEthereumWallet[]>(() => {
-    // Deduplicate by address (same address can have multiple chainIds for Smart Accounts)
     const uniqueAddresses = new Map<string, EmbeddedAccount>()
     for (const acc of ethereumAccounts) {
       const key = acc.address.toLowerCase()
@@ -78,26 +87,18 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     }
 
     return Array.from(uniqueAddresses.values()).map((acc, index) => ({
+      id: acc.id,
       address: acc.address as `0x${string}`,
       ownerAddress: acc.ownerAddress,
       implementationType: acc.implementationType,
       chainType: ChainTypeEnum.EVM,
       walletIndex: index,
+      recoveryMethod: acc.recoveryMethod,
       getProvider: async () => {
         return createProviderForAccount(acc)
       },
     }))
-  }, [ethereumAccounts])
-
-  const createProviderForAccount = useCallback(
-    async (_account: EmbeddedAccount): Promise<OpenfortEmbeddedEthereumWalletProvider> => {
-      // Get the EIP-1193 provider from the Openfort client
-      // Note: _account is available for future use if needed for per-account providers
-      const provider = await client.embeddedWallet.getEthereumProvider()
-      return provider as OpenfortEmbeddedEthereumWalletProvider
-    },
-    [client]
-  )
+  }, [ethereumAccounts, createProviderForAccount])
 
   const create = useCallback(
     async (createOptions?: CreateEthereumWalletOptions): Promise<EmbeddedAccount> => {
@@ -108,10 +109,10 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           throw new OpenfortError('Wallet config not found', OpenfortReactErrorType.CONFIGURATION_ERROR)
         }
 
-        // Build recovery params
         const recoveryParams = await buildRecoveryParams(
           {
-            recoveryMethod: undefined, // Use default
+            recoveryMethod: createOptions?.recoveryMethod,
+            passkeyId: createOptions?.passkeyId,
             password: createOptions?.recoveryPassword,
             otpCode: createOptions?.otpCode,
           },
@@ -139,17 +140,18 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           recoveryParams,
         })
 
-        // Refresh embedded accounts
-        await updateEmbeddedAccounts()
+        await updateEmbeddedAccounts({ silent: true })
 
         // Create provider and update state
         const provider = await createProviderForAccount(account)
         const connectedWallet: ConnectedEmbeddedEthereumWallet = {
+          id: account.id,
           address: account.address as `0x${string}`,
           ownerAddress: account.ownerAddress,
           implementationType: account.implementationType,
           chainType: ChainTypeEnum.EVM,
           walletIndex: 0,
+          recoveryMethod: account.recoveryMethod,
           getProvider: async () => provider,
         }
 
@@ -185,71 +187,122 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
 
   const setActive = useCallback(
     async (activeOptions: SetActiveEthereumWalletOptions): Promise<void> => {
-      setState((s) => ({ ...s, status: 'connecting', error: null }))
+      const run = async (): Promise<void> => {
+        setState((s) => ({ ...s, status: 'connecting', error: null }))
 
-      try {
-        // Find the account
-        const account = ethereumAccounts.find(
-          (acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase()
-        )
-
-        if (!account) {
-          throw new OpenfortError(
-            `Ethereum wallet not found: ${activeOptions.address}`,
-            OpenfortReactErrorType.WALLET_ERROR
+        try {
+          const account = ethereumAccounts.find(
+            (acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase()
           )
-        }
 
-        // Recover if needed
-        if (activeOptions.recoveryParams) {
-          await client.embeddedWallet.recover({
-            account: account.id,
-            recoveryParams: activeOptions.recoveryParams,
+          if (!account) {
+            throw new OpenfortError(
+              `Ethereum wallet not found: ${activeOptions.address}`,
+              OpenfortReactErrorType.WALLET_ERROR
+            )
+          }
+
+          const password = activeOptions.recoveryPassword
+          const hasExplicitRecovery =
+            activeOptions.recoveryParams != null || password != null || activeOptions.recoveryMethod !== undefined
+
+          let recoveryParams = activeOptions.recoveryParams
+          if (!recoveryParams && !hasExplicitRecovery) {
+            if (account.recoveryMethod === RecoveryMethod.PASSKEY) {
+              recoveryParams = { recoveryMethod: RecoveryMethod.PASSKEY }
+              if (activeOptions.passkeyId)
+                (recoveryParams as typeof recoveryParams & { passkeyId?: string }).passkeyId = activeOptions.passkeyId
+            } else if (account.recoveryMethod === RecoveryMethod.PASSWORD) {
+              setState((s) => ({ ...s, status: 'needs-recovery', error: null }))
+              return
+            } else {
+              recoveryParams = await buildRecoveryParams(
+                { recoveryMethod: undefined, otpCode: activeOptions.otpCode },
+                {
+                  walletConfig,
+                  getAccessToken: () => client.getAccessToken(),
+                  getUserId: async () => (await client.user.get())?.id,
+                }
+              )
+            }
+          } else if (!recoveryParams && hasExplicitRecovery) {
+            recoveryParams = await buildRecoveryParams(
+              {
+                recoveryMethod:
+                  activeOptions.recoveryMethod ?? (password != null ? RecoveryMethod.PASSWORD : undefined),
+                passkeyId: activeOptions.passkeyId,
+                password,
+                otpCode: activeOptions.otpCode,
+              },
+              {
+                walletConfig,
+                getAccessToken: () => client.getAccessToken(),
+                getUserId: async () => (await client.user.get())?.id,
+              }
+            )
+          }
+
+          if (recoveryParams) {
+            await client.embeddedWallet.recover({
+              account: account.id,
+              recoveryParams,
+            })
+          }
+
+          const provider = await createProviderForAccount(account)
+          const connectedWallet: ConnectedEmbeddedEthereumWallet = {
+            id: account.id,
+            address: account.address as `0x${string}`,
+            ownerAddress: account.ownerAddress,
+            implementationType: account.implementationType,
+            chainType: ChainTypeEnum.EVM,
+            walletIndex: ethereumAccounts.indexOf(account),
+            recoveryMethod: account.recoveryMethod,
+            getProvider: async () => provider,
+          }
+
+          setState({
+            status: 'connected',
+            activeWallet: connectedWallet,
+            provider,
+            error: null,
           })
+        } catch (err) {
+          const error =
+            err instanceof OpenfortError
+              ? err
+              : new OpenfortError('Failed to set active Ethereum wallet', OpenfortReactErrorType.WALLET_ERROR, {
+                  error: err,
+                })
+
+          setState((s) => ({
+            ...s,
+            status: 'error',
+            error: error.message,
+          }))
+
+          throw error
         }
+      }
 
-        // Create provider
-        const provider = await createProviderForAccount(account)
-        const connectedWallet: ConnectedEmbeddedEthereumWallet = {
-          address: account.address as `0x${string}`,
-          ownerAddress: account.ownerAddress,
-          implementationType: account.implementationType,
-          chainType: ChainTypeEnum.EVM,
-          walletIndex: ethereumAccounts.indexOf(account),
-          getProvider: async () => provider,
-        }
-
-        setState({
-          status: 'connected',
-          activeWallet: connectedWallet,
-          provider,
-          error: null,
-        })
-      } catch (err) {
-        const error =
-          err instanceof OpenfortError
-            ? err
-            : new OpenfortError('Failed to set active Ethereum wallet', OpenfortReactErrorType.WALLET_ERROR, {
-                error: err,
-              })
-
-        setState((s) => ({
-          ...s,
-          status: 'error',
-          error: error.message,
-        }))
-
-        throw error
+      const prev = setActiveInProgressRef.current
+      if (prev) await prev
+      const promise = run()
+      setActiveInProgressRef.current = promise
+      try {
+        await promise
+      } finally {
+        if (setActiveInProgressRef.current === promise) setActiveInProgressRef.current = null
       }
     },
-    [client, ethereumAccounts, createProviderForAccount]
+    [client, walletConfig, ethereumAccounts, createProviderForAccount]
   )
 
   const setRecovery = useCallback(
     async (recoveryOptions: SetRecoveryOptions): Promise<void> => {
       try {
         await client.embeddedWallet.setRecoveryMethod(recoveryOptions.previousRecovery, recoveryOptions.newRecovery)
-        await updateEmbeddedAccounts()
+        await updateEmbeddedAccounts({ silent: true })
       } catch (err) {
         const error =
           err instanceof OpenfortError
@@ -277,6 +330,52 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     }),
     [create, wallets, setActive, setRecovery, exportPrivateKey]
   )
+
+  useEffect(() => {
+    if (
+      isLoadingAccounts ||
+      state.status !== 'disconnected' ||
+      ethereumAccounts.length === 0 ||
+      autoReconnectAttemptedRef.current
+    ) {
+      return
+    }
+    autoReconnectAttemptedRef.current = true
+    let cancelled = false
+    client.embeddedWallet
+      .get()
+      .then(async (active: EmbeddedAccount | null | undefined) => {
+        if (cancelled || !active || active.chainType !== ChainTypeEnum.EVM) return
+        const account = ethereumAccounts.find(
+          (acc) => acc.address.toLowerCase() === (active.address as string).toLowerCase()
+        )
+        if (!account) return
+        const provider = await createProviderForAccount(account)
+        if (cancelled) return
+        const connectedWallet: ConnectedEmbeddedEthereumWallet = {
+          id: account.id,
+          address: account.address as `0x${string}`,
+          ownerAddress: account.ownerAddress,
+          implementationType: account.implementationType,
+          chainType: ChainTypeEnum.EVM,
+          walletIndex: ethereumAccounts.indexOf(account),
+          recoveryMethod: account.recoveryMethod,
+          getProvider: async () => provider,
+        }
+        setState({
+          status: 'connected',
+          activeWallet: connectedWallet,
+          provider,
+          error: null,
+        })
+      })
+      .catch(() => {
+        autoReconnectAttemptedRef.current = false
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isLoadingAccounts, state.status, ethereumAccounts, client, createProviderForAccount])
 
   // Handle loading state
   if (isLoadingAccounts) {

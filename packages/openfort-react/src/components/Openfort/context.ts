@@ -1,4 +1,4 @@
-import type { OAuthProvider, SDKOverrides, ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
+import type { ChainTypeEnum, OAuthProvider, SDKOverrides, ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
 import type React from 'react'
 import { createContext } from 'react'
 import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
@@ -25,6 +25,7 @@ type Connector =
 type ErrorMessage = string | React.ReactNode | null
 
 export type ContextValue = {
+  chainType: ChainTypeEnum
   setTheme: React.Dispatch<React.SetStateAction<Theme>>
   mode: Mode
   setMode: React.Dispatch<React.SetStateAction<Mode>>

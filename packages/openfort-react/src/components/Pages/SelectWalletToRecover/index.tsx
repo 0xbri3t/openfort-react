@@ -4,6 +4,7 @@ import { FingerPrintIcon, KeyIcon, LockIcon } from '../../../assets/icons'
 import { embeddedWalletId } from '../../../constants/openfort'
 import { type UserWallet, useWallets } from '../../../hooks/openfort/useWallets'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
+import { useChain } from '../../../shared/hooks/useChain'
 import { truncateEthAddress } from '../../../utils'
 import { walletConfigs } from '../../../wallets/walletConfigs'
 import Button from '../../Common/Button'
@@ -26,10 +27,10 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 const SelectWalletButton = ({ wallet }: { wallet: UserWallet }) => {
-  // Use new abstraction hooks (no wagmi)
+  const { chainType } = useChain()
   const identity = useResolvedIdentity({
     address: wallet.address,
-    chainType: 'ethereum',
+    chainType,
     enabled: !!wallet.address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined

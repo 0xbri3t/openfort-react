@@ -1,4 +1,9 @@
-import { RecoveryMethod, type SDKOverrides, type ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
+import {
+  ChainTypeEnum,
+  RecoveryMethod,
+  type SDKOverrides,
+  type ThirdPartyAuthConfiguration,
+} from '@openfort/openfort-js'
 import { Buffer } from 'buffer'
 import type React from 'react'
 import { createElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
@@ -11,7 +16,6 @@ import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import { isFamily } from '../../utils/wallets'
 import ConnectKitModal from '../ConnectModal'
-import { Web3ContextProvider } from '../contexts/web3'
 import { type ContextValue, Openfortcontext } from './context'
 import {
   type BuyFormState,
@@ -33,7 +37,7 @@ import {
 type OpenfortProviderProps = {
   children?: React.ReactNode
   debugMode?: boolean | DebugModeOptions
-
+  chainType?: ChainTypeEnum
   publishableKey: string
   uiConfig?: ConnectUIOptions
   walletConfig?: OpenfortWalletConfig
@@ -41,96 +45,22 @@ type OpenfortProviderProps = {
   thirdPartyAuth?: ThirdPartyAuthConfiguration
 } & useConnectCallbackProps
 
-/**
- * Provides Openfort configuration and context to descendant components.
- *
- * The provider supports three modes:
- * 1. **Ethereum only** - Wrap with WagmiProvider (required for Ethereum)
- * 2. **Solana only** - Configure `walletConfig.solana` (no WagmiProvider needed)
- * 3. **Both chains** - Wrap with WagmiProvider and configure `walletConfig.solana`
- *
- * @param props - Provider configuration including callbacks, UI options and the wrapped children.
- * @returns A React element that sets up the Openfort context.
- * @throws If neither WagmiProvider nor Solana config is provided, or if mounted multiple times.
- *
- * @example Ethereum only (existing behavior)
- * ```tsx
- * import { WagmiConfig, createConfig } from 'wagmi';
- * import { OpenfortProvider } from '@openfort/openfort-react';
- *
- * const config = createConfig({ YOUR_WAGMI_CONFIG_HERE });
- *
- * export function App() {
- *   return (
- *     <WagmiConfig config={config}>
- *       <OpenfortProvider publishableKey="pk_...">
- *         <YourApp />
- *       </OpenfortProvider>
- *     </WagmiConfig>
- *   );
- * }
- * ```
- *
- * @example Solana only (no WagmiProvider required)
- * ```tsx
- * import { OpenfortProvider } from '@openfort/openfort-react';
- *
- * export function App() {
- *   return (
- *     <OpenfortProvider
- *       publishableKey="pk_..."
- *       walletConfig={{
- *         shieldPublishableKey: 'shield_pk_...',
- *         solana: { cluster: 'mainnet-beta' }
- *       }}
- *     >
- *       <YourApp />
- *     </OpenfortProvider>
- *   );
- * }
- * ```
- *
- * @example Both Ethereum and Solana
- * ```tsx
- * import { WagmiConfig, createConfig } from 'wagmi';
- * import { OpenfortProvider } from '@openfort/openfort-react';
- *
- * export function App() {
- *   return (
- *     <WagmiConfig config={wagmiConfig}>
- *       <OpenfortProvider
- *         publishableKey="pk_..."
- *         walletConfig={{
- *           shieldPublishableKey: 'shield_pk_...',
- *           solana: { cluster: 'mainnet-beta' }
- *         }}
- *       >
- *         <YourApp />
- *       </OpenfortProvider>
- *     </WagmiConfig>
- *   );
- * }
- * ```
- *
- * @see RFC-0001 Section 1.2-1.4
- */
+/** Provides Openfort configuration and context to descendant components. */
 export const OpenfortProvider = ({
   children,
   uiConfig,
   onConnect,
   onDisconnect,
   debugMode,
-
+  chainType: chainTypeProp,
   publishableKey,
   walletConfig,
   overrides,
   thirdPartyAuth,
 }: OpenfortProviderProps) => {
-  // Check if Wagmi is available (optional now for Solana-only mode)
   const hasWagmi = useHasWagmi()
-
-  // Check if Solana is configured
   const hasSolana = !!walletConfig?.solana
+  const chainType = chainTypeProp ?? (hasSolana && !hasWagmi ? ChainTypeEnum.SVM : ChainTypeEnum.EVM)
 
   // Require at least one chain to be configured
   if (!hasWagmi && !hasSolana) {
@@ -232,15 +162,9 @@ export const OpenfortProvider = ({
   }
 
   if (typeof window !== 'undefined') {
-    // Buffer Polyfill, needed for bundlers that don't provide Node polyfills (e.g CRA, Vite, etc.)
-    if (safeUiConfig.bufferPolyfill) window.Buffer = window.Buffer ?? Buffer
-
-    // Some bundlers may need `global` and `process.env` polyfills as well
-    // Not implemented here to avoid unexpected behaviors, but leaving example here for future reference
-    /*
-     * window.global = window.global ?? window;
-     * window.process = window.process ?? { env: {} };
-     */
+    if (safeUiConfig.bufferPolyfill && !window.Buffer) {
+      window.Buffer = Buffer
+    }
   }
 
   const [ckTheme, setTheme] = useState<Theme>(safeUiConfig.theme ?? 'auto')
@@ -248,9 +172,8 @@ export const OpenfortProvider = ({
   const [ckCustomTheme, setCustomTheme] = useState<CustomTheme | undefined>(safeUiConfig.customTheme ?? {})
   const [ckLang, setLang] = useState<Languages>('en-US')
   const [open, setOpenWithoutHistory] = useState<boolean>(false)
-  const [connector, setConnector] = useState<ContextValue['connector']>({
-    id: '',
-  })
+  const initialConnector: ContextValue['connector'] = { id: '' }
+  const [connector, setConnector] = useState<ContextValue['connector']>(initialConnector)
   const [route, setRoute] = useState<RouteOptions>({ route: routes.LOADING })
   const [routeHistory, setRouteHistory] = useState<RouteOptions[]>([])
 
@@ -263,12 +186,12 @@ export const OpenfortProvider = ({
   const [buyForm, setBuyForm] = useState<BuyFormState>(defaultBuyFormState)
   const [headerLeftSlot, setHeaderLeftSlot] = useState<React.ReactNode | null>(null)
 
-  const setOpen = (value: boolean) => {
+  const setOpen = useCallback((value: boolean) => {
     if (value) {
       setRouteHistory([])
     }
     setOpenWithoutHistory(value)
-  }
+  }, [])
 
   // Include Google Font that is needed for a themes
   useThemeFont(safeUiConfig.embedGoogleFonts ? ckTheme : ('' as Theme))
@@ -278,9 +201,9 @@ export const OpenfortProvider = ({
   useEffect(() => setMode(safeUiConfig.mode ?? 'auto'), [safeUiConfig.mode])
   useEffect(() => setCustomTheme(safeUiConfig.customTheme ?? {}), [safeUiConfig.customTheme])
   useEffect(() => setLang(safeUiConfig.language || 'en-US'), [safeUiConfig.language])
-  useEffect(() => setErrorMessage(null), [route, open])
+  useEffect(() => setErrorMessage(null), [])
 
-  // Check if chain is supported, elsewise redirect to switches page
+  // Check if chain is supported`, elsewise redirect to switches page
   // Uses safe hooks that work without WagmiProvider (for Solana-only mode)
   const { chain, isConnected } = useAccountSafe()
   const isChainSupported = useChainIsSupportedSafe(chain?.id)
@@ -291,7 +214,7 @@ export const OpenfortProvider = ({
       setOpen(true)
       setRoute({ route: routes.SWITCHNETWORKS })
     }
-  }, [hasWagmi, isConnected, isChainSupported, chain, route, open])
+  }, [hasWagmi, isConnected, isChainSupported, safeUiConfig.enforceSupportedChains, setOpen, setRoute])
 
   // Ethereum-specific: autoconnect to Family wallet if available
   useEffect(() => {
@@ -306,7 +229,7 @@ export const OpenfortProvider = ({
 
   useEffect(() => {
     setHeaderLeftSlot(null)
-  }, [route.route])
+  }, [])
 
   const typedSetRoute = useCallback(
     (options: SetRouteOptions) => {
@@ -343,48 +266,79 @@ export const OpenfortProvider = ({
 
   const [onBack, setOnBack] = useState<(() => void) | null>(null)
 
-  const value: ContextValue = {
-    setTheme,
-    mode: ckMode,
-    setMode,
-    setCustomTheme,
-    lang: ckLang,
-    setLang,
-    open,
-    setOpen,
-    route,
-    setRoute: typedSetRoute,
-    onBack,
-    setOnBack,
-    setPreviousRoute,
-    routeHistory,
-    setRouteHistory,
-    previousRoute: routeHistory.length > 1 ? routeHistory[routeHistory.length - 2] : null,
-    connector,
-    setConnector,
-    onConnect,
-    onDisconnect,
-    // Other configuration
-    uiConfig: safeUiConfig,
-    errorMessage,
-    debugMode: debugModeOptions,
-    emailInput,
-    setEmailInput,
-    phoneInput,
-    setPhoneInput,
-    resize,
-    triggerResize,
-    publishableKey,
-    walletConfig,
-    overrides,
-    thirdPartyAuth,
-    sendForm,
-    setSendForm,
-    buyForm,
-    setBuyForm,
-    headerLeftSlot,
-    setHeaderLeftSlot,
-  }
+  const value: ContextValue = useMemo(
+    () => ({
+      chainType,
+      setTheme,
+      mode: ckMode,
+      setMode,
+      setCustomTheme,
+      lang: ckLang,
+      setLang,
+      open,
+      setOpen,
+      route,
+      setRoute: typedSetRoute,
+      onBack,
+      setOnBack,
+      headerLeftSlot,
+      setHeaderLeftSlot,
+      previousRoute: routeHistory.length > 1 ? routeHistory[routeHistory.length - 2] : null,
+      setPreviousRoute,
+      routeHistory,
+      setRouteHistory,
+      connector,
+      setConnector,
+      errorMessage,
+      debugMode: debugModeOptions,
+      resize,
+      triggerResize,
+      publishableKey,
+      uiConfig: safeUiConfig,
+      walletConfig,
+      overrides,
+      thirdPartyAuth,
+      emailInput,
+      setEmailInput,
+      phoneInput,
+      setPhoneInput,
+      sendForm,
+      setSendForm,
+      buyForm,
+      setBuyForm,
+      onConnect,
+      onDisconnect,
+    }),
+    [
+      chainType,
+      ckMode,
+      ckLang,
+      open,
+      setOpen,
+      route,
+      typedSetRoute,
+      onBack,
+      setPreviousRoute,
+      routeHistory,
+      connector,
+      errorMessage,
+      debugModeOptions,
+      resize,
+      triggerResize,
+      safeUiConfig,
+      publishableKey,
+      walletConfig,
+      overrides,
+      thirdPartyAuth,
+      emailInput,
+      phoneInput,
+      sendForm,
+      buyForm,
+      headerLeftSlot,
+      onConnect,
+      onDisconnect,
+    ]
+  )
 
   // Wrap children with Solana provider if configured
   const wrappedChildren = hasSolana ? (
@@ -396,60 +350,58 @@ export const OpenfortProvider = ({
   return createElement(
     Openfortcontext.Provider,
     { value },
-    <Web3ContextProvider>
-      <CoreOpenfortProvider
-        openfortConfig={{
-          baseConfiguration: {
-            publishableKey,
-          },
-          shieldConfiguration: walletConfig
-            ? {
-                shieldPublishableKey: walletConfig.shieldPublishableKey,
-                debug: debugModeOptions.shieldDebugMode,
-              }
-            : undefined,
-          debug: debugModeOptions.openfortCoreDebugMode,
-          overrides,
-          thirdPartyAuth,
-        }}
-        onConnect={onConnect}
-        onDisconnect={onDisconnect}
-      >
-        {debugModeOptions.debugRoutes && (
-          <pre
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              fontSize: '14px',
-              color: 'gray',
-              background: 'white',
-              zIndex: 9999,
-            }}
-          >
-            {
-              JSON.stringify(
-                routeHistory.map((item) =>
-                  Object.fromEntries(
-                    Object.entries(item).map(([key, value]) => [
-                      key,
-                      typeof value === 'object' && value !== null ? '[object]' : value,
-                    ])
-                  )
-                ),
-                null,
-                2
-              ) // For debugging purposes
+    <CoreOpenfortProvider
+      openfortConfig={{
+        baseConfiguration: {
+          publishableKey,
+        },
+        shieldConfiguration: walletConfig
+          ? {
+              shieldPublishableKey: walletConfig.shieldPublishableKey,
+              debug: debugModeOptions.shieldDebugMode,
             }
-          </pre>
-        )}
-        {/* <ThemeProvider
+          : undefined,
+        debug: debugModeOptions.openfortCoreDebugMode,
+        overrides,
+        thirdPartyAuth,
+      }}
+      onConnect={onConnect}
+      onDisconnect={onDisconnect}
+    >
+      {debugModeOptions.debugRoutes && (
+        <pre
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            fontSize: '14px',
+            color: 'gray',
+            background: 'white',
+            zIndex: 9999,
+          }}
+        >
+          {
+            JSON.stringify(
+              routeHistory.map((item) =>
+                Object.fromEntries(
+                  Object.entries(item).map(([key, value]) => [
+                    key,
+                    typeof value === 'object' && value !== null ? '[object]' : value,
+                  ])
+                )
+              ),
+              null,
+              2
+            ) // For debugging purposes
+          }
+        </pre>
+      )}
+      {/* <ThemeProvider
             theme={defaultTheme}
           > */}
-        {wrappedChildren}
-        <ConnectKitModal lang={ckLang} theme={ckTheme} mode={safeUiConfig.mode ?? ckMode} customTheme={ckCustomTheme} />
-        {/* </ThemeProvider> */}
-      </CoreOpenfortProvider>
-    </Web3ContextProvider>
+      {wrappedChildren}
+      <ConnectKitModal lang={ckLang} theme={ckTheme} mode={safeUiConfig.mode ?? ckMode} customTheme={ckCustomTheme} />
+      {/* </ThemeProvider> */}
+    </CoreOpenfortProvider>
   )
 }

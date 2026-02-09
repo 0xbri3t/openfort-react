@@ -5,18 +5,20 @@
  * This is the Ethereum-specific view extracted from the original Connected component.
  */
 
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { AnimatePresence, motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { formatUnits } from 'viem'
-
 import { BuyIcon, ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
 import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
 import { useChains } from '../../../hooks/useChains'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
+import { useChain } from '../../../shared/hooks/useChain'
 import { nFormatter, truncateEthAddress } from '../../../utils'
+import { logger } from '../../../utils/logger'
 import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
 import { TextLinkButton } from '../../Common/Button/styles'
@@ -53,13 +55,20 @@ const EthereumConnected: React.FC = () => {
   const address = isConnected ? (wallet.address as `0x${string}`) : undefined
   const chainId = isConnected ? wallet.chainId : undefined
 
+  const { chainType } = useChain()
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && chainType !== ChainTypeEnum.EVM) {
+      logger.warn(
+        '[EthereumConnected] This component is for EVM only. Current chainType is not EVM; ensure OpenfortProvider uses chainType={ChainTypeEnum.EVM}.'
+      )
+    }
+  }, [chainType])
   const chains = useChains()
   const chain = chains.find((c) => c.id === chainId)
 
-  // ENS resolution using new hook (always call, use enabled option)
   const identity = useResolvedIdentity({
     address: address ?? '',
-    chainType: 'ethereum',
+    chainType,
     enabled: isConnected && !!address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined

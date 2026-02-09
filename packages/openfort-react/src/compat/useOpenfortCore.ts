@@ -18,8 +18,8 @@ let hasWarned = false
  * - `useConnectUI()` for modal/navigation state
  * - `useAuth()` for user authentication state
  * - `useOpenfortClient()` for SDK access
- * - `useEthereumWallet()` for Ethereum wallet operations
- * - `useSolanaWallet()` for Solana wallet operations
+ * - `useEthereumEmbeddedWallet()` for Ethereum wallet operations
+ * - `useSolanaEmbeddedWallet()` for Solana wallet operations
  *
  * @example Migration example:
  * ```tsx
@@ -40,8 +40,8 @@ export function useOpenfortCore(): ContextValue | null {
         '  - Modal/navigation state: useConnectUI()\n' +
         '  - User authentication: useAuth()\n' +
         '  - SDK access: useOpenfortClient()\n' +
-        '  - Ethereum wallet: useEthereumWallet()\n' +
-        '  - Solana wallet: useSolanaWallet()\n' +
+        '  - Ethereum wallet: useEthereumEmbeddedWallet()\n' +
+        '  - Solana wallet: useSolanaEmbeddedWallet()\n' +
         'See: https://openfort.io/docs/migration/v3'
     )
     hasWarned = true

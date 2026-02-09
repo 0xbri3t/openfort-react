@@ -4,16 +4,19 @@ import type React from 'react'
 import { createElement, type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAccount, useChainId, useConfig, useDisconnect } from 'wagmi'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
+import { queryKeys } from '../core/queryKeys'
+import type { WalletReadiness } from '../core/types'
 import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
 import { useConnect } from '../hooks/useConnect'
 import { useConnectCallback, type useConnectCallbackProps } from '../hooks/useConnectCallback'
 import type { UserAccount } from '../openfortCustomTypes'
+import { OpenfortError, OpenfortReactErrorType } from '../types'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
 import { Context } from './context'
 import { createOpenfortClient, setDefaultClient } from './core'
 
-export type ContextValue = {
+export type OpenfortCoreContextValue = {
   signUpGuest: () => Promise<void>
   embeddedState: EmbeddedState
 
@@ -25,13 +28,19 @@ export type ContextValue = {
 
   embeddedAccounts?: EmbeddedAccount[]
   isLoadingAccounts: boolean
+  walletReadiness: WalletReadiness
 
   logout: () => void
 
-  updateEmbeddedAccounts: (options?: RefetchOptions) => Promise<QueryObserverResult<EmbeddedAccount[], Error>>
+  updateEmbeddedAccounts: (
+    options?: RefetchOptions & { silent?: boolean }
+  ) => Promise<QueryObserverResult<EmbeddedAccount[], Error>>
 
   walletStatus: WalletFlowStatus
   setWalletStatus: (status: WalletFlowStatus) => void
+
+  pollingError: OpenfortError | null
+  retryPolling: () => void
 
   client: Openfort
 }
@@ -80,10 +89,13 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       !openfortConfig.shieldConfiguration?.passkeyRpId &&
       typeof window !== 'undefined'
     ) {
-      openfortConfig.shieldConfiguration = {
-        passkeyRpId: window.location.hostname,
-        passkeyRpName: document.title || 'Openfort DApp',
-        ...openfortConfig.shieldConfiguration,
+      const loc = window.location
+      if (loc) {
+        openfortConfig.shieldConfiguration = {
+          passkeyRpId: loc.hostname,
+          passkeyRpName: typeof document !== 'undefined' ? document.title || 'Openfort DApp' : 'Openfort DApp',
+          ...openfortConfig.shieldConfiguration,
+        }
       }
     }
 
@@ -95,8 +107,12 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   // ---- Embedded state ----
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
-  const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const [pollingError, setPollingError] = useState<OpenfortError | null>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const previousEmbeddedState = useRef<EmbeddedState>(EmbeddedState.NONE)
+  const retryCountRef = useRef(0)
+  const POLLING_RETRIES = 3
+  const POLLING_BASE_MS = 2000
 
   const pollEmbeddedState = useCallback(async () => {
     if (!openfort) return
@@ -104,11 +120,38 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     try {
       const state = await openfort.embeddedWallet.getEmbeddedState()
       setEmbeddedState(state)
+      setPollingError(null)
+      retryCountRef.current = 0
     } catch (error) {
       logger.error('Error checking embedded state with Openfort:', error)
-      if (pollingRef.current) clearInterval(pollingRef.current)
+      if (retryCountRef.current < POLLING_RETRIES) {
+        retryCountRef.current += 1
+        const delay = POLLING_BASE_MS * 2 ** retryCountRef.current
+        setTimeout(pollEmbeddedState, delay)
+      } else {
+        setPollingError(
+          error instanceof OpenfortError
+            ? error
+            : new OpenfortError('Embedded state polling failed', OpenfortReactErrorType.UNEXPECTED_ERROR, {
+                error,
+              })
+        )
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current)
+          pollingRef.current = null
+        }
+      }
     }
   }, [openfort])
+
+  const retryPolling = useCallback(() => {
+    retryCountRef.current = 0
+    setPollingError(null)
+    pollEmbeddedState()
+    if (!pollingRef.current) {
+      pollingRef.current = setInterval(pollEmbeddedState, 300)
+    }
+  }, [pollEmbeddedState])
 
   // Only log embedded state when it changes
   useEffect(() => {
@@ -124,8 +167,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [pollEmbeddedState])
 
   const stopPollingEmbeddedState = useCallback(() => {
-    clearInterval(pollingRef.current || undefined)
-    pollingRef.current = null
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
+    }
   }, [])
 
   useEffect(() => {
@@ -171,21 +216,25 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     [openfort]
   )
 
+  const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
+
+  const embeddedAccountsAccountType =
+    walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT
+
   // Embedded accounts list. Will reset on logout.
   const {
     data: embeddedAccounts,
-    refetch: fetchEmbeddedAccounts,
-    isPending: isLoadingAccounts,
+    refetch: refetchEmbeddedAccounts,
+    isPending: isAccountsPending,
   } = useQuery({
-    queryKey: ['openfortEmbeddedAccountsList'],
+    queryKey: queryKeys.accounts.embedded(embeddedAccountsAccountType),
     queryFn: async () => {
       try {
         return await openfort.embeddedWallet.list({
           limit: 100,
-          // If its EOA we want all accounts, otherwise we want only smart accounts
-          accountType: walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT,
+          accountType: embeddedAccountsAccountType,
         })
-      } catch (error: any) {
+      } catch (error: unknown) {
         handleOAuthConfigError(error)
         throw error
       }
@@ -194,6 +243,20 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     refetchOnWindowFocus: false,
     retry: false,
   })
+
+  const fetchEmbeddedAccounts = useCallback(
+    async (options?: RefetchOptions & { silent?: boolean }) => {
+      if (options?.silent) setSilentRefetchInProgress(true)
+      try {
+        return await refetchEmbeddedAccounts(options)
+      } finally {
+        if (options?.silent) setSilentRefetchInProgress(false)
+      }
+    },
+    [refetchEmbeddedAccounts]
+  )
+
+  const isLoadingAccounts = isAccountsPending && !silentRefetchInProgress
 
   // Update ethereum provider when chainId changes
   useEffect(() => {
@@ -304,7 +367,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     logger.log('Logging out...')
     await openfort.auth.logout()
     await disconnectAsync()
-    queryClient.resetQueries({ queryKey: ['openfortEmbeddedAccountsList'] })
+    queryClient.resetQueries({ queryKey: queryKeys.accounts.all() })
     reset()
     startPollingEmbeddedState()
   }, [openfort])
@@ -350,7 +413,14 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const needsRecovery = embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED && !address
 
-  const value: ContextValue = {
+  const walletReadiness = useMemo((): WalletReadiness => {
+    if (isLoadingAccounts) return 'loading'
+    if (!embeddedAccounts || embeddedAccounts.length === 0) return 'not-created'
+    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) return 'needs-recovery'
+    return 'ready'
+  }, [isLoadingAccounts, embeddedAccounts, embeddedState])
+
+  const value: OpenfortCoreContextValue = {
     signUpGuest,
     embeddedState,
     logout,
@@ -364,9 +434,13 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
     embeddedAccounts,
     isLoadingAccounts,
+    walletReadiness,
 
     walletStatus,
     setWalletStatus,
+
+    pollingError,
+    retryPolling,
 
     client: openfort,
   }

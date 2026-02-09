@@ -4,7 +4,7 @@
  * Address formatting utilities for different chain types.
  */
 
-import type { ChainType } from './chains'
+import { ChainTypeEnum } from '@openfort/openfort-js'
 
 /**
  * Format EVM address: 0x1234...abcd
@@ -22,15 +22,15 @@ export function formatSolanaAddress(address: string): string {
   return `${address.slice(0, 4)}...${address.slice(-4)}`
 }
 
-export const addressFormatters: Record<ChainType, (address: string) => string> = {
-  ethereum: formatEVMAddress,
-  solana: formatSolanaAddress,
+export const addressFormatters: Record<ChainTypeEnum, (address: string) => string> = {
+  [ChainTypeEnum.EVM]: formatEVMAddress,
+  [ChainTypeEnum.SVM]: formatSolanaAddress,
 }
 
 /**
  * Format address based on chain type
  */
-export function formatAddress(address: string, chainType: ChainType): string {
+export function formatAddress(address: string, chainType: ChainTypeEnum): string {
   const formatter = addressFormatters[chainType]
   return formatter(address)
 }

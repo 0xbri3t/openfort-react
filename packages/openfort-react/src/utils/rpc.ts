@@ -4,7 +4,7 @@
  * Default RPC URLs and chain metadata.
  */
 
-import type { SolanaCluster } from './chains'
+import type { SolanaCluster } from '../solana/types'
 
 /**
  * Default Ethereum RPC URLs by chain ID
@@ -22,9 +22,9 @@ export const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
 }
 
 /**
- * Default Solana RPC URLs by cluster
+ * Default Solana RPC URLs by cluster (custom uses devnet as fallback)
  */
-export const DEFAULT_SOLANA_RPC_URLS: Record<SolanaCluster, string> = {
+export const DEFAULT_SOLANA_RPC_URLS: Record<Exclude<SolanaCluster, 'custom'>, string> = {
   'mainnet-beta': 'https://api.mainnet-beta.solana.com',
   devnet: 'https://api.devnet.solana.com',
   testnet: 'https://api.testnet.solana.com',
@@ -43,6 +43,7 @@ export function getDefaultEthereumRpcUrl(chainId: number): string {
  * Falls back to mainnet-beta if cluster not found
  */
 export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string {
+  if (cluster === 'custom') return DEFAULT_SOLANA_RPC_URLS.devnet
   return DEFAULT_SOLANA_RPC_URLS[cluster] ?? DEFAULT_SOLANA_RPC_URLS['mainnet-beta']
 }
 

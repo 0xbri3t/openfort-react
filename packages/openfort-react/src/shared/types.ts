@@ -32,16 +32,16 @@ export interface BaseWalletActions<
   setActive(options: TSetActiveOptions): Promise<void>
 
   /** Update recovery method */
-  setRecovery(options: BaseSetRecoveryOptions): Promise<void>
+  setRecovery(options: SetRecoveryOptions): Promise<void>
 
   /** Export the private key (requires user confirmation) */
   exportPrivateKey(): Promise<string>
 }
 
 /**
- * Base options for setting recovery method
+ * Options for setting recovery method (canonical).
  */
-export type BaseSetRecoveryOptions = {
+export type SetRecoveryOptions = {
   previousRecovery: RecoveryParams
   newRecovery: RecoveryParams
 }
@@ -58,25 +58,6 @@ export type WalletStatus =
   | 'needs-recovery'
   | 'connected'
   | 'error'
-
-/**
- * Chain mode detected by the provider
- */
-export type ChainMode = 'ethereum-only' | 'solana-only' | 'multi-chain'
-
-/**
- * Available chains result from useAvailableChains hook
- */
-export type AvailableChainsResult = {
-  /** Whether Ethereum is available (EthereumContext present) */
-  hasEthereum: boolean
-  /** Whether Solana is available (SolanaContext present) */
-  hasSolana: boolean
-  /** List of available chain identifiers */
-  availableChains: readonly ('ethereum' | 'solana')[]
-  /** Current chain mode */
-  mode: ChainMode
-}
 
 /**
  * Base create wallet options (shared between chains)

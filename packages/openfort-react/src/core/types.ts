@@ -106,6 +106,12 @@ export type CoreContextValue = {
 }
 
 /**
+ * Wallet readiness for onboarding flows.
+ * Use with useOpenfort() to decide: create wallet vs recovery form vs dashboard.
+ */
+export type WalletReadiness = 'not-created' | 'needs-recovery' | 'ready' | 'loading'
+
+/**
  * Standard async operation status
  */
 export type AsyncStatus = 'idle' | 'loading' | 'success' | 'error'

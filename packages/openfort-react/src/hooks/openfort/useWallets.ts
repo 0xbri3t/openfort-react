@@ -13,6 +13,7 @@ import { type Connector, useAccount, useChainId, useDisconnect, useSwitchChain }
 import { type GetEncryptionSessionParams, routes, UIAuthProvider } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
+import { queryKeys } from '../../core/queryKeys'
 import { useOpenfortCore, useWalletStatus } from '../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
@@ -598,14 +599,14 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         let hasToSwitchChain = false
 
         try {
+          const accountType =
+            walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT
           const embeddedAccounts = await queryClient.ensureQueryData<EmbeddedAccount[]>({
-            queryKey: ['openfortEmbeddedAccountsList'],
+            queryKey: queryKeys.accounts.embedded(accountType),
             queryFn: () =>
               client.embeddedWallet.list({
                 limit: 100,
-                // If its EOA we want all accounts, otherwise we want only smart accounts
-                accountType:
-                  walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT,
+                accountType,
               }),
           })
           let walletAddress = optionsObject.address
@@ -848,7 +849,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
           status: 'success',
         })
 
-        queryClient.invalidateQueries({ queryKey: ['openfortEmbeddedAccountsList'] })
+        queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all() })
         return onSuccess({
           hookOptions,
           options,

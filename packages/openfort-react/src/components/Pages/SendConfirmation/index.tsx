@@ -5,19 +5,21 @@
  * Uses viem-based hooks for balance, transactions, and receipts.
  */
 
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { Address } from 'viem'
 import { encodeFunctionData, isAddress, parseUnits } from 'viem'
 import { TickIcon } from '../../../assets/icons'
 import { erc20Abi } from '../../../constants/erc20'
 import { EthereumContext } from '../../../ethereum/EthereumContext'
+import { useEthereumSendTransaction } from '../../../ethereum/hooks/useEthereumSendTransaction'
+import { useEthereumTokenBalance } from '../../../ethereum/hooks/useEthereumTokenBalance'
+import { useEthereumWaitForTransactionReceipt } from '../../../ethereum/hooks/useEthereumWaitForTransactionReceipt'
+import { useEthereumWriteContract } from '../../../ethereum/hooks/useEthereumWriteContract'
 import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
 import { useBalance } from '../../../hooks/useBalance'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
-import { useSendTransaction } from '../../../hooks/useSendTransaction'
-import { useTokenBalance } from '../../../hooks/useTokenBalance'
-import { useWaitForTransactionReceipt } from '../../../hooks/useWaitForTransactionReceipt'
-import { useWriteContract } from '../../../hooks/useWriteContract'
+import { useChain } from '../../../shared/hooks/useChain'
 import { truncateEthAddress } from '../../../utils'
 import { parseTransactionError } from '../../../utils/errorHandling'
 import { logger } from '../../../utils/logger'
@@ -73,12 +75,11 @@ function isTestnetChain(chainId: number): boolean {
 }
 
 const SendConfirmation = () => {
-  // Use wagmi-free hooks
   const wallet = useConnectedWallet()
+  const { chainType } = useChain()
   const ethereumContext = useContext(EthereumContext)
   const { sendForm, setRoute, triggerResize, walletConfig } = useOpenfort()
 
-  // Derive address and chainId from new hooks
   const address = wallet.status === 'connected' ? (wallet.address as `0x${string}`) : undefined
   const chainId = ethereumContext?.chainId
 
@@ -110,18 +111,18 @@ const SendConfirmation = () => {
 
   const isErc20 = token.type === 'erc20'
 
-  // Native balance using wagmi-free hook
   const nativeBalance = useBalance({
     address: address ?? '',
-    chainType: 'ethereum',
+    chainType: wallet.status === 'connected' ? wallet.chainType : chainType,
     chainId: chainId ?? 1,
+    cluster: wallet.status === 'connected' && wallet.chainType === ChainTypeEnum.SVM ? wallet.cluster : 'mainnet-beta',
     enabled: !!address && !isErc20,
   })
 
   const refetchNativeBalance = nativeBalance.refetch
 
   // ERC20 balance using wagmi-free hook (skipped when native send; no placeholder address)
-  const erc20Balance = useTokenBalance({
+  const erc20Balance = useEthereumTokenBalance({
     tokenAddress: isErc20 ? (token.address as `0x${string}`) : undefined,
     ownerAddress: address,
     chainId: chainId ?? 1,
@@ -167,8 +168,13 @@ const SendConfirmation = () => {
     data: nativeTxHash,
     isPending: isNativePending,
     error: nativeError,
-  } = useSendTransaction()
-  const { writeContractAsync, data: erc20TxHash, isPending: isTokenPending, error: erc20Error } = useWriteContract()
+  } = useEthereumSendTransaction()
+  const {
+    writeContractAsync,
+    data: erc20TxHash,
+    isPending: isTokenPending,
+    error: erc20Error,
+  } = useEthereumWriteContract()
 
   const transactionHash = nativeTxHash ?? erc20TxHash
 
@@ -184,7 +190,7 @@ const SendConfirmation = () => {
       : undefined
 
   // Wait for transaction receipt using wagmi-free hook
-  const receiptState = useWaitForTransactionReceipt({
+  const receiptState = useEthereumWaitForTransactionReceipt({
     hash: transactionHash,
     chainId,
     enabled: Boolean(transactionHash),

@@ -1,9 +1,11 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
+import { address, createSolanaRpc } from '@solana/kit'
 import { useQuery } from '@tanstack/react-query'
 import { createPublicClient, formatEther, http } from 'viem'
 
 import { useCoreContext } from '../core/CoreContext'
 import { lamportsToSol } from '../solana/hooks/utils'
-import type { ChainType, SolanaCluster } from '../utils/chains'
+import type { SolanaCluster } from '../solana/types'
 import { getDefaultEthereumRpcUrl, getDefaultSolanaRpcUrl, getNativeCurrency } from '../utils/rpc'
 
 export type BalanceState =
@@ -16,7 +18,7 @@ export interface UseBalanceOptions {
   /** Address to fetch balance for */
   address: string
   /** Chain type */
-  chainType: ChainType
+  chainType: ChainTypeEnum
   /** Ethereum chain ID (default: 1) */
   chainId?: number
   /** Solana cluster (default: mainnet-beta) */
@@ -30,65 +32,27 @@ export interface UseBalanceOptions {
 }
 
 type BalanceResult = { value: bigint; formatted: string; symbol: string; decimals: number }
-type BalanceFetcher = (address: string, rpcUrl: string, commitment?: string) => Promise<BalanceResult>
 
-const balanceFetchers: Record<ChainType, (chainId: number, cluster: SolanaCluster) => BalanceFetcher> = {
-  ethereum: (chainId) => async (address, rpcUrl) => {
-    const client = createPublicClient({ transport: http(rpcUrl) })
-    const balance = await client.getBalance({ address: address as `0x${string}` })
-    const { symbol, decimals } = getNativeCurrency(chainId)
-    return {
-      value: balance,
-      formatted: formatEther(balance),
-      symbol,
-      decimals,
-    }
-  },
-
-  solana:
-    () =>
-    async (address, rpcUrl, commitment = 'confirmed') => {
-      // Use fetch-based RPC call (no @solana/web3.js dependency)
-      const response = await fetch(rpcUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getBalance',
-          params: [address, { commitment }],
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`RPC request failed: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-      if (data.error) {
-        throw new Error(data.error.message || 'RPC error')
-      }
-
-      const lamports = BigInt(data.result.value)
-      return {
-        value: lamports,
-        formatted: lamportsToSol(lamports).toFixed(9),
-        symbol: 'SOL',
-        decimals: 9,
-      }
-    },
+async function fetchEvmBalance(address: string, rpcUrl: string, chainId: number): Promise<BalanceResult> {
+  const client = createPublicClient({ transport: http(rpcUrl) })
+  const balance = await client.getBalance({ address: address as `0x${string}` })
+  const { symbol, decimals } = getNativeCurrency(chainId)
+  return { value: balance, formatted: formatEther(balance), symbol, decimals }
 }
 
-const rpcResolvers: Record<
-  ChainType,
-  (
-    config: { rpcUrls?: { ethereum?: Record<number, string>; solana?: Record<string, string> } },
-    chainId: number,
-    cluster: SolanaCluster
-  ) => string
-> = {
-  ethereum: (config, chainId) => config.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId),
-  solana: (config, _chainId, cluster) => config.rpcUrls?.solana?.[cluster] ?? getDefaultSolanaRpcUrl(cluster),
+async function fetchSolanaBalance(
+  addressStr: string,
+  rpcUrl: string,
+  commitment: 'processed' | 'confirmed' | 'finalized'
+): Promise<BalanceResult> {
+  const rpc = createSolanaRpc(rpcUrl)
+  const { value: lamports } = await rpc.getBalance(address(addressStr), { commitment }).send()
+  return {
+    value: BigInt(lamports),
+    formatted: lamportsToSol(BigInt(lamports)).toFixed(9),
+    symbol: 'SOL',
+    decimals: 9,
+  }
 }
 
 /** Hook for fetching native token balance. */
@@ -104,13 +68,19 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
   } = options
 
   const { config } = useCoreContext()
-  const rpcUrl = rpcResolvers[chainType](config, chainId, cluster)
+  const rpcUrl =
+    chainType === ChainTypeEnum.EVM
+      ? (config.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId))
+      : (config.rpcUrls?.solana?.[cluster] ?? getDefaultSolanaRpcUrl(cluster))
 
   const isEnabled = enabled && !!address && address.length > 0
 
   const query = useQuery({
     queryKey: ['balance', chainType, address, chainId, cluster],
-    queryFn: () => balanceFetchers[chainType](chainId, cluster)(address, rpcUrl, commitment),
+    queryFn: () =>
+      chainType === ChainTypeEnum.EVM
+        ? fetchEvmBalance(address, rpcUrl, chainId)
+        : fetchSolanaBalance(address, rpcUrl, commitment),
     enabled: isEnabled,
     refetchInterval,
   })

@@ -7,6 +7,9 @@ import type { getAssets } from 'viem/_types/experimental/erc7811/actions/getAsse
 import type { UserWallet } from '../../hooks/openfort/useWallets'
 import type { UserAccount } from '../../openfortCustomTypes'
 import type { SolanaConfig } from '../../solana/types'
+
+export type { SolanaUIOptions } from '../../solana/types'
+
 import type { CustomAvatarProps, CustomTheme, Languages, Mode, Theme } from '../../types'
 
 export const routes = {
@@ -192,8 +195,6 @@ type CommonWalletConfig = {
    *   }
    * }}
    * ```
-   *
-   * @see RFC-0001 Section 1.5
    */
   solana?: SolanaConfig
 }

@@ -9,6 +9,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
+import { queryKeys } from '../../core/queryKeys'
 import { useSolanaContext } from '../providers/SolanaContextProvider'
 import { lamportsToSol } from './utils'
 
@@ -48,7 +49,7 @@ export function useSolanaBalance(address: string | undefined, options?: UseSolan
   const { rpcUrl, commitment } = useSolanaContext()
 
   return useQuery({
-    queryKey: ['solana', 'balance', address, rpcUrl, commitment],
+    queryKey: queryKeys.solana.balance(address, rpcUrl, commitment),
     queryFn: async (): Promise<SolanaBalanceResult> => {
       if (!address) {
         throw new Error('Address is required')

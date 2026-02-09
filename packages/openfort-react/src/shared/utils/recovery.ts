@@ -8,7 +8,7 @@
 import { RecoveryMethod, type RecoveryParams } from '@openfort/openfort-js'
 
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
-import { OpenfortErrorCode, OpenfortReactError } from '../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../types'
 
 /**
  * Recovery options for wallet operations
@@ -53,12 +53,12 @@ export async function buildRecoveryParams(
     case RecoveryMethod.AUTOMATIC: {
       const accessToken = await getAccessToken()
       if (!accessToken) {
-        throw new OpenfortReactError('Access token not found', OpenfortErrorCode.NOT_AUTHENTICATED)
+        throw new OpenfortError('Access token not found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
       }
 
       const userId = await getUserId()
       if (!userId) {
-        throw new OpenfortReactError('User not found', OpenfortErrorCode.NOT_AUTHENTICATED)
+        throw new OpenfortError('User not found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
       }
 
       const encryptionSession = await getEncryptionSession({
@@ -76,7 +76,10 @@ export async function buildRecoveryParams(
 
     case RecoveryMethod.PASSWORD: {
       if (!options?.password) {
-        throw new OpenfortReactError('Password is required for PASSWORD recovery', OpenfortErrorCode.INVALID_CONFIG)
+        throw new OpenfortError(
+          'Password is required for PASSWORD recovery',
+          OpenfortReactErrorType.CONFIGURATION_ERROR
+        )
       }
       return {
         recoveryMethod: RecoveryMethod.PASSWORD,
@@ -91,7 +94,10 @@ export async function buildRecoveryParams(
     }
 
     default:
-      throw new OpenfortReactError(`Unsupported recovery method: ${recoveryMethod}`, OpenfortErrorCode.INVALID_CONFIG)
+      throw new OpenfortError(
+        `Unsupported recovery method: ${recoveryMethod}`,
+        OpenfortReactErrorType.CONFIGURATION_ERROR
+      )
   }
 }
 
@@ -108,7 +114,7 @@ async function getEncryptionSession(params: {
   const { accessToken, userId, otpCode, walletConfig } = params
 
   if (!walletConfig) {
-    throw new OpenfortReactError('Wallet config not found', OpenfortErrorCode.INVALID_CONFIG)
+    throw new OpenfortError('Wallet config not found', OpenfortReactErrorType.CONFIGURATION_ERROR)
   }
 
   // Use custom function if provided
@@ -127,16 +133,16 @@ async function getEncryptionSession(params: {
     const data = await response.json()
     if (!response.ok) {
       if (data.error === 'OTP_REQUIRED') {
-        throw new OpenfortReactError('OTP_REQUIRED', OpenfortErrorCode.AUTH_FAILED)
+        throw new OpenfortError('OTP_REQUIRED', OpenfortReactErrorType.AUTHENTICATION_ERROR)
       }
-      throw new OpenfortReactError('Failed to create encryption session', OpenfortErrorCode.WALLET_CREATION_FAILED)
+      throw new OpenfortError('Failed to create encryption session', OpenfortReactErrorType.WALLET_ERROR)
     }
 
     return data.session
   }
 
-  throw new OpenfortReactError(
+  throw new OpenfortError(
     'No encryption session method configured. Provide getEncryptionSession or createEncryptedSessionEndpoint in walletConfig.',
-    OpenfortErrorCode.INVALID_CONFIG
+    OpenfortReactErrorType.CONFIGURATION_ERROR
   )
 }

@@ -7,8 +7,7 @@
 
 import { createContext, useContext } from 'react'
 import type { BuyFormState, RouteOptions, SendFormState, SetRouteOptions } from '../components/Openfort/types'
-import { ProviderNotFoundError } from '../core/errors'
-import type { Mode, Theme } from '../types'
+import { type Mode, OpenfortError, OpenfortReactErrorType, type Theme } from '../types'
 
 /**
  * Clean UI context value for modal control, navigation, and theme management.
@@ -63,7 +62,7 @@ export const ConnectUIContext = createContext<ConnectUIValue | null>(null)
 /**
  * Access the Connect UI context for modal control, navigation, and theme.
  *
- * @throws ProviderNotFoundError if called outside of OpenfortProvider
+ * @throws OpenfortError if called outside of OpenfortProvider
  *
  * @example
  * ```tsx
@@ -79,7 +78,10 @@ export const ConnectUIContext = createContext<ConnectUIValue | null>(null)
 export function useConnectUI(): ConnectUIValue {
   const context = useContext(ConnectUIContext)
   if (!context) {
-    throw new ProviderNotFoundError('useConnectUI')
+    throw new OpenfortError(
+      'useConnectUI must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.',
+      OpenfortReactErrorType.CONFIGURATION_ERROR
+    )
   }
   return context
 }

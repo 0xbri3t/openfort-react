@@ -10,7 +10,7 @@
 
 import type { Openfort } from '@openfort/openfort-js'
 
-import { OpenfortErrorCode, OpenfortReactError } from '../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../types'
 
 import type { SignedSolanaTransaction, SolanaTransaction } from './types'
 
@@ -69,7 +69,9 @@ export async function signMessage(params: SignMessageParams): Promise<string> {
 
     return signature as string
   } catch (error) {
-    throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
+    throw error instanceof OpenfortError
+      ? error
+      : new OpenfortError('Signing failed', OpenfortReactErrorType.WALLET_ERROR, { error })
   }
 }
 
@@ -104,7 +106,9 @@ export async function signTransaction(params: SignTransactionParams): Promise<Si
       publicKey,
     }
   } catch (error) {
-    throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
+    throw error instanceof OpenfortError
+      ? error
+      : new OpenfortError('Signing failed', OpenfortReactErrorType.WALLET_ERROR, { error })
   }
 }
 
@@ -135,7 +139,9 @@ export async function signAllTransactions(params: SignAllTransactionsParams): Pr
 
     return results
   } catch (error) {
-    throw OpenfortReactError.from(error, OpenfortErrorCode.SIGNING_FAILED)
+    throw error instanceof OpenfortError
+      ? error
+      : new OpenfortError('Signing failed', OpenfortReactErrorType.WALLET_ERROR, { error })
   }
 }
 
@@ -166,5 +172,5 @@ export function getTransactionBytes(transaction: SolanaTransaction): Uint8Array 
     return transaction.serializeMessage()
   }
 
-  throw new OpenfortReactError('Unsupported Solana transaction format', OpenfortErrorCode.INVALID_CONFIG)
+  throw new OpenfortError('Unsupported Solana transaction format', OpenfortReactErrorType.CONFIGURATION_ERROR)
 }

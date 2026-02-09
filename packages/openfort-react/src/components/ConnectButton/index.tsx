@@ -8,6 +8,7 @@ import { useConnectedWallet } from '../../hooks/useConnectedWallet'
 import useIsMounted from '../../hooks/useIsMounted'
 import useLocales from '../../hooks/useLocales'
 import { useResolvedIdentity } from '../../hooks/useResolvedIdentity'
+import { useChain } from '../../shared/hooks/useChain'
 import { ResetContainer } from '../../styles'
 import type { CustomTheme, Mode, Theme } from '../../types'
 import { Balance } from '../BalanceButton'
@@ -113,7 +114,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
   const context = useOpenfort()
   const { open, close, isOpen } = useUI()
 
-  // Use new abstraction hooks (no wagmi)
+  const { chainType } = useChain()
   const wallet = useConnectedWallet()
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? (wallet.address as Hash) : undefined
@@ -121,10 +122,9 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
 
   const isChainSupported = useChainIsSupported(chainId)
 
-  // ENS resolution using new hook (always call, use enabled option)
   const identity = useResolvedIdentity({
     address: address ?? '',
-    chainType: 'ethereum',
+    chainType: isConnected ? wallet.chainType : chainType,
     enabled: isConnected && !!address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined
@@ -193,7 +193,7 @@ function OpenfortButtonInner({
   const locales = useLocales({})
   const { user } = useAuthContext()
 
-  // Use new abstraction hooks (no wagmi)
+  const { chainType } = useChain()
   const wallet = useConnectedWallet()
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? (wallet.address as `0x${string}`) : undefined
@@ -201,10 +201,9 @@ function OpenfortButtonInner({
 
   const isChainSupported = useChainIsSupported(chainId)
 
-  // ENS resolution using new hook (always call, use enabled option)
   const identity = useResolvedIdentity({
     address: address ?? '',
-    chainType: 'ethereum',
+    chainType: isConnected ? wallet.chainType : chainType,
     enabled: isConnected && !!address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined

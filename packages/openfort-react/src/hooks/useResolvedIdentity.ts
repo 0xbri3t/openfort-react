@@ -5,13 +5,13 @@
  * Uses discriminated union for type-safe status handling.
  */
 
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useQuery } from '@tanstack/react-query'
 import { createPublicClient, http } from 'viem'
 import { mainnet } from 'viem/chains'
 import { normalize } from 'viem/ens'
 
 import { useCoreContext } from '../core/CoreContext'
-import type { ChainType } from '../utils/chains'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
 
 /**
@@ -27,40 +27,24 @@ export interface UseResolvedIdentityOptions {
   /** Address to resolve (empty string if not available yet) */
   address: string
   /** Chain type for resolution */
-  chainType?: ChainType
+  chainType?: ChainTypeEnum
   /** ENS chain ID (default: 1 for mainnet) */
   ensChainId?: number
   /** Enable/disable the query (for conditional fetching without breaking React rules) */
   enabled?: boolean
 }
 
-type IdentityResolver = (address: string, rpcUrl: string) => Promise<{ name: string | null; avatar: string | null }>
-
-const resolvers: Record<ChainType, IdentityResolver> = {
-  ethereum: async (address, rpcUrl) => {
-    const client = createPublicClient({
-      chain: mainnet,
-      transport: http(rpcUrl),
-    })
-
-    // IMPORTANT: getEnsAvatar requires ENS name, not address
-    // Must fetch name first, then avatar
-    const name = await client
-      .getEnsName({
-        address: address as `0x${string}`,
-      })
-      .catch(() => null)
-
-    // Only fetch avatar if we have a name
-    const avatar = name ? await client.getEnsAvatar({ name: normalize(name) }).catch(() => null) : null
-
-    return { name, avatar }
-  },
-
-  solana: async (_address, _rpcUrl) => {
-    // TODO: Solana name service support (Bonfida SNS, etc.)
-    return { name: null, avatar: null }
-  },
+async function resolveEthereumIdentity(
+  address: string,
+  rpcUrl: string
+): Promise<{ name: string | null; avatar: string | null }> {
+  const client = createPublicClient({
+    chain: mainnet,
+    transport: http(rpcUrl),
+  })
+  const name = await client.getEnsName({ address: address as `0x${string}` }).catch(() => null)
+  const avatar = name ? await client.getEnsAvatar({ name: normalize(name) }).catch(() => null) : null
+  return { name, avatar }
 }
 
 /**
@@ -100,7 +84,7 @@ const resolvers: Record<ChainType, IdentityResolver> = {
  * ```
  */
 export function useResolvedIdentity(options: UseResolvedIdentityOptions): ResolvedIdentity {
-  const { address, chainType = 'ethereum', ensChainId = 1, enabled = true } = options
+  const { address, chainType = ChainTypeEnum.EVM, ensChainId = 1, enabled = true } = options
 
   const { config } = useCoreContext()
   const rpcUrl = config.rpcUrls?.ethereum?.[ensChainId] ?? getDefaultEthereumRpcUrl(ensChainId)
@@ -109,9 +93,12 @@ export function useResolvedIdentity(options: UseResolvedIdentityOptions): Resolv
 
   const query = useQuery({
     queryKey: ['identity', chainType, address, ensChainId],
-    queryFn: () => resolvers[chainType](address, rpcUrl),
+    queryFn: () =>
+      chainType === ChainTypeEnum.EVM
+        ? resolveEthereumIdentity(address, rpcUrl)
+        : Promise.resolve({ name: null, avatar: null }),
     enabled: isEnabled,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   })
 
   // Discriminated union return - status-based

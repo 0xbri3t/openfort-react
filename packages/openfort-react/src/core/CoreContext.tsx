@@ -8,8 +8,8 @@
 import { Openfort, type OpenfortSDKConfiguration } from '@openfort/openfort-js'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createContext, type PropsWithChildren, type ReactNode, useContext, useMemo } from 'react'
-
-import { ConfigurationError, ProviderNotFoundError } from './errors'
+import { OpenfortError, OpenfortReactErrorType } from '../types'
+import { ConfigurationError } from './errors'
 import type { CoreContextValue, CoreProviderConfig, OpenfortConfig } from './types'
 
 const CoreContext = createContext<CoreContextValue | null>(null)
@@ -42,10 +42,12 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
     ? {
         shieldPublishableKey: config.shieldPublishableKey,
         // Default passkey config for browser environment
-        ...(typeof window !== 'undefined' && {
-          passkeyRpId: window.location.hostname,
-          passkeyRpName: document.title || 'Openfort DApp',
-        }),
+        ...(typeof window !== 'undefined' && window.location
+          ? {
+              passkeyRpId: window.location.hostname,
+              passkeyRpName: typeof document !== 'undefined' ? document.title || 'Openfort DApp' : 'Openfort DApp',
+            }
+          : {}),
       }
     : undefined
 
@@ -140,7 +142,10 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
 export function useCoreContext(): CoreContextValue {
   const context = useContext(CoreContext)
   if (!context) {
-    throw new ProviderNotFoundError('useCoreContext')
+    throw new OpenfortError(
+      'useCoreContext must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.',
+      OpenfortReactErrorType.CONFIGURATION_ERROR
+    )
   }
   return context
 }

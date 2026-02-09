@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 
 export function useOnUserReturn(callback: () => void) {
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         callback()

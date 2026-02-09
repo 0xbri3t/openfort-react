@@ -10,6 +10,7 @@ import { type RequestWalletRecoverOTPResponse, type UserWallet, useWallets } fro
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useRouteProps } from '../../../hooks/useRouteProps'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { useChain } from '../../../shared/hooks/useChain'
 import { truncateEthAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
@@ -66,10 +67,10 @@ const RecoverPasswordWallet = ({
     if (recoveryError) triggerResize()
   }, [recoveryError])
 
-  // Use new abstraction hooks (no wagmi)
+  const { chainType } = useChain()
   const identity = useResolvedIdentity({
     address: wallet.address,
-    chainType: 'ethereum',
+    chainType,
     enabled: !!wallet.address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined
@@ -168,10 +169,10 @@ const RecoverPasskeyWallet = ({
     if (recoveryError) triggerResize()
   }, [recoveryError])
 
-  // Use new abstraction hooks (no wagmi)
+  const { chainType } = useChain()
   const identity = useResolvedIdentity({
     address: wallet.address,
-    chainType: 'ethereum',
+    chainType,
     enabled: !!wallet.address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined
@@ -266,10 +267,10 @@ const RecoverAutomaticWallet = ({
     }
   }
 
-  // Use new abstraction hooks (no wagmi)
+  const { chainType } = useChain()
   const identity = useResolvedIdentity({
     address: walletAddress,
-    chainType: 'ethereum',
+    chainType,
     enabled: !!walletAddress,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined

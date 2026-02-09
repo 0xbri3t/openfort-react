@@ -4,18 +4,44 @@
  * These types define the Solana wallet state machine and related interfaces.
  */
 
-import type { ChainTypeEnum, EmbeddedAccount, RecoveryParams } from '@openfort/openfort-js'
+import type { ChainTypeEnum, EmbeddedAccount, RecoveryMethod, RecoveryParams } from '@openfort/openfort-js'
+import type React from 'react'
+import type { SetRecoveryOptions as SetRecoveryOptionsBase } from '../shared/types'
 import type { OpenfortHookOptions } from '../types'
 
 /**
- * Solana cluster configuration
+ * Solana cluster identifier
  */
-export type SolanaCluster = 'mainnet-beta' | 'devnet' | 'testnet'
+export type SolanaCluster = 'mainnet-beta' | 'devnet' | 'testnet' | 'custom'
+
+/**
+ * Custom cluster entry for the cluster switcher
+ */
+export type SolanaClusterConfig = {
+  /** Display name (e.g. "My Devnet") */
+  name: string
+  /** Network identifier for explorer links etc. */
+  cluster: SolanaCluster
+  /** RPC endpoint (required for custom clusters) */
+  rpcUrl: string
+  /** Optional WebSocket URL */
+  wsUrl?: string
+}
 
 /**
  * Solana commitment level for transactions
  */
 export type SolanaCommitment = 'processed' | 'confirmed' | 'finalized'
+
+/**
+ * UI options for Solana-connected views (e.g. SolanaConnected page)
+ */
+export type SolanaUIOptions = {
+  /** When true, hide the cluster badge and switch button */
+  hideClusterSelector?: boolean
+  /** Custom avatar component; receives address for display */
+  customAvatar?: React.ComponentType<{ address: string }>
+}
 
 /**
  * Configuration for Solana support in OpenfortProvider
@@ -41,6 +67,10 @@ export type SolanaConfig = {
   rpcUrl?: string
   /** Commitment level for transactions (default: 'confirmed') */
   commitment?: SolanaCommitment
+  /** Custom cluster options for the cluster switcher */
+  customClusters?: SolanaClusterConfig[]
+  /** UI options for Solana-connected screens */
+  ui?: SolanaUIOptions
 }
 
 /**
@@ -150,12 +180,16 @@ export interface OpenfortEmbeddedSolanaWalletProvider {
  * Connected Solana embedded wallet
  */
 export type ConnectedEmbeddedSolanaWallet = {
+  /** Embedded account id (from Openfort) */
+  id: string
   /** Solana address in Base58 format */
   address: string
   /** Chain type discriminator */
   chainType: typeof ChainTypeEnum.SVM
   /** Wallet index (for multiple wallets) */
   walletIndex: number
+  /** Recovery method for this wallet */
+  recoveryMethod?: RecoveryMethod
   /** Get the Solana wallet provider */
   getProvider(): Promise<OpenfortEmbeddedSolanaWalletProvider>
 }
@@ -169,15 +203,17 @@ export type CreateSolanaWalletResult = {
 }
 
 /**
- * Options for creating a Solana embedded wallet
- *
- * Note: Solana wallets are always EOA (no Smart Accounts).
- * The same wallet works across all clusters (mainnet/devnet/testnet).
+ * Options for creating a Solana embedded wallet.
+ * Solana wallets are EOA; the same wallet works across all clusters.
  */
 export type CreateSolanaWalletOptions = {
-  /** Recovery password for key encryption */
+  /** Recovery method for key encryption */
+  recoveryMethod?: RecoveryMethod
+  /** Passkey ID for PASSKEY recovery */
+  passkeyId?: string
+  /** Recovery password for PASSWORD method */
   recoveryPassword?: string
-  /** OTP code for verification */
+  /** OTP code for AUTOMATIC method */
   otpCode?: string
 } & OpenfortHookOptions<CreateSolanaWalletResult>
 
@@ -187,16 +223,18 @@ export type CreateSolanaWalletOptions = {
 export type SetActiveSolanaWalletOptions = {
   /** Wallet address to set as active (Base58) */
   address: string
-  /** Recovery params for wallet access */
+  /** Recovery params for wallet access (escape hatch; prefer named options) */
   recoveryParams?: RecoveryParams
-}
-
-/**
- * Options for setting recovery method
- */
-export type SetRecoveryOptions = {
-  previousRecovery: RecoveryParams
-  newRecovery: RecoveryParams
+  /** Recovery method when recoveryParams not provided */
+  recoveryMethod?: RecoveryMethod
+  /** Passkey ID for PASSKEY recovery */
+  passkeyId?: string
+  /** Password for PASSWORD recovery */
+  password?: string
+  /** Alias for password (react-native parity) */
+  recoveryPassword?: string
+  /** OTP code for AUTOMATIC recovery */
+  otpCode?: string
 }
 
 /**
@@ -210,7 +248,7 @@ export interface SolanaWalletActions {
   /** Set the active wallet */
   setActive(options: SetActiveSolanaWalletOptions): Promise<void>
   /** Update recovery method */
-  setRecovery(options: SetRecoveryOptions): Promise<void>
+  setRecovery(options: SetRecoveryOptionsBase): Promise<void>
   /** Export the private key (requires user confirmation) */
   exportPrivateKey(): Promise<string>
 }

@@ -25,7 +25,7 @@ export type UseOpenfortClientReturn = {
  * Access the Openfort SDK client
  *
  * This hook provides direct access to the Openfort client for advanced use cases.
- * For most operations, prefer the higher-level hooks like useAuth, useEthereumWallet, etc.
+ * For most operations, prefer the higher-level hooks like useAuth, useEthereumEmbeddedWallet, etc.
  *
  * @returns Openfort client and configuration
  * @throws ProviderNotFoundError if not within OpenfortProvider
