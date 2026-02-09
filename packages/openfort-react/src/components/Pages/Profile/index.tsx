@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import { DisconnectIcon, GuestIcon, KeyIcon } from '../../../assets/icons'
-import { useAuthContext } from '../../../core/AuthContext'
 import useLocales from '../../../hooks/useLocales'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { LargeButton } from '../../Common/LargeButton'
 import { ModalContent, ModalHeading } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
@@ -12,7 +12,7 @@ import { DisconnectButton } from '../Connected/styles'
 
 const Profile: React.FC = () => {
   const { setOpen, setRoute } = useOpenfort()
-  const { logout } = useAuthContext()
+  const { logout } = useOpenfortCore()
 
   const locales = useLocales()
 

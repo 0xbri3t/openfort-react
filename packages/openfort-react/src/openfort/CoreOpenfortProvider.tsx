@@ -19,6 +19,7 @@ import { createOpenfortClient, setDefaultClient } from './core'
 export type OpenfortCoreContextValue = {
   signUpGuest: () => Promise<void>
   embeddedState: EmbeddedState
+  isAuthenticated: boolean
 
   isLoading: boolean
   needsRecovery: boolean
@@ -420,9 +421,12 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     return 'ready'
   }, [isLoadingAccounts, embeddedAccounts, embeddedState])
 
+  const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
+
   const value: OpenfortCoreContextValue = {
     signUpGuest,
     embeddedState,
+    isAuthenticated,
     logout,
 
     isLoading: isLoading(),

@@ -62,6 +62,7 @@ export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validati
 // SIWE utilities for direct SDK usage (no wagmi required)
 export { createSIWEMessage } from './siwe/create-siwe-message'
 // Convenience re-exports for Solana hooks (can also import from '@openfort/react/solana')
+export { useSolanaBalance } from './solana/hooks/useSolanaBalance'
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 export type {
   SolanaSendTransactionStatus,

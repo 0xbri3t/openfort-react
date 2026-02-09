@@ -1,12 +1,15 @@
-import { ChainTypeEnum } from '@openfort/openfort-js'
+import { ChainTypeEnum, type EmbeddedAccount } from '@openfort/openfort-js'
 import { useContext } from 'react'
-
-import { useAuthContext } from '../core/AuthContext'
 import { EthereumContext } from '../ethereum/EthereumContext'
+import { useOpenfortCore } from '../openfort/useOpenfort'
 import { useChain } from '../shared/hooks/useChain'
 import { SolanaContext } from '../solana/providers/SolanaContextProvider'
 import type { SolanaCluster } from '../solana/types'
 import { formatEVMAddress, formatSolanaAddress } from '../utils/format'
+
+function accountsForChain(accounts: EmbeddedAccount[] | undefined, chainType: ChainTypeEnum): EmbeddedAccount[] {
+  return accounts?.filter((a) => a.chainType === chainType) ?? []
+}
 
 export type ConnectedWalletState =
   | { status: 'disconnected' }
@@ -29,11 +32,11 @@ interface WalletInternalState {
 
 function useEthereumWalletInternal(): WalletInternalState | null {
   const context = useContext(EthereumContext)
-  const { embeddedAccounts, isLoadingAccounts } = useAuthContext()
+  const { embeddedAccounts, isLoadingAccounts } = useOpenfortCore()
 
   if (!context) return null
 
-  const ethAccounts = embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.EVM) ?? []
+  const ethAccounts = accountsForChain(embeddedAccounts, ChainTypeEnum.EVM)
 
   if (isLoadingAccounts) {
     return { status: 'loading' }
@@ -53,11 +56,11 @@ function useEthereumWalletInternal(): WalletInternalState | null {
 
 function useSolanaWalletInternal(): WalletInternalState | null {
   const context = useContext(SolanaContext)
-  const { embeddedAccounts, isLoadingAccounts } = useAuthContext()
+  const { embeddedAccounts, isLoadingAccounts } = useOpenfortCore()
 
   if (!context) return null
 
-  const solAccounts = embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.SVM) ?? []
+  const solAccounts = accountsForChain(embeddedAccounts, ChainTypeEnum.SVM)
 
   if (isLoadingAccounts) {
     return { status: 'loading' }

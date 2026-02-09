@@ -6,7 +6,6 @@ import { PhoneInput } from 'react-international-phone'
 
 import { EmailIcon, GuestIcon, PhoneIcon } from '../../../assets/icons'
 import Logos, { OtherSocials, providersLogos } from '../../../assets/logos'
-import { useAuthContext } from '../../../core/AuthContext'
 import { useProviders } from '../../../hooks/openfort/useProviders'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
@@ -313,7 +312,7 @@ export const ProviderButton: React.FC<{ provider: UIAuthProvider }> = ({ provide
 // This accounts for the case where the user has an address but no user, which can happen if the user has not signed up yet, but logged in with a wallet
 const AddressButNoUserCase: React.FC = () => {
   const { updateUser } = useOpenfortCore()
-  const { logout } = useAuthContext()
+  const { logout } = useOpenfortCore()
 
   useEffect(() => {
     updateUser()

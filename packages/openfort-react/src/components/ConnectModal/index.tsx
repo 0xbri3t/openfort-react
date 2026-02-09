@@ -1,5 +1,5 @@
-import { OAuthProvider } from '@openfort/openfort-js'
-import { useEffect } from 'react'
+import { ChainTypeEnum, OAuthProvider } from '@openfort/openfort-js'
+import { useEffect, useMemo } from 'react'
 import type { ValueOf } from 'viem/_types/types/utils'
 import { useAccount } from 'wagmi'
 import { getAppName } from '../../defaultConfig'
@@ -8,7 +8,7 @@ import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import Modal from '../Common/Modal'
 import { ConnectKitThemeProvider } from '../ConnectKitThemeProvider/ConnectKitThemeProvider'
-import { routes } from '../Openfort/types'
+import { routes, type SetRouteOptions } from '../Openfort/types'
 import { useOpenfort } from '../Openfort/useOpenfort'
 import About from '../Pages/About'
 import { AssetInventory } from '../Pages/AssetInventory'
@@ -53,6 +53,81 @@ import SwitchNetworks from '../Pages/SwitchNetworks'
 import ConnectUsing from './ConnectUsing'
 import ConnectWithMobile from './ConnectWithMobile'
 
+type RoutePages = Partial<Record<ValueOf<typeof routes>, React.ReactNode>>
+
+function buildSharedPages(): RoutePages {
+  return {
+    onboarding: <Onboarding />,
+    about: <About />,
+    loading: <Loading />,
+    loadWallets: <LoadWallets />,
+    connectedSuccess: <ConnectedSuccess />,
+    createGuestUser: <CreateGuestUserPage />,
+    socialProviders: <SocialProviders />,
+    emailLogin: <EmailLogin />,
+    emailOtp: <EmailOTP />,
+    phoneOtp: <PhoneOTP />,
+    forgotPassword: <ForgotPassword />,
+    emailVerification: <EmailVerification />,
+    linkEmail: <LinkEmail />,
+    createWallet: <CreateWallet />,
+    recoverWallets: <RecoverPage />,
+    download: <DownloadApp />,
+    connectors: <Connectors />,
+    mobileConnectors: <MobileConnectors />,
+    selectWalletToRecover: <SelectWalletToRecover />,
+    providers: <Providers />,
+    connect: <ConnectUsing />,
+    connected: <Connected />,
+    profile: <Profile />,
+    switchNetworks: <SwitchNetworks />,
+    linkedProviders: <LinkedProviders />,
+    linkedProvider: <LinkedProvider />,
+    removeLinkedProvider: <RemoveLinkedProvider />,
+    connectWithMobile: <ConnectWithMobile />,
+    noAssetsAvailable: <NoAssetsAvailable />,
+    assetInventory: <AssetInventory />,
+    send: <Send />,
+    sendConfirmation: <SendConfirmation />,
+    sendTokenSelect: <SelectToken isBuyFlow={false} />,
+    buyTokenSelect: <SelectToken isBuyFlow={true} />,
+    buySelectProvider: <BuySelectProvider />,
+    buyProcessing: <BuyProcessing />,
+    buyComplete: <BuyComplete />,
+    buyProviderSelect: <BuyProviderSelect />,
+    receive: <Receive />,
+    buy: <Buy />,
+    exportKey: <ExportKey />,
+    walletOverview: <Connected />,
+  }
+}
+
+const CHAIN_PREFIXED_PAGES: Record<ChainTypeEnum, RoutePages> = {
+  [ChainTypeEnum.EVM]: {
+    'eth:connected': <Connected />,
+    'eth:createWallet': <CreateWallet />,
+    'eth:recoverWallet': <RecoverPage />,
+    'eth:switchNetworks': <SwitchNetworks />,
+    'eth:send': <Send />,
+    'eth:receive': <Receive />,
+    'eth:buy': <Buy />,
+    'eth:connectors': <Connectors />,
+  },
+  [ChainTypeEnum.SVM]: {
+    'sol:connected': <Connected />,
+    'sol:createWallet': <CreateWallet />,
+    'sol:recoverWallet': <RecoverPage />,
+    'sol:switchCluster': <SwitchCluster />,
+    'sol:send': <SolanaSend />,
+    'sol:receive': <Receive />,
+  },
+}
+
+const DEFAULT_CONNECTED_ROUTE: Record<ChainTypeEnum, ValueOf<typeof routes>> = {
+  [ChainTypeEnum.EVM]: routes.ETH_CONNECTED,
+  [ChainTypeEnum.SVM]: routes.SOL_CONNECTED,
+}
+
 const customThemeDefault: object = {}
 
 const ConnectModal: React.FC<{
@@ -77,6 +152,7 @@ const ConnectModal: React.FC<{
   // ]
 
   const route = context.route.route
+  const chainType = context.chainType
 
   // const showBackButton = (closeable && !mainRoutes.includes(route)) || (closeable && route === routes.PROVIDERS && user)
 
@@ -113,79 +189,16 @@ const ConnectModal: React.FC<{
   //       // }
   //     }
 
-  const pages: Record<ValueOf<typeof routes>, React.ReactNode> = {
-    // Shared routes
-    onboarding: <Onboarding />,
-    about: <About />,
-    loading: <Loading />,
-    loadWallets: <LoadWallets />,
-    connectedSuccess: <ConnectedSuccess />,
+  const sharedPages = useMemo(buildSharedPages, [])
+  const pages = useMemo(() => ({ ...sharedPages, ...CHAIN_PREFIXED_PAGES[chainType] }), [sharedPages, chainType])
+  const effectivePageId =
+    route in pages && pages[route as ValueOf<typeof routes>] != null ? route : DEFAULT_CONNECTED_ROUTE[chainType]
 
-    createGuestUser: <CreateGuestUserPage />,
-    socialProviders: <SocialProviders />,
-    emailLogin: <EmailLogin />,
-    emailOtp: <EmailOTP />,
-    phoneOtp: <PhoneOTP />,
-
-    forgotPassword: <ForgotPassword />,
-    emailVerification: <EmailVerification />,
-    linkEmail: <LinkEmail />,
-
-    createWallet: <CreateWallet />,
-    recoverWallets: <RecoverPage />,
-
-    download: <DownloadApp />,
-    connectors: <Connectors />,
-    mobileConnectors: <MobileConnectors />,
-    selectWalletToRecover: <SelectWalletToRecover />,
-
-    providers: <Providers />,
-    connect: <ConnectUsing />,
-    connected: <Connected />,
-    profile: <Profile />,
-    switchNetworks: <SwitchNetworks />,
-    linkedProviders: <LinkedProviders />,
-    linkedProvider: <LinkedProvider />,
-    removeLinkedProvider: <RemoveLinkedProvider />,
-    connectWithMobile: <ConnectWithMobile />,
-
-    noAssetsAvailable: <NoAssetsAvailable />,
-    assetInventory: <AssetInventory />,
-
-    send: <Send />,
-    sendConfirmation: <SendConfirmation />,
-    sendTokenSelect: <SelectToken isBuyFlow={false} />,
-    buyTokenSelect: <SelectToken isBuyFlow={true} />,
-    buySelectProvider: <BuySelectProvider />,
-    buyProcessing: <BuyProcessing />,
-    buyComplete: <BuyComplete />,
-    buyProviderSelect: <BuyProviderSelect />,
-    receive: <Receive />,
-    buy: <Buy />,
-
-    exportKey: <ExportKey />,
-
-    // Ethereum-specific routes (chain-prefixed)
-    'eth:connected': <Connected />,
-    'eth:createWallet': <CreateWallet />,
-    'eth:recoverWallet': <RecoverPage />,
-    'eth:switchNetworks': <SwitchNetworks />,
-    'eth:send': <Send />,
-    'eth:receive': <Receive />,
-    'eth:buy': <Buy />,
-    'eth:connectors': <Connectors />,
-
-    // Solana-specific routes (chain-prefixed)
-    'sol:connected': <Connected />,
-    'sol:createWallet': <CreateWallet />,
-    'sol:recoverWallet': <RecoverPage />,
-    'sol:switchCluster': <SwitchCluster />,
-    'sol:send': <SolanaSend />,
-    'sol:receive': <Receive />,
-
-    // Multi-chain routes
-    walletOverview: <Connected />,
-  }
+  useEffect(() => {
+    if (effectivePageId !== route) {
+      context.setRoute(effectivePageId as SetRouteOptions)
+    }
+  }, [effectivePageId, route, context.setRoute])
 
   function hide() {
     context.setOpen(false)
@@ -261,7 +274,7 @@ const ConnectModal: React.FC<{
       <Modal
         open={context.open}
         pages={pages}
-        pageId={route}
+        pageId={effectivePageId}
         onClose={closeable ? hide : undefined}
         // TODO: Implement onInfo
         // onInfo={

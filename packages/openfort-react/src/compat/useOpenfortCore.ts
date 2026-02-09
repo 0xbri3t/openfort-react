@@ -16,7 +16,7 @@ let hasWarned = false
  *
  * @deprecated Use specific hooks instead:
  * - `useConnectUI()` for modal/navigation state
- * - `useAuth()` for user authentication state
+ * - `useUser()` for user authentication state
  * - `useOpenfortClient()` for SDK access
  * - `useEthereumEmbeddedWallet()` for Ethereum wallet operations
  * - `useSolanaEmbeddedWallet()` for Solana wallet operations
@@ -38,7 +38,7 @@ export function useOpenfortCore(): ContextValue | null {
       '[@openfort/react] useOpenfortCore() is deprecated.\n' +
         'Migration guide:\n' +
         '  - Modal/navigation state: useConnectUI()\n' +
-        '  - User authentication: useAuth()\n' +
+        '  - User authentication: useUser()\n' +
         '  - SDK access: useOpenfortClient()\n' +
         '  - Ethereum wallet: useEthereumEmbeddedWallet()\n' +
         '  - Solana wallet: useSolanaEmbeddedWallet()\n' +

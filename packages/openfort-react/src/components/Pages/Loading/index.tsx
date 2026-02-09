@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
-
-import { useAuthContext } from '../../../core/AuthContext'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import Loader from '../../Common/Loading'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -9,7 +8,7 @@ import { PageContent } from '../../PageContent'
 
 const Loading: React.FC = () => {
   const { setRoute, walletConfig } = useOpenfort()
-  const { user, isLoadingAccounts, needsRecovery } = useAuthContext()
+  const { user, isLoadingAccounts, needsRecovery } = useOpenfortCore()
 
   // Use new abstraction hooks (no wagmi)
   const wallet = useConnectedWallet()

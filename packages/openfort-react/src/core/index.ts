@@ -5,13 +5,6 @@
  * This module provides the wagmi-free base architecture.
  */
 
-export {
-  type AuthContextValue,
-  AuthProvider,
-  type AuthProviderProps,
-  authQueryKeys,
-  useAuthContext,
-} from './AuthContext'
 export { CoreProvider, type CoreProviderProps, useCoreContext, useHasCoreProvider } from './CoreContext'
 export type { OpenfortErrorCode as OpenfortErrorCodeType } from './errors'
 export {
@@ -25,9 +18,8 @@ export {
   ProviderNotFoundError,
   WalletError,
 } from './errors'
-export { type UseAuthReturn, useAuth } from './hooks/useAuth'
-export { type UseEmbeddedAccountsReturn, useEmbeddedAccounts } from './hooks/useEmbeddedAccounts'
 export { type UseOpenfortClientReturn, useOpenfortClient } from './hooks/useOpenfortClient'
+export { authQueryKeys } from './queryKeys'
 export type {
   AsyncState,
   AsyncStatus,

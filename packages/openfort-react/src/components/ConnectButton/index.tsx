@@ -1,13 +1,12 @@
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import type React from 'react'
-
-import { useAuthContext } from '../../core/AuthContext'
 import { useUI } from '../../hooks/openfort/useUI'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import { useConnectedWallet } from '../../hooks/useConnectedWallet'
 import useIsMounted from '../../hooks/useIsMounted'
 import useLocales from '../../hooks/useLocales'
 import { useResolvedIdentity } from '../../hooks/useResolvedIdentity'
+import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { useChain } from '../../shared/hooks/useChain'
 import { ResetContainer } from '../../styles'
 import type { CustomTheme, Mode, Theme } from '../../types'
@@ -161,7 +160,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
 ConnectButtonRenderer.displayName = 'OpenfortButton.Custom'
 
 const ConnectedLabel = ({ separator }: { separator?: string }) => {
-  const { user } = useAuthContext()
+  const { user } = useOpenfortCore()
   const wallet = useConnectedWallet()
 
   // Use discriminated union pattern
@@ -191,7 +190,7 @@ function OpenfortButtonInner({
   separator?: string
 }) {
   const locales = useLocales({})
-  const { user } = useAuthContext()
+  const { user } = useOpenfortCore()
 
   const { chainType } = useChain()
   const wallet = useConnectedWallet()

@@ -1,10 +1,10 @@
 import type React from 'react'
 
 import { DisconnectIcon } from '../../../assets/icons'
-import { useAuthContext } from '../../../core/AuthContext'
 import { useChainIsSupported } from '../../../hooks/useChainIsSupported'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import Button from '../../Common/Button'
 import ChainSelectList from '../../Common/ChainSelectList'
 import { OrDivider } from '../../Common/Modal'
@@ -12,7 +12,7 @@ import { ModalBody, ModalContent } from '../../Common/Modal/styles'
 import { PageContent } from '../../PageContent'
 
 const SwitchNetworks: React.FC = () => {
-  const { logout } = useAuthContext()
+  const { logout } = useOpenfortCore()
 
   // Use new abstraction hooks (no wagmi)
   const wallet = useConnectedWallet()

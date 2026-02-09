@@ -5,7 +5,7 @@
  * for the wagmi-free architecture.
  */
 
-import type { EmbeddedAccount, Openfort, OpenfortSDKConfiguration, User } from '@openfort/openfort-js'
+import type { EmbeddedAccount, EmbeddedState, Openfort, OpenfortSDKConfiguration, User } from '@openfort/openfort-js'
 
 import type { SolanaConfig } from '../solana/types'
 
@@ -127,6 +127,22 @@ export type AsyncState<T> = {
   isError: boolean
   isSuccess: boolean
   isIdle: boolean
+}
+
+/**
+ * Auth context value (mapped from CoreOpenfortProvider).
+ * Shape of auth-related values from the core context (useOpenfort / useOpenfortCore).
+ */
+export type AuthContextValue = {
+  user: User | null
+  isAuthenticated: boolean
+  embeddedState: EmbeddedState
+  embeddedAccounts: EmbeddedAccount[] | undefined
+  isLoadingAccounts: boolean
+  refetchAccounts: (options?: { silent?: boolean }) => Promise<void>
+  logout: () => Promise<void>
+  updateUser: (user?: User) => Promise<User | null>
+  needsRecovery: boolean
 }
 
 /**
