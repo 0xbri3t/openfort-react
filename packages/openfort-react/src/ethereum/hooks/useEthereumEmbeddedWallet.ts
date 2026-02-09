@@ -1,6 +1,5 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { useChainId, WagmiContext } from 'wagmi'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
@@ -32,27 +31,18 @@ type InternalState = {
   error: string | null
 }
 
+const DEFAULT_CHAIN_ID = 1
+
 /**
- * Hook for managing Ethereum embedded wallets.
- * Requires WagmiProvider in the component tree.
+ * Core hook for managing Ethereum embedded wallets. Uses only viem/openfort-js; no wagmi.
+ * ChainId comes from options or defaults to mainnet (1). For chainId from wagmi (e.g. connected
+ * wallet chain), use the wagmi extension's useEthereumEmbeddedWallet.
  */
 export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOptions): EmbeddedEthereumWalletState {
-  // Guard: Ensure WagmiProvider is present
-  const wagmiContext = useContext(WagmiContext)
-  if (!wagmiContext) {
-    throw new OpenfortError(
-      'useEthereumEmbeddedWallet requires WagmiProvider. ' +
-        'Please wrap your app with WagmiProvider or use the Solana-only configuration.',
-      OpenfortReactErrorType.CONFIGURATION_ERROR
-    )
-  }
-
   const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
-  const wagmiChainId = useChainId()
 
-  // Use provided chainId or fall back to wagmi chainId
-  const chainId = options?.chainId ?? wagmiChainId
+  const chainId = options?.chainId ?? DEFAULT_CHAIN_ID
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
   const autoReconnectAttemptedRef = useRef(false)

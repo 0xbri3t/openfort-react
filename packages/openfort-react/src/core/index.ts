@@ -19,6 +19,14 @@ export {
   WalletError,
 } from './errors'
 export { type UseOpenfortClientReturn, useOpenfortClient } from './hooks/useOpenfortClient'
+export {
+  type OpenfortEVMBridgeAccount,
+  type OpenfortEVMBridgeChain,
+  type OpenfortEVMBridgeConfig,
+  type OpenfortEVMBridgeConnector,
+  OpenfortEVMBridgeContext,
+  type OpenfortEVMBridgeValue,
+} from './OpenfortEVMBridgeContext'
 export { authQueryKeys } from './queryKeys'
 export type {
   AsyncState,

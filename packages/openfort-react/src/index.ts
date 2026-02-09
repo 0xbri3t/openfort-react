@@ -22,6 +22,14 @@ export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './comp
 export { PageLayout, type PageLayoutProps } from './components/PageLayout'
 export { embeddedWalletId } from './constants/openfort'
 export { OpenfortTransactionError, TransactionErrorCode } from './core/errors'
+export {
+  type OpenfortEVMBridgeAccount,
+  type OpenfortEVMBridgeChain,
+  type OpenfortEVMBridgeConfig,
+  type OpenfortEVMBridgeConnector,
+  OpenfortEVMBridgeContext,
+  type OpenfortEVMBridgeValue,
+} from './core/OpenfortEVMBridgeContext'
 export { queryKeys } from './core/queryKeys'
 export type { WalletReadiness } from './core/types'
 export { default as getDefaultConfig } from './defaultConfig'
