@@ -1,20 +1,29 @@
 import { AccountTypeEnum, type EmbeddedAccount, EmbeddedState, type Openfort, type User } from '@openfort/openfort-js'
 import { type QueryObserverResult, type RefetchOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import type React from 'react'
-import { createElement, type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useAccount, useChainId, useConfig, useDisconnect } from 'wagmi'
+import {
+  createElement,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
+import { OpenfortEVMBridgeContext } from '../core/OpenfortEVMBridgeContext'
 import { queryKeys } from '../core/queryKeys'
 import type { WalletReadiness } from '../core/types'
 import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
-import { useConnect } from '../hooks/useConnect'
-import { useConnectCallback, type useConnectCallbackProps } from '../hooks/useConnectCallback'
 import type { UserAccount } from '../openfortCustomTypes'
 import { OpenfortError, OpenfortReactErrorType } from '../types'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
+import type { ConnectCallbackProps } from './connectCallbackTypes'
 import { Context } from './context'
 import { createOpenfortClient, setDefaultClient } from './core'
+import { useOpenfortCore } from './useOpenfort'
 
 export type OpenfortCoreContextValue = {
   signUpGuest: () => Promise<void>
@@ -46,11 +55,32 @@ export type OpenfortCoreContextValue = {
   client: Openfort
 }
 
-const ConnectCallback = ({ onConnect, onDisconnect }: useConnectCallbackProps) => {
-  useConnectCallback({
-    onConnect,
-    onDisconnect,
-  })
+const ConnectCallback = ({ onConnect, onDisconnect }: ConnectCallbackProps) => {
+  const bridge = useContext(OpenfortEVMBridgeContext)
+  const { user } = useOpenfortCore()
+  const address = bridge?.account.address
+  const connectorId = bridge?.account.connector?.id
+  const prevConnected = useRef(false)
+
+  useEffect(() => {
+    if (!bridge) return
+    const connected = !!(address && user)
+    if (connected && !prevConnected.current) {
+      prevConnected.current = true
+      onConnect?.({
+        address: address ?? undefined,
+        connectorId,
+        user: user ?? undefined,
+      })
+    } else if (!connected && prevConnected.current) {
+      prevConnected.current = false
+      onDisconnect?.()
+    } else if (connected) {
+      prevConnected.current = true
+    } else {
+      prevConnected.current = false
+    }
+  }, [bridge, address, user, connectorId, onConnect, onDisconnect])
 
   return null
 }
@@ -58,7 +88,7 @@ const ConnectCallback = ({ onConnect, onDisconnect }: useConnectCallbackProps) =
 type CoreOpenfortProviderProps = PropsWithChildren<
   {
     openfortConfig: ConstructorParameters<typeof Openfort>[0]
-  } & useConnectCallbackProps
+  } & ConnectCallbackProps
 >
 
 export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
@@ -67,16 +97,14 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   onDisconnect,
   openfortConfig,
 }) => {
-  const { connectors, connect, reset } = useConnect()
-  const { address } = useAccount()
+  const bridge = useContext(OpenfortEVMBridgeContext)
+  const address = bridge?.account.address
+  const chainId = bridge?.chainId ?? 1
   const [user, setUser] = useState<User | null>(null)
   const [linkedAccounts, setLinkedAccounts] = useState<UserAccount[]>([])
   const [walletStatus, setWalletStatus] = useState<WalletFlowStatus>({ status: 'idle' })
 
-  const { disconnectAsync } = useDisconnect()
   const { walletConfig } = useOpenfort()
-  const wagmiConfig = useConfig()
-  const chainId = useChainId()
 
   // ---- Openfort instance ----
   const openfort = useMemo(() => {
@@ -259,9 +287,9 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const isLoadingAccounts = isAccountsPending && !silentRefetchInProgress
 
-  // Update ethereum provider when chainId changes
+  // Update ethereum provider when chainId changes (only when EVM bridge is present)
   useEffect(() => {
-    if (!openfort || !walletConfig) return
+    if (!openfort || !walletConfig || !bridge) return
 
     const resolvePolicy = () => {
       const { ethereumProviderPolicyId } = walletConfig
@@ -281,11 +309,11 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       return { policy }
     }
 
-    const rpcUrls = wagmiConfig.chains.reduce(
-      (acc, chain) => {
-        const rpcUrl = wagmiConfig.getClient({ chainId: chain.id }).transport.url
+    const rpcUrls = bridge.config.chains.reduce(
+      (acc, ch) => {
+        const rpcUrl = bridge.config.getClient({ chainId: ch.id }).transport.url
         if (rpcUrl) {
-          acc[chain.id] = rpcUrl
+          acc[ch.id] = rpcUrl
         }
         return acc
       },
@@ -299,9 +327,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       chains: rpcUrls,
     })
 
-    // Refresh embedded accounts to reflect any changes in the selected chain
     fetchEmbeddedAccounts()
-  }, [openfort, walletConfig, chainId])
+  }, [openfort, walletConfig, chainId, bridge])
 
   const [isConnectedWithEmbeddedSigner, setIsConnectedWithEmbeddedSigner] = useState(false)
 
@@ -344,18 +371,17 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [embeddedState, openfort])
 
   useEffect(() => {
-    // Connect to wagmi with Embedded signer
-    if (address || !user) return
+    if (!bridge || address || !user) return
     if (isConnectedWithEmbeddedSigner) return
-
     if (embeddedState !== EmbeddedState.READY) return
-    const connector = connectors.find((connector) => connector.name === 'Openfort')
-    if (!connector) return
+
+    const openfortConnector = bridge.connectors.find((c) => c.name === 'Openfort')
+    if (!openfortConnector) return
 
     logger.log('Connecting to wagmi with Openfort')
     setIsConnectedWithEmbeddedSigner(true)
-    connect({ connector })
-  }, [connectors, embeddedState, address, user])
+    bridge.connect({ connector: openfortConnector })
+  }, [bridge, address, user, embeddedState, isConnectedWithEmbeddedSigner])
 
   // ---- Auth functions ----
 
@@ -367,11 +393,13 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     setWalletStatus({ status: 'idle' })
     logger.log('Logging out...')
     await openfort.auth.logout()
-    await disconnectAsync()
-    queryClient.resetQueries({ queryKey: queryKeys.accounts.all() })
-    reset()
+    if (bridge) {
+      await bridge.disconnect()
+      queryClient.resetQueries({ queryKey: queryKeys.accounts.all() })
+      bridge.reset()
+    }
     startPollingEmbeddedState()
-  }, [openfort])
+  }, [openfort, bridge])
 
   const signUpGuest = useCallback(async () => {
     if (!openfort) return
@@ -403,14 +431,16 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         // If automatic recovery is enabled, we should wait for the embedded signer to be ready
         return false
       case EmbeddedState.READY:
-        // We should wait for the user to be set
-        if (!address || !user) return true
-        else return false
+        if (!user) return true
+        if (bridge) {
+          if (!address) return true
+        }
+        return false
 
       default:
         return true
     }
-  }, [embeddedState, address, user])
+  }, [embeddedState, address, user, bridge])
 
   const needsRecovery = embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED && !address
 

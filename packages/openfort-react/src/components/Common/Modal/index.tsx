@@ -2,8 +2,8 @@ import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTransition } from 'react-transition-state'
-import { useAccount, useSwitchChain } from 'wagmi'
 import { AuthIcon } from '../../../assets/icons'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import FocusTrap from '../../../hooks/useFocusTrap'
 import useLocales from '../../../hooks/useLocales'
 import useLockBodyScroll from '../../../hooks/useLockBodyScroll'
@@ -11,7 +11,7 @@ import usePrevious from '../../../hooks/usePrevious'
 import { ResetContainer } from '../../../styles'
 import type { CustomTheme } from '../../../types'
 import { flattenChildren, isMobile, isWalletConnectConnector } from '../../../utils'
-import { useWallet } from '../../../wallets/useWagmiWallets'
+import { useWallet } from '../../../wallets/useEVMConnectors'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -248,13 +248,14 @@ const Modal: React.FC<ModalProps> = ({
   )
 
   // Update layout on chain/network switch to avoid clipping
-  const { chain } = useAccount()
-  const { switchChain } = useSwitchChain()
+  const bridge = useEVMBridge()
+  const chainId = bridge?.account?.chain?.id ?? bridge?.chainId
+  const switchChain = bridge?.switchChain?.switchChain
 
   const ref = useRef<any>(null)
   useEffect(() => {
     if (ref.current) updateBounds(ref.current)
-  }, [chain, switchChain, mobile, context.uiConfig, context.resize])
+  }, [chainId, switchChain, mobile, context.uiConfig, context.resize])
 
   useEffect(() => {
     if (!mounted) {

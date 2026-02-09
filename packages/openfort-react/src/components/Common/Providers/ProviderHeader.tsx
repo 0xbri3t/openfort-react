@@ -1,7 +1,7 @@
+import { useEffect, useState } from 'react'
 import type { Hex } from 'viem'
-import { useEnsName } from 'wagmi'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import { useUser } from '../../../hooks/openfort/useUser'
-import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
 import type { UserAccount } from '../../../openfortCustomTypes'
 import { truncateEthAddress } from '../../../utils'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
@@ -9,14 +9,15 @@ import { useOpenfort } from '../../Openfort/useOpenfort'
 import { LinkedProviderText } from '../../Pages/LinkedProviders/styles'
 
 export const WalletDisplay = ({ walletAddress }: { walletAddress: string }) => {
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address: walletAddress as Hex,
-    config: ensFallbackConfig,
-  })
+  const bridge = useEVMBridge()
+  const [ensName, setEnsName] = useState<string | undefined>(undefined)
   const context = useOpenfort()
   const themeContext = useThemeContext()
+
+  useEffect(() => {
+    if (!bridge?.getEnsName || !walletAddress) return
+    bridge.getEnsName({ address: walletAddress as Hex }).then(setEnsName)
+  }, [bridge, walletAddress])
 
   const separator = ['web95', 'rounded', 'minimal'].includes(themeContext.theme ?? context.uiConfig.theme ?? '')
     ? '....'

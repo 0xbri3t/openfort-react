@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react'
-import { useConfig } from 'wagmi'
+import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
 
 export const useLastConnector = () => {
-  const { storage } = useConfig()
+  const bridge = useEVMBridge()
+  const storage = bridge?.config?.storage
   const [lastConnectorId, setLastConnectorId] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
-      const id = await storage?.getItem('recentConnectorId')
+      const id = storage ? await storage.getItem('recentConnectorId') : null
       setLastConnectorId(id ?? '')
     }
     init()
-  }, [])
+  }, [storage])
 
   const update = (id: string) => {
     storage?.setItem('recentConnectorId', id)

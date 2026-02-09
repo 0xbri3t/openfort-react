@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useId, useState } from 'react'
-import { useAccount, useSwitchChain } from 'wagmi'
 import ChainIcons from '../../../assets/chains'
 import { chainConfigs } from '../../../constants/chainConfigs'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import useLocales from '../../../hooks/useLocales'
 import { isCoinbaseWalletConnector, isMobile } from '../../../utils'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -47,8 +47,15 @@ const Spinner = () => {
 }
 
 const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => {
-  const { connector, chain } = useAccount()
-  const { chains, isPending, switchChain, error } = useSwitchChain()
+  const bridge = useEVMBridge()
+  const connector = bridge?.account?.connector
+  const chain = bridge?.account?.chain
+  const { chains, isPending, switchChain, error } = bridge?.switchChain ?? {
+    chains: [],
+    isPending: false,
+    switchChain: undefined,
+    error: null,
+  }
   const [pendingChainId, setPendingChainId] = useState<number | undefined>(undefined)
 
   const locales = useLocales({})

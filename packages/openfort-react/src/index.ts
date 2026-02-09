@@ -12,6 +12,7 @@ export {
   SignedMessagePayload,
   User,
 } from '@openfort/openfort-js'
+export { useConnect } from '@openfort/wagmi'
 // Compat layer (deprecated hooks)
 export { useOpenfortCore } from './compat/useOpenfortCore'
 export { default as Avatar } from './components/Common/Avatar'
@@ -28,7 +29,9 @@ export {
   type OpenfortEVMBridgeConfig,
   type OpenfortEVMBridgeConnector,
   OpenfortEVMBridgeContext,
+  type OpenfortEVMBridgeSwitchChain,
   type OpenfortEVMBridgeValue,
+  useEVMBridge,
 } from './core/OpenfortEVMBridgeContext'
 export { queryKeys } from './core/queryKeys'
 export type { WalletReadiness } from './core/types'
@@ -110,6 +113,7 @@ export {
 } from './utils/format'
 export { OPENFORT_VERSION } from './version'
 export { wallets } from './wallets'
+export { useEVMConnectors, useWallet, type WalletProps } from './wallets/useEVMConnectors'
 
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 export type { CountryData, CountryIso2, CountrySelectorProps }

@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import { type Connector, useDisconnect } from 'wagmi'
+import type { OpenfortEVMBridgeConnector } from '../../../core/OpenfortEVMBridgeContext'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
 import { logger } from '../../../utils/logger'
-import { useWagmiWallets } from '../../../wallets/useWagmiWallets'
-import { useConnect } from '../../useConnect'
+import { useEVMConnectors } from '../../../wallets/useEVMConnectors'
 import { onError, onSuccess } from '../hookConsistency'
 import { useConnectWithSiwe } from '../useConnectWithSiwe'
 import { type BaseFlowState, mapStatus } from './status'
 
 type ConnectWalletOptions = {
-  connector: Connector | string
+  connector: OpenfortEVMBridgeConnector | string
 } // onConnect is handled by the hookOptions because useConnect needs to finish the connection process
 
 /**
@@ -40,9 +40,10 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
   }
 
   const { updateUser } = useOpenfortCore()
+  const bridge = useEVMBridge()
   const siwe = useConnectWithSiwe()
-  const availableWallets = useWagmiWallets() // TODO: Use this to get the wallet client type
-  const { disconnect } = useDisconnect()
+  const availableWallets = useEVMConnectors()
+  const disconnect = bridge?.disconnect
   const [walletConnectingTo, setWalletConnectingTo] = useState<string | null>(null)
   const [shouldConnectWithSiwe, setShouldConnectWithSiwe] = useState(false)
 
@@ -65,19 +66,21 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
     [hookOptions]
   )
 
-  const { connectAsync } = useConnect({
-    mutation: {
-      onError: (e) => {
+  const connectAsync = useCallback(
+    async (params: { connector: OpenfortEVMBridgeConnector }) => {
+      if (!bridge?.connectAsync) throw new Error('EVM bridge not available')
+      try {
+        await bridge.connectAsync(params)
+        setShouldConnectWithSiwe(true)
+      } catch (e) {
         const error = new OpenfortError('Failed to connect with wallet', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
           error: e,
         })
         handleError(error)
-      },
-      onSuccess: () => {
-        setShouldConnectWithSiwe(true)
-      },
+      }
     },
-  })
+    [bridge, handleError]
+  )
 
   useEffect(() => {
     // Ensure it has been connected with a wallet before connecting with SIWE
@@ -213,24 +216,18 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
 
       setWalletConnectingTo(connector.id)
 
-      const hasDisconnected = new Promise<void>((resolve) => {
-        disconnect(undefined, {
-          onSuccess: () => {
-            resolve()
-          },
-          onError: (e) => {
-            logger.error('Error disconnecting', e)
-
-            const error = new OpenfortError('Failed to disconnect', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
-              error: e,
-            })
-            handleError(error)
-
-            resolve()
-          },
-        })
-      })
-      await hasDisconnected
+      if (disconnect) {
+        try {
+          await disconnect()
+        } catch (e) {
+          logger.error('Error disconnecting', e)
+          const error = new OpenfortError('Failed to disconnect', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+            error: e,
+          })
+          handleError(error)
+          return
+        }
+      }
 
       try {
         await connectAsync({
@@ -242,7 +239,7 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
         handleError(new OpenfortError('Failed to connect', OpenfortReactErrorType.AUTHENTICATION_ERROR, { error }))
       }
     },
-    [siwe, disconnect, updateUser, availableWallets, setStatus, hookOptions]
+    [siwe, disconnect, updateUser, availableWallets, setStatus, hookOptions, connectAsync, handleError]
   )
 
   return {

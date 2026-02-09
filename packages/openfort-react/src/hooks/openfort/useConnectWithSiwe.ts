@@ -1,22 +1,21 @@
 import { OpenfortError } from '@openfort/openfort-js'
-import { switchChain } from '@wagmi/core'
 import { AxiosError } from 'axios'
 import { useCallback } from 'react'
-import { useAccount, useChainId, useConfig, usePublicClient, useSignMessage } from 'wagmi'
+import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { createSIWEMessage } from '../../siwe/create-siwe-message'
 import { logger } from '../../utils/logger'
 
-// This hook assumes wagmi is already connected to a wallet
-// It will use the connected wallet to sign the SIWE message and authenticate with Openfort
-// If there is a user already, it will link the wallet to the user
 export function useConnectWithSiwe() {
   const { client, user, updateUser } = useOpenfortCore()
-  const { address, connector, chainId: accountChainId } = useAccount()
-  const chainId = useChainId()
-  const config = useConfig()
-  const publicClient = usePublicClient()
-  const { signMessageAsync } = useSignMessage()
+  const bridge = useEVMBridge()
+  const address = bridge?.account?.address
+  const connector = bridge?.account?.connector
+  const chainId = bridge?.chainId ?? 0
+  const accountChainId = bridge?.account?.chain?.id ?? bridge?.chainId
+  const chainName = bridge?.account?.chain?.name
+  const switchChainAsync = bridge?.switchChain?.switchChainAsync
+  const signMessage = bridge?.signMessage
 
   const connectWithSiwe = useCallback(
     async ({
@@ -41,11 +40,14 @@ export function useConnectWithSiwe() {
         return
       }
 
+      if (!signMessage) {
+        onError?.('EVM bridge not available (signMessage)')
+        return
+      }
+
       try {
-        if (accountChainId !== chainId) {
-          switchChain(config, {
-            chainId,
-          })
+        if (accountChainId !== chainId && switchChainAsync) {
+          await switchChainAsync({ chainId })
         }
 
         let nonce: string
@@ -59,7 +61,7 @@ export function useConnectWithSiwe() {
 
         const SIWEMessage = createSIWEMessage(address, nonce, chainId)
 
-        const signature = await signMessageAsync({ message: SIWEMessage })
+        const signature = await signMessage({ message: SIWEMessage })
 
         if (link) {
           logger.log('Linking wallet to user')
@@ -99,7 +101,7 @@ export function useConnectWithSiwe() {
         } else if (message.includes('Invalid signature')) {
           message = 'Invalid signature. Please try again.'
         } else if (message.includes('An error occurred when attempting to switch chain')) {
-          message = `Failed to switch chain. Please switch your wallet to ${publicClient?.chain?.name ?? 'the correct network'} and try again.`
+          message = `Failed to switch chain. Please switch your wallet to ${chainName ?? 'the correct network'} and try again.`
         } else {
           message = 'Failed to connect with SIWE.'
         }
@@ -107,7 +109,7 @@ export function useConnectWithSiwe() {
         onError(message, err instanceof OpenfortError ? err : undefined)
       }
     },
-    [client, user, updateUser, address, chainId, config, connector, accountChainId, publicClient]
+    [client, user, updateUser, address, chainId, connector, accountChainId, chainName, switchChainAsync, signMessage]
   )
 
   return connectWithSiwe

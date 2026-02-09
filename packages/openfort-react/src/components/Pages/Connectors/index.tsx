@@ -4,7 +4,7 @@
  * This component is only used for connecting external wallets via WalletConnect.
  */
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import useIsMobile from '../../../hooks/useIsMobile'
 import { useWalletConnectModal } from '../../../hooks/useWalletConnectModal'
 import { logger } from '../../../utils/logger'
@@ -19,7 +19,9 @@ let hasWarnedConnectors = false
 const ConnectWithMobile = () => {
   const { open: openWalletConnectModal } = useWalletConnectModal()
   const [error, setError] = useState<string | undefined>(undefined)
-  const { connector, address } = useAccount()
+  const bridge = useEVMBridge()
+  const connector = bridge?.account?.connector
+  const address = bridge?.account?.address
   const { setRoute, setConnector } = useOpenfort()
 
   const openWCModal = async () => {

@@ -25,7 +25,10 @@ export {
   type OpenfortEVMBridgeConfig,
   type OpenfortEVMBridgeConnector,
   OpenfortEVMBridgeContext,
+  type OpenfortEVMBridgeStorage,
+  type OpenfortEVMBridgeSwitchChain,
   type OpenfortEVMBridgeValue,
+  useEVMBridge,
 } from './OpenfortEVMBridgeContext'
 export { authQueryKeys } from './queryKeys'
 export type {

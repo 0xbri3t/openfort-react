@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import type { Hex } from 'viem'
 import { erc7715Actions, type GrantPermissionsParameters, type GrantPermissionsReturnType } from 'viem/experimental'
-import { useChainId, useWalletClient } from 'wagmi'
+import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
 import { useChains } from '../useChains'
@@ -106,12 +106,12 @@ type GrantPermissionsHookOptions = OpenfortHookOptions<GrantPermissionsHookResul
  * ```
  */
 export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {}) => {
+  const bridge = useEVMBridge()
   const chains = useChains()
-  const chainId = useChainId()
+  const chainId = bridge?.chainId ?? 0
   const [status, setStatus] = useState<BaseFlowState>({
     status: 'idle',
   })
-  const { data: walletClient } = useWalletClient()
   const [data, setData] = useState<GrantPermissionsResult | null>(null)
   const grantPermissions = useCallback(
     async (
@@ -121,6 +121,7 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
       try {
         logger.log('Granting permissions with request:', request)
 
+        const walletClient = await bridge?.getWalletClient?.()
         if (!walletClient) {
           throw new OpenfortError('Wallet client not available', OpenfortReactErrorType.WALLET_ERROR)
         }
@@ -129,7 +130,6 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
           status: 'loading',
         })
 
-        // Get the current chain configuration
         const chain = chains.find((c) => c.id === chainId)
         if (!chain) {
           throw new OpenfortError('No chain configured', OpenfortReactErrorType.CONFIGURATION_ERROR)
@@ -175,7 +175,7 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
         })
       }
     },
-    [chains, chainId, setStatus, hookOptions]
+    [bridge, chains, chainId, setStatus, hookOptions]
   )
 
   return {

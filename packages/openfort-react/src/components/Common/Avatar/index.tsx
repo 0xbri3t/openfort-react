@@ -1,9 +1,6 @@
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { normalize } from 'viem/ens'
-
-import { useEnsAddress, useEnsAvatar, useEnsName } from 'wagmi'
-import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import useIsMounted from '../../../hooks/useIsMounted'
 import { ResetContainer } from '../../../styles'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -27,38 +24,55 @@ const Avatar: React.FC<{
 }> = ({ address, name, size = 96, radius = 96 }) => {
   const isMounted = useIsMounted()
   const context = useOpenfort()
+  const bridge = useEVMBridge()
 
   const imageRef = useRef<any>(null)
   const [loaded, setLoaded] = useState(true)
+  const [ens, setEns] = useState<{ address?: Hash; name?: string; avatar?: string }>({})
 
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensAddress } = useEnsAddress({
-    chainId: 1,
-    name: name,
-    config: ensFallbackConfig,
-  })
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address: address ?? ensAddress ?? undefined,
-    config: ensFallbackConfig,
-  })
-  const { data: ensAvatar } = useEnsAvatar({
-    chainId: 1,
-    name: normalize(ensName ?? ''),
-    config: ensFallbackConfig,
-  })
-
-  const ens = {
-    address: ensAddress ?? address,
-    name: ensName ?? name,
-    avatar: ensAvatar ?? undefined,
-  }
+  useEffect(() => {
+    if (!bridge) {
+      setEns({ address, name })
+      return
+    }
+    const resolve = async () => {
+      let resolvedAddress: Hash | undefined = address
+      let resolvedName: string | undefined = name
+      if (name && bridge.getEnsAddress) {
+        resolvedAddress = (await bridge.getEnsAddress(name)) ?? address
+      }
+      if (address && bridge.getEnsName) {
+        resolvedName = (await bridge.getEnsName({ address })) ?? name
+      }
+      if (bridge.account?.address === address && bridge.account?.ensName) {
+        resolvedName = bridge.account.ensName
+      }
+      if (bridge.account?.address === address && bridge.account?.ensAvatar) {
+        setEns({
+          address: resolvedAddress ?? address,
+          name: resolvedName ?? name,
+          avatar: bridge.account.ensAvatar,
+        })
+        return
+      }
+      let avatar: string | undefined
+      if (resolvedName && bridge.getEnsAvatar) {
+        avatar = await bridge.getEnsAvatar(resolvedName)
+      }
+      setEns({
+        address: resolvedAddress ?? address,
+        name: resolvedName ?? name,
+        avatar,
+      })
+    }
+    resolve()
+  }, [bridge, address, name])
 
   useEffect(() => {
     if (!(imageRef.current?.complete && imageRef.current.naturalHeight !== 0)) {
       setLoaded(false)
     }
-  }, [ensAvatar])
+  }, [ens.avatar])
 
   if (!isMounted) return <div style={{ width: size, height: size, borderRadius: radius }} />
 

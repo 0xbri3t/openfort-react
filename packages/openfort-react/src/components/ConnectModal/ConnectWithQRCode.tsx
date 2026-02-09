@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useAccount, useEnsName } from 'wagmi'
+import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import { useWalletConnectModal } from '../../hooks/useWalletConnectModal'
 import { truncateEthAddress } from '../../utils'
-import { useWallet } from '../../wallets/useWagmiWallets'
+import { useWallet } from '../../wallets/useEVMConnectors'
 import { CopyText } from '../Common/CopyToClipboard/CopyText'
 import Loader from '../Common/Loading'
 import { ModalBody } from '../Common/Modal/styles'
@@ -12,7 +12,10 @@ import { useOpenfort } from '../Openfort/useOpenfort'
 import { PageContent } from '../PageContent'
 
 const ConnectWithSiwe = () => {
-  const { isConnected, address } = useAccount()
+  const bridge = useEVMBridge()
+  const isConnected = bridge?.account?.isConnected ?? false
+  const address = bridge?.account?.address
+  const ensName = bridge?.account?.ensName
   const { connector, setRoute } = useOpenfort()
   const wallet = useWallet(connector.id)
 
@@ -39,11 +42,6 @@ const ConnectWithSiwe = () => {
       connectWithSiwe()
     }
   }, [isConnected])
-
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address: address,
-  })
 
   return (
     <PageContent>

@@ -338,6 +338,8 @@ export type PhoneConfig = {
 }
 
 export type ConnectUIOptions = {
+  /** App name (e.g. for WalletConnect og:title). When using getDefaultConfig from @openfort/wagmi, pass the same appName here for consistency. */
+  appName?: string
   theme?: Theme
   mode?: Mode
   customTheme?: CustomTheme
@@ -377,6 +379,7 @@ type WalletRecoveryOptionsExtended = {
 export type CustomizableRoutes = typeof routes.CONNECTED
 
 export type OpenfortUIOptionsExtended = {
+  appName?: string
   theme: Theme
   mode: Mode
   customTheme?: CustomTheme

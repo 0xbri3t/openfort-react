@@ -9,16 +9,16 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Hex } from 'viem'
-import { type Connector, useAccount, useChainId, useDisconnect, useSwitchChain } from 'wagmi'
 import { type GetEncryptionSessionParams, routes, UIAuthProvider } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
+import type { OpenfortEVMBridgeConnector } from '../../core/OpenfortEVMBridgeContext'
+import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { queryKeys } from '../../core/queryKeys'
 import { useOpenfortCore, useWalletStatus } from '../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
-import { useWagmiWallets } from '../../wallets/useWagmiWallets'
-import { useConnect } from '../useConnect'
+import { useEVMConnectors } from '../../wallets/useEVMConnectors'
 import type { BaseFlowState } from './auth/status'
 import { onError, onSuccess } from './hookConsistency'
 import { useUser } from './useUser'
@@ -32,7 +32,7 @@ export type UserWallet = {
   address: Hex
   connectorType?: string
   walletClientType?: string
-  connector?: Connector
+  connector?: OpenfortEVMBridgeConnector
   id: string
   isAvailable: boolean
   isActive?: boolean
@@ -230,56 +230,58 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   const { client, embeddedAccounts, isLoadingAccounts: isLoadingWallets, updateEmbeddedAccounts } = useOpenfortCore()
   const { linkedAccounts, user } = useUser()
   const { walletConfig, setOpen, setRoute, setConnector, uiConfig } = useOpenfort()
-  const { connector, isConnected, address } = useAccount()
-  const chainId = useChainId()
-  const availableWallets = useWagmiWallets() // TODO: Map wallets object to be the same as wallets
-  const { disconnect, disconnectAsync } = useDisconnect()
+  const bridge = useEVMBridge()
+  const connector = bridge?.account?.connector
+  const isConnected = bridge?.account?.isConnected ?? false
+  const address = bridge?.account?.address
+  const chainId = bridge?.chainId ?? 0
+  const availableWallets = useEVMConnectors()
+  const disconnectAsync = bridge?.disconnect
   const [status, setStatus] = useWalletStatus()
-  const [connectToConnector, setConnectToConnector] = useState<{ address?: Hex; connector: Connector } | undefined>(
-    undefined
-  )
-  const { switchChainAsync } = useSwitchChain()
+  const [connectToConnector, setConnectToConnector] = useState<
+    { address?: Hex; connector: OpenfortEVMBridgeConnector } | undefined
+  >(undefined)
+  const switchChainAsync = bridge?.switchChain?.switchChainAsync
 
-  const { connect } = useConnect({
-    mutation: {
-      onError: (e) => {
-        const error = new OpenfortError(
-          'Failed to connect with wallet: ',
-          OpenfortReactErrorType.AUTHENTICATION_ERROR,
-          e
-        )
-        setStatus({
-          status: 'error',
-          error,
+  const connectWithBridge = useCallback(
+    (params: { connector: OpenfortEVMBridgeConnector }) => {
+      if (!bridge?.connectAsync) return
+      const conn = params.connector
+      const pending = connectToConnector
+      bridge
+        .connectAsync({ connector: conn })
+        .then((data: { accounts?: string[] }) => {
+          setConnectToConnector(undefined)
+          logger.log('Connected with wallet', data, pending)
+          if (
+            pending?.address &&
+            data?.accounts &&
+            !data.accounts.some((a) => a.toLowerCase() === pending.address?.toLowerCase())
+          ) {
+            setStatus({
+              status: 'error',
+              error: new OpenfortError(
+                'Failed to connect with wallet: Address mismatch',
+                OpenfortReactErrorType.AUTHENTICATION_ERROR
+              ),
+            })
+            bridge?.disconnect()
+            return
+          }
+          setStatus({ status: 'success' })
         })
-        onError({
-          error,
-          options: hookOptions,
+        .catch((e) => {
+          const error = new OpenfortError(
+            'Failed to connect with wallet: ',
+            OpenfortReactErrorType.AUTHENTICATION_ERROR,
+            e
+          )
+          setStatus({ status: 'error', error })
+          onError({ error, options: hookOptions })
         })
-      },
-      onSuccess: (data) => {
-        setConnectToConnector(undefined)
-        logger.log('Connected with wallet', data, connectToConnector)
-        if (
-          connectToConnector?.address &&
-          !data.accounts.some((a) => a.toLowerCase() === connectToConnector.address?.toLowerCase())
-        ) {
-          setStatus({
-            status: 'error',
-            error: new OpenfortError(
-              'Failed to connect with wallet: Address mismatch',
-              OpenfortReactErrorType.AUTHENTICATION_ERROR
-            ),
-          })
-          disconnect()
-          return
-        }
-        setStatus({
-          status: 'success',
-        })
-      },
     },
-  })
+    [bridge, connectToConnector, hookOptions]
+  )
 
   const openfortConnector = useMemo(
     () => availableWallets.find((c) => c.connector.id === embeddedWalletId)?.connector,
@@ -516,8 +518,8 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
   const [shouldSwitchToChain, setShouldSwitchToChain] = useState<number | null>(null)
   useEffect(() => {
-    if (connectToConnector) connect({ connector: connectToConnector.connector })
-  }, [connectToConnector])
+    if (connectToConnector && bridge) connectWithBridge({ connector: connectToConnector.connector })
+  }, [connectToConnector, bridge, connectWithBridge])
 
   const setActiveWallet = useCallback(
     async (options: SetActiveWalletOptions | string): Promise<SetActiveWalletResult> => {
@@ -525,7 +527,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
       const { showUI } = optionsObject
 
-      let connector: Connector | null = null
+      let connector: OpenfortEVMBridgeConnector | null = null
 
       if (typeof optionsObject.walletId === 'string') {
         const wallet = availableWallets.find((c) => c.id === optionsObject.walletId)
@@ -536,7 +538,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         logger.log('Connecting to', wallet.connector)
         connector = wallet.connector
       } else {
-        connector = optionsObject.walletId
+        connector = optionsObject.walletId as OpenfortEVMBridgeConnector
       }
 
       if (!connector) {
@@ -549,7 +551,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         return { wallet: activeWallet }
       }
 
-      await disconnectAsync()
+      if (disconnectAsync) await disconnectAsync()
 
       if (showUI) {
         const walletToConnect = wallets.find((w) => w.id === connector.id)

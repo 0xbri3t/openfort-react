@@ -1,16 +1,18 @@
-import { type Connector, useConnectors as useWagmiConnectors } from 'wagmi'
+import type { OpenfortEVMBridgeConnector } from '../core/OpenfortEVMBridgeContext'
+import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
 
-export function useConnectors() {
-  const connectors = useWagmiConnectors()
-  return connectors ?? []
+export function useConnectors(): OpenfortEVMBridgeConnector[] {
+  const bridge = useEVMBridge()
+  return bridge?.connectors ?? []
 }
 
-export function useConnector(id: string, uuid?: string) {
+export function useConnector(id: string, uuid?: string): OpenfortEVMBridgeConnector | undefined {
   const connectors = useConnectors()
   if (id === 'injected' && uuid) {
-    return connectors.find((c) => c.id === id && c.name === uuid) as Connector
-  } else if (id === 'injected') {
-    return connectors.find((c) => c.id === id && c.name.includes('Injected')) as Connector
+    return connectors.find((c) => c.id === id && c.name === uuid)
+  }
+  if (id === 'injected') {
+    return connectors.find((c) => c.id === id && c.name?.includes('Injected'))
   }
   return connectors.find((c) => c.id === id)
 }
@@ -20,49 +22,4 @@ export function useFamilyAccountsConnector() {
 }
 export function useFamilyConnector() {
   return useConnector('co.family.wallet')
-}
-
-function _useInjectedConnector(uuid?: string) {
-  /*
-  options: {
-    shimDisconnect: true,
-    name: (
-      detectedName: string | string[] // Detects the name of the injected wallet
-    ) =>
-      `Injected (${
-        typeof detectedName === 'string'
-          ? detectedName
-          : detectedName.join(', ')
-      })`,
-  }
-  */
-  return useConnector('injected', uuid)
-}
-function _useWalletConnectConnector() {
-  /*
-  options: {
-    qrcode: false,
-    // or
-    showQrModal: false,
-  }
-  */
-  return useConnector('walletConnect')
-}
-function _useCoinbaseWalletConnector() {
-  /*
-  options: {
-    headlessMode: true,
-  }
-  */
-  return useConnector('coinbaseWalletSDK')
-}
-function _useMetaMaskConnector() {
-  /*
-  options: {
-    shimDisconnect: true,
-    shimChainChangedDisconnect: true,
-    UNSTABLE_shimOnConnectSelectAccount: true,
-  }
-  */
-  return useConnector('metaMask')
 }

@@ -7,9 +7,9 @@ import {
 import { Buffer } from 'buffer'
 import type React from 'react'
 import { createElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { OpenfortEVMBridgeContext } from '../../core/OpenfortEVMBridgeContext'
 import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
 import { useThemeFont } from '../../hooks/useGoogleFont'
-import { useAccountSafe, useChainIsSupportedSafe, useConnectorSafe, useHasWagmi } from '../../hooks/useWagmiSafe'
 import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
 import { SolanaContextProvider } from '../../solana/providers/SolanaContextProvider'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
@@ -58,15 +58,15 @@ export const OpenfortProvider = ({
   overrides,
   thirdPartyAuth,
 }: OpenfortProviderProps) => {
-  const hasWagmi = useHasWagmi()
+  const bridge = useContext(OpenfortEVMBridgeContext)
+  const hasWagmi = !!bridge
   const hasSolana = !!walletConfig?.solana
-  const chainType = chainTypeProp ?? (hasSolana && !hasWagmi ? ChainTypeEnum.SVM : ChainTypeEnum.EVM)
+  const chainType = chainTypeProp ?? (hasSolana ? ChainTypeEnum.SVM : ChainTypeEnum.EVM)
 
-  // Require at least one chain to be configured
-  if (!hasWagmi && !hasSolana) {
+  if (chainType === ChainTypeEnum.SVM && !hasSolana) {
     throw new Error(
-      'OpenfortProvider requires either WagmiProvider (for Ethereum) or walletConfig.solana (for Solana). ' +
-        'Wrap with WagmiProvider for Ethereum support, or pass walletConfig={{ solana: { cluster: "mainnet-beta" } }} for Solana-only mode.'
+      'OpenfortProvider with chainType SVM requires walletConfig.solana. ' +
+        'Pass walletConfig={{ solana: { cluster: "mainnet-beta" } }} (or use chainType EVM for Ethereum).'
     )
   }
 
@@ -106,12 +106,11 @@ export const OpenfortProvider = ({
     return debugModeOptions
   }, [debugMode])
 
-  // Use safe hooks that work without WagmiProvider (for Solana-only mode)
-  const injectedConnector = useConnectorSafe('injected')
+  const injectedConnector = bridge?.connectors?.find((c) => c.id === 'injected')
   const allowAutomaticRecovery = !!(walletConfig?.createEncryptedSessionEndpoint || walletConfig?.getEncryptionSession)
 
-  // Default config options
   const defaultUIOptions: OpenfortUIOptionsExtended = {
+    appName: 'Openfort',
     theme: 'auto',
     mode: 'auto',
     language: 'en-US',
@@ -203,12 +202,10 @@ export const OpenfortProvider = ({
   useEffect(() => setLang(safeUiConfig.language || 'en-US'), [safeUiConfig.language])
   useEffect(() => setErrorMessage(null), [])
 
-  // Check if chain is supported`, elsewise redirect to switches page
-  // Uses safe hooks that work without WagmiProvider (for Solana-only mode)
-  const { chain, isConnected } = useAccountSafe()
-  const isChainSupported = useChainIsSupportedSafe(chain?.id)
+  const chain = bridge?.account.chain
+  const isConnected = bridge?.account.isConnected ?? false
+  const isChainSupported = !chain?.id || (bridge?.config.chains?.some((c) => c.id === chain.id) ?? false)
 
-  // Ethereum-specific: enforce supported chains (only when Wagmi is available)
   useEffect(() => {
     if (hasWagmi && isConnected && safeUiConfig.enforceSupportedChains && !isChainSupported) {
       setOpen(true)
@@ -216,12 +213,11 @@ export const OpenfortProvider = ({
     }
   }, [hasWagmi, isConnected, isChainSupported, safeUiConfig.enforceSupportedChains, setOpen, setRoute])
 
-  // Ethereum-specific: autoconnect to Family wallet if available
   useEffect(() => {
-    if (hasWagmi && isFamily()) {
-      injectedConnector?.connect()
+    if (hasWagmi && isFamily() && injectedConnector && bridge) {
+      bridge.connect({ connector: injectedConnector })
     }
-  }, [hasWagmi, injectedConnector])
+  }, [hasWagmi, injectedConnector, bridge])
 
   useEffect(() => {
     logger.log('ROUTE', route)

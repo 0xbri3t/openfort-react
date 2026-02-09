@@ -1,17 +1,16 @@
-import type { User } from '@openfort/openfort-js'
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import type { ConnectCallbackProps } from '../openfort/connectCallbackTypes'
 import { useOpenfortCore } from '../openfort/useOpenfort'
 import useIsMounted from './useIsMounted'
 
-export type useConnectCallbackProps = {
-  onConnect?: ({ address, connectorId, user }: { address?: string; connectorId?: string; user?: User }) => void
-  onDisconnect?: () => void
-}
+export type { ConnectCallbackProps as useConnectCallbackProps } from '../openfort/connectCallbackTypes'
 
-export const useConnectCallback = ({ onConnect, onDisconnect }: useConnectCallbackProps) => {
+export const useConnectCallback = ({ onConnect, onDisconnect }: ConnectCallbackProps) => {
   const { user } = useOpenfortCore()
-  const { address, connector } = useAccount()
+  const bridge = useEVMBridge()
+  const address = bridge?.account?.address
+  const connector = bridge?.account?.connector
   const hasAddress = !!address
   const [isConnected, setIsConnected] = useState(false)
   const isMounted = useIsMounted()
@@ -36,5 +35,5 @@ export const useConnectCallback = ({ onConnect, onDisconnect }: useConnectCallba
     } else {
       onDisconnect?.()
     }
-  }, [isConnected])
+  }, [isConnected, address, connector, user, isMounted, onConnect, onDisconnect])
 }

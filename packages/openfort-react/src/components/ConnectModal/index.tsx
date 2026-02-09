@@ -1,8 +1,7 @@
 import { ChainTypeEnum, OAuthProvider } from '@openfort/openfort-js'
 import { useEffect, useMemo } from 'react'
 import type { ValueOf } from 'viem/_types/types/utils'
-import { useAccount } from 'wagmi'
-import { getAppName } from '../../defaultConfig'
+import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
@@ -137,9 +136,10 @@ const ConnectModal: React.FC<{
   lang?: Languages
 }> = ({ mode = 'auto', theme = 'auto', customTheme = customThemeDefault, lang = 'en-US' }) => {
   const context = useOpenfort()
-  // const { logout, user } = useOpenfortCore()
-  const { isConnected, chain } = useAccount()
-  const chainIsSupported = useChainIsSupported(chain?.id)
+  const bridge = useEVMBridge()
+  const isConnected = bridge?.account?.isConnected ?? false
+  const chainId = bridge?.account?.chain?.id ?? bridge?.chainId
+  const chainIsSupported = useChainIsSupported(chainId)
 
   //if chain is unsupported we enforce a "switch chain" prompt
   const closeable = !(context.uiConfig.enforceSupportedChains && isConnected && !chainIsSupported)
@@ -245,7 +245,7 @@ const ConnectModal: React.FC<{
 
   /* When pulling data into WalletConnect, it prioritises the og:title tag over the title tag */
   useEffect(() => {
-    const appName = getAppName()
+    const appName = context.uiConfig.appName ?? 'Openfort'
     if (!appName || !context.open) return
 
     const title = document.createElement('meta')
