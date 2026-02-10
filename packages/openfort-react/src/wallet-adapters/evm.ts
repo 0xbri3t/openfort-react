@@ -1,0 +1,221 @@
+/**
+ * EVM wallet adapter hooks
+ *
+ * Implementations of wallet adapter interfaces using SDK/viem only (no wagmi).
+ * Use these when running in evm-only mode (no WagmiProvider).
+ */
+
+import { ChainTypeEnum } from '@openfort/openfort-js'
+import { useQuery } from '@tanstack/react-query'
+import { useCallback, useState } from 'react'
+import { type Abi, createPublicClient, getAddress, http } from 'viem'
+import { useCoreContext } from '../core/CoreContext'
+import { useEthereumWriteContract } from '../ethereum/hooks/useEthereumWriteContract'
+import { signMessage as signMessageOp } from '../ethereum/operations'
+import { useSignOut } from '../hooks/openfort/auth/useSignOut'
+import { useBalance as useBalanceHook } from '../hooks/useBalance'
+import { useChains } from '../hooks/useChains'
+import { useConnectedWallet } from '../hooks/useConnectedWallet'
+import { useOpenfortCore } from '../openfort/useOpenfort'
+import { getDefaultEthereumRpcUrl } from '../utils/rpc'
+import type {
+  UseAccountLike,
+  UseBalanceLike,
+  UseDisconnectLike,
+  UseReadContractLike,
+  UseSignMessageLike,
+  UseSwitchChainLike,
+  UseWriteContractLike,
+  WalletAdapterChain,
+} from './types'
+
+export function useEVMAccount(): UseAccountLike {
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  return {
+    address: isConnected && wallet.address ? (wallet.address as `0x${string}`) : undefined,
+    chainId: isConnected ? wallet.chainId : undefined,
+    isConnected,
+  }
+}
+
+export function useEVMBalance(): UseBalanceLike {
+  const { address, chainId, isConnected } = useEVMAccount()
+  const chainIdNum = chainId ?? 1
+  const balanceState = useBalanceHook({
+    address: address ?? '',
+    chainType: ChainTypeEnum.EVM,
+    chainId: chainIdNum,
+    enabled: isConnected && !!address,
+  })
+
+  const refetch = useCallback(() => {
+    balanceState.refetch()
+  }, [balanceState.refetch])
+
+  if (!isConnected || !address) {
+    return { data: undefined, refetch, isLoading: false }
+  }
+
+  if (balanceState.status === 'loading') {
+    return { data: undefined, refetch, isLoading: true }
+  }
+  if (balanceState.status === 'error') {
+    return { data: undefined, refetch, isLoading: false, error: balanceState.error }
+  }
+  if (balanceState.status === 'success') {
+    return {
+      data: {
+        value: balanceState.value,
+        formatted: balanceState.formatted,
+        symbol: balanceState.symbol,
+        decimals: balanceState.decimals,
+      },
+      refetch,
+      isLoading: false,
+    }
+  }
+  return { data: undefined, refetch, isLoading: false }
+}
+
+export function useEVMDisconnect(): UseDisconnectLike {
+  const { signOut } = useSignOut()
+  return {
+    disconnect: () => {
+      signOut()
+    },
+  }
+}
+
+export function useEVMSwitchChain(): UseSwitchChainLike {
+  const chains = useChains()
+  const { chainId: currentChainId } = useEVMAccount()
+  const [data, setData] = useState<WalletAdapterChain | undefined>(undefined)
+  const [error, setError] = useState<Error | null>(null)
+  const [isPending, setIsPending] = useState(false)
+
+  const adapterChains: WalletAdapterChain[] = chains.map((c) => ({
+    id: c.id,
+    name: c.name ?? `Chain ${c.id}`,
+    blockExplorers: c.blockExplorers,
+  }))
+
+  const switchChain = useCallback(
+    async (params: { chainId: number }) => {
+      const chain = adapterChains.find((c) => c.id === params.chainId)
+      if (!chain) {
+        setError(new Error(`Chain ${params.chainId} not found`))
+        return
+      }
+      setError(null)
+      setIsPending(true)
+      try {
+        setData(chain)
+      } finally {
+        setIsPending(false)
+      }
+    },
+    [adapterChains]
+  )
+
+  return {
+    chains: adapterChains,
+    currentChainId,
+    switchChain,
+    data,
+    error,
+    isPending,
+  }
+}
+
+export function useEVMSignMessage(): UseSignMessageLike {
+  const { client } = useOpenfortCore()
+  const [data, setData] = useState<`0x${string}` | undefined>(undefined)
+  const [error, setError] = useState<Error | null>(null)
+  const [isPending, setIsPending] = useState(false)
+
+  const signMessage = useCallback(
+    async (params: { message: string }) => {
+      setError(null)
+      setIsPending(true)
+      try {
+        const sig = await signMessageOp({ message: params.message, client })
+        setData(sig)
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error(String(err)))
+      } finally {
+        setIsPending(false)
+      }
+    },
+    [client]
+  )
+
+  return {
+    data,
+    signMessage,
+    isPending,
+    error,
+  }
+}
+
+/** useReadContract-like: read one view function (address, abi, functionName, args) */
+export function useEVMReadContract(params: {
+  address: `0x${string}`
+  abi: Abi
+  functionName: string
+  args?: unknown[]
+  chainId?: number
+}): UseReadContractLike {
+  const { config } = useCoreContext()
+  const { chainId: connectedChainId } = useEVMAccount()
+  const chainId = params.chainId ?? connectedChainId ?? 1
+  const rpcUrl = config?.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)
+
+  const query = useQuery({
+    queryKey: ['readContract', params.address, params.functionName, params.args, chainId],
+    enabled: !!params.address && !!params.functionName,
+    queryFn: async () => {
+      const client = createPublicClient({ transport: http(rpcUrl) })
+      return client.readContract({
+        address: params.address,
+        abi: params.abi,
+        functionName: params.functionName,
+        args: params.args as readonly unknown[] | undefined,
+      })
+    },
+  })
+
+  return {
+    data: query.data,
+    refetch: query.refetch,
+    error: query.error as Error | null,
+    isLoading: query.isLoading || query.isPending,
+  }
+}
+
+/** useWriteContract-like: writeContract({ address, abi, functionName, args }) */
+export function useEVMWriteContract(): UseWriteContractLike {
+  const { address, chainId } = useEVMAccount()
+  const { writeContractAsync, data, isPending, error } = useEthereumWriteContract()
+
+  const writeContract = useCallback(
+    (params: { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }) => {
+      if (!address) return Promise.reject(new Error('Wallet not connected'))
+      return writeContractAsync({
+        address: getAddress(params.address),
+        abi: params.abi as Abi,
+        functionName: params.functionName,
+        args: params.args,
+        chainId: chainId,
+      })
+    },
+    [address, chainId, writeContractAsync]
+  )
+
+  return {
+    data,
+    writeContract,
+    isPending,
+    error,
+  }
+}

@@ -1,6 +1,5 @@
-import { embeddedWalletId, RecoveryMethod, useWallets } from '@openfort/react'
+import { RecoveryMethod, useEthereumEmbeddedWallet } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
 import { onSettledOptions } from '@/components/Variable/commonVariables'
 import { HookVariable } from '@/components/Variable/HookVariable'
 import { Layout } from '../../../components/Layout'
@@ -9,97 +8,63 @@ export const Route = createFileRoute('/_hooks/wallet/useWallets')({
   component: RouteComponent,
 })
 
+const defaultOptions = { ...onSettledOptions, chainId: 11155111 }
+
 function RouteComponent() {
-  const wallets = useWallets()
-  const connectorOptions = useMemo(
-    () =>
-      wallets.wallets
-        .map((wallet) => wallet.id)
-        .reduce((acc, id) => {
-          if (!acc.includes(id)) {
-            acc.push(id)
-          }
-          return acc
-        }, [] as string[]),
-    [wallets.wallets]
-  )
-
-  const [isOpenfortWallet, setIsOpenfortWallet] = useState(connectorOptions[0] === embeddedWalletId)
-
-  useEffect(() => {
-    setIsOpenfortWallet(connectorOptions[0] === embeddedWalletId)
-  }, [connectorOptions])
-
-  // wallets.setActiveWallet({
-  //   walletId,
-  //   recovery: {
-  //     password
-  //   }
-  // })
   return (
     <Layout>
       <HookVariable
-        name="useWallets"
-        hook={useWallets}
-        description="This hook provides access to the wallets available in the application."
-        defaultOptions={onSettledOptions}
+        name="useEthereumEmbeddedWallet"
+        hook={useEthereumEmbeddedWallet}
+        description="Ethereum embedded wallet hook (viem/openfort-js only, no wagmi). Use for create, setActive, wallets, and activeWallet."
+        defaultOptions={defaultOptions}
         variables={{
-          setActiveWallet: {
-            description: 'Set the active wallet for the application.',
+          setActive: {
+            description: 'Set the active embedded wallet by address.',
             inputs: {
-              showUI: {
-                type: 'boolean',
-                defaultValue: 'false',
-                required: true,
-              },
-              walletId: {
-                type: 'select',
-                options: connectorOptions,
-                required: true,
-                onChange: (value) => {
-                  setIsOpenfortWallet(value === embeddedWalletId)
-                },
-              },
-              'recovery.recoveryMethod': {
-                type: 'select',
-                options: ['undefined', 'PASSWORD', 'PASSKEY', 'AUTOMATIC'],
-                hidden: !isOpenfortWallet,
-              },
-              'recovery.password': {
-                type: 'password',
-                hidden: !isOpenfortWallet,
-              },
               address: {
                 type: 'text',
-                placeholder: '0x1234...',
+                placeholder: '0x...',
+                required: true,
+              },
+              recoveryMethod: {
+                type: 'select',
+                options: ['undefined', RecoveryMethod.PASSWORD, RecoveryMethod.PASSKEY, RecoveryMethod.AUTOMATIC],
+              },
+              recoveryPassword: {
+                type: 'password',
               },
             },
           },
           exportPrivateKey: {
             description: 'Export the private key of the active wallet.',
           },
-          createWallet: {
-            description: 'Create a new wallet.',
+          create: {
+            description: 'Create a new embedded wallet.',
             inputs: {
-              'recovery.recoveryMethod': {
+              recoveryMethod: {
                 type: 'select',
                 options: ['undefined', RecoveryMethod.PASSWORD, RecoveryMethod.PASSKEY, RecoveryMethod.AUTOMATIC],
               },
-              'recovery.password': {
+              recoveryPassword: {
                 type: 'password',
               },
             },
           },
-          availableWallets: {
-            description: 'List of available wallets in the application.',
+          setRecovery: {
+            description: 'Update recovery method for the wallet.',
           },
           activeWallet: {
-            description: 'The currently active wallet in the application.',
-            typescriptType: 'Wallet',
+            description: 'The currently active embedded wallet (when status is connected).',
+            typescriptType: 'ConnectedEmbeddedEthereumWallet | null',
           },
           wallets: {
-            description: 'List of the wallets of the user.',
-            typescriptType: 'Wallet[]',
+            description: 'List of embedded Ethereum wallets.',
+            typescriptType: 'ConnectedEmbeddedEthereumWallet[]',
+          },
+          status: {
+            description:
+              'Current wallet state: disconnected | fetching-wallets | connecting | creating | connected | needs-recovery | error.',
           },
         }}
       />

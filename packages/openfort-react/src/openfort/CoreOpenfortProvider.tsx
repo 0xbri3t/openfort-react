@@ -52,6 +52,10 @@ export type OpenfortCoreContextValue = {
   isLoadingAccounts: boolean
   walletReadiness: WalletReadiness
 
+  /** Current active embedded wallet address (drives top-right / useConnectedWallet). Set by useEthereumEmbeddedWallet.setActive and synced from SDK on load. */
+  activeEmbeddedAddress: string | undefined
+  setActiveEmbeddedAddress: (address: string | undefined) => void
+
   logout: () => void
 
   updateEmbeddedAccounts: (
@@ -289,6 +293,28 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const isLoadingAccounts = isAccountsPending && !silentRefetchInProgress
 
+  const [activeEmbeddedAddress, setActiveEmbeddedAddress] = useState<string | undefined>(undefined)
+
+  // Sync active embedded address from SDK on load (so top-right and strategy match after refresh)
+  useEffect(() => {
+    if (!openfort || !embeddedAccounts?.length) {
+      if (!embeddedAccounts?.length) setActiveEmbeddedAddress(undefined)
+      return
+    }
+    let cancelled = false
+    openfort.embeddedWallet
+      .get()
+      .then((active) => {
+        if (cancelled || !active) return
+        const addr = active.chainType === ChainTypeEnum.EVM ? active.address : undefined
+        if (addr) setActiveEmbeddedAddress(addr)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [openfort, embeddedAccounts?.length])
+
   useEffect(() => {
     if (!openfort || !walletConfig || !strategy) return
 
@@ -361,6 +387,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     if (!openfort) return
 
     setUser(null)
+    setActiveEmbeddedAddress(undefined)
     setWalletStatus({ status: 'idle' })
     logger.log('Logging out...')
     await openfort.auth.logout()
@@ -438,6 +465,9 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     embeddedAccounts,
     isLoadingAccounts,
     walletReadiness,
+
+    activeEmbeddedAddress,
+    setActiveEmbeddedAddress,
 
     walletStatus,
     setWalletStatus,

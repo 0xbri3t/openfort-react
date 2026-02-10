@@ -40,6 +40,7 @@ export function createEVMEmbeddedStrategy(walletConfig: OpenfortWalletConfig | u
     },
 
     getAddress(state) {
+      if (state.activeEmbeddedAddress) return state.activeEmbeddedAddress
       return firstEVMAddress(state.embeddedAccounts)
     },
 

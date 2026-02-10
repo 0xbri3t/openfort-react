@@ -11,16 +11,39 @@ function accountsForChain(accounts: EmbeddedAccount[] | undefined, chainType: Ch
   return accounts?.filter((a) => a.chainType === chainType) ?? []
 }
 
+/** Normalized status (wagmi-compatible). 'loading' is exposed as 'connecting'. */
+export type ConnectedWalletStatus = 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
+
 export type ConnectedWalletState =
-  | { status: 'disconnected' }
-  | { status: 'loading' }
+  | {
+      status: 'disconnected'
+      /** @see ConnectedWalletStatus */
+      normalizedStatus: 'disconnected'
+      isConnected: false
+      isConnecting: false
+      isDisconnected: true
+      isReconnecting: false
+    }
+  | {
+      status: 'loading'
+      normalizedStatus: 'connecting'
+      isConnected: false
+      isConnecting: true
+      isDisconnected: false
+      isReconnecting: false
+    }
   | {
       status: 'connected'
+      normalizedStatus: 'connected'
       address: string
       chainType: ChainTypeEnum
       chainId?: number
       cluster?: SolanaCluster
       displayAddress: string
+      isConnected: true
+      isConnecting: false
+      isDisconnected: false
+      isReconnecting: false
     }
 
 interface WalletInternalState {
@@ -40,6 +63,7 @@ function useEthereumWalletFromStrategy(): WalletInternalState | null {
   const state = {
     user: core.user,
     embeddedAccounts: core.embeddedAccounts,
+    activeEmbeddedAddress: core.activeEmbeddedAddress,
     chainType,
   }
 
@@ -78,18 +102,39 @@ function useSolanaWalletInternal(): WalletInternalState | null {
 }
 
 function toConnectedState(chainType: ChainTypeEnum, wallet: WalletInternalState | null): ConnectedWalletState {
-  if (wallet?.status === 'loading') return { status: 'loading' }
+  if (wallet?.status === 'loading') {
+    return {
+      status: 'loading',
+      normalizedStatus: 'connecting',
+      isConnected: false,
+      isConnecting: true,
+      isDisconnected: false,
+      isReconnecting: false,
+    }
+  }
   if (wallet?.status === 'connected' && wallet.address) {
     return {
       status: 'connected',
+      normalizedStatus: 'connected',
       address: wallet.address,
       chainType,
       ...(chainType === ChainTypeEnum.EVM && { chainId: wallet.chainId }),
       ...(chainType === ChainTypeEnum.SVM && { cluster: wallet.cluster }),
       displayAddress: formatAddress(wallet.address, chainType),
+      isConnected: true,
+      isConnecting: false,
+      isDisconnected: false,
+      isReconnecting: false,
     }
   }
-  return { status: 'disconnected' }
+  return {
+    status: 'disconnected',
+    normalizedStatus: 'disconnected',
+    isConnected: false,
+    isConnecting: false,
+    isDisconnected: true,
+    isReconnecting: false,
+  }
 }
 
 export function useConnectedWallet(): ConnectedWalletState {

@@ -8,6 +8,8 @@ export const DEFAULT_DEV_CHAIN_ID = 11155111
 export interface ConnectionStrategyState {
   user: User | null
   embeddedAccounts: EmbeddedAccount[] | undefined
+  /** When set, strategy uses this as the connected address (e.g. after user switches active embedded wallet). */
+  activeEmbeddedAddress?: string | null
   chainType: ChainTypeEnum
 }
 

@@ -12,6 +12,8 @@ import type { Hex } from 'viem'
 import { type GetEncryptionSessionParams, routes, UIAuthProvider } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
+import { DEFAULT_DEV_CHAIN_ID } from '../../core/ConnectionStrategy'
+import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import type { OpenfortEVMBridgeConnector } from '../../core/OpenfortEVMBridgeContext'
 import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { queryKeys } from '../../core/queryKeys'
@@ -20,6 +22,14 @@ import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from 
 import { logger } from '../../utils/logger'
 import { useEVMConnectors } from '../../wallets/useEVMConnectors'
 import type { BaseFlowState } from './auth/status'
+
+/** Synthetic connector for embedded wallet when EVM has no bridge (evm-only mode). */
+const SYNTHETIC_EMBEDDED_CONNECTOR: OpenfortEVMBridgeConnector = {
+  id: embeddedWalletId,
+  name: 'Openfort',
+  type: 'embedded',
+}
+
 import { onError, onSuccess } from './hookConsistency'
 import { useUser } from './useUser'
 
@@ -201,8 +211,9 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
  * }
  * ```
  *
- * @deprecated Use `useEthereumEmbeddedWallet` from '@openfort/react/ethereum' for a cleaner,
- * more type-safe API with discriminated union states. This hook will be removed in a future version.
+ * @deprecated Use `useEthereumEmbeddedWallet` from this package for a cleaner, more type-safe API
+ * with discriminated union states. Import from `@openfort/react` or `@openfort/react/ethereum`.
+ * This hook will be removed in a future version.
  *
  * @example Migration to useEthereumEmbeddedWallet:
  * ```tsx
@@ -210,31 +221,34 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
  * import { useWallets } from '@openfort/react';
  * const { wallets, createWallet } = useWallets();
  *
- * // After:
- * import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
+ * // After (same package, main or ethereum entry):
+ * import { useEthereumEmbeddedWallet } from '@openfort/react';
+ * // or: import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
  * const ethereum = useEthereumEmbeddedWallet();
  * if (ethereum.status === 'connected') {
  *   console.log(ethereum.activeWallet.address);
  * }
  * ```
  */
+let useWalletsDeprecationWarned = false
+
 export function useWallets(hookOptions: WalletOptions = {}) {
-  // Emit deprecation warning in development
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' && !useWalletsDeprecationWarned) {
+    useWalletsDeprecationWarned = true
     logger.warn(
-      '[Openfort] useWallets is deprecated. ' +
-        "Use useEthereumEmbeddedWallet from '@openfort/react/ethereum' for a cleaner API with discriminated union states."
+      '[Openfort] useWallets is deprecated. Use useEthereumEmbeddedWallet from @openfort/react (or @openfort/react/ethereum) for a cleaner API with discriminated union states.'
     )
   }
 
   const { client, embeddedAccounts, isLoadingAccounts: isLoadingWallets, updateEmbeddedAccounts } = useOpenfortCore()
   const { linkedAccounts, user } = useUser()
   const { walletConfig, setOpen, setRoute, setConnector, uiConfig } = useOpenfort()
+  const strategy = useConnectionStrategy()
   const bridge = useEVMBridge()
   const connector = bridge?.account?.connector
   const isConnected = bridge?.account?.isConnected ?? false
   const address = bridge?.account?.address
-  const chainId = bridge?.chainId ?? 0
+  const chainId = bridge?.chainId ?? strategy?.getChainId() ?? walletConfig?.ethereum?.chainId ?? 0
   const availableWallets = useEVMConnectors()
   const disconnectAsync = bridge?.disconnect
   const [status, setStatus] = useWalletStatus()
@@ -285,8 +299,10 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   )
 
   const openfortConnector = useMemo(
-    () => availableWallets.find((c) => c.connector.id === embeddedWalletId)?.connector,
-    [availableWallets]
+    () =>
+      availableWallets.find((c) => c.connector.id === embeddedWalletId)?.connector ??
+      (strategy?.kind === 'embedded' ? SYNTHETIC_EMBEDDED_CONNECTOR : undefined),
+    [availableWallets, strategy?.kind]
   )
 
   const getEncryptionSession = useCallback(
@@ -530,7 +546,10 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
       let connector: OpenfortEVMBridgeConnector | null = null
 
-      if (typeof optionsObject.walletId === 'string') {
+      if (optionsObject.walletId === embeddedWalletId) {
+        // Embedded wallet: may not be in availableWallets when evm-only (no bridge).
+        connector = openfortConnector ?? SYNTHETIC_EMBEDDED_CONNECTOR
+      } else if (typeof optionsObject.walletId === 'string') {
         const wallet = availableWallets.find((c) => c.id === optionsObject.walletId)
         if (!wallet) {
           logger.log('Connector not found', connector)
@@ -839,8 +858,10 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
         const accountType = options?.accountType || walletConfig?.accountType || AccountTypeEnum.SMART_ACCOUNT
 
+        const effectiveChainId =
+          chainId && chainId > 0 ? chainId : (walletConfig?.ethereum?.chainId ?? DEFAULT_DEV_CHAIN_ID)
         const embeddedAccount = await client.embeddedWallet.create({
-          ...(accountType !== AccountTypeEnum.EOA && { chainId }),
+          ...(accountType !== AccountTypeEnum.EOA && { chainId: effectiveChainId }),
           accountType,
           chainType: ChainTypeEnum.EVM,
           recoveryParams,
@@ -862,7 +883,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
                 embeddedAccounts: [embeddedAccount],
                 address: embeddedAccount.address as Hex,
               }),
-              chainId,
+              chainId: effectiveChainId,
             }),
           },
         })
@@ -901,7 +922,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         return { error, isOTPRequired }
       }
     },
-    [client, uiConfig, chainId]
+    [client, uiConfig, chainId, walletConfig?.ethereum?.chainId]
   )
 
   const setRecovery = useCallback(

@@ -39,7 +39,8 @@ const DEFAULT_CHAIN_ID = 1
  * wallet chain), use the wagmi extension's useEthereumEmbeddedWallet.
  */
 export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOptions): EmbeddedEthereumWalletState {
-  const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts } = useOpenfortCore()
+  const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =
+    useOpenfortCore()
   const { walletConfig } = useOpenfort()
 
   const chainId = options?.chainId ?? DEFAULT_CHAIN_ID
@@ -151,6 +152,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           provider,
           error: null,
         })
+        setActiveEmbeddedAddress(account.address)
 
         createOptions?.onSuccess?.({ account })
         return account
@@ -172,26 +174,38 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         throw error
       }
     },
-    [client, walletConfig, chainId, createProviderForAccount, updateEmbeddedAccounts]
+    [client, walletConfig, chainId, createProviderForAccount, updateEmbeddedAccounts, setActiveEmbeddedAddress]
   )
 
   const setActive = useCallback(
     async (activeOptions: SetActiveEthereumWalletOptions): Promise<void> => {
       const run = async (): Promise<void> => {
-        setState((s) => ({ ...s, status: 'connecting', error: null }))
+        const account = ethereumAccounts.find(
+          (acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase()
+        )
+
+        if (!account) {
+          throw new OpenfortError(
+            `Ethereum wallet not found: ${activeOptions.address}`,
+            OpenfortReactErrorType.WALLET_ERROR
+          )
+        }
+
+        const connectingStub: ConnectedEmbeddedEthereumWallet = {
+          id: account.id,
+          address: account.address as `0x${string}`,
+          ownerAddress: account.ownerAddress,
+          implementationType: account.implementationType,
+          chainType: ChainTypeEnum.EVM,
+          walletIndex: ethereumAccounts.indexOf(account),
+          recoveryMethod: account.recoveryMethod,
+          getProvider: async () => {
+            throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
+          },
+        }
+        setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
 
         try {
-          const account = ethereumAccounts.find(
-            (acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase()
-          )
-
-          if (!account) {
-            throw new OpenfortError(
-              `Ethereum wallet not found: ${activeOptions.address}`,
-              OpenfortReactErrorType.WALLET_ERROR
-            )
-          }
-
           const password = activeOptions.recoveryPassword
           const hasExplicitRecovery =
             activeOptions.recoveryParams != null || password != null || activeOptions.recoveryMethod !== undefined
@@ -257,6 +271,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
             provider,
             error: null,
           })
+          setActiveEmbeddedAddress(account.address)
         } catch (err) {
           const error =
             err instanceof OpenfortError
@@ -285,7 +300,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         if (setActiveInProgressRef.current === promise) setActiveInProgressRef.current = null
       }
     },
-    [client, walletConfig, ethereumAccounts, createProviderForAccount]
+    [client, walletConfig, ethereumAccounts, createProviderForAccount, setActiveEmbeddedAddress]
   )
 
   const setRecovery = useCallback(
@@ -358,6 +373,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           provider,
           error: null,
         })
+        setActiveEmbeddedAddress(account.address)
       })
       .catch(() => {
         autoReconnectAttemptedRef.current = false
@@ -365,7 +381,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     return () => {
       cancelled = true
     }
-  }, [isLoadingAccounts, state.status, ethereumAccounts, client, createProviderForAccount])
+  }, [isLoadingAccounts, state.status, ethereumAccounts, client, createProviderForAccount, setActiveEmbeddedAddress])
 
   // Handle loading state
   if (isLoadingAccounts) {

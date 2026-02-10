@@ -47,6 +47,7 @@ export type { WalletReadiness } from './core/types'
 export type { ChainId, SetChainResult } from './ethereum/EthereumContext'
 // Convenience re-export for Ethereum hook (can also import from '@openfort/react/ethereum')
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
+export type { ConnectedEmbeddedEthereumWallet } from './ethereum/types'
 export { useAuthCallback } from './hooks/openfort/auth/useAuthCallback'
 export { useEmailAuth } from './hooks/openfort/auth/useEmailAuth'
 export { useEmailOtpAuth } from './hooks/openfort/auth/useEmailOtpAuth'
@@ -67,11 +68,19 @@ export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
 export { useWalletAssets } from './hooks/openfort/useWalletAssets'
 export { UserWallet, useWallets } from './hooks/openfort/useWallets'
+export { type UseAccountReturnType, useAccount } from './hooks/useAccount'
+export { type UseAccountBalanceReturnType, useAccountBalance } from './hooks/useAccountBalance'
 export { useChainIsSupported } from './hooks/useChainIsSupported'
 export { useChains } from './hooks/useChains'
-export { type ConnectedWalletState, useConnectedWallet } from './hooks/useConnectedWallet'
+export {
+  type ConnectedWalletState,
+  type ConnectedWalletStatus,
+  useConnectedWallet,
+} from './hooks/useConnectedWallet'
 export { useConnectLifecycle } from './hooks/useConnectLifecycle'
 export { useConnectRoutes } from './hooks/useConnectRoutes'
+export { type UseDisconnectReturnType, useDisconnect } from './hooks/useDisconnect'
+export { type UseSwitchChainReturnType, useSwitchChain } from './hooks/useSwitchChain'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
 export type { TransactionFlowStatus, UseTransactionFlowResult } from './shared/hooks/useTransactionFlow'
@@ -117,6 +126,26 @@ export {
   formatSolanaAddress,
 } from './utils/format'
 export { OPENFORT_VERSION } from './version'
+// Wallet adapters: interfaces + EVM implementation (no wagmi)
+export type {
+  UseAccountLike,
+  UseBalanceLike,
+  UseDisconnectLike,
+  UseReadContractLike,
+  UseSignMessageLike,
+  UseSwitchChainLike,
+  UseWriteContractLike,
+  WalletAdapterChain,
+} from './wallet-adapters'
+export {
+  useEVMAccount,
+  useEVMBalance,
+  useEVMDisconnect,
+  useEVMReadContract,
+  useEVMSignMessage,
+  useEVMSwitchChain,
+  useEVMWriteContract,
+} from './wallet-adapters'
 export { wallets } from './wallets'
 export { useEVMConnectors, useWallet, type WalletProps } from './wallets/useEVMConnectors'
 

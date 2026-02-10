@@ -1,4 +1,4 @@
-import { useChains, useConnectedWallet, useUser, useWallets } from '@openfort/react'
+import { useChains, useConnectedWallet, useEthereumEmbeddedWallet, useUser } from '@openfort/react'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { type PropsWithChildren, useMemo } from 'react'
@@ -28,8 +28,17 @@ const SidebarLink = ({ children, href, cta = 'View in hook' }: PropsWithChildren
 
 const SidebarInfo = () => {
   const { user, linkedAccounts } = useUser()
-  const { activeWallet } = useWallets()
   const wallet = useConnectedWallet()
+  const ethereum = useEthereumEmbeddedWallet(
+    wallet.status === 'connected' && wallet.chainId != null ? { chainId: wallet.chainId } : undefined
+  )
+  const activeWallet =
+    ethereum.status === 'connected' ||
+    ethereum.status === 'connecting' ||
+    ethereum.status === 'reconnecting' ||
+    ethereum.status === 'needs-recovery'
+      ? ethereum.activeWallet
+      : null
   const address = wallet.status === 'connected' ? wallet.address : undefined
   const chainId = wallet.status === 'connected' ? wallet.chainId : undefined
   const chains = useChains()
@@ -52,7 +61,7 @@ const SidebarInfo = () => {
       return (
         <div className="text-sm flex flex-col gap-1">
           <p className="text-gray-500 dark:text-gray-400 mb-2">You are authenticated, but no wallet is connected.</p>
-          <SidebarLink href="/wallet/useWallets?focus=setActiveWallet">Connect a wallet</SidebarLink>
+          <SidebarLink href="/wallet/useWallets?focus=setActive">Connect a wallet</SidebarLink>
           <SidebarLink href="/auth/useSignOut?focus=signOut">Sign out</SidebarLink>
         </div>
       )
@@ -97,7 +106,7 @@ const SidebarInfo = () => {
           </SidebarLink>
           <SidebarLink href="/wallet/useWallets?focus=activeWallet">
             Wallet ID:{' '}
-            <span className="text-gray-500 dark:text-gray-400">{activeWallet?.id || 'No wallet connected'}</span>
+            <span className="text-gray-500 dark:text-gray-400">{activeWallet?.id ?? 'No wallet connected'}</span>
           </SidebarLink>
           <SidebarLink href="/wagmi/useAccount?focus=chainId">
             Chain:{' '}
