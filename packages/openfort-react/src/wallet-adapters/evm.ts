@@ -7,7 +7,7 @@
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { type Abi, createPublicClient, getAddress, http } from 'viem'
 import { useCoreContext } from '../core/CoreContext'
 import { useEthereumWriteContract } from '../ethereum/hooks/useEthereumWriteContract'
@@ -90,7 +90,7 @@ export function useEVMDisconnect(): UseDisconnectLike {
 export function useEVMSwitchChain(): UseSwitchChainLike {
   const chains = useChains()
   const { chainId: currentChainId } = useEVMAccount()
-  const [data, setData] = useState<WalletAdapterChain | undefined>(undefined)
+  const { setActiveChainId } = useOpenfortCore()
   const [error, setError] = useState<Error | null>(null)
   const [isPending, setIsPending] = useState(false)
 
@@ -99,6 +99,11 @@ export function useEVMSwitchChain(): UseSwitchChainLike {
     name: c.name ?? `Chain ${c.id}`,
     blockExplorers: c.blockExplorers,
   }))
+
+  const data = useMemo(
+    () => (currentChainId != null ? adapterChains.find((c) => c.id === currentChainId) : undefined),
+    [adapterChains, currentChainId]
+  )
 
   const switchChain = useCallback(
     async (params: { chainId: number }) => {
@@ -110,12 +115,12 @@ export function useEVMSwitchChain(): UseSwitchChainLike {
       setError(null)
       setIsPending(true)
       try {
-        setData(chain)
+        setActiveChainId(params.chainId)
       } finally {
         setIsPending(false)
       }
     },
-    [adapterChains]
+    [adapterChains, setActiveChainId]
   )
 
   return {

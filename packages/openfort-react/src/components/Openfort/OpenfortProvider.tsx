@@ -46,6 +46,8 @@ type OpenfortProviderProps = {
   thirdPartyAuth?: ThirdPartyAuthConfiguration
 } & useConnectCallbackProps
 
+let openfortProviderWarnedNoWagmi = false
+
 /** Provides Openfort configuration and context to descendant components. */
 export const OpenfortProvider = ({
   children,
@@ -149,7 +151,8 @@ export const OpenfortProvider = ({
 
   if (!hasWagmi && safeUiConfig.authProviders?.includes(UIAuthProvider.WALLET)) {
     safeUiConfig.authProviders = safeUiConfig.authProviders.filter((p) => p !== UIAuthProvider.WALLET)
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && !openfortProviderWarnedNoWagmi) {
+      openfortProviderWarnedNoWagmi = true
       logger.warn(
         '[@openfort/react] UIAuthProvider.WALLET was removed from authProviders because no Wagmi bridge is present. Add OpenfortWagmiBridge to enable external wallet sign-in.'
       )

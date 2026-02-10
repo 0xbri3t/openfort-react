@@ -56,6 +56,10 @@ export type OpenfortCoreContextValue = {
   activeEmbeddedAddress: string | undefined
   setActiveEmbeddedAddress: (address: string | undefined) => void
 
+  /** Current chain for EVM embedded (no bridge). Persisted in localStorage. When set, useConnectedWallet and writes use this chain. */
+  activeChainId: number | undefined
+  setActiveChainId: (chainId: number | undefined) => void
+
   logout: () => void
 
   updateEmbeddedAccounts: (
@@ -295,6 +299,22 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const [activeEmbeddedAddress, setActiveEmbeddedAddress] = useState<string | undefined>(undefined)
 
+  const ACTIVE_CHAIN_ID_KEY = 'openfort_active_chain_id'
+  const [activeChainId, setActiveChainIdState] = useState<number | undefined>(() => {
+    if (typeof window === 'undefined') return undefined
+    const s = window.localStorage.getItem(ACTIVE_CHAIN_ID_KEY)
+    if (s == null) return undefined
+    const n = parseInt(s, 10)
+    return Number.isNaN(n) ? undefined : n
+  })
+  const setActiveChainId = useCallback((chainId: number | undefined) => {
+    setActiveChainIdState(chainId)
+    if (typeof window !== 'undefined') {
+      if (chainId == null) window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
+      else window.localStorage.setItem(ACTIVE_CHAIN_ID_KEY, String(chainId))
+    }
+  }, [])
+
   // Sync active embedded address from SDK on load (so top-right and strategy match after refresh)
   useEffect(() => {
     if (!openfort || !embeddedAccounts?.length) {
@@ -468,6 +488,9 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
     activeEmbeddedAddress,
     setActiveEmbeddedAddress,
+
+    activeChainId,
+    setActiveChainId,
 
     walletStatus,
     setWalletStatus,

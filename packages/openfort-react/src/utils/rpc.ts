@@ -10,10 +10,11 @@ import type { SolanaCluster } from '../solana/types'
 
 /**
  * Default Ethereum RPC URLs by chain ID
- * Uses public RPC endpoints - users should provide their own for production
+ * Uses public RPC endpoints - users should provide their own for production.
+ * Mainnet uses cloudflare-eth.com to avoid ad-blocker blocking (e.g. llamarpc).
  */
 export const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
-  1: 'https://eth.llamarpc.com',
+  1: 'https://cloudflare-eth.com',
   10: 'https://mainnet.optimism.io',
   137: 'https://polygon-rpc.com',
   8453: 'https://mainnet.base.org',

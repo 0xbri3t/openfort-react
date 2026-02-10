@@ -71,7 +71,7 @@ function useEthereumWalletFromStrategy(): WalletInternalState | null {
   if (!strategy.isConnected(state)) return { status: 'not-created' }
 
   const address = strategy.getAddress(state)
-  const chainId = strategy.getChainId()
+  const chainId = core?.activeChainId ?? strategy.getChainId()
   if (!address) return { status: 'not-created' }
 
   return { status: 'connected', address, chainId }

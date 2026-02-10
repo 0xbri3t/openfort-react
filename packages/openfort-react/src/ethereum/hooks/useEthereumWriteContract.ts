@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
 import { type Abi, type ContractFunctionArgs, type ContractFunctionName, encodeFunctionData } from 'viem'
-
+import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
+import type { OpenfortEmbeddedEthereumWalletProvider } from '../types'
 import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
 type WriteableMutability = 'payable' | 'nonpayable'
@@ -33,6 +34,7 @@ export interface UseEthereumWriteContractReturn {
 }
 
 export function useEthereumWriteContract(): UseEthereumWriteContractReturn {
+  const { client } = useOpenfortCore()
   const ethereum = useEthereumEmbeddedWallet()
 
   const [data, setData] = useState<`0x${string}` | undefined>(undefined)
@@ -53,11 +55,12 @@ export function useEthereumWriteContract(): UseEthereumWriteContractReturn {
       setError(null)
 
       try {
-        if (ethereum.status !== 'connected') {
-          throw new OpenfortError('Wallet not connected', OpenfortReactErrorType.WALLET_ERROR)
+        let provider: OpenfortEmbeddedEthereumWalletProvider
+        if (ethereum.status === 'connected') {
+          provider = await ethereum.activeWallet.getProvider()
+        } else {
+          provider = (await client.embeddedWallet.getEthereumProvider()) as OpenfortEmbeddedEthereumWalletProvider
         }
-
-        const provider = await ethereum.activeWallet.getProvider()
 
         const accounts = (await provider.request({ method: 'eth_accounts' })) as `0x${string}`[]
         if (!accounts || accounts.length === 0) {
@@ -98,7 +101,7 @@ export function useEthereumWriteContract(): UseEthereumWriteContractReturn {
         throw error
       }
     },
-    [ethereum]
+    [client, ethereum]
   )
 
   return {
