@@ -55,6 +55,10 @@ export const navRoutes: NavRoute[] = [
         label: 'useUI',
       },
       {
+        href: '/adapter',
+        label: 'EVM adapter (viem)',
+      },
+      {
         href: '/wagmi',
         label: 'wagmi',
       },

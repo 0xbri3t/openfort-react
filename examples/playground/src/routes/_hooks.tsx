@@ -5,6 +5,7 @@ import { type PropsWithChildren, useMemo } from 'react'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
+import { mode } from '@/providers'
 
 export const Route = createFileRoute('/_hooks')({
   component: RouteComponent,
@@ -66,13 +67,20 @@ const SidebarInfo = () => {
         </div>
       )
     }
+    const useAdapter = mode !== 'evm-wagmi'
     return (
       <div className="text-sm flex flex-col gap-1">
         <p className="text-gray-500 dark:text-gray-400 mb-2">
           You are authenticated and have a wallet connected. Good job!
         </p>
-        <SidebarLink href="/wagmi/useBalance?focus=data">Check balance</SidebarLink>
-        <SidebarLink href="/wagmi/useDisconnect?focus=disconnect">Disconnect wallet</SidebarLink>
+        <SidebarLink href={useAdapter ? '/adapter/useBalance?focus=data' : '/wagmi/useBalance?focus=data'}>
+          Check balance
+        </SidebarLink>
+        <SidebarLink
+          href={useAdapter ? '/adapter/useDisconnect?focus=disconnect' : '/wagmi/useDisconnect?focus=disconnect'}
+        >
+          Disconnect wallet
+        </SidebarLink>
         <SidebarLink href="/auth/useSignOut?focus=signOut">Sign out</SidebarLink>
       </div>
     )
@@ -108,7 +116,11 @@ const SidebarInfo = () => {
             Wallet ID:{' '}
             <span className="text-gray-500 dark:text-gray-400">{activeWallet?.id ?? 'No wallet connected'}</span>
           </SidebarLink>
-          <SidebarLink href="/wagmi/useAccount?focus=chainId">
+          <SidebarLink
+            href={
+              mode !== 'evm-wagmi' ? '/adapter/useSwitchChain?focus=currentChainId' : '/wagmi/useAccount?focus=chainId'
+            }
+          >
             Chain:{' '}
             <span className="text-gray-500 dark:text-gray-400">
               {address ? connectedChain?.name : 'No wallet connected'}

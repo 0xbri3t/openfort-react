@@ -2,11 +2,13 @@ import { OpenfortButton } from '@openfort/react'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
+import { useMemo } from 'react'
 import { ModeToggle } from '@/components/mode-toggle'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Logo } from '@/components/ui/logo'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { navRoutes } from '@/lib/navRoute'
+import { mode } from '@/providers'
 import type { FileRoutesByTo } from '../routeTree.gen'
 
 export type NavRoute = {
@@ -19,6 +21,19 @@ export type NavRoute = {
 export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePath?: string }) => {
   const location = useLocation()
   const path = location.pathname.includes('showcase') ? '/' : overridePath || location.pathname
+
+  const effectiveNavRoutes = useMemo(() => {
+    const hasWagmi = mode === 'evm-wagmi'
+    return navRoutes.map((route) => {
+      if (route.label !== 'Utils' || !route.children) return route
+      const children = route.children.filter((child) => {
+        if (child.label === 'wagmi') return hasWagmi
+        if (child.label === 'EVM adapter (viem)') return !hasWagmi
+        return true
+      })
+      return { ...route, children }
+    })
+  }, [])
 
   const isActive = (item: NavRoute) => {
     if (item.exact) {
@@ -39,7 +54,7 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
         )}
         <div className="flex items-center gap-4 ml-auto overflow-x-auto overflow-y-hidden">
           <div className="sm:flex hidden flex gap-4 mr-4 items-center">
-            {navRoutes.map((route, i) =>
+            {effectiveNavRoutes.map((route, i) =>
               route.children ? (
                 <DropdownMenu key={route.label}>
                   <DropdownMenuTrigger
@@ -108,7 +123,7 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  {navRoutes.map((route, i) =>
+                  {effectiveNavRoutes.map((route, i) =>
                     route.children ? (
                       route.children.map((child) => (
                         <DropdownMenuItem key={child.href} asChild>
