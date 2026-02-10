@@ -81,7 +81,11 @@ export function useEthereumSendTransaction(): UseEthereumSendTransactionReturn {
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Transaction failed', OpenfortReactErrorType.WALLET_ERROR, { error: err })
+            : new OpenfortError(
+                err instanceof Error ? err.message : 'Transaction failed',
+                OpenfortReactErrorType.WALLET_ERROR,
+                { error: err instanceof Error ? err : undefined }
+              )
         setError(error)
         setIsPending(false)
         throw error

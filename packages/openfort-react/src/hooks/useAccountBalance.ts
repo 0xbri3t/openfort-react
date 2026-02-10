@@ -31,7 +31,7 @@ export function useAccountBalance(): UseAccountBalanceReturnType {
   const { isEvm } = useChain()
   const wallet = useConnectedWallet()
   const address = isEvm && wallet.status === 'connected' ? wallet.address : undefined
-  const chainId = isEvm && wallet.status === 'connected' ? (wallet.chainId ?? 1) : 1
+  const chainId = isEvm && wallet.status === 'connected' ? (wallet.chainId ?? 80002) : 80002
 
   const balanceState = useBalance({
     address: address ?? '',

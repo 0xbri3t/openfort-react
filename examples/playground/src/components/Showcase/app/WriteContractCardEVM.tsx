@@ -99,7 +99,7 @@ export const WriteContractCardEVM = () => {
               View on Explorer
             </a>
           )}
-          <InputMessage message={`Error: ${error?.message}`} show={!!error} variant="error" />
+          <InputMessage message={error ? `Error: ${error.message}` : ''} show={!!error} variant="error" />
         </form>
       </CardContent>
     </Card>

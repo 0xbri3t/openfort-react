@@ -5,7 +5,7 @@ import { type PropsWithChildren, useMemo } from 'react'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
-import { mode } from '@/providers'
+import { usePlaygroundMode } from '@/providers'
 
 export const Route = createFileRoute('/_hooks')({
   component: RouteComponent,
@@ -28,18 +28,21 @@ const SidebarLink = ({ children, href, cta = 'View in hook' }: PropsWithChildren
 }
 
 const SidebarInfo = () => {
+  const { mode } = usePlaygroundMode()
   const { user, linkedAccounts } = useUser()
   const wallet = useConnectedWallet()
   const ethereum = useEthereumEmbeddedWallet(
     wallet.status === 'connected' && wallet.chainId != null ? { chainId: wallet.chainId } : undefined
   )
   const activeWallet =
-    ethereum.status === 'connected' ||
-    ethereum.status === 'connecting' ||
-    ethereum.status === 'reconnecting' ||
-    ethereum.status === 'needs-recovery'
-      ? ethereum.activeWallet
-      : null
+    mode === 'solana-only'
+      ? null
+      : ethereum.status === 'connected' ||
+          ethereum.status === 'connecting' ||
+          ethereum.status === 'reconnecting' ||
+          ethereum.status === 'needs-recovery'
+        ? ethereum.activeWallet
+        : null
   const address = wallet.status === 'connected' ? wallet.address : undefined
   const chainId = wallet.status === 'connected' ? wallet.chainId : undefined
   const chains = useChains()

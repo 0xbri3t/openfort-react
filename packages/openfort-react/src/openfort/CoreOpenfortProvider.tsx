@@ -20,6 +20,7 @@ import {
   useState,
 } from 'react'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
+import { DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
 import { OpenfortEVMBridgeContext } from '../core/OpenfortEVMBridgeContext'
 import { queryKeys } from '../core/queryKeys'
@@ -257,8 +258,13 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
 
+  // SVM (Solana) wallets are EOA; EVM uses walletConfig.accountType so the core sees the right list after guest signup
   const embeddedAccountsAccountType =
-    walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT
+    chainType === ChainTypeEnum.SVM
+      ? undefined
+      : walletConfig?.accountType === AccountTypeEnum.EOA
+        ? undefined
+        : AccountTypeEnum.SMART_ACCOUNT
 
   // Embedded accounts list. Will reset on logout.
   const {
@@ -305,7 +311,13 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     const s = window.localStorage.getItem(ACTIVE_CHAIN_ID_KEY)
     if (s == null) return undefined
     const n = parseInt(s, 10)
-    return Number.isNaN(n) ? undefined : n
+    if (Number.isNaN(n)) return undefined
+    // Never restore default dev chain from storage so first render uses strategy default (avoids policy/chain mismatch)
+    if (n === DEFAULT_DEV_CHAIN_ID) {
+      window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
+      return undefined
+    }
+    return n
   })
   const setActiveChainId = useCallback((chainId: number | undefined) => {
     setActiveChainIdState(chainId)
@@ -314,6 +326,20 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       else window.localStorage.setItem(ACTIVE_CHAIN_ID_KEY, String(chainId))
     }
   }, [])
+
+  // If stored activeChainId is not in configured EVM chains (e.g. old Sepolia 11155111), reset to strategy default
+  useEffect(() => {
+    if (!strategy || strategy.kind !== 'embedded' || !walletConfig?.ethereum) return
+    const ethereum = walletConfig.ethereum
+    const configuredChainIds = new Set<number>([
+      ...(ethereum.chainId != null ? [ethereum.chainId] : []),
+      ...(ethereum.rpcUrls ? Object.keys(ethereum.rpcUrls).map(Number) : []),
+    ])
+    if (activeChainId != null && configuredChainIds.size > 0 && !configuredChainIds.has(activeChainId)) {
+      const defaultChainId = strategy.getChainId()
+      if (defaultChainId != null) setActiveChainId(defaultChainId)
+    }
+  }, [strategy, walletConfig?.ethereum, activeChainId, setActiveChainId])
 
   // Sync active embedded address from SDK on load (so top-right and strategy match after refresh)
   useEffect(() => {

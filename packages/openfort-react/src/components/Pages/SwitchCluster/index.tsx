@@ -16,7 +16,6 @@ import {
 } from './styles'
 
 const DEFAULT_OPTIONS: { name: string; cluster: SolanaCluster; rpcUrl?: string }[] = [
-  { name: 'Mainnet', cluster: 'mainnet-beta' },
   { name: 'Devnet', cluster: 'devnet' },
   { name: 'Testnet', cluster: 'testnet' },
 ]

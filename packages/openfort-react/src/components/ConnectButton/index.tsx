@@ -124,6 +124,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
   const identity = useResolvedIdentity({
     address: address ?? '',
     chainType: isConnected ? wallet.chainType : chainType,
+    ensChainId: chainId ?? 0,
     enabled: isConnected && !!address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined
@@ -203,6 +204,7 @@ function OpenfortButtonInner({
   const identity = useResolvedIdentity({
     address: address ?? '',
     chainType: isConnected ? wallet.chainType : chainType,
+    ensChainId: chainId ?? 0,
     enabled: isConnected && !!address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined

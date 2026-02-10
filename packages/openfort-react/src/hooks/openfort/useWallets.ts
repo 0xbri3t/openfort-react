@@ -38,7 +38,7 @@ type SimpleAccount = {
   id: string
 }
 
-export type UserWallet = {
+export type EthereumUserWallet = {
   address: Hex
   connectorType?: string
   walletClientType?: string
@@ -59,6 +59,20 @@ export type UserWallet = {
   salt?: string
 }
 
+/** Solana embedded wallet shape (mirrors UserWallet for SVM). address is Base58. Discriminate with chainType. */
+export type SolanaUserWallet = {
+  address: string
+  id: string
+  chainType: typeof ChainTypeEnum.SVM
+  isAvailable: boolean
+  isActive?: boolean
+  isConnecting?: boolean
+  accounts: { id: string }[]
+  recoveryMethod?: RecoveryMethod
+  accountType?: AccountTypeEnum
+  createdAt?: number
+}
+
 type WalletRecovery = {
   recoveryMethod: RecoveryMethod
   password?: string
@@ -72,7 +86,7 @@ export type RequestWalletRecoverOTPResponse = {
   phone?: string
 }
 
-type SetActiveWalletResult = { error?: OpenfortError; wallet?: UserWallet; isOTPRequired?: boolean }
+type SetActiveWalletResult = { error?: OpenfortError; wallet?: EthereumUserWallet; isOTPRequired?: boolean }
 
 type SetActiveWalletOptions = {
   walletId: string
@@ -113,6 +127,39 @@ const getSimpleAccounts = ({
     }))
 }
 
+/** Build UserWallet from a single EVM embedded account (e.g. for post-auth return). */
+export function embeddedAccountToUserWallet(account: EmbeddedAccount): EthereumUserWallet {
+  return {
+    connectorType: 'embedded',
+    walletClientType: 'openfort',
+    address: account.address as Hex,
+    id: account.id,
+    isAvailable: true,
+    accounts: [{ id: account.id, chainId: account.chainId }],
+    recoveryMethod: account.recoveryMethod ?? RecoveryMethod.AUTOMATIC,
+    accountId: account.id,
+    accountType: account.accountType,
+    ownerAddress: account.ownerAddress as Hex | undefined,
+    implementationType: account.implementationType,
+    createdAt: account.createdAt,
+    salt: account.salt,
+  }
+}
+
+/** Build SolanaUserWallet from a single SVM embedded account (e.g. for post-auth return). */
+export function embeddedAccountToSolanaUserWallet(account: EmbeddedAccount): SolanaUserWallet {
+  return {
+    address: account.address,
+    id: account.id,
+    chainType: ChainTypeEnum.SVM,
+    isAvailable: true,
+    accounts: [{ id: account.id }],
+    recoveryMethod: account.recoveryMethod,
+    accountType: account.accountType,
+    createdAt: account.createdAt,
+  }
+}
+
 const parseEmbeddedAccount = ({
   embeddedAccount,
   connector,
@@ -123,7 +170,7 @@ const parseEmbeddedAccount = ({
   connector: OpenfortEVMBridgeConnector | undefined
   simpleAccounts: SimpleAccount[]
   chainId: number
-}): UserWallet => {
+}): EthereumUserWallet => {
   return {
     connectorType: 'embedded',
     walletClientType: 'openfort',
@@ -476,8 +523,8 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     [walletConfig, getEncryptionSession, user?.id]
   )
 
-  const userLinkedWalletConnectors = useMemo<UserWallet[]>(() => {
-    const userWallets: UserWallet[] = linkedAccounts
+  const userLinkedWalletConnectors = useMemo<EthereumUserWallet[]>(() => {
+    const userWallets: EthereumUserWallet[] = linkedAccounts
       ? linkedAccounts
           .filter((linkedAccount) => linkedAccount.provider === UIAuthProvider.WALLET)
           .map((linkedAccount) => {
@@ -497,8 +544,8 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     return userWallets
   }, [linkedAccounts, embeddedAccounts])
 
-  const userEmbeddedWallets = useMemo<UserWallet[]>(() => {
-    const newRawWallets = [] as UserWallet[]
+  const userEmbeddedWallets = useMemo<EthereumUserWallet[]>(() => {
+    const newRawWallets = [] as EthereumUserWallet[]
 
     embeddedAccounts?.forEach((embeddedAccount) => {
       // Remove duplicates (different chain ids)
@@ -519,11 +566,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     return newRawWallets
   }, [chainId, embeddedAccounts, openfortConnector])
 
-  const rawWallets = useMemo<UserWallet[]>(() => {
+  const rawWallets = useMemo<EthereumUserWallet[]>(() => {
     return [...userLinkedWalletConnectors, ...userEmbeddedWallets]
   }, [userLinkedWalletConnectors, userEmbeddedWallets])
 
-  const wallets = useMemo<UserWallet[]>(() => {
+  const wallets = useMemo<EthereumUserWallet[]>(() => {
     // logger.log("Mapping wallets", { rawWallets, status, address, isConnected, connector: connector?.id });
     return rawWallets.map((w) => ({
       ...w,

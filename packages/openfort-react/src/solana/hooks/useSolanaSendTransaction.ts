@@ -44,7 +44,7 @@ function createTransferSolInstruction(
 export type SolanaSendTransactionStatus = 'idle' | 'signing' | 'sending' | 'confirmed' | 'error'
 
 export type UseSolanaSendTransactionResult = {
-  sendTransaction: (params: { to: string; amount: bigint }) => Promise<void>
+  sendTransaction: (params: { to: string; amount: bigint }) => Promise<string | undefined>
   status: SolanaSendTransactionStatus
   error: OpenfortTransactionError | null
   reset: () => void
@@ -95,7 +95,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
 
         setStatus('sending')
 
-        const signature = await rpc
+        const result = await rpc
           .sendTransaction(new Uint8Array(Buffer.from(signed.signature, 'base64')) as any, {
             //TODO: fix this
             encoding: 'base64',
@@ -103,12 +103,13 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
             skipPreflight: false,
           })
           .send()
-        if (signature.valueOf()) {
-          //TODO: fix this
+        const signatureValue = result.valueOf() as string | undefined
+        if (signatureValue) {
           setStatus('confirmed')
           queryClient.invalidateQueries({
             queryKey: queryKeys.solana.balance(fromAddress, rpcUrl),
           })
+          return signatureValue
         } else {
           setStatus('error')
           setError(new OpenfortTransactionError('Transaction failed', TransactionErrorCode.RPC_ERROR))

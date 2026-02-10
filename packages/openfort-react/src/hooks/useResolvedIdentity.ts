@@ -28,7 +28,7 @@ export interface UseResolvedIdentityOptions {
   address: string
   /** Chain type for resolution */
   chainType?: ChainTypeEnum
-  /** ENS chain ID (default: 1 for mainnet) */
+  /** ENS chain ID. Only chainId 1 (mainnet) supports ENS. Default 0 = do not resolve. */
   ensChainId?: number
   /** Enable/disable the query (for conditional fetching without breaking React rules) */
   enabled?: boolean
@@ -42,8 +42,8 @@ async function resolveEthereumIdentity(
     chain: mainnet,
     transport: http(rpcUrl),
   })
-  const name = await client.getEnsName({ address: address as `0x${string}` }).catch(() => null)
-  const avatar = name ? await client.getEnsAvatar({ name: normalize(name) }).catch(() => null) : null
+  const name = await client.getEnsName({ address: address as `0x${string}` })
+  const avatar = name ? await client.getEnsAvatar({ name: normalize(name) }) : null
   return { name, avatar }
 }
 
@@ -84,19 +84,16 @@ async function resolveEthereumIdentity(
  * ```
  */
 export function useResolvedIdentity(options: UseResolvedIdentityOptions): ResolvedIdentity {
-  const { address, chainType = ChainTypeEnum.EVM, ensChainId = 1, enabled = true } = options
+  const { address, chainType = ChainTypeEnum.EVM, ensChainId = 0, enabled = true } = options
 
   const { config } = useCoreContext()
   const rpcUrl = config.rpcUrls?.ethereum?.[ensChainId] ?? getDefaultEthereumRpcUrl(ensChainId)
 
-  const isEnabled = enabled && !!address && address.length > 0
+  const isEnabled = enabled && !!address && address.length > 0 && ensChainId === 1 && !!rpcUrl
 
   const query = useQuery({
     queryKey: ['identity', chainType, address, ensChainId],
-    queryFn: () =>
-      chainType === ChainTypeEnum.EVM
-        ? resolveEthereumIdentity(address, rpcUrl)
-        : Promise.resolve({ name: null, avatar: null }),
+    queryFn: () => resolveEthereumIdentity(address, rpcUrl!),
     enabled: isEnabled,
     staleTime: 5 * 60 * 1000,
   })

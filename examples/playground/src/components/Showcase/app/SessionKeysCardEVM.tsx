@@ -13,11 +13,13 @@ export const SessionKeysCardEVM = () => {
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
   const [sessionKeys, setSessionKeys] = useState<StoredData[]>([])
+  const [submitting, setSubmitting] = useState(false)
   const { addPrivateKey, getPrivateKeys, clearAll, removePrivateKey, updatePrivateKey } =
     useSessionKeysStorage_backendSimulation()
   const { address, chainId } = useEVMAccount()
   const { data } = useEVMSignMessage()
   const key = useMemo(() => (chainId != null && address ? `${chainId}-${address}` : ''), [chainId, address])
+  const grantDisabled = isLoading || submitting
 
   const updateSessionKeys = () => {
     const keys = getPrivateKeys(key)
@@ -46,43 +48,49 @@ export const SessionKeysCardEVM = () => {
           className="space-y-2"
           onSubmit={async (e) => {
             e.preventDefault()
-            const privateKey = generatePrivateKey()
-            const accountSessionAddress = privateKeyToAccount(privateKey).address
-            const { error: grantError, permissionsContext } = await grantPermissions({
-              sessionKey: privateKey,
-              request: {
-                signer: {
-                  type: 'account',
-                  data: {
-                    id: accountSessionAddress,
-                  },
-                },
-                expiry: 60 * 60 * 24,
-                permissions: [
-                  {
-                    type: 'contract-call',
+            if (grantDisabled) return
+            setSubmitting(true)
+            try {
+              const privateKey = generatePrivateKey()
+              const accountSessionAddress = privateKeyToAccount(privateKey).address
+              const { error: grantError, permissionsContext } = await grantPermissions({
+                sessionKey: privateKey,
+                request: {
+                  signer: {
+                    type: 'account',
                     data: {
-                      address: '0x2522f4fc9af2e1954a3d13f7a5b2683a00a4543a',
-                      calls: [],
+                      id: accountSessionAddress,
                     },
-                    policies: [],
                   },
-                ],
-              },
-            })
-            if (!grantError && permissionsContext) {
-              addPrivateKey(key, {
-                privateKey: privateKey,
-                publicKey: accountSessionAddress,
-                sessionKeyId: permissionsContext,
-                active: true,
+                  expiry: 60 * 60 * 24,
+                  permissions: [
+                    {
+                      type: 'contract-call',
+                      data: {
+                        address: '0x2522f4fc9af2e1954a3d13f7a5b2683a00a4543a',
+                        calls: [],
+                      },
+                      policies: [],
+                    },
+                  ],
+                },
               })
-              setTimeout(updateSessionKeys, 100)
+              if (!grantError && permissionsContext) {
+                addPrivateKey(key, {
+                  privateKey: privateKey,
+                  publicKey: accountSessionAddress,
+                  sessionKeyId: permissionsContext,
+                  active: true,
+                })
+                setTimeout(updateSessionKeys, 100)
+              }
+            } finally {
+              setSubmitting(false)
             }
           }}
         >
-          <Button className="btn btn-accent w-full" disabled={isLoading}>
-            {isLoading ? 'Creating...' : 'Create session key'}
+          <Button className="btn btn-accent w-full" type="submit" disabled={grantDisabled}>
+            {grantDisabled ? 'Creating...' : 'Create session key'}
           </Button>
           {sessionKeys.map(({ privateKey, publicKey, sessionKeyId, active }) => (
             <Tooltip key={privateKey}>

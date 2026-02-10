@@ -1,4 +1,4 @@
-import { OpenfortButton } from '@openfort/react'
+import { ChainTypeEnum, OpenfortButton } from '@openfort/react'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
@@ -8,32 +8,52 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Logo } from '@/components/ui/logo'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { navRoutes } from '@/lib/navRoute'
-import { mode } from '@/providers'
+import type { OpenfortPlaygroundMode } from '@/providers'
+import { usePlaygroundMode } from '@/providers'
 import type { FileRoutesByTo } from '../routeTree.gen'
+
+const MODE_LABELS: Record<OpenfortPlaygroundMode, string> = {
+  'evm-only': 'EVM only',
+  'solana-only': 'Solana only',
+  'evm-wagmi': 'EVM + Wagmi',
+}
 
 export type NavRoute = {
   href?: keyof FileRoutesByTo
   label: string
   exact?: boolean
   children?: NavRoute[]
+  mode?: ChainTypeEnum
 }
 
 export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePath?: string }) => {
   const location = useLocation()
   const path = location.pathname.includes('showcase') ? '/' : overridePath || location.pathname
+  const { mode, setMode } = usePlaygroundMode()
 
   const effectiveNavRoutes = useMemo(() => {
     const hasWagmi = mode === 'evm-wagmi'
+    const isSolana = mode === 'solana-only'
     return navRoutes.map((route) => {
-      if (route.label !== 'Utils' || !route.children) return route
-      const children = route.children.filter((child) => {
-        if (child.label === 'wagmi') return hasWagmi
-        if (child.label === 'EVM adapter (viem)') return !hasWagmi
-        return true
-      })
-      return { ...route, children }
+      if (route.label === 'Utils' && route.children) {
+        const children = route.children.filter((child) => {
+          if (child.label === 'wagmi') return hasWagmi
+          if (child.label === 'EVM adapter (viem)') return !hasWagmi
+          return true
+        })
+        return { ...route, children }
+      }
+      if (route.label === 'Wallet hooks' && route.children) {
+        const children = route.children.filter((child) => {
+          if (child.mode === ChainTypeEnum.EVM) return !isSolana
+          if (child.mode === ChainTypeEnum.SVM) return isSolana
+          return true
+        })
+        return { ...route, children }
+      }
+      return route
     })
-  }, [])
+  }, [mode])
 
   const isActive = (item: NavRoute) => {
     if (item.exact) {
@@ -97,6 +117,19 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
             )}
           </div>
           <div className="flex gap-4 sm:border-l pl-4 items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground min-w-[7rem] flex items-center justify-center gap-1">
+                {MODE_LABELS[mode]}
+                <ChevronDown className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {(['evm-only', 'solana-only', 'evm-wagmi'] as const).map((m) => (
+                  <DropdownMenuItem key={m} onClick={() => setMode(m)}>
+                    {MODE_LABELS[m]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <ModeToggle className="scale-110" />
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>

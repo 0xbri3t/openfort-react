@@ -72,3 +72,34 @@ export interface UseWriteContractLike {
   isPending: boolean
   error: Error | null
 }
+
+export type SolanaCluster = 'mainnet-beta' | 'devnet' | 'testnet' | 'custom'
+
+export interface UseSolanaAccountLike {
+  address: string | undefined
+  cluster: SolanaCluster | undefined
+  isConnected: boolean
+}
+
+export interface UseSolanaSwitchClusterLike {
+  clusters: SolanaCluster[]
+  currentCluster: SolanaCluster | undefined
+  switchCluster: (cluster: SolanaCluster) => void
+  isPending: boolean
+  error: Error | null
+}
+
+export interface UseSolanaSignMessageLike {
+  data: string | undefined
+  signMessage: (params: { message: string }) => Promise<void>
+  isPending: boolean
+  error: Error | null
+}
+
+export interface UseSolanaSendSOLLike {
+  sendSOL: (params: { to: string; lamports: bigint }) => Promise<void>
+  data: string | undefined
+  isPending: boolean
+  error: Error | null
+  reset: () => void
+}

@@ -20,7 +20,7 @@ import type {
   UseSolanaSwitchClusterLike,
 } from './types'
 
-const DEFAULT_CLUSTERS: SolanaCluster[] = ['mainnet-beta', 'devnet', 'testnet']
+const DEFAULT_CLUSTERS: SolanaCluster[] = ['devnet', 'testnet']
 
 export function useSolanaAccount(): UseSolanaAccountLike {
   const wallet = useConnectedWallet()

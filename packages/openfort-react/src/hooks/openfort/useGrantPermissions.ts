@@ -191,9 +191,17 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
           data,
         })
       } catch (error) {
-        const openfortError = new OpenfortError('Failed to grant permissions', OpenfortReactErrorType.WALLET_ERROR, {
-          error,
-        })
+        const isUnsupported =
+          error instanceof Error &&
+          /Method not supported|grantPermissions|wallet_grantPermissions|does not support/i.test(error.message)
+        const message = isUnsupported
+          ? 'Session keys (grantPermissions) are not supported by the embedded wallet provider. Use an external wallet for this flow.'
+          : undefined
+        const openfortError = new OpenfortError(
+          message ?? 'Failed to grant permissions',
+          OpenfortReactErrorType.WALLET_ERROR,
+          { error }
+        )
 
         setStatus({
           status: 'error',

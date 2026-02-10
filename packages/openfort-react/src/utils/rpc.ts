@@ -9,61 +9,53 @@ import { defineChain } from 'viem'
 import type { SolanaCluster } from '../solana/types'
 
 /**
- * Default Ethereum RPC URLs by chain ID
- * Uses public RPC endpoints - users should provide their own for production.
- * Mainnet uses cloudflare-eth.com to avoid ad-blocker blocking (e.g. llamarpc).
+ * Default Ethereum RPC URLs by chain ID — testnets only.
+ * Production apps must provide their own RPCs via walletConfig.ethereum.rpcUrls.
  */
 export const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
-  1: 'https://cloudflare-eth.com',
-  10: 'https://mainnet.optimism.io',
-  137: 'https://polygon-rpc.com',
-  8453: 'https://mainnet.base.org',
-  42161: 'https://arb1.arbitrum.io/rpc',
-  43114: 'https://api.avax.network/ext/bc/C/rpc',
-  56: 'https://bsc-dataseed.binance.org',
-  250: 'https://rpc.ftm.tools',
+  80002: 'https://rpc-amoy.polygon.technology',
+  84532: 'https://sepolia.base.org',
+  13337: 'https://subnets.avax.network/beam/testnet/rpc',
   11155111: 'https://rpc.sepolia.org',
+  11155420: 'https://sepolia.optimism.io',
+  421614: 'https://sepolia-rollup.arbitrum.io/rpc',
 }
 
 /**
- * Default Solana RPC URLs by cluster (custom uses devnet as fallback)
+ * Default Solana RPC URLs by cluster — testnets only.
+ * Production apps must provide their own RPCs via walletConfig.solana.
  */
-export const DEFAULT_SOLANA_RPC_URLS: Record<Exclude<SolanaCluster, 'custom'>, string> = {
-  'mainnet-beta': 'https://api.mainnet-beta.solana.com',
+export const DEFAULT_SOLANA_RPC_URLS: Partial<Record<Exclude<SolanaCluster, 'custom'>, string>> = {
   devnet: 'https://api.devnet.solana.com',
   testnet: 'https://api.testnet.solana.com',
 }
 
 /**
- * Get default Ethereum RPC URL for a chain ID
- * Falls back to mainnet if chain not configured
+ * Get default Ethereum RPC URL for a chain ID.
+ * Returns undefined when chain is not in the testnet map.
  */
-export function getDefaultEthereumRpcUrl(chainId: number): string {
-  return DEFAULT_ETHEREUM_RPC_URLS[chainId] ?? DEFAULT_ETHEREUM_RPC_URLS[1]
+export function getDefaultEthereumRpcUrl(chainId: number): string | undefined {
+  return DEFAULT_ETHEREUM_RPC_URLS[chainId]
 }
 
 /**
- * Get default Solana RPC URL for a cluster
- * Falls back to mainnet-beta if cluster not found
+ * Get default Solana RPC URL for a cluster.
+ * Defaults to devnet for unknown or 'custom' clusters.
  */
-export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string {
+export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string | undefined {
   if (cluster === 'custom') return DEFAULT_SOLANA_RPC_URLS.devnet
-  return DEFAULT_SOLANA_RPC_URLS[cluster] ?? DEFAULT_SOLANA_RPC_URLS['mainnet-beta']
+  return DEFAULT_SOLANA_RPC_URLS[cluster]
 }
 
 /**
  * Chain names by chain ID
  */
 export const CHAIN_NAMES: Record<number, string> = {
-  1: 'Ethereum',
-  10: 'Optimism',
-  137: 'Polygon',
-  8453: 'Base',
-  42161: 'Arbitrum One',
-  43114: 'Avalanche',
-  56: 'BNB Smart Chain',
-  250: 'Fantom',
+  80002: 'Polygon Amoy',
+  84532: 'Base Sepolia',
   11155111: 'Sepolia',
+  11155420: 'Optimism Sepolia',
+  421614: 'Arbitrum Sepolia',
 }
 
 /**
@@ -79,15 +71,11 @@ export interface NativeCurrency {
  * Native currencies by chain ID
  */
 export const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
-  1: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  10: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  137: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-  8453: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  42161: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  43114: { name: 'Avalanche', symbol: 'AVAX', decimals: 18 },
-  56: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-  250: { name: 'Fantom', symbol: 'FTM', decimals: 18 },
+  80002: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+  84532: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   11155111: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  11155420: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  421614: { name: 'Ether', symbol: 'ETH', decimals: 18 },
 }
 
 /**
@@ -113,15 +101,11 @@ export function getNativeCurrency(chainId: number): NativeCurrency {
  * Block explorer URLs by chain ID
  */
 export const BLOCK_EXPLORERS: Record<number, string> = {
-  1: 'https://etherscan.io',
-  10: 'https://optimistic.etherscan.io',
-  137: 'https://polygonscan.com',
-  8453: 'https://basescan.org',
-  42161: 'https://arbiscan.io',
-  43114: 'https://snowtrace.io',
-  56: 'https://bscscan.com',
-  250: 'https://ftmscan.com',
+  80002: 'https://amoy.polygonscan.com',
+  84532: 'https://sepolia.basescan.org',
   11155111: 'https://sepolia.etherscan.io',
+  11155420: 'https://sepolia-optimism.etherscan.io',
+  421614: 'https://sepolia.arbiscan.io',
 }
 
 /**
@@ -153,6 +137,9 @@ export function getAddressUrl(chainId: number, address: string): string | undefi
  */
 export function buildChainFromConfig(chainId: number, rpcUrls?: Record<number, string>): Chain {
   const rpcUrl = rpcUrls?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)
+  if (!rpcUrl) {
+    throw new Error(`No RPC URL configured for chain ${chainId}. Provide walletConfig.ethereum.rpcUrls[${chainId}].`)
+  }
   const native = getNativeCurrency(chainId)
   const explorerUrl = getBlockExplorerUrl(chainId)
   return defineChain({

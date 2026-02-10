@@ -28,7 +28,7 @@ export interface UseEthereumGasEstimateOptions {
 }
 
 export function useEthereumGasEstimate(options: UseEthereumGasEstimateOptions): EthereumGasEstimate {
-  const { to, value = BigInt(0), data = '0x', from, chainId = 1, enabled = true } = options
+  const { to, value = BigInt(0), data = '0x', from, chainId = 80002, enabled = true } = options
 
   const { config } = useCoreContext()
   const rpcUrl = config.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)

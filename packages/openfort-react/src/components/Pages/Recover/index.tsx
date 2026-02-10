@@ -1,4 +1,4 @@
-import { EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
+import { ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -6,11 +6,16 @@ import type { Hex } from 'viem'
 
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, ShieldIcon } from '../../../assets/icons'
 import { embeddedWalletId } from '../../../constants/openfort'
-import { type RequestWalletRecoverOTPResponse, type UserWallet, useWallets } from '../../../hooks/openfort/useWallets'
+import {
+  type EthereumUserWallet,
+  type RequestWalletRecoverOTPResponse,
+  type SolanaUserWallet,
+  useWallets,
+} from '../../../hooks/openfort/useWallets'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
-import { useRouteProps } from '../../../hooks/useRouteProps'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { truncateEthAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
@@ -21,19 +26,89 @@ import Loader from '../../Common/Loading'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
 import { OtpInputStandalone } from '../../Common/OTPInput'
 import { FloatingGraphic } from '../../FloatingGraphic'
-import { routes } from '../../Openfort/types'
+import { routes, type SetRouteOptions } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent, type SetOnBackFunction } from '../../PageContent'
 import { Body, FooterButtonText, FooterTextButton, ResultContainer } from '../EmailOTP/styles'
 
-// TODO: Localize
+type RecoverAutomaticContext = {
+  setRoute: (options: SetRouteOptions) => void
+  setError: (e: string | false) => void
+  setNeedsOTP: (n: boolean) => void
+  setOtpResponse: (r: RequestWalletRecoverOTPResponse | null) => void
+  isWalletRecoveryOTPEnabled: boolean
+  requestWalletRecoverOTP: () => Promise<RequestWalletRecoverOTPResponse>
+  setActiveWallet: (opts: {
+    walletId: string
+    address?: Hex
+    recovery?: { recoveryMethod: RecoveryMethod.AUTOMATIC; otpCode: string }
+  }) => Promise<{ error?: Error; isOTPRequired?: boolean }>
+  solanaSetActive: (opts: { address: string; otpCode?: string }) => Promise<void>
+  embeddedWalletId: string
+  routes: typeof routes
+}
+
+const recoverAutomaticRegistry: {
+  [ChainTypeEnum.EVM]: {
+    recover: (wallet: EthereumUserWallet, ctx: RecoverAutomaticContext) => Promise<void>
+    completeOtp: (wallet: EthereumUserWallet, otp: string, ctx: RecoverAutomaticContext) => Promise<void>
+  }
+  [ChainTypeEnum.SVM]: {
+    recover: (wallet: SolanaUserWallet, ctx: RecoverAutomaticContext) => Promise<void>
+    completeOtp: (wallet: SolanaUserWallet, otp: string, ctx: RecoverAutomaticContext) => Promise<void>
+  }
+} = {
+  [ChainTypeEnum.EVM]: {
+    recover: async (wallet, ctx) => {
+      const response = await ctx.setActiveWallet({
+        walletId: ctx.embeddedWalletId,
+        address: wallet.address,
+      })
+      if (response.isOTPRequired && ctx.isWalletRecoveryOTPEnabled) {
+        const res = await ctx.requestWalletRecoverOTP()
+        ctx.setNeedsOTP(true)
+        ctx.setOtpResponse(res)
+      } else if (response.error) {
+        ctx.setError(response.error.message || 'There was an error recovering your account')
+        logger.log('Error recovering wallet', response.error)
+      } else {
+        ctx.setRoute(ctx.routes.CONNECTED_SUCCESS)
+      }
+    },
+    completeOtp: async (wallet, otp, ctx) => {
+      const response = await ctx.setActiveWallet({
+        walletId: ctx.embeddedWalletId,
+        recovery: { recoveryMethod: RecoveryMethod.AUTOMATIC, otpCode: otp },
+        address: wallet.address,
+      })
+      if (response.error) {
+        throw response.error
+      }
+    },
+  },
+  [ChainTypeEnum.SVM]: {
+    recover: async (wallet, ctx) => {
+      if (ctx.isWalletRecoveryOTPEnabled) {
+        const res = await ctx.requestWalletRecoverOTP()
+        ctx.setNeedsOTP(true)
+        ctx.setOtpResponse(res)
+      } else {
+        await ctx.solanaSetActive({ address: wallet.address })
+        ctx.setRoute(ctx.routes.SOL_CONNECTED)
+      }
+    },
+    completeOtp: async (wallet, otp, ctx) => {
+      await ctx.solanaSetActive({ address: wallet.address, otpCode: otp })
+    },
+  },
+}
 
 const RecoverPasswordWallet = ({
   wallet,
   onBack,
   logoutOnBack,
 }: {
-  wallet: UserWallet
+  wallet: EthereumUserWallet | SolanaUserWallet
   onBack: SetOnBackFunction
   logoutOnBack?: boolean
 }) => {
@@ -42,6 +117,9 @@ const RecoverPasswordWallet = ({
   const { triggerResize, setRoute } = useOpenfort()
   const [loading, setLoading] = useState(false)
   const { setActiveWallet } = useWallets()
+
+  const { chainType } = useChain()
+  const solanaEmbeddedWallet = useSolanaEmbeddedWallet()
 
   const handleSubmit = async () => {
     setLoading(true)
@@ -52,14 +130,19 @@ const RecoverPasswordWallet = ({
         recoveryMethod: RecoveryMethod.PASSWORD,
         password: recoveryPhrase,
       },
-      address: wallet.address,
+      address: wallet.address as `0x${string}`,
     })
     setLoading(false)
 
     if (error) {
       setRecoveryError(error.message || 'There was an error recovering your account')
     } else {
-      setRoute(routes.CONNECTED_SUCCESS)
+      if (chainType === ChainTypeEnum.SVM) {
+        await solanaEmbeddedWallet.setActive({ address: wallet.address })
+        setRoute(routes.SOL_CONNECTED)
+      } else {
+        setRoute(routes.CONNECTED_SUCCESS)
+      }
     }
   }
 
@@ -67,7 +150,6 @@ const RecoverPasswordWallet = ({
     if (recoveryError) triggerResize()
   }, [recoveryError])
 
-  const { chainType } = useChain()
   const identity = useResolvedIdentity({
     address: wallet.address,
     chainType,
@@ -131,7 +213,7 @@ const RecoverPasskeyWallet = ({
   onBack,
   logoutOnBack,
 }: {
-  wallet: UserWallet
+  wallet: EthereumUserWallet | SolanaUserWallet
   onBack: SetOnBackFunction
   logoutOnBack?: boolean
 }) => {
@@ -140,17 +222,25 @@ const RecoverPasskeyWallet = ({
   const [shouldRecoverWallet, setShouldRecoverWallet] = useState(false)
   const { setRoute } = useOpenfort()
 
+  const { chainType } = useChain()
+  const solanaEmbeddedWallet = useSolanaEmbeddedWallet()
+
   const recoverWallet = async () => {
     const { error } = await setActiveWallet({
       walletId: embeddedWalletId,
       recovery: {
         recoveryMethod: RecoveryMethod.PASSKEY,
       },
-      address: wallet.address,
+      address: wallet.address as `0x${string}`,
     })
 
     if (!error) {
-      setRoute(routes.CONNECTED_SUCCESS)
+      if (chainType === ChainTypeEnum.SVM) {
+        await solanaEmbeddedWallet.setActive({ address: wallet.address })
+        setRoute(routes.SOL_CONNECTED)
+      } else {
+        setRoute(routes.CONNECTED_SUCCESS)
+      }
     }
   }
 
@@ -169,7 +259,6 @@ const RecoverPasskeyWallet = ({
     if (recoveryError) triggerResize()
   }, [recoveryError])
 
-  const { chainType } = useChain()
   const identity = useResolvedIdentity({
     address: wallet.address,
     chainType,
@@ -192,17 +281,19 @@ const RecoverPasskeyWallet = ({
 }
 
 const RecoverAutomaticWallet = ({
-  walletAddress,
+  wallet,
   onBack,
   logoutOnBack,
 }: {
-  walletAddress: Hex
+  wallet: EthereumUserWallet | SolanaUserWallet
   onBack: SetOnBackFunction
   logoutOnBack?: boolean
 }) => {
   const { embeddedState } = useOpenfortCore()
   const { setActiveWallet, isWalletRecoveryOTPEnabled, requestWalletRecoverOTP } = useWallets()
   const { setRoute } = useOpenfort()
+  const { chainType } = useChain()
+  const solanaEmbeddedWallet = useSolanaEmbeddedWallet()
   const [error, setError] = useState<false | string>(false)
   const [needsOTP, setNeedsOTP] = useState(false)
   const [otpResponse, setOtpResponse] = useState<RequestWalletRecoverOTPResponse | null>(null)
@@ -210,27 +301,31 @@ const RecoverAutomaticWallet = ({
     'idle'
   )
 
+  const recoveryCtx: RecoverAutomaticContext = useMemo(
+    () => ({
+      setRoute,
+      setError,
+      setNeedsOTP,
+      setOtpResponse,
+      isWalletRecoveryOTPEnabled,
+      requestWalletRecoverOTP,
+      setActiveWallet,
+      solanaSetActive: solanaEmbeddedWallet.setActive.bind(solanaEmbeddedWallet),
+      embeddedWalletId,
+      routes,
+    }),
+    [setRoute, isWalletRecoveryOTPEnabled, requestWalletRecoverOTP, setActiveWallet, solanaEmbeddedWallet]
+  )
+
   const recoverWallet = useCallback(async () => {
-    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) {
-      logger.log('Automatically recovering wallet', walletAddress)
-
-      const response = await setActiveWallet({
-        walletId: embeddedWalletId,
-        address: walletAddress,
-      })
-
-      if (response.isOTPRequired && isWalletRecoveryOTPEnabled) {
-        const response = await requestWalletRecoverOTP()
-        setNeedsOTP(true)
-        setOtpResponse(response)
-      } else if (response.error) {
-        setError(response.error.message || 'There was an error recovering your account')
-        logger.log('Error recovering wallet', response.error)
-      } else {
-        setRoute(routes.CONNECTED_SUCCESS)
-      }
+    if (embeddedState !== EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) return
+    logger.log('Automatically recovering wallet', wallet.address)
+    if (chainType === ChainTypeEnum.SVM) {
+      await recoverAutomaticRegistry[ChainTypeEnum.SVM].recover(wallet as SolanaUserWallet, recoveryCtx)
+    } else {
+      await recoverAutomaticRegistry[ChainTypeEnum.EVM].recover(wallet as EthereumUserWallet, recoveryCtx)
     }
-  }, [walletAddress, setActiveWallet, setRoute, isWalletRecoveryOTPEnabled, requestWalletRecoverOTP])
+  }, [wallet, embeddedState, chainType, recoveryCtx])
 
   const shouldRecoverWallet = useRef(false)
   useEffect(() => {
@@ -241,40 +336,35 @@ const RecoverAutomaticWallet = ({
 
   const handleCompleteOtp = async (otp: string) => {
     setOtpStatus('loading')
-
-    const response = await setActiveWallet({
-      walletId: embeddedWalletId,
-      recovery: {
-        recoveryMethod: RecoveryMethod.AUTOMATIC,
-        otpCode: otp,
-      },
-      address: walletAddress,
-    })
-
-    if (response.error) {
+    try {
+      if (chainType === ChainTypeEnum.SVM) {
+        await recoverAutomaticRegistry[ChainTypeEnum.SVM].completeOtp(wallet as SolanaUserWallet, otp, recoveryCtx)
+      } else {
+        await recoverAutomaticRegistry[ChainTypeEnum.EVM].completeOtp(wallet as EthereumUserWallet, otp, recoveryCtx)
+      }
+      setOtpStatus('success')
+      setTimeout(
+        () => setRoute(chainType === ChainTypeEnum.SVM ? routes.SOL_CONNECTED : routes.CONNECTED_SUCCESS),
+        1000
+      )
+    } catch (err) {
       setOtpStatus('error')
-      setError(response.error.message || 'There was an error verifying the OTP')
-      logger.log('Error verifying OTP for wallet recovery', response.error)
+      setError(err instanceof Error ? err.message : 'There was an error verifying the OTP')
+      logger.log('Error verifying OTP for wallet recovery', err)
       setTimeout(() => {
         setOtpStatus('idle')
         setError(false)
       }, 1000)
-    } else {
-      setOtpStatus('success')
-      setTimeout(() => {
-        setRoute(routes.CONNECTED_SUCCESS)
-      }, 1000)
     }
   }
 
-  const { chainType } = useChain()
   const identity = useResolvedIdentity({
-    address: walletAddress,
+    address: wallet.address,
     chainType,
-    enabled: !!walletAddress,
+    enabled: !!wallet.address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined
-  const walletDisplay = ensName ?? truncateEthAddress(walletAddress)
+  const walletDisplay = ensName ?? truncateEthAddress(wallet.address)
   const [canSendOtp, setCanSendOtp] = useState(true)
 
   // Handle resend cooldown
@@ -316,7 +406,7 @@ const RecoverAutomaticWallet = ({
         />
         <ModalBody>
           <Body>
-            Recovering wallet <CopyText value={walletAddress}>{walletDisplay}</CopyText>
+            Recovering wallet <CopyText value={wallet.address}>{walletDisplay}</CopyText>
             Please check <b>{otpResponse?.sentTo === 'phone' ? otpResponse?.phone : otpResponse?.email}</b> and enter
             your code below.
           </Body>
@@ -365,7 +455,7 @@ const RecoverWallet = ({
   onBack,
   logoutOnBack,
 }: {
-  wallet: UserWallet
+  wallet: EthereumUserWallet | SolanaUserWallet
   onBack: SetOnBackFunction
   logoutOnBack?: boolean
 }) => {
@@ -373,18 +463,23 @@ const RecoverWallet = ({
     case RecoveryMethod.PASSWORD:
       return <RecoverPasswordWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
     case RecoveryMethod.AUTOMATIC:
-      return <RecoverAutomaticWallet walletAddress={wallet.address} onBack={onBack} logoutOnBack={logoutOnBack} />
+      return <RecoverAutomaticWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
     case RecoveryMethod.PASSKEY:
       return <RecoverPasskeyWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
     default:
       logger.error(`Unsupported recovery method: ${wallet.recoveryMethod}, defaulting to automatic.`)
-      return <RecoverAutomaticWallet walletAddress={wallet.address} onBack={onBack} logoutOnBack={logoutOnBack} />
+      return <RecoverAutomaticWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
   }
 }
 
 const RecoverPage: React.FC = () => {
-  const { previousRoute } = useOpenfort()
-  const { wallet } = useRouteProps(routes.RECOVER_WALLET)
+  const { previousRoute, route } = useOpenfort()
+  const wallet =
+    route.route === routes.SOL_RECOVER_WALLET
+      ? (route as { route: typeof routes.SOL_RECOVER_WALLET; wallet: SolanaUserWallet }).wallet
+      : route.route === routes.RECOVER_WALLET
+        ? (route as { route: typeof routes.RECOVER_WALLET; wallet: EthereumUserWallet }).wallet
+        : undefined
 
   const { onBack, logoutOnBack } = useMemo<{
     onBack: SetOnBackFunction
@@ -400,6 +495,7 @@ const RecoverPage: React.FC = () => {
     return { onBack: routes.PROVIDERS, logoutOnBack: true }
   }, [previousRoute])
 
+  if (!wallet) return null
   return <RecoverWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
 }
 

@@ -39,7 +39,7 @@ export const navRoutes: NavRoute[] = [
     children: [
       {
         href: '/wallet/useWallets',
-        label: 'useEthereumEmbeddedWallet', // TODO adapt for solana too
+        label: 'useEmbeddedWallet',
       },
       {
         href: '/wallet/useWalletAssets',
@@ -61,6 +61,10 @@ export const navRoutes: NavRoute[] = [
       {
         href: '/wagmi',
         label: 'wagmi',
+      },
+      {
+        href: '/solana',
+        label: 'Solana hooks',
       },
     ],
   },

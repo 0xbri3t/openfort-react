@@ -49,7 +49,7 @@ export const EstimatedFees = ({
     to: to ?? ('0x0000000000000000000000000000000000000000' as `0x${string}`),
     value: value ?? BigInt(0),
     data: data ?? '0x',
-    chainId: chainId ?? 1,
+    chainId: chainId ?? 80002,
     enabled: enabled && !!account && !!to,
   })
 

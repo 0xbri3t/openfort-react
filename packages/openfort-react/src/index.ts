@@ -67,7 +67,13 @@ export { useRevokePermissions } from './hooks/openfort/useRevokePermissions'
 export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
 export { useWalletAssets } from './hooks/openfort/useWalletAssets'
-export { UserWallet, useWallets } from './hooks/openfort/useWallets'
+export {
+  EthereumUserWallet,
+  embeddedAccountToSolanaUserWallet,
+  embeddedAccountToUserWallet,
+  SolanaUserWallet,
+  useWallets,
+} from './hooks/openfort/useWallets'
 export { type UseAccountReturnType, useAccount } from './hooks/useAccount'
 export { type UseAccountBalanceReturnType, useAccountBalance } from './hooks/useAccountBalance'
 export { useChainIsSupported } from './hooks/useChainIsSupported'
@@ -126,13 +132,18 @@ export {
   formatSolanaAddress,
 } from './utils/format'
 export { OPENFORT_VERSION } from './version'
-// Wallet adapters: interfaces + EVM implementation (no wagmi)
+// Wallet adapters: interfaces + EVM/Solana implementations
 export type {
+  SolanaCluster,
   UseAccountLike,
   UseBalanceLike,
   UseDisconnectLike,
   UseReadContractLike,
   UseSignMessageLike,
+  UseSolanaAccountLike,
+  UseSolanaSendSOLLike,
+  UseSolanaSignMessageLike,
+  UseSolanaSwitchClusterLike,
   UseSwitchChainLike,
   UseWriteContractLike,
   WalletAdapterChain,
@@ -145,6 +156,12 @@ export {
   useEVMSignMessage,
   useEVMSwitchChain,
   useEVMWriteContract,
+  useSolanaAccount,
+  useSolanaBalanceAdapter,
+  useSolanaDisconnect,
+  useSolanaSendSOL,
+  useSolanaSignMessageAdapter,
+  useSolanaSwitchCluster,
 } from './wallet-adapters'
 export { wallets } from './wallets'
 export { useEVMConnectors, useWallet, type WalletProps } from './wallets/useEVMConnectors'

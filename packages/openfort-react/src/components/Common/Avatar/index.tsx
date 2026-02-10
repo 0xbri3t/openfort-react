@@ -27,7 +27,8 @@ const Avatar: React.FC<{
   const context = useOpenfort()
   const strategy = useConnectionStrategy()
   const bridge = useEVMBridge()
-  const useEns = strategy?.kind === 'bridge' && !!bridge
+  // Only resolve ENS on mainnet (1); testnets throw "network does not support ENS"
+  const useEns = strategy?.kind === 'bridge' && !!bridge && (bridge.chainId ?? 0) === 1
 
   const imageRef = useRef<any>(null)
   const [loaded, setLoaded] = useState(true)
@@ -41,32 +42,36 @@ const Avatar: React.FC<{
     const resolve = async () => {
       let resolvedAddress: Hash | undefined = address
       let resolvedName: string | undefined = name
-      if (name && bridge.getEnsAddress) {
-        resolvedAddress = (await bridge.getEnsAddress(name)) ?? address
-      }
-      if (address && bridge.getEnsName) {
-        resolvedName = (await bridge.getEnsName({ address })) ?? name
-      }
-      if (bridge.account?.address === address && bridge.account?.ensName) {
-        resolvedName = bridge.account.ensName
-      }
-      if (bridge.account?.address === address && bridge.account?.ensAvatar) {
+      try {
+        if (name && bridge.getEnsAddress) {
+          resolvedAddress = (await bridge.getEnsAddress(name)) ?? address
+        }
+        if (address && bridge.getEnsName) {
+          resolvedName = (await bridge.getEnsName({ address })) ?? name
+        }
+        if (bridge.account?.address === address && bridge.account?.ensName) {
+          resolvedName = bridge.account.ensName
+        }
+        if (bridge.account?.address === address && bridge.account?.ensAvatar) {
+          setEns({
+            address: resolvedAddress ?? address,
+            name: resolvedName ?? name,
+            avatar: bridge.account.ensAvatar,
+          })
+          return
+        }
+        let avatar: string | undefined
+        if (resolvedName && bridge.getEnsAvatar) {
+          avatar = await bridge.getEnsAvatar(resolvedName)
+        }
         setEns({
           address: resolvedAddress ?? address,
           name: resolvedName ?? name,
-          avatar: bridge.account.ensAvatar,
+          avatar,
         })
-        return
+      } catch {
+        setEns({ address: resolvedAddress ?? address, name: resolvedName ?? name })
       }
-      let avatar: string | undefined
-      if (resolvedName && bridge.getEnsAvatar) {
-        avatar = await bridge.getEnsAvatar(resolvedName)
-      }
-      setEns({
-        address: resolvedAddress ?? address,
-        name: resolvedName ?? name,
-        avatar,
-      })
     }
     resolve()
   }, [useEns, bridge, address, name])

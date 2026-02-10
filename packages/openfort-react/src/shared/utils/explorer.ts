@@ -27,12 +27,12 @@ type ExplorerUrlBuilder = (options: ExplorerUrlOptions) => string
 
 const explorerRegistry: Record<ChainTypeEnum, ExplorerUrlBuilder> = {
   [ChainTypeEnum.EVM]: (options) => {
-    const chainId = options.chainId ?? 1
-    const base = EVM_EXPLORER_BY_CHAIN_ID[chainId] ?? 'https://etherscan.io'
+    const chainId = options.chainId ?? 80002
+    const base = EVM_EXPLORER_BY_CHAIN_ID[chainId] ?? 'https://amoy.polygonscan.com'
     return appendPath(base, options)
   },
   [ChainTypeEnum.SVM]: (options) => {
-    const cluster = options.cluster ?? 'mainnet-beta'
+    const cluster = options.cluster ?? 'devnet'
     const base = cluster === 'mainnet-beta' ? SOLANA_EXPLORER_BASE : `${SOLANA_EXPLORER_BASE}/?cluster=${cluster}`
     return appendPath(base, options)
   },

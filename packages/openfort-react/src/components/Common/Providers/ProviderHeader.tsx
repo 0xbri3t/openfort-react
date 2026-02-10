@@ -15,11 +15,15 @@ export const WalletDisplay = ({ walletAddress }: { walletAddress: string }) => {
   const [ensName, setEnsName] = useState<string | undefined>(undefined)
   const context = useOpenfort()
   const themeContext = useThemeContext()
-  const useEns = strategy?.kind === 'bridge' && !!bridge?.getEnsName
+  // Only resolve ENS on mainnet (1); testnets throw "network does not support ENS"
+  const useEns = strategy?.kind === 'bridge' && !!bridge?.getEnsName && (bridge.chainId ?? 0) === 1
 
   useEffect(() => {
     if (!useEns || !walletAddress || !bridge?.getEnsName) return
-    bridge.getEnsName({ address: walletAddress as Hex }).then(setEnsName)
+    bridge
+      .getEnsName({ address: walletAddress as Hex })
+      .then(setEnsName)
+      .catch(() => {})
   }, [useEns, bridge, walletAddress])
 
   const separator = ['web95', 'rounded', 'minimal'].includes(themeContext.theme ?? context.uiConfig.theme ?? '')

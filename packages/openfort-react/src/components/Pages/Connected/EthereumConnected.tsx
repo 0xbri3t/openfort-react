@@ -69,6 +69,7 @@ const EthereumConnected: React.FC = () => {
   const identity = useResolvedIdentity({
     address: address ?? '',
     chainType,
+    ensChainId: chainId ?? 0,
     enabled: isConnected && !!address,
   })
   const ensName = identity.status === 'success' ? identity.name : undefined

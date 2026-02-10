@@ -19,9 +19,9 @@ export interface UseBalanceOptions {
   address: string
   /** Chain type */
   chainType: ChainTypeEnum
-  /** Ethereum chain ID (default: 1) */
+  /** Ethereum chain ID (default: 80002 Polygon Amoy) */
   chainId?: number
-  /** Solana cluster (default: mainnet-beta) */
+  /** Solana cluster (default: devnet) */
   cluster?: SolanaCluster
   /** Solana commitment level (default: confirmed) */
   commitment?: 'processed' | 'confirmed' | 'finalized'
@@ -60,8 +60,8 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
   const {
     address,
     chainType,
-    chainId = 1,
-    cluster = 'mainnet-beta',
+    chainId = 80002,
+    cluster = 'devnet',
     commitment = 'confirmed',
     enabled = true,
     refetchInterval = 30_000,

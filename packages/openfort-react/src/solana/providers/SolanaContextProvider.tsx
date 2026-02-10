@@ -26,15 +26,14 @@ export interface SolanaContextValue {
   setCluster: (cluster: SolanaCluster, rpcUrl?: string) => void
 }
 
-const DEFAULT_RPC_URLS: Record<Exclude<SolanaCluster, 'custom'>, string> = {
-  'mainnet-beta': 'https://api.mainnet-beta.solana.com',
+const DEFAULT_RPC_URLS: Partial<Record<Exclude<SolanaCluster, 'custom'>, string>> = {
   devnet: 'https://api.devnet.solana.com',
   testnet: 'https://api.testnet.solana.com',
 }
 
 function getDefaultRpcUrl(cluster: SolanaCluster): string {
-  if (cluster === 'custom') return DEFAULT_RPC_URLS.devnet
-  return DEFAULT_RPC_URLS[cluster]
+  if (cluster === 'custom') return DEFAULT_RPC_URLS.devnet!
+  return DEFAULT_RPC_URLS[cluster] ?? DEFAULT_RPC_URLS.devnet!
 }
 
 export interface SolanaContextProviderProps {
@@ -69,7 +68,7 @@ export const SolanaContext = createContext<SolanaContextValue | null>(null)
  * </OpenfortProvider>
  * ```
  */
-const DEFAULT_CLUSTERS: SolanaCluster[] = ['mainnet-beta', 'devnet', 'testnet']
+const DEFAULT_CLUSTERS: SolanaCluster[] = ['devnet', 'testnet']
 
 type StoredCluster = { cluster: SolanaCluster; rpcUrl?: string } | null
 

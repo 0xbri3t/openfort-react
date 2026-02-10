@@ -17,6 +17,7 @@ import { useBalance as useBalanceHook } from '../hooks/useBalance'
 import { useChains } from '../hooks/useChains'
 import { useConnectedWallet } from '../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../openfort/useOpenfort'
+import { useChain } from '../shared/hooks/useChain'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
 import type {
   UseAccountLike,
@@ -31,9 +32,10 @@ import type {
 
 export function useEVMAccount(): UseAccountLike {
   const wallet = useConnectedWallet()
-  const isConnected = wallet.status === 'connected'
+  const { chainType } = useChain()
+  const isConnected = wallet.status === 'connected' && chainType === ChainTypeEnum.EVM && !!wallet.address
   return {
-    address: isConnected && wallet.address ? (wallet.address as `0x${string}`) : undefined,
+    address: isConnected ? (wallet.address as `0x${string}`) : undefined,
     chainId: isConnected ? wallet.chainId : undefined,
     isConnected,
   }
@@ -41,7 +43,7 @@ export function useEVMAccount(): UseAccountLike {
 
 export function useEVMBalance(): UseBalanceLike {
   const { address, chainId, isConnected } = useEVMAccount()
-  const chainIdNum = chainId ?? 1
+  const chainIdNum = chainId ?? 80002
   const balanceState = useBalanceHook({
     address: address ?? '',
     chainType: ChainTypeEnum.EVM,
@@ -173,7 +175,7 @@ export function useEVMReadContract(params: {
 }): UseReadContractLike {
   const { config } = useCoreContext()
   const { chainId: connectedChainId } = useEVMAccount()
-  const chainId = params.chainId ?? connectedChainId ?? 1
+  const chainId = params.chainId ?? connectedChainId ?? 80002
   const rpcUrl = config?.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)
 
   const query = useQuery({

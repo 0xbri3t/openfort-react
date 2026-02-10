@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 import type { Hex } from 'viem'
 import type { getAssets } from 'viem/_types/experimental/erc7811/actions/getAssets'
-import type { UserWallet } from '../../hooks/openfort/useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/useWallets'
 import type { UserAccount } from '../../openfortCustomTypes'
 import type { SolanaConfig } from '../../solana/types'
 
@@ -110,7 +110,7 @@ type ConnectOptions =
     }
   | {
       connectType: 'recover'
-      wallet: UserWallet
+      wallet: EthereumUserWallet | SolanaUserWallet
     }
 
 // export type ConnectType = ConnectOptions['connectType']
@@ -118,7 +118,8 @@ type ConnectOptions =
 type RoutesWithOptions =
   | ({ route: typeof routes.CONNECTORS } & ConnectOptions)
   | ({ route: typeof routes.CONNECT } & ConnectOptions)
-  | { route: typeof routes.RECOVER_WALLET; wallet: UserWallet }
+  | { route: typeof routes.RECOVER_WALLET; wallet: EthereumUserWallet }
+  | { route: typeof routes.SOL_RECOVER_WALLET; wallet: SolanaUserWallet }
   | { route: typeof routes.LINKED_PROVIDER; provider: UserAccount }
   | { route: typeof routes.REMOVE_LINKED_PROVIDER; provider: UserAccount }
 
