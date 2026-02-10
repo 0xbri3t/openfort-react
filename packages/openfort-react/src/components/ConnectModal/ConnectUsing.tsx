@@ -33,7 +33,7 @@ const ConnectUsing = () => {
     if (isOauth) return
     // if no provider, change to qrcode
     const checkProvider = async () => {
-      const res = await wallet?.connector.getProvider()
+      const res = await wallet?.connector?.getProvider?.()
       if (!res) {
         setStatus(states.QRCODE)
         setTimeout(context.triggerResize, 10) // delay required here for modal to resize

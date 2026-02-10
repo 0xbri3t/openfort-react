@@ -1,5 +1,6 @@
-import { useOpenfort } from '../components/Openfort/useOpenfort'
-import { type OpenfortEVMBridgeConnector, useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import { createElement } from 'react'
+import { useConnectionStrategy } from '../core/ConnectionStrategyContext'
+import type { OpenfortEVMBridgeConnector, OpenfortEVMBridgeValue } from '../core/OpenfortEVMBridgeContext'
 import { isCoinbaseWalletConnector, isInjectedConnector } from '../utils'
 import { type WalletConfigProps, walletConfigs } from './walletConfigs'
 
@@ -9,13 +10,14 @@ export type WalletProps = {
   isInstalled?: boolean
 } & WalletConfigProps
 
-/** Returns the list of EVM connectors (MetaMask, WalletConnect, etc.) for the connect UI. */
-export function useEVMConnectors(): WalletProps[] {
-  const bridge = useEVMBridge()
-  const context = useOpenfort()
+export type MapBridgeConnectorsOptions = { walletConnectName?: string }
 
-  if (!bridge) return []
-
+/** Maps bridge.connectors to WalletProps[]. Used by EVMBridgeStrategy and useEVMConnectors. */
+export function mapBridgeConnectorsToWalletProps(
+  bridge: OpenfortEVMBridgeValue,
+  options: MapBridgeConnectorsOptions = {}
+): WalletProps[] {
+  const { walletConnectName } = options
   const wallets = bridge.connectors.map((connector): WalletProps => {
     const walletId = Object.keys(walletConfigs).find(
       (id) =>
@@ -28,11 +30,16 @@ export function useEVMConnectors(): WalletProps[] {
     const c: WalletProps = {
       id: connector.id,
       name: connector.name ?? connector.id ?? connector.type ?? '',
-      icon: connector.icon ? (
-        <img src={connector.icon} alt={connector.name} width={'100%'} height={'100%'} />
-      ) : (
-        <span style={{ width: '100%', height: '100%', background: 'var(--ck-body-background)', borderRadius: 4 }} />
-      ),
+      icon: connector.icon
+        ? createElement('img', { src: connector.icon, alt: connector.name, width: '100%', height: '100%' })
+        : createElement('span', {
+            style: {
+              width: '100%',
+              height: '100%',
+              background: 'var(--ck-body-background)',
+              borderRadius: 4,
+            },
+          }),
       connector,
       iconShape: 'squircle',
       isInstalled:
@@ -45,9 +52,9 @@ export function useEVMConnectors(): WalletProps[] {
       const wallet = walletConfigs[walletId]
       return {
         ...c,
-        iconConnector: connector.icon ? (
-          <img src={connector.icon} alt={connector.name} width={'100%'} height={'100%'} />
-        ) : undefined,
+        iconConnector: connector.icon
+          ? createElement('img', { src: connector.icon, alt: connector.name, width: '100%', height: '100%' })
+          : undefined,
         ...wallet,
       }
     }
@@ -61,8 +68,8 @@ export function useEVMConnectors(): WalletProps[] {
       if (wallet.id === 'walletConnect') {
         return {
           ...wallet,
-          name: context.uiConfig.walletConnectName || wallet.name,
-          shortName: context.uiConfig.walletConnectName || wallet.shortName,
+          name: walletConnectName || wallet.name,
+          shortName: walletConnectName || wallet.shortName,
         }
       }
       return wallet
@@ -89,6 +96,13 @@ export function useEVMConnectors(): WalletProps[] {
       if (b.id === 'walletConnect') return -1
       return 0
     })
+}
+
+/** Returns the list of EVM connectors (MetaMask, WalletConnect, etc.) for the connect UI. Uses strategy when available; returns [] when embedded-only (no bridge). */
+export function useEVMConnectors(): WalletProps[] {
+  const strategy = useConnectionStrategy()
+  if (!strategy) return []
+  return strategy.getConnectors()
 }
 
 /** Single connector by id. */

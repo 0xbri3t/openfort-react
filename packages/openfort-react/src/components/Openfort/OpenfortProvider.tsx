@@ -6,7 +6,8 @@ import {
 } from '@openfort/openfort-js'
 import { Buffer } from 'buffer'
 import type React from 'react'
-import { createElement, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createElement, Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { CoreProvider } from '../../core/CoreContext'
 import { OpenfortEVMBridgeContext } from '../../core/OpenfortEVMBridgeContext'
 import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
 import { useThemeFont } from '../../hooks/useGoogleFont'
@@ -139,10 +140,21 @@ export const OpenfortProvider = ({
       allowedMethods: [RecoveryMethod.PASSWORD, ...(allowAutomaticRecovery ? [RecoveryMethod.AUTOMATIC] : [])],
       defaultMethod: allowAutomaticRecovery ? RecoveryMethod.AUTOMATIC : RecoveryMethod.PASSWORD,
     },
-    authProviders: [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP, UIAuthProvider.WALLET],
+    authProviders: hasWagmi
+      ? [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP, UIAuthProvider.WALLET]
+      : [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP],
   }
 
   const safeUiConfig: OpenfortUIOptionsExtended = Object.assign({}, defaultUIOptions, uiConfig)
+
+  if (!hasWagmi && safeUiConfig.authProviders?.includes(UIAuthProvider.WALLET)) {
+    safeUiConfig.authProviders = safeUiConfig.authProviders.filter((p) => p !== UIAuthProvider.WALLET)
+    if (process.env.NODE_ENV === 'development') {
+      logger.warn(
+        '[@openfort/react] UIAuthProvider.WALLET was removed from authProviders because no Wagmi bridge is present. Add OpenfortWagmiBridge to enable external wallet sign-in.'
+      )
+    }
+  }
 
   if (!safeUiConfig.walletRecovery.allowedMethods) {
     safeUiConfig.walletRecovery.allowedMethods = defaultUIOptions.walletRecovery.allowedMethods
@@ -343,30 +355,29 @@ export const OpenfortProvider = ({
     children
   )
 
-  return createElement(
-    Openfortcontext.Provider,
-    { value },
-    <CoreOpenfortProvider
-      openfortConfig={{
-        baseConfiguration: {
-          publishableKey,
-        },
-        shieldConfiguration: walletConfig
-          ? {
-              shieldPublishableKey: walletConfig.shieldPublishableKey,
-              debug: debugModeOptions.shieldDebugMode,
-            }
-          : undefined,
-        debug: debugModeOptions.openfortCoreDebugMode,
-        overrides,
-        thirdPartyAuth,
-      }}
-      onConnect={onConnect}
-      onDisconnect={onDisconnect}
-    >
-      {debugModeOptions.debugRoutes && (
-        <pre
-          style={{
+  const coreProviderConfig = useMemo(
+    () => ({
+      publishableKey,
+      shieldPublishableKey: walletConfig?.shieldPublishableKey,
+      debug: debugModeOptions.openfortCoreDebugMode,
+      rpcUrls: walletConfig?.ethereum?.rpcUrls,
+    }),
+    [
+      publishableKey,
+      walletConfig?.shieldPublishableKey,
+      walletConfig?.ethereum?.rpcUrls,
+      debugModeOptions.openfortCoreDebugMode,
+    ]
+  )
+
+  const coreOpenfortChildren = createElement(
+    Fragment,
+    null,
+    debugModeOptions.debugRoutes &&
+      createElement(
+        'pre',
+        {
+          style: {
             position: 'absolute',
             top: 0,
             left: 0,
@@ -374,30 +385,58 @@ export const OpenfortProvider = ({
             color: 'gray',
             background: 'white',
             zIndex: 9999,
-          }}
-        >
-          {
-            JSON.stringify(
-              routeHistory.map((item) =>
-                Object.fromEntries(
-                  Object.entries(item).map(([key, value]) => [
-                    key,
-                    typeof value === 'object' && value !== null ? '[object]' : value,
-                  ])
-                )
-              ),
-              null,
-              2
-            ) // For debugging purposes
-          }
-        </pre>
-      )}
-      {/* <ThemeProvider
-            theme={defaultTheme}
-          > */}
-      {wrappedChildren}
-      <ConnectKitModal lang={ckLang} theme={ckTheme} mode={safeUiConfig.mode ?? ckMode} customTheme={ckCustomTheme} />
-      {/* </ThemeProvider> */}
-    </CoreOpenfortProvider>
+          },
+        },
+        JSON.stringify(
+          routeHistory.map((item) =>
+            Object.fromEntries(
+              Object.entries(item).map(([key, value]) => [
+                key,
+                typeof value === 'object' && value !== null ? '[object]' : value,
+              ])
+            )
+          ),
+          null,
+          2
+        )
+      ),
+    wrappedChildren,
+    createElement(ConnectKitModal, {
+      lang: ckLang,
+      theme: ckTheme,
+      mode: safeUiConfig.mode ?? ckMode,
+      customTheme: ckCustomTheme,
+    })
+  )
+
+  return createElement(
+    Openfortcontext.Provider,
+    { value },
+    createElement(
+      CoreProvider,
+      coreProviderConfig,
+      createElement(
+        CoreOpenfortProvider,
+        {
+          openfortConfig: {
+            baseConfiguration: {
+              publishableKey,
+            },
+            shieldConfiguration: walletConfig
+              ? {
+                  shieldPublishableKey: walletConfig.shieldPublishableKey,
+                  debug: debugModeOptions.shieldDebugMode,
+                }
+              : undefined,
+            debug: debugModeOptions.openfortCoreDebugMode,
+            overrides,
+            thirdPartyAuth,
+          },
+          onConnect,
+          onDisconnect,
+        },
+        coreOpenfortChildren
+      )
+    )
   )
 }

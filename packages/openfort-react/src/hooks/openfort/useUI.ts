@@ -1,6 +1,6 @@
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
-import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
+import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { logger } from '../../utils/logger'
 
@@ -28,10 +28,11 @@ const allRoutes: ModalRoutes[] = [...safeRoutes.connected, ...safeRoutes.disconn
 type ValidRoutes = ModalRoutes
 
 export function useUI() {
-  const { open, setOpen, setRoute } = useOpenfort()
-  const { isLoading, user, needsRecovery } = useOpenfortCore()
-  const bridge = useEVMBridge()
-  const isConnected = bridge?.account?.isConnected ?? false
+  const { open, setOpen, setRoute, chainType } = useOpenfort()
+  const { isLoading, user, needsRecovery, embeddedAccounts } = useOpenfortCore()
+  const strategy = useConnectionStrategy()
+  const state = { user, embeddedAccounts, chainType }
+  const isConnected = strategy?.isConnected(state) ?? false
 
   function defaultOpen() {
     setOpen(true)

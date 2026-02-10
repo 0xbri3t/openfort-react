@@ -10,6 +10,8 @@ export interface OpenfortEVMBridgeConnector {
   name: string
   icon?: string
   type?: string
+  /** Optional; provided by wagmi connectors. Used when deciding QR vs injector flow. */
+  getProvider?: () => Promise<unknown>
 }
 
 export interface OpenfortEVMBridgeAccount {

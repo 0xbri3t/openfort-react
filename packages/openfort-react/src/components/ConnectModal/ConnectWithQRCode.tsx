@@ -94,7 +94,8 @@ const ConnectWithWalletConnect = () => {
 
 const ConnectWithQRCode = () => {
   const { connector, triggerResize } = useOpenfort()
-  const { isConnected } = useAccount()
+  const bridge = useEVMBridge()
+  const isConnected = bridge?.account?.isConnected ?? false
 
   useEffect(() => {
     triggerResize()

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Hex } from 'viem'
+import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
 import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import { useUser } from '../../../hooks/openfort/useUser'
 import type { UserAccount } from '../../../openfortCustomTypes'
@@ -9,15 +10,17 @@ import { useOpenfort } from '../../Openfort/useOpenfort'
 import { LinkedProviderText } from '../../Pages/LinkedProviders/styles'
 
 export const WalletDisplay = ({ walletAddress }: { walletAddress: string }) => {
+  const strategy = useConnectionStrategy()
   const bridge = useEVMBridge()
   const [ensName, setEnsName] = useState<string | undefined>(undefined)
   const context = useOpenfort()
   const themeContext = useThemeContext()
+  const useEns = strategy?.kind === 'bridge' && !!bridge?.getEnsName
 
   useEffect(() => {
-    if (!bridge?.getEnsName || !walletAddress) return
+    if (!useEns || !walletAddress || !bridge?.getEnsName) return
     bridge.getEnsName({ address: walletAddress as Hex }).then(setEnsName)
-  }, [bridge, walletAddress])
+  }, [useEns, bridge, walletAddress])
 
   const separator = ['web95', 'rounded', 'minimal'].includes(themeContext.theme ?? context.uiConfig.theme ?? '')
     ? '....'

@@ -1,8 +1,9 @@
 import { ChainTypeEnum, OAuthProvider } from '@openfort/openfort-js'
 import { useEffect, useMemo } from 'react'
 import type { ValueOf } from 'viem/_types/types/utils'
-import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
+import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
+import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import Modal from '../Common/Modal'
@@ -136,58 +137,27 @@ const ConnectModal: React.FC<{
   lang?: Languages
 }> = ({ mode = 'auto', theme = 'auto', customTheme = customThemeDefault, lang = 'en-US' }) => {
   const context = useOpenfort()
-  const bridge = useEVMBridge()
-  const isConnected = bridge?.account?.isConnected ?? false
-  const chainId = bridge?.account?.chain?.id ?? bridge?.chainId
-  const chainIsSupported = useChainIsSupported(chainId)
+  const core = useOpenfortCore()
+  const strategy = useConnectionStrategy()
+  const state = useMemo(
+    () => ({
+      user: core.user,
+      embeddedAccounts: core.embeddedAccounts,
+      chainType: context.chainType,
+    }),
+    [core.user, core.embeddedAccounts, context.chainType]
+  )
+  const isConnected = strategy?.isConnected(state) ?? false
+  const chainId = strategy?.getChainId()
+  const chainIsSupported = useChainIsSupported(chainId, strategy)
 
   //if chain is unsupported we enforce a "switch chain" prompt
   const closeable = !(context.uiConfig.enforceSupportedChains && isConnected && !chainIsSupported)
 
-  // const mainRoutes: ValueOf<typeof routes>[] = [
-  //   routes.CONNECTED,
-  //   routes.LOADING,
-  //   routes.PROVIDERS,
-  //   routes.EMAIL_VERIFICATION,
-  // ]
-
   const route = context.route.route
   const chainType = context.chainType
 
-  // const showBackButton = (closeable && !mainRoutes.includes(route)) || (closeable && route === routes.PROVIDERS && user)
-
   const _showInfoButton = closeable && route !== routes.CONNECTED
-
-  // const onBack = context.onBack
-  //   ? context.onBack
-  //   : () => {
-  //       if (route === routes.CONNECT) {
-  //         context.setRoute(routes.CONNECTORS)
-  //         return
-  //       }
-
-  //       if (route === routes.FORGOT_PASSWORD) {
-  //         context.setRoute(routes.EMAIL_LOGIN)
-  //         return
-  //       }
-
-  //       if (route === routes.CONNECTORS && user) {
-  //         context.setRoute(routes.CONNECTED)
-  //         return
-  //       }
-
-  //       if (route === routes.PROVIDERS || route === routes.SWITCHNETWORKS) {
-  //         context.setRoute(routes.CONNECTED)
-  //         return
-  //       }
-
-  //       if (route === routes.LOAD_WALLETS || route === routes.RECOVER_WALLET || route === routes.EMAIL_VERIFICATION) {
-  //         logout()
-  //       }
-
-  //       context.setRoute(routes.PROVIDERS)
-  //       // }
-  //     }
 
   const sharedPages = useMemo(buildSharedPages, [])
   const pages = useMemo(() => ({ ...sharedPages, ...CHAIN_PREFIXED_PAGES[chainType] }), [sharedPages, chainType])
@@ -206,6 +176,7 @@ const ConnectModal: React.FC<{
 
   // if auth redirect
   useEffect(() => {
+    if (typeof window === 'undefined') return
     const url = new URL(window.location.href.replace('?access_token=', '&access_token=')) // handle both ? and & cases
     const provider = url.searchParams.get('openfortAuthProviderUI')
     const emailVerification = url.searchParams.get('openfortEmailVerificationUI')

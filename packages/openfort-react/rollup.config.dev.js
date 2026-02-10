@@ -10,7 +10,7 @@ const styledComponentsTransformer = createStyledComponentsTransformer({
 })
 
 // Shared external dependencies
-const sharedExternal = ['react', 'react-dom', 'framer-motion', 'wagmi']
+const sharedExternal = ['react', 'react-dom', 'framer-motion']
 
 // Create typescript plugin with styled-components transformer
 const createTypescriptPlugin = (declarationDir) =>

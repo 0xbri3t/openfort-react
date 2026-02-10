@@ -14,7 +14,7 @@ const sharedPlugins = [
 ]
 
 // Shared external dependencies
-const sharedExternal = ['react', 'react-dom', 'framer-motion', 'wagmi']
+const sharedExternal = ['react', 'react-dom', 'framer-motion']
 
 export default [
   // Main entry point (chain-agnostic)
@@ -29,27 +29,27 @@ export default [
     plugins: sharedPlugins,
   },
   // Solana subpath export
-  {
-    input: './src/solana/index.ts',
-    external: sharedExternal,
-    output: {
-      file: packageJson.exports['./solana'].import,
-      format: 'esm',
-      sourcemap: true,
-    },
-    plugins: [
-      peerDepsExternal(),
-      typescript({
-        useTsconfigDeclarationDir: true,
-        exclude: 'node_modules/**',
-        tsconfigOverride: {
-          compilerOptions: {
-            declarationDir: 'build/solana',
-          },
-        },
-      }),
-    ],
-  },
+  // {
+  //   input: './src/solana/index.ts',
+  //   external: sharedExternal,
+  //   output: {
+  //     file: packageJson.exports['./solana'].import,
+  //     format: 'esm',
+  //     sourcemap: true,
+  //   },
+  //   plugins: [
+  //     peerDepsExternal(),
+  //     typescript({
+  //       useTsconfigDeclarationDir: true,
+  //       exclude: 'node_modules/**',
+  //       tsconfigOverride: {
+  //         compilerOptions: {
+  //           declarationDir: 'build/solana',
+  //         },
+  //       },
+  //     }),
+  //   ],
+  // },
   // Ethereum subpath export
   {
     input: './src/ethereum/index.ts',

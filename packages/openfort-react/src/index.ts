@@ -12,7 +12,6 @@ export {
   SignedMessagePayload,
   User,
 } from '@openfort/openfort-js'
-export { useConnect } from '@openfort/wagmi'
 // Compat layer (deprecated hooks)
 export { useOpenfortCore } from './compat/useOpenfortCore'
 export { default as Avatar } from './components/Common/Avatar'
@@ -22,6 +21,13 @@ export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
 export { PageLayout, type PageLayoutProps } from './components/PageLayout'
 export { embeddedWalletId } from './constants/openfort'
+export {
+  type ConnectionStrategy,
+  type ConnectionStrategyState,
+  type ConnectRoute,
+  DEFAULT_DEV_CHAIN_ID,
+} from './core/ConnectionStrategy'
+export { ConnectionStrategyProvider, useConnectionStrategy } from './core/ConnectionStrategyContext'
 export { OpenfortTransactionError, TransactionErrorCode } from './core/errors'
 export {
   type OpenfortEVMBridgeAccount,
@@ -34,9 +40,9 @@ export {
   useEVMBridge,
 } from './core/OpenfortEVMBridgeContext'
 export { queryKeys } from './core/queryKeys'
+export { createEVMBridgeStrategy } from './core/strategies/EVMBridgeStrategy'
+export { createEVMEmbeddedStrategy } from './core/strategies/EVMEmbeddedStrategy'
 export type { WalletReadiness } from './core/types'
-export { default as getDefaultConfig } from './defaultConfig'
-export { default as getDefaultConnectors } from './defaultConnectors'
 // Ethereum context types
 export type { ChainId, SetChainResult } from './ethereum/EthereumContext'
 // Convenience re-export for Ethereum hook (can also import from '@openfort/react/ethereum')
@@ -64,6 +70,8 @@ export { UserWallet, useWallets } from './hooks/openfort/useWallets'
 export { useChainIsSupported } from './hooks/useChainIsSupported'
 export { useChains } from './hooks/useChains'
 export { type ConnectedWalletState, useConnectedWallet } from './hooks/useConnectedWallet'
+export { useConnectLifecycle } from './hooks/useConnectLifecycle'
+export { useConnectRoutes } from './hooks/useConnectRoutes'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
 export type { TransactionFlowStatus, UseTransactionFlowResult } from './shared/hooks/useTransactionFlow'
@@ -72,16 +80,13 @@ export { type ExplorerUrlOptions, getExplorerUrl } from './shared/utils/explorer
 export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validation'
 // SIWE utilities for direct SDK usage (no wagmi required)
 export { createSIWEMessage } from './siwe/create-siwe-message'
-// Convenience re-exports for Solana hooks (can also import from '@openfort/react/solana')
-export { useSolanaBalance } from './solana/hooks/useSolanaBalance'
-export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
-export type {
-  SolanaSendTransactionStatus,
-  UseSolanaSendTransactionResult,
-} from './solana/hooks/useSolanaSendTransaction'
-export { useSolanaSendTransaction } from './solana/hooks/useSolanaSendTransaction'
-export { useSolanaMessageSigner, useSolanaSigner } from './solana/hooks/useSolanaSigner'
-export type { SolanaConfig } from './solana/types'
+// Solana exports temporarily excluded from main build for ETH/viem-only testing. Re-enable and build ./solana when fixing @solana/kit types.
+// export { useSolanaBalance } from './solana/hooks/useSolanaBalance'
+// export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
+// export type { SolanaSendTransactionStatus, UseSolanaSendTransactionResult } from './solana/hooks/useSolanaSendTransaction'
+// export { useSolanaSendTransaction } from './solana/hooks/useSolanaSendTransaction'
+// export { useSolanaMessageSigner, useSolanaSigner } from './solana/hooks/useSolanaSigner'
+// export type { SolanaConfig } from './solana/types'
 export type { CustomTheme } from './styles/customTheme'
 export type {
   CustomAvatarProps,

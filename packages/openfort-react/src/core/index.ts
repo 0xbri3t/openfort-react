@@ -5,6 +5,13 @@
  * This module provides the wagmi-free base architecture.
  */
 
+export {
+  type ConnectionStrategy,
+  type ConnectionStrategyState,
+  type ConnectRoute,
+  DEFAULT_DEV_CHAIN_ID,
+} from './ConnectionStrategy'
+export { ConnectionStrategyProvider, useConnectionStrategy } from './ConnectionStrategyContext'
 export { CoreProvider, type CoreProviderProps, useCoreContext, useHasCoreProvider } from './CoreContext'
 export type { OpenfortErrorCode as OpenfortErrorCodeType } from './errors'
 export {
@@ -31,6 +38,8 @@ export {
   useEVMBridge,
 } from './OpenfortEVMBridgeContext'
 export { authQueryKeys } from './queryKeys'
+export { createEVMBridgeStrategy } from './strategies/EVMBridgeStrategy'
+export { createEVMEmbeddedStrategy } from './strategies/EVMEmbeddedStrategy'
 export type {
   AsyncState,
   AsyncStatus,

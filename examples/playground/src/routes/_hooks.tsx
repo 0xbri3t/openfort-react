@@ -1,8 +1,7 @@
-import { useUser, useWallets } from '@openfort/react'
+import { useChains, useConnectedWallet, useUser, useWallets } from '@openfort/react'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { type PropsWithChildren, useMemo } from 'react'
-import { useAccount, useChainId, useChains } from 'wagmi'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
@@ -30,8 +29,9 @@ const SidebarLink = ({ children, href, cta = 'View in hook' }: PropsWithChildren
 const SidebarInfo = () => {
   const { user, linkedAccounts } = useUser()
   const { activeWallet } = useWallets()
-  const { address } = useAccount()
-  const chainId = useChainId()
+  const wallet = useConnectedWallet()
+  const address = wallet.status === 'connected' ? wallet.address : undefined
+  const chainId = wallet.status === 'connected' ? wallet.chainId : undefined
   const chains = useChains()
 
   const connectedChain = useMemo(() => chains.find((c) => c.id === chainId), [chains, chainId])

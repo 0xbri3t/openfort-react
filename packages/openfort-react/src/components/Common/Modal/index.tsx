@@ -3,6 +3,7 @@ import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTransition } from 'react-transition-state'
 import { AuthIcon } from '../../../assets/icons'
+import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
 import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import FocusTrap from '../../../hooks/useFocusTrap'
 import useLocales from '../../../hooks/useLocales'
@@ -248,8 +249,9 @@ const Modal: React.FC<ModalProps> = ({
   )
 
   // Update layout on chain/network switch to avoid clipping
+  const strategy = useConnectionStrategy()
   const bridge = useEVMBridge()
-  const chainId = bridge?.account?.chain?.id ?? bridge?.chainId
+  const chainId = strategy?.getChainId() ?? bridge?.account?.chain?.id ?? bridge?.chainId
   const switchChain = bridge?.switchChain?.switchChain
 
   const ref = useRef<any>(null)

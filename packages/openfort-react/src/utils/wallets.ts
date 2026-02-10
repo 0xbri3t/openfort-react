@@ -1,7 +1,13 @@
+/** EIP-1193 provider injected by wallets (MetaMask, etc.); may have providers array when multiple injected */
+type EthereumWindowProvider = Record<string, unknown> & {
+  providers?: Record<string, unknown>[]
+}
+
 declare global {
   interface Window {
     trustWallet: any
     trustwallet: any
+    ethereum?: EthereumWindowProvider
   }
 }
 

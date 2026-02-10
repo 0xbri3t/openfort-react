@@ -91,7 +91,7 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
     siwe({
       onError: (e) => {
         logger.log('Error connecting with SIWE', e)
-        disconnect()
+        disconnect?.()
         const error = new OpenfortError('Failed to connect with siwe', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
           error: e,
         })
@@ -198,7 +198,7 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
       setStatus({
         status: 'loading',
       })
-      let connector: Connector | null = null
+      let connector: OpenfortEVMBridgeConnector | null = null
 
       if (typeof options.connector === 'string') {
         const wallet = availableWallets.find((c) => c.id === options.connector)

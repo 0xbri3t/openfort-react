@@ -129,7 +129,14 @@ const ConnectWithInjector: React.FC<{
         },
       })
     },
-    [bridge, linkedAccounts, onConnect, props.connectType, props.wallet?.address, connectWithSiwe]
+    [
+      bridge,
+      linkedAccounts,
+      onConnect,
+      props.connectType,
+      'wallet' in props ? props.wallet?.address : undefined,
+      connectWithSiwe,
+    ]
   )
 
   const handleConnectError = useCallback((error: { code?: number; message?: string }) => {

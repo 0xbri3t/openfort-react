@@ -1,7 +1,6 @@
-import type { Theme } from '@openfort/react'
+import { type Theme, useConnectedWallet } from '@openfort/react'
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { useAccount } from 'wagmi'
 import z from 'zod'
 import { Nav } from '@/components/Nav'
 import { useAppStore } from '@/lib/useAppStore'
@@ -18,7 +17,8 @@ const themes: Theme[] = ['auto', 'midnight', 'nouns', 'retro', 'rounded', 'soft'
 let themeIndex = 0
 
 function RootComponent() {
-  const { isConnected } = useAccount()
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
   const location = useLocation()
 
   const { setProviderOptions, providerOptions } = useAppStore()

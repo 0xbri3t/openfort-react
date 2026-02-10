@@ -110,7 +110,7 @@ const parseEmbeddedAccount = ({
   chainId,
 }: {
   embeddedAccount: EmbeddedAccount
-  connector: Connector | undefined
+  connector: OpenfortEVMBridgeConnector | undefined
   simpleAccounts: SimpleAccount[]
   chainId: number
 }): UserWallet => {
@@ -250,13 +250,14 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       const pending = connectToConnector
       bridge
         .connectAsync({ connector: conn })
-        .then((data: { accounts?: string[] }) => {
+        .then((data: unknown) => {
+          const resolved = data as { accounts?: string[] }
           setConnectToConnector(undefined)
-          logger.log('Connected with wallet', data, pending)
+          logger.log('Connected with wallet', resolved, pending)
           if (
             pending?.address &&
-            data?.accounts &&
-            !data.accounts.some((a) => a.toLowerCase() === pending.address?.toLowerCase())
+            resolved?.accounts &&
+            !resolved.accounts.some((a) => a.toLowerCase() === pending.address?.toLowerCase())
           ) {
             setStatus({
               status: 'error',
@@ -806,17 +807,15 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
   useEffect(() => {
     ;(async () => {
-      if (shouldSwitchToChain) {
+      if (shouldSwitchToChain && switchChainAsync) {
         logger.log(`Switching to chain ${shouldSwitchToChain}.`)
-        // const a = await client.embeddedWallet.getEthereumProvider()
-        // const res = await switchChain(a, { id: shouldSwitchToChain })
         const res = await switchChainAsync({ chainId: shouldSwitchToChain })
         logger.log('Switched to chain', res)
         updateEmbeddedAccounts()
         setShouldSwitchToChain(null)
       }
     })()
-  }, [shouldSwitchToChain])
+  }, [shouldSwitchToChain, switchChainAsync])
 
   const queryClient = useQueryClient()
   const createWallet = useCallback(

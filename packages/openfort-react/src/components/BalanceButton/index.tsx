@@ -1,3 +1,4 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { AnimatePresence, motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useState } from 'react'
@@ -54,7 +55,8 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
   const chainId = isConnected ? wallet.chainId : undefined
-  const chainType = isConnected ? wallet.chainType : 'ethereum'
+  // Chain type is EVM or SVM only (ChainTypeEnum)
+  const chainType = isConnected ? wallet.chainType : ChainTypeEnum.EVM
 
   const isChainSupported = useChainIsSupported(chainId)
 

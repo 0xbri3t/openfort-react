@@ -2,7 +2,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useId, useState } from 'react'
 import ChainIcons from '../../../assets/chains'
 import { chainConfigs } from '../../../constants/chainConfigs'
+import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
 import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
+import { useChains } from '../../../hooks/useChains'
 import useLocales from '../../../hooks/useLocales'
 import { isCoinbaseWalletConnector, isMobile } from '../../../utils'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -47,15 +49,33 @@ const Spinner = () => {
 }
 
 const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => {
+  const strategy = useConnectionStrategy()
   const bridge = useEVMBridge()
+  const currentChainId = strategy?.getChainId()
+
   const connector = bridge?.account?.connector
-  const chain = bridge?.account?.chain
-  const { chains, isPending, switchChain, error } = bridge?.switchChain ?? {
-    chains: [],
+  const bridgeSwitchChain = bridge?.switchChain
+  const {
+    chains: bridgeChains,
+    isPending,
+    switchChain,
+    error,
+  } = bridgeSwitchChain ?? {
+    chains: [] as { id: number; name?: string }[],
     isPending: false,
     switchChain: undefined,
     error: null,
   }
+
+  const embeddedChains = useChains()
+  const chain =
+    strategy?.kind === 'embedded' && currentChainId != null ? { id: currentChainId } : bridge?.account?.chain
+
+  const chains =
+    strategy?.kind === 'embedded' && currentChainId != null
+      ? embeddedChains.map((c) => ({ id: c.id, name: c.name }))
+      : bridgeChains
+
   const [pendingChainId, setPendingChainId] = useState<number | undefined>(undefined)
 
   const locales = useLocales({})

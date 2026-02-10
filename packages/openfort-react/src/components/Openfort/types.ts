@@ -170,6 +170,11 @@ export enum LinkWalletOnSignUpOption {
 
 type PolicyConfig = string | Record<number, string>
 
+export type EthereumWalletConfig = {
+  chainId: number
+  rpcUrls?: Record<number, string>
+}
+
 type CommonWalletConfig = {
   /** Publishable key for the Shield API. */
   shieldPublishableKey: string
@@ -182,20 +187,7 @@ type CommonWalletConfig = {
   assets?: {
     [chainId: number]: Hex[]
   }
-  /**
-   * Solana configuration. When provided, enables Solana support.
-   *
-   * @example
-   * ```tsx
-   * walletConfig={{
-   *   shieldPublishableKey: 'shield_pk_...',
-   *   solana: {
-   *     cluster: 'mainnet-beta',
-   *     commitment: 'confirmed'
-   *   }
-   * }}
-   * ```
-   */
+  ethereum?: EthereumWalletConfig
   solana?: SolanaConfig
 }
 

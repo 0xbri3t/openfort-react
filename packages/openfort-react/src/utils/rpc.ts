@@ -4,6 +4,8 @@
  * Default RPC URLs and chain metadata.
  */
 
+import type { Chain } from 'viem'
+import { defineChain } from 'viem'
 import type { SolanaCluster } from '../solana/types'
 
 /**
@@ -19,6 +21,7 @@ export const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
   43114: 'https://api.avax.network/ext/bc/C/rpc',
   56: 'https://bsc-dataseed.binance.org',
   250: 'https://rpc.ftm.tools',
+  11155111: 'https://rpc.sepolia.org',
 }
 
 /**
@@ -59,6 +62,7 @@ export const CHAIN_NAMES: Record<number, string> = {
   43114: 'Avalanche',
   56: 'BNB Smart Chain',
   250: 'Fantom',
+  11155111: 'Sepolia',
 }
 
 /**
@@ -82,6 +86,7 @@ export const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
   43114: { name: 'Avalanche', symbol: 'AVAX', decimals: 18 },
   56: { name: 'BNB', symbol: 'BNB', decimals: 18 },
   250: { name: 'Fantom', symbol: 'FTM', decimals: 18 },
+  11155111: { name: 'Ether', symbol: 'ETH', decimals: 18 },
 }
 
 /**
@@ -115,6 +120,7 @@ export const BLOCK_EXPLORERS: Record<number, string> = {
   43114: 'https://snowtrace.io',
   56: 'https://bscscan.com',
   250: 'https://ftmscan.com',
+  11155111: 'https://sepolia.etherscan.io',
 }
 
 /**
@@ -138,4 +144,21 @@ export function getTransactionUrl(chainId: number, txHash: string): string | und
 export function getAddressUrl(chainId: number, address: string): string | undefined {
   const explorer = BLOCK_EXPLORERS[chainId]
   return explorer ? `${explorer}/address/${address}` : undefined
+}
+
+/**
+ * Build a viem Chain from chainId and optional rpcUrls (e.g. from walletConfig.ethereum.rpcUrls).
+ * Used when no bridge is present (embedded strategy) so useChains() and viem clients have a Chain.
+ */
+export function buildChainFromConfig(chainId: number, rpcUrls?: Record<number, string>): Chain {
+  const rpcUrl = rpcUrls?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)
+  const native = getNativeCurrency(chainId)
+  const explorerUrl = getBlockExplorerUrl(chainId)
+  return defineChain({
+    id: chainId,
+    name: getChainName(chainId),
+    nativeCurrency: { decimals: native.decimals, name: native.name, symbol: native.symbol },
+    rpcUrls: { default: { http: [rpcUrl] } },
+    ...(explorerUrl && { blockExplorers: { default: { name: 'Explorer', url: explorerUrl } } }),
+  })
 }

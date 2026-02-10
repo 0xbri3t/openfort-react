@@ -1,5 +1,6 @@
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
+import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
 import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import useIsMounted from '../../../hooks/useIsMounted'
 import { ResetContainer } from '../../../styles'
@@ -24,14 +25,16 @@ const Avatar: React.FC<{
 }> = ({ address, name, size = 96, radius = 96 }) => {
   const isMounted = useIsMounted()
   const context = useOpenfort()
+  const strategy = useConnectionStrategy()
   const bridge = useEVMBridge()
+  const useEns = strategy?.kind === 'bridge' && !!bridge
 
   const imageRef = useRef<any>(null)
   const [loaded, setLoaded] = useState(true)
   const [ens, setEns] = useState<{ address?: Hash; name?: string; avatar?: string }>({})
 
   useEffect(() => {
-    if (!bridge) {
+    if (!useEns) {
       setEns({ address, name })
       return
     }
@@ -66,7 +69,7 @@ const Avatar: React.FC<{
       })
     }
     resolve()
-  }, [bridge, address, name])
+  }, [useEns, bridge, address, name])
 
   useEffect(() => {
     if (!(imageRef.current?.complete && imageRef.current.naturalHeight !== 0)) {
