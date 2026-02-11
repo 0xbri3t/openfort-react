@@ -1,4 +1,4 @@
-import { ChainTypeEnum, OpenfortButton, useDisconnect } from '@openfort/react'
+import { OpenfortButton, useDisconnect } from '@openfort/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
@@ -26,12 +26,11 @@ export type NavRoute = {
   label: string
   exact?: boolean
   children?: NavRoute[]
-  mode?: ChainTypeEnum
 }
 
-export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePath?: string }) => {
+export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const location = useLocation()
-  const path = location.pathname.includes('showcase') ? '/' : overridePath || location.pathname
+  const path = location.pathname.includes('showcase') ? '/' : location.pathname
   const { mode, setMode } = usePlaygroundMode()
   const queryClient = useQueryClient()
   const { disconnectAsync } = useDisconnect()
@@ -53,20 +52,11 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
 
   const effectiveNavRoutes = useMemo(() => {
     const hasWagmi = mode === 'evm-wagmi'
-    const isSolana = mode === 'solana-only'
     return navRoutes.map((route) => {
       if (route.label === 'Utils' && route.children) {
         const children = route.children.filter((child) => {
           if (child.label === 'wagmi') return hasWagmi
           if (child.label === 'EVM adapter (viem)') return !hasWagmi
-          return true
-        })
-        return { ...route, children }
-      }
-      if (route.label === 'Wallet hooks' && route.children) {
-        const children = route.children.filter((child) => {
-          if (child.mode === ChainTypeEnum.EVM) return !isSolana
-          if (child.mode === ChainTypeEnum.SVM) return isSolana
           return true
         })
         return { ...route, children }

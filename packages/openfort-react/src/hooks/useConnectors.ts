@@ -1,7 +1,7 @@
 import type { OpenfortEVMBridgeConnector } from '../core/OpenfortEVMBridgeContext'
 import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
 
-export function useConnectors(): OpenfortEVMBridgeConnector[] {
+function useConnectors(): OpenfortEVMBridgeConnector[] {
   const bridge = useEVMBridge()
   return bridge?.connectors ?? []
 }

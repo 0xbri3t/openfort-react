@@ -94,7 +94,7 @@ export function useConnectWithSiwe() {
         })
         if (!onError) return
 
-        let message = err instanceof Error ? err.message : err instanceof AxiosError ? err.message : String(err)
+        let message = err instanceof Error ? err.message : String(err)
 
         if (message.includes('User rejected the request.')) {
           message = 'User rejected the request.'

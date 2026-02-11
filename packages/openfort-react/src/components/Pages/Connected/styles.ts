@@ -93,26 +93,6 @@ export const DisconnectButton = styled(Button)`
   margin-top: 4px;
 `
 
-export const ClusterBadge = styled.div<{ $cluster: string }>`
-  z-index: 3;
-  position: absolute;
-  bottom: 0px;
-  right: -16px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  background: ${(props) =>
-    props.$cluster === 'mainnet-beta'
-      ? 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)'
-      : props.$cluster === 'devnet'
-        ? 'var(--ck-body-color-warning, #f59e0b)'
-        : 'var(--ck-body-color-muted, #6b7280)'};
-  color: white;
-  white-space: nowrap;
-`
-
 export const LinkedProvidersToggle = styled.button`
   align-self: flex-start;
   display: inline-flex;

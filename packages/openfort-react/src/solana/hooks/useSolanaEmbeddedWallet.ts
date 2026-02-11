@@ -303,7 +303,13 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
   )
 
   useEffect(() => {
-    if (isLoadingAccounts || solanaAccounts.length === 0 || embeddedState !== EmbeddedState.READY) {
+    if (
+      isLoadingAccounts ||
+      solanaAccounts.length === 0 ||
+      embeddedState !== EmbeddedState.READY ||
+      state.status === 'connecting' ||
+      state.status === 'reconnecting'
+    ) {
       return
     }
     const accountByAddress = activeEmbeddedAddress

@@ -3,7 +3,7 @@
  *
  * Manages UI state (modals, navigation, theme, forms) and provides both:
  * - New clean API via ConnectUIContext
- * - Legacy compatibility via Openfortcontext
+ * - Legacy compatibility via OpenfortContext
  */
 
 import { type ReactNode, useCallback, useMemo, useState } from 'react'

@@ -25,12 +25,10 @@ import { ConnectingAnimation, ConnectingContainer, Container, Content, RetryButt
 const states = {
   CONNECTED: 'connected',
   CONNECTING: 'connecting',
-  EXPIRING: 'expiring',
   FAILED: 'failed',
   REJECTED: 'rejected',
   NOTCONNECTED: 'notconnected',
   UNAVAILABLE: 'unavailable',
-  DUPLICATED: 'duplicated',
   SIWE: 'siwe',
   RECOVER_ADDRESS_MISMATCH: 'recoverAddressMismatch',
 }
@@ -175,9 +173,6 @@ const ConnectWithInjector: React.FC<{
 
   const [showTryAgainTooltip, setShowTryAgainTooltip] = useState(false)
 
-  const expiryDefault = 9 // Starting at 10 causes layout shifting, better to start at 9
-  const [_expiryTimer, _setExpiryTimer] = useState<number>(expiryDefault)
-
   const browser = detectBrowser()
 
   const extensionUrl = wallet?.downloadUrls?.[browser]
@@ -296,11 +291,7 @@ const ConnectWithInjector: React.FC<{
     )
   }
 
-  const hasError =
-    status === states.FAILED ||
-    status === states.REJECTED ||
-    status === states.DUPLICATED ||
-    status === states.RECOVER_ADDRESS_MISMATCH
+  const hasError = status === states.FAILED || status === states.REJECTED || status === states.RECOVER_ADDRESS_MISMATCH
 
   return (
     <PageContent>
@@ -459,25 +450,7 @@ const ConnectWithInjector: React.FC<{
                 </ModalContent>
               </Content>
             )}
-            {status === states.DUPLICATED && (
-              <Content
-                key={states.DUPLICATED}
-                initial={'initial'}
-                animate={'animate'}
-                exit={'exit'}
-                variants={contentVariants}
-              >
-                <ModalContent style={{ paddingBottom: 28 }}>
-                  <ModalH1 $error>
-                    <AlertIcon />
-                    {locales.injectionScreen_failed_h1}
-                  </ModalH1>
-                  <ModalBody>This wallet is already linked to another player. Please try another wallet.</ModalBody>
-                  {/* TODO: Localize */}
-                </ModalContent>
-              </Content>
-            )}
-            {(status === states.CONNECTING || status === states.EXPIRING) && (
+            {status === states.CONNECTING && (
               <Content
                 key={states.CONNECTING}
                 initial={'initial'}

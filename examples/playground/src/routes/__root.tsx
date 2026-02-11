@@ -41,7 +41,7 @@ function RootComponent() {
 
     document.addEventListener('keydown', handleKeydown)
     return () => document.removeEventListener('keydown', handleKeydown)
-  }, [setProviderOptions])
+  }, [setProviderOptions, providerOptions])
 
   return (
     <div className="flex flex-col min-h-screen w-screen">

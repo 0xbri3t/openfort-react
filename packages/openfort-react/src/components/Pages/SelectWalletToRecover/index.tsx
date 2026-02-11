@@ -1,8 +1,7 @@
-import { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
-import { FingerPrintIcon, KeyIcon, LockIcon } from '../../../assets/icons'
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { embeddedWalletId } from '../../../constants/openfort'
 import type { ConnectedEmbeddedEthereumWallet } from '../../../ethereum/types'
-import type { EthereumUserWallet, SolanaUserWallet } from '../../../hooks/openfort/useWallets'
+import { toEthereumUserWallet, toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
 import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useChain } from '../../../shared/hooks/useChain'
@@ -11,49 +10,12 @@ import { truncateEthAddress } from '../../../utils'
 import { walletConfigs } from '../../../wallets/walletConfigs'
 import Button from '../../Common/Button'
 import { ModalHeading } from '../../Common/Modal/styles'
+import { WalletRecoveryIcon } from '../../Common/WalletRecoveryIcon'
 import { externalWalletRecoverRoute, recoverRoute } from '../../Openfort/routeHelpers'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { ProviderIcon, ProviderLabel, ProvidersButton } from '../Providers/styles'
-
-function toEthereumUserWallet(w: ConnectedEmbeddedEthereumWallet): EthereumUserWallet {
-  return {
-    id: w.id,
-    address: w.address,
-    connectorType: 'embedded',
-    walletClientType: 'openfort',
-    isAvailable: true,
-    accounts: [{ id: w.id }],
-    recoveryMethod: w.recoveryMethod,
-    ownerAddress: w.ownerAddress as EthereumUserWallet['ownerAddress'],
-    implementationType: w.implementationType,
-  }
-}
-
-function toSolanaUserWallet(w: ConnectedEmbeddedSolanaWallet): SolanaUserWallet {
-  return {
-    id: w.id,
-    address: w.address,
-    chainType: ChainTypeEnum.SVM,
-    isAvailable: true,
-    accounts: [{ id: w.id }],
-    recoveryMethod: w.recoveryMethod,
-  }
-}
-
-const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
-  switch (recovery) {
-    case RecoveryMethod.PASSWORD:
-      return <KeyIcon />
-    case RecoveryMethod.PASSKEY:
-      return <FingerPrintIcon />
-    case RecoveryMethod.AUTOMATIC:
-      return <LockIcon />
-    default:
-      return null
-  }
-}
 
 function WalletRow({
   chainType,

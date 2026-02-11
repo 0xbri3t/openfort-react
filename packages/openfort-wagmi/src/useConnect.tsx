@@ -24,8 +24,6 @@ export function useConnect(props: UseConnectParameters = {}): CustomUseConnectRe
       ...props.mutation,
       onError(...err) {
         props.mutation?.onError?.(...err)
-        if (err[0]?.message && err[0].message !== 'User rejected request') {
-        }
       },
     },
   })

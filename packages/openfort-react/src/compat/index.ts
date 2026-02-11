@@ -1,7 +1,5 @@
 /**
  * Compatibility layer exports
  *
- * Provides deprecated hooks with migration warnings for backwards compatibility.
+ * Reserved for deprecated hooks with migration warnings.
  */
-
-export { _resetDeprecationWarning, useOpenfortCore } from './useOpenfortCore'

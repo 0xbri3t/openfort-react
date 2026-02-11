@@ -14,13 +14,15 @@ import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useSolanaBalance } from '../../../solana/hooks/useSolanaBalance'
 import { useSolanaContext } from '../../../solana/providers/SolanaContextProvider'
-import { nFormatter, truncateEthAddress } from '../../../utils'
+import { nFormatter, truncateSolanaAddress } from '../../../utils'
 import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
 import { TextLinkButton } from '../../Common/Button/styles'
+import ClusterSelector from '../../Common/ClusterSelect'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { ModalBody, ModalContent, ModalH1 } from '../../Common/Modal/styles'
 import PoweredByFooter from '../../Common/PoweredByFooter'
+import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
@@ -31,7 +33,7 @@ import {
   AvatarInner,
   Balance,
   BalanceContainer,
-  ClusterBadge,
+  ChainSelectorContainer,
   LinkedProvidersToggle,
   LoadingBalance,
 } from './styles'
@@ -73,10 +75,14 @@ const SolanaConnected: React.FC = () => {
     }
   }, [address, setHeaderLeftSlot, setRoute])
 
+  const themeContext = useThemeContext()
   const solanaUI = context.walletConfig?.solana?.ui
   const clusterDisplay = cluster === 'mainnet-beta' ? 'Mainnet' : cluster.charAt(0).toUpperCase() + cluster.slice(1)
   const showClusterSelector = !solanaUI?.hideClusterSelector
   const CustomAvatar = solanaUI?.customAvatar
+  const separator = ['web95', 'rounded', 'minimal'].includes(themeContext.theme ?? context.uiConfig.theme ?? '')
+    ? '....'
+    : undefined
 
   return (
     <PageContent onBack={null} header={locales.profileScreen_heading}>
@@ -86,22 +92,15 @@ const SolanaConnected: React.FC = () => {
             <AvatarContainer>
               <AvatarInner>
                 {showClusterSelector ? (
-                  <ClusterBadge
-                    $cluster={cluster}
-                    as="button"
-                    type="button"
-                    onClick={() => setRoute(routes.SOL_SWITCH_CLUSTER)}
-                    title="Switch cluster"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {clusterDisplay}
-                  </ClusterBadge>
+                  <ChainSelectorContainer>
+                    <ClusterSelector cluster={cluster} clusterDisplay={clusterDisplay} />
+                  </ChainSelectorContainer>
                 ) : null}
                 {CustomAvatar ? <CustomAvatar address={address} /> : <Avatar address={address} />}
               </AvatarInner>
             </AvatarContainer>
             <ModalH1>
-              <CopyText value={address}>{truncateEthAddress(address)}</CopyText>
+              <CopyText value={address}>{truncateSolanaAddress(address, separator)}</CopyText>
             </ModalH1>
             {context?.uiConfig.hideBalance ? null : (
               <ModalBody>

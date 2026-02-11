@@ -10,10 +10,8 @@ import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import { useConnectedWallet } from '../../hooks/useConnectedWallet'
 import useIsMounted from '../../hooks/useIsMounted'
 import styled from '../../styles/styled'
-import type { All } from '../../types'
 import { nFormatter } from '../../utils'
 import Chain from '../Common/Chain'
-import ThemedButton from '../Common/ThemedButton'
 
 const Container = styled(motion.div)`
   display: flex;
@@ -133,13 +131,5 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
         </motion.div>
       </AnimatePresence>
     </div>
-  )
-}
-
-const _BalanceButton: React.FC<All & BalanceProps> = ({ theme, mode, customTheme, hideIcon, hideSymbol }) => {
-  return (
-    <ThemedButton duration={0.4} variant={'secondary'} theme={theme} mode={mode} customTheme={customTheme}>
-      <Balance hideIcon={hideIcon} hideSymbol={hideSymbol} />
-    </ThemedButton>
   )
 }

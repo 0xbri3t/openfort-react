@@ -1,40 +1,17 @@
-import { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
-import { FingerPrintIcon, KeyIcon, LockIcon, PlusIcon } from '../../../assets/icons'
-import type { SolanaUserWallet } from '../../../hooks/openfort/useWallets'
+import { ChainTypeEnum } from '@openfort/openfort-js'
+import { PlusIcon } from '../../../assets/icons'
+import { toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
 import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useChain } from '../../../shared/hooks/useChain'
 import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import Button from '../../Common/Button'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
+import { WalletRecoveryIcon } from '../../Common/WalletRecoveryIcon'
 import { recoverRoute } from '../../Openfort/routeHelpers'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { ProviderIcon, ProviderLabel, ProvidersButton } from '../Providers/styles'
-
-function toSolanaUserWallet(w: ConnectedEmbeddedSolanaWallet): SolanaUserWallet {
-  return {
-    id: w.id,
-    address: w.address,
-    chainType: ChainTypeEnum.SVM,
-    isAvailable: true,
-    accounts: [{ id: w.id }],
-    recoveryMethod: w.recoveryMethod,
-  }
-}
-
-const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
-  switch (recovery) {
-    case RecoveryMethod.PASSWORD:
-      return <KeyIcon />
-    case RecoveryMethod.PASSKEY:
-      return <FingerPrintIcon />
-    case RecoveryMethod.AUTOMATIC:
-      return <LockIcon />
-    default:
-      return null
-  }
-}
 
 function WalletRow({ wallet }: { wallet: ConnectedEmbeddedSolanaWallet }) {
   const { setRoute } = useOpenfort()

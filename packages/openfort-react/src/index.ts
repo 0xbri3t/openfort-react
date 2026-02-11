@@ -12,8 +12,6 @@ export {
   SignedMessagePayload,
   User,
 } from '@openfort/openfort-js'
-// Compat layer (deprecated hooks)
-export { useOpenfortCore } from './compat/useOpenfortCore'
 export { default as Avatar } from './components/Common/Avatar'
 export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'

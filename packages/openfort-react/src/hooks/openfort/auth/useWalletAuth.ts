@@ -60,7 +60,7 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
       })
       return onError({
         error,
-        options: hookOptions,
+        hookOptions,
       })
     },
     [hookOptions]
@@ -105,11 +105,12 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
         updateUser()
         onSuccess({
           hookOptions,
+          options: {},
           data: {},
         })
       },
     })
-  }, [shouldConnectWithSiwe, siwe, updateUser])
+  }, [shouldConnectWithSiwe, siwe, updateUser, disconnect, handleError, hookOptions])
 
   // const generateSiweMessage = useCallback(
   //   async (args) => {

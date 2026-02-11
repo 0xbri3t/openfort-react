@@ -17,7 +17,7 @@ import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import { isFamily } from '../../utils/wallets'
 import ConnectKitModal from '../ConnectModal'
-import { type ContextValue, Openfortcontext } from './context'
+import { type ContextValue, OpenfortContext } from './context'
 import {
   type BuyFormState,
   type ConnectUIOptions,
@@ -82,7 +82,7 @@ export const OpenfortProvider = ({
 
   // Only allow for mounting OpenfortProvider once, so we avoid weird global
   // state collisions.
-  if (useContext(Openfortcontext)) {
+  if (useContext(OpenfortContext)) {
     throw new Error('Multiple, nested usages of OpenfortProvider detected. Please use only one.')
   }
 
@@ -412,7 +412,7 @@ export const OpenfortProvider = ({
     : innerChildren
 
   return createElement(
-    Openfortcontext.Provider,
+    OpenfortContext.Provider,
     { value },
     createElement(
       CoreProvider,

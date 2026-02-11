@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef } from 'react'
-import { Openfortcontext } from '../components/Openfort/context'
+import { OpenfortContext } from '../components/Openfort/context'
 import type { ConnectionStrategy } from '../core/ConnectionStrategy'
 import type { ConnectCallbackProps } from '../openfort/connectCallbackTypes'
 import { Context as OpenfortCoreContext } from '../openfort/context'
@@ -7,7 +7,7 @@ import { Context as OpenfortCoreContext } from '../openfort/context'
 /**
  * Standalone hook: subscribes to connection lifecycle and fires onConnect/onDisconnect
  * when strategy.isConnected(state) changes. Must be used inside OpenfortProvider and
- * CoreOpenfortProvider (so both Openfortcontext and OpenfortCoreContext are available).
+ * CoreOpenfortProvider (so both OpenfortContext and OpenfortCoreContext are available).
  */
 export function useConnectLifecycle(
   strategy: ConnectionStrategy | null,
@@ -15,7 +15,7 @@ export function useConnectLifecycle(
   onDisconnect: ConnectCallbackProps['onDisconnect']
 ): void {
   const core = useContext(OpenfortCoreContext)
-  const ui = useContext(Openfortcontext)
+  const ui = useContext(OpenfortContext)
   const prevConnected = useRef(false)
 
   useEffect(() => {

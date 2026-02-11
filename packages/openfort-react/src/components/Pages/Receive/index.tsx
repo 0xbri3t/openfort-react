@@ -38,7 +38,7 @@ const Receive = () => {
           ? `Chain ID: ${chainId}`
           : null
 
-  const { uiConfig: options } = useOpenfort()
+  const { uiConfig: options } = context
   const renderLogo = () => {
     if (options?.logo) {
       if (typeof options.logo === 'string') {

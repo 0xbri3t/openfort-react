@@ -13,6 +13,12 @@ const truncateEthAddress = (address?: string, separator: string = '••••'
   return `${match[1]}${separator}${match[2]}`
 }
 
+const truncateSolanaAddress = (address?: string, separator: string = '••••') => {
+  if (!address) return ''
+  if (address.length <= 14) return address
+  return `${address.slice(0, 6)}${separator}${address.slice(-4)}`
+}
+
 const _truncateENSAddress = (ensName: string, maxLength: number) => {
   if (ensName.length > maxLength) {
     return `${ensName.replace('.eth', '').slice(0, maxLength)}...`
@@ -105,4 +111,4 @@ export const isSafeConnector = (connectorId?: string) => connectorId === 'safe'
 
 export const isInjectedConnector = (connectorId?: string) => connectorId === 'injected'
 
-export { nFormatter, truncateEthAddress, isMobile, isAndroid, detectBrowser, flattenChildren }
+export { nFormatter, truncateEthAddress, truncateSolanaAddress, isMobile, isAndroid, detectBrowser, flattenChildren }

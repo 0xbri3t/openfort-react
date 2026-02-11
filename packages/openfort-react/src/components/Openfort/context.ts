@@ -67,4 +67,4 @@ export type ContextValue = {
   setBuyForm: React.Dispatch<React.SetStateAction<BuyFormState>>
 } & useConnectCallbackProps
 
-export const Openfortcontext = createContext<ContextValue | null>(null)
+export const OpenfortContext = createContext<ContextValue | null>(null)
