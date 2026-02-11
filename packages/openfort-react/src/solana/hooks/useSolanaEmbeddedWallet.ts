@@ -2,10 +2,9 @@ import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import type { SetRecoveryOptions } from '../../shared/types'
+import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
 import { createSolanaProvider } from '../provider'
-import { useSolanaContext } from '../providers/SolanaContextProvider'
 import type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
@@ -18,16 +17,6 @@ import type {
 } from '../types'
 import { buildRecoveryParams } from './utils'
 
-type WalletStatus =
-  | 'disconnected'
-  | 'fetching-wallets'
-  | 'connecting'
-  | 'reconnecting'
-  | 'creating'
-  | 'needs-recovery'
-  | 'connected'
-  | 'error'
-
 type InternalState = {
   status: WalletStatus
   activeWallet: ConnectedEmbeddedSolanaWallet | null
@@ -37,9 +26,6 @@ type InternalState = {
 
 /** Hook for managing Solana embedded wallets. */
 export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): EmbeddedSolanaWalletState {
-  // Ensure Solana context is available
-  useSolanaContext()
-
   const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
 

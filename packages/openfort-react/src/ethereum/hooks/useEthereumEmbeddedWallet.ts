@@ -2,6 +2,7 @@ import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
+import type { WalletStatus } from '../../shared/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
 import type {
   ConnectedEmbeddedEthereumWallet,
@@ -13,16 +14,6 @@ import type {
   UseEmbeddedEthereumWalletOptions,
 } from '../types'
 import { buildRecoveryParams } from './utils'
-
-type WalletStatus =
-  | 'disconnected'
-  | 'fetching-wallets'
-  | 'connecting'
-  | 'reconnecting'
-  | 'creating'
-  | 'needs-recovery'
-  | 'connected'
-  | 'error'
 
 type InternalState = {
   status: WalletStatus

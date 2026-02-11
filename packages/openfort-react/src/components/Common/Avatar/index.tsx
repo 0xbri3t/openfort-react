@@ -7,10 +7,8 @@ import { ResetContainer } from '../../../styles'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { EnsAvatar, ImageContainer } from './styles'
 
-type Hash = `0x${string}`
-
 export type CustomAvatarProps = {
-  address?: Hash | undefined
+  address?: string | undefined
   ensName?: string | undefined
   ensImage?: string
   size: number
@@ -18,7 +16,7 @@ export type CustomAvatarProps = {
 }
 
 const Avatar: React.FC<{
-  address?: Hash | undefined
+  address?: string | undefined
   name?: string | undefined
   size?: number
   radius?: number
@@ -32,7 +30,7 @@ const Avatar: React.FC<{
 
   const imageRef = useRef<any>(null)
   const [loaded, setLoaded] = useState(true)
-  const [ens, setEns] = useState<{ address?: Hash; name?: string; avatar?: string }>({})
+  const [ens, setEns] = useState<{ address?: string; name?: string; avatar?: string }>({})
 
   useEffect(() => {
     if (!useEns) {
@@ -40,14 +38,15 @@ const Avatar: React.FC<{
       return
     }
     const resolve = async () => {
-      let resolvedAddress: Hash | undefined = address
+      let resolvedAddress: string | undefined = address
       let resolvedName: string | undefined = name
+      const hexAddress = address?.startsWith('0x') ? (address as `0x${string}`) : undefined
       try {
         if (name && bridge.getEnsAddress) {
           resolvedAddress = (await bridge.getEnsAddress(name)) ?? address
         }
-        if (address && bridge.getEnsName) {
-          resolvedName = (await bridge.getEnsName({ address })) ?? name
+        if (hexAddress && bridge.getEnsName) {
+          resolvedName = (await bridge.getEnsName({ address: hexAddress })) ?? name
         }
         if (bridge.account?.address === address && bridge.account?.ensName) {
           resolvedName = bridge.account.ensName

@@ -1,3 +1,4 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
@@ -5,6 +6,11 @@ import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { logger } from '../../utils/logger'
 
 type ModalRoutes = RoutesWithoutOptions['route'] | RouteOptions
+
+const connectedRouteByChain: Record<ChainTypeEnum, ModalRoutes> = {
+  [ChainTypeEnum.EVM]: routes.ETH_CONNECTED,
+  [ChainTypeEnum.SVM]: routes.SOL_CONNECTED,
+}
 
 const safeRoutes: {
   connected: ModalRoutes[]
@@ -17,6 +23,8 @@ const safeRoutes: {
   ],
   connected: [
     routes.CONNECTED,
+    routes.ETH_CONNECTED,
+    routes.SOL_CONNECTED,
     { route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' },
     routes.SWITCHNETWORKS,
     routes.PROVIDERS,
@@ -41,7 +49,7 @@ export function useUI() {
     else if (!user) setRoute(routes.PROVIDERS)
     else if (!isConnected) setRoute(routes.LOAD_WALLETS)
     else if (needsRecovery) setRoute(routes.LOAD_WALLETS)
-    else setRoute(routes.CONNECTED)
+    else setRoute(connectedRouteByChain[chainType])
   }
 
   const gotoAndOpen = (route: ValidRoutes) => {
@@ -74,7 +82,7 @@ export function useUI() {
     close: () => setOpen(false),
     setIsOpen: setOpen,
 
-    openProfile: () => gotoAndOpen(routes.CONNECTED),
+    openProfile: () => gotoAndOpen(connectedRouteByChain[chainType]),
     openSwitchNetworks: () => gotoAndOpen(routes.SWITCHNETWORKS),
     openProviders: () => gotoAndOpen(routes.PROVIDERS),
     openWallets: () => gotoAndOpen({ route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' }),

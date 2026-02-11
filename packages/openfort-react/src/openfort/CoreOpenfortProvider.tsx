@@ -20,12 +20,13 @@ import {
   useState,
 } from 'react'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
-import { DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
+import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
 import { OpenfortEVMBridgeContext } from '../core/OpenfortEVMBridgeContext'
 import { queryKeys } from '../core/queryKeys'
 import { createEVMBridgeStrategy } from '../core/strategies/EVMBridgeStrategy'
 import { createEVMEmbeddedStrategy } from '../core/strategies/EVMEmbeddedStrategy'
+import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
 import type { WalletReadiness } from '../core/types'
 import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
@@ -106,9 +107,13 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [bridge, uiConfig.walletConnectName])
 
   const strategy = useMemo(() => {
-    if (chainType !== ChainTypeEnum.EVM) return null
-    if (bridge) return createEVMBridgeStrategy(bridge, bridgeConnectors)
-    return createEVMEmbeddedStrategy(walletConfig)
+    const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
+      [ChainTypeEnum.SVM]: createSolanaEmbeddedStrategy(walletConfig),
+      [ChainTypeEnum.EVM]: bridge
+        ? createEVMBridgeStrategy(bridge, bridgeConnectors)
+        : createEVMEmbeddedStrategy(walletConfig),
+    }
+    return strategyByChain[chainType] ?? null
   }, [bridge, chainType, walletConfig, bridgeConnectors])
 
   const address = bridge?.account.address

@@ -105,5 +105,13 @@ function RouteComponent() {
   const { mode } = usePlaygroundMode()
   const isSolana = mode === 'solana-only'
 
-  return <Layout>{isSolana ? <SolanaContent /> : <EvmContent />}</Layout>
+  return (
+    <Layout>
+      <p className="text-sm text-muted-foreground">
+        For app code that works with either chain, use <code>useEmbeddedWallet()</code> from{' '}
+        <code>@openfort/react</code>; this page shows the underlying chain-specific hooks for inspection.
+      </p>
+      {isSolana ? <SolanaContent /> : <EvmContent />}
+    </Layout>
+  )
 }

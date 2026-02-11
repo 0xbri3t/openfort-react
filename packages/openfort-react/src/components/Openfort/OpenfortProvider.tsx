@@ -12,7 +12,7 @@ import { OpenfortEVMBridgeContext } from '../../core/OpenfortEVMBridgeContext'
 import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
 import { useThemeFont } from '../../hooks/useGoogleFont'
 import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
-import { SolanaContextProvider } from '../../solana/providers/SolanaContextProvider'
+import { SolanaContextProvider, type SolanaContextProviderProps } from '../../solana/providers/SolanaContextProvider'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import { isFamily } from '../../utils/wallets'
@@ -64,12 +64,20 @@ export const OpenfortProvider = ({
   const bridge = useContext(OpenfortEVMBridgeContext)
   const hasWagmi = !!bridge
   const hasSolana = !!walletConfig?.solana
+  const hasEthereum = !!walletConfig?.ethereum
   const chainType = chainTypeProp ?? (hasSolana ? ChainTypeEnum.SVM : ChainTypeEnum.EVM)
 
   if (chainType === ChainTypeEnum.SVM && !hasSolana) {
     throw new Error(
       'OpenfortProvider with chainType SVM requires walletConfig.solana. ' +
         'Pass walletConfig={{ solana: { cluster: "mainnet-beta" } }} (or use chainType EVM for Ethereum).'
+    )
+  }
+
+  if (chainType === ChainTypeEnum.EVM && !hasEthereum) {
+    throw new Error(
+      'OpenfortProvider with chainType EVM requires walletConfig.ethereum. ' +
+        'Pass walletConfig={{ ethereum: { chainId: 1 } }} (or use chainType SVM for Solana).'
     )
   }
 
@@ -351,13 +359,6 @@ export const OpenfortProvider = ({
     ]
   )
 
-  // Wrap children with Solana provider if configured
-  const wrappedChildren = hasSolana ? (
-    <SolanaContextProvider config={walletConfig!.solana!}>{children}</SolanaContextProvider>
-  ) : (
-    children
-  )
-
   const coreProviderConfig = useMemo(
     () => ({
       publishableKey,
@@ -373,7 +374,7 @@ export const OpenfortProvider = ({
     ]
   )
 
-  const coreOpenfortChildren = createElement(
+  const innerChildren = createElement(
     Fragment,
     null,
     debugModeOptions.debugRoutes &&
@@ -403,7 +404,7 @@ export const OpenfortProvider = ({
           2
         )
       ),
-    wrappedChildren,
+    children,
     createElement(ConnectKitModal, {
       lang: ckLang,
       theme: ckTheme,
@@ -411,6 +412,14 @@ export const OpenfortProvider = ({
       customTheme: ckCustomTheme,
     })
   )
+
+  const coreOpenfortChildren = hasSolana
+    ? createElement(
+        SolanaContextProvider,
+        { config: walletConfig!.solana! } as SolanaContextProviderProps,
+        innerChildren
+      )
+    : innerChildren
 
   return createElement(
     Openfortcontext.Provider,

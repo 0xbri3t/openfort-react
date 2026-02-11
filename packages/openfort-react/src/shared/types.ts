@@ -4,8 +4,15 @@
  * Base types and interfaces shared between Ethereum and Solana implementations.
  */
 
-import type { EmbeddedAccount, RecoveryParams } from '@openfort/openfort-js'
+import type { EmbeddedAccount, RecoveryMethod, RecoveryParams } from '@openfort/openfort-js'
 import type { OpenfortHookOptions } from '../types'
+
+export type RecoverableWallet = {
+  address: string
+  id: string
+  recoveryMethod?: RecoveryMethod
+  accounts: { id: string }[]
+}
 
 /**
  * Base wallet actions interface

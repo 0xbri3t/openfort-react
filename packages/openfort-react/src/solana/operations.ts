@@ -11,6 +11,7 @@
 import type { Openfort } from '@openfort/openfort-js'
 
 import { OpenfortError, OpenfortReactErrorType } from '../types'
+import { logger } from '../utils/logger'
 
 import type { SignedSolanaTransaction, SolanaTransaction } from './types'
 
@@ -59,16 +60,25 @@ export interface SignAllTransactionsParams {
 export async function signMessage(params: SignMessageParams): Promise<string> {
   const { message, client } = params
 
-  try {
-    // Convert Uint8Array to string if needed
-    const messageString = message instanceof Uint8Array ? Buffer.from(message).toString('utf8') : message
+  const messageString = message instanceof Uint8Array ? Buffer.from(message).toString('utf8') : message
+  logger.log('[Solana operations.signMessage] start', {
+    messageLength: messageString?.length,
+    isUint8Array: message instanceof Uint8Array,
+  })
 
+  try {
     const signature = await client.embeddedWallet.signMessage(messageString, {
       hashMessage: false, // CRITICAL: Ed25519 - no keccak256
     })
 
+    logger.log('[Solana operations.signMessage] client.embeddedWallet.signMessage returned', {
+      signatureLength: (signature as string)?.length,
+    })
     return signature as string
   } catch (error) {
+    logger.log('[Solana operations.signMessage] client.embeddedWallet.signMessage threw', {
+      message: error instanceof Error ? error.message : String(error),
+    })
     throw error instanceof OpenfortError
       ? error
       : new OpenfortError('Signing failed', OpenfortReactErrorType.WALLET_ERROR, { error })

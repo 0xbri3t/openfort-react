@@ -1,18 +1,20 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useEffect, useState } from 'react'
 import { embeddedWalletId } from '../../../constants/openfort'
-import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import type { ConnectedEmbeddedEthereumWallet } from '../../../ethereum/types'
-import type { EthereumUserWallet } from '../../../hooks/openfort/useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../../../hooks/openfort/useWallets'
+import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
+import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import { logger } from '../../../utils/logger'
 import Loader from '../../Common/Loading'
+import { createRoute, externalWalletRecoverRoute, recoverRoute } from '../../Openfort/routeHelpers'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 
-function toUserWallet(w: ConnectedEmbeddedEthereumWallet): EthereumUserWallet {
+function toEthereumUserWallet(w: ConnectedEmbeddedEthereumWallet): EthereumUserWallet {
   return {
     id: w.id,
     address: w.address,
@@ -26,89 +28,104 @@ function toUserWallet(w: ConnectedEmbeddedEthereumWallet): EthereumUserWallet {
   }
 }
 
+function toSolanaUserWallet(w: ConnectedEmbeddedSolanaWallet): SolanaUserWallet {
+  return {
+    id: w.id,
+    address: w.address,
+    chainType: ChainTypeEnum.SVM,
+    isAvailable: true,
+    accounts: [{ id: w.id }],
+    recoveryMethod: w.recoveryMethod,
+  }
+}
+
+type SingleWalletHandler = (
+  w: ConnectedEmbeddedEthereumWallet | ConnectedEmbeddedSolanaWallet,
+  chainType: ChainTypeEnum,
+  setRoute: (opts: ReturnType<typeof recoverRoute>) => void,
+  setConnector: (c: { id: string }) => void
+) => void
+
+const handleSingleWalletRegistry: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, SingleWalletHandler> = {
+  [ChainTypeEnum.SVM]: (w, chainType, setRoute) => {
+    const walletForRoute = toSolanaUserWallet(w as ConnectedEmbeddedSolanaWallet)
+    setRoute(recoverRoute(chainType, walletForRoute))
+  },
+  [ChainTypeEnum.EVM]: (w, chainType, setRoute, setConnector) => {
+    const walletForRoute = toEthereumUserWallet(w as ConnectedEmbeddedEthereumWallet)
+    if (w.id === embeddedWalletId) {
+      setRoute(recoverRoute(chainType, walletForRoute))
+    } else {
+      const externalRoute = externalWalletRecoverRoute(chainType, walletForRoute)
+      if (externalRoute) {
+        setRoute(externalRoute)
+        setConnector({ id: w.id })
+      }
+    }
+  },
+}
+
+const errorForChainRegistry: Record<
+  ChainTypeEnum.EVM | ChainTypeEnum.SVM,
+  (errorWallets: Error | undefined) => { isError: boolean; message: string | undefined }
+> = {
+  [ChainTypeEnum.SVM]: () => ({ isError: false, message: undefined }),
+  [ChainTypeEnum.EVM]: (errorWallets) => ({
+    isError: !!errorWallets,
+    message: errorWallets?.message || 'There was an error loading wallets',
+  }),
+}
+
 const LoadWallets: React.FC = () => {
   const { chainType } = useChain()
-  const { user, embeddedAccounts, isLoadingAccounts } = useOpenfortCore()
-  const { triggerResize, setRoute, setConnector, walletConfig } = useOpenfort()
-  const chainId = walletConfig?.ethereum?.chainId ?? 80002
-  const ethereum = useEthereumEmbeddedWallet({ chainId })
+  const { user } = useOpenfortCore()
+  const { triggerResize, setRoute, setConnector } = useOpenfort()
+  const embeddedWallet = useEmbeddedWallet()
   const [loadingUX, setLoadingUX] = useState(true)
 
-  const isSolana = chainType === ChainTypeEnum.SVM
-  const solanaWallets = (embeddedAccounts ?? []).filter((a) => a.chainType === ChainTypeEnum.SVM)
-  const solanaLoading = isSolana && isLoadingAccounts
-
-  const wallets = ethereum.wallets
+  const wallets = embeddedWallet.wallets
   const isLoadingWallets =
-    ethereum.status === 'fetching-wallets' || ethereum.status === 'connecting' || ethereum.status === 'creating'
-  const errorWallets = ethereum.status === 'error' ? new Error(ethereum.error) : undefined
+    embeddedWallet.status === 'fetching-wallets' ||
+    embeddedWallet.status === 'connecting' ||
+    embeddedWallet.status === 'creating'
+  const errorWallets = embeddedWallet.status === 'error' ? new Error(embeddedWallet.error) : undefined
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
-    const loading = isSolana ? solanaLoading : isLoadingWallets
-    if (!loading) {
+    if (!isLoadingWallets) {
       timeout = setTimeout(() => {
         setLoadingUX(false)
         triggerResize()
       }, 500)
     }
-    return () => {
-      clearTimeout(timeout)
-    }
-  }, [isSolana, solanaLoading, isLoadingWallets, triggerResize])
+    return () => clearTimeout(timeout)
+  }, [isLoadingWallets, triggerResize])
 
   useEffect(() => {
     if (loadingUX) return
-    if (isSolana) {
-      if (solanaLoading) return
-      logger.log('Solana wallets loaded:', solanaWallets.length)
-      if (solanaWallets.length > 1) {
-        setRoute(routes.SELECT_WALLET_TO_RECOVER)
-      } else {
-        setRoute(routes.SOL_CONNECTED)
-      }
-      return
-    }
     if (isLoadingWallets) return
     if (!wallets) {
       logger.error('Could not load wallets for user:', user)
       return
     }
-    logger.log('User wallets loaded:', wallets)
+    logger.log('User wallets loaded:', wallets.length)
 
     if (wallets.length === 0) {
-      setRoute(routes.CREATE_WALLET)
+      setRoute(createRoute(chainType))
       return
     }
 
     if (wallets.length === 1) {
-      const w = wallets[0]
-      const walletForRoute = toUserWallet(w)
-      if (w.id === embeddedWalletId) {
-        setRoute({ route: routes.RECOVER_WALLET, wallet: walletForRoute })
-      } else {
-        setRoute({ route: routes.CONNECT, connectType: 'recover', wallet: walletForRoute })
-        setConnector({ id: w.id })
-      }
+      handleSingleWalletRegistry[chainType](wallets[0], chainType, setRoute, setConnector)
       return
     }
 
     setRoute(routes.SELECT_WALLET_TO_RECOVER)
-  }, [
-    loadingUX,
-    isSolana,
-    solanaLoading,
-    solanaWallets.length,
-    isLoadingWallets,
-    wallets,
-    user,
-    setRoute,
-    setConnector,
-  ])
+  }, [loadingUX, isLoadingWallets, wallets, user, chainType, setRoute, setConnector])
 
-  const isError = !user || (isSolana ? false : !!errorWallets)
-  const errorMessage =
-    !isSolana && errorWallets ? errorWallets.message || 'There was an error loading wallets' : undefined
+  const { isError: isErrorFromChain, message: errorMessageFromChain } = errorForChainRegistry[chainType](errorWallets)
+  const isError = !user || isErrorFromChain
+  const errorMessage = !user ? undefined : errorMessageFromChain
 
   return (
     <PageContent onBack={!user ? 'back' : null}>

@@ -8,10 +8,13 @@
  * @packageDocumentation
  */
 
+export type { OTPResponse } from './hooks/useRecoveryOTP'
+export { useRecoveryOTP } from './hooks/useRecoveryOTP'
 export type {
   BaseCreateWalletOptions,
   BaseSetActiveWalletOptions,
   BaseWalletActions,
+  RecoverableWallet,
   SetRecoveryOptions,
   WalletStatus,
 } from './types'

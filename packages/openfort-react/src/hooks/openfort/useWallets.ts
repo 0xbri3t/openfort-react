@@ -30,6 +30,7 @@ const SYNTHETIC_EMBEDDED_CONNECTOR: OpenfortEVMBridgeConnector = {
   type: 'embedded',
 }
 
+import { useRecoveryOTP } from '../../shared/hooks/useRecoveryOTP'
 import { onError, onSuccess } from './hookConsistency'
 import { useUser } from './useUser'
 
@@ -258,23 +259,18 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
  * }
  * ```
  *
- * @deprecated Use `useEthereumEmbeddedWallet` from this package for a cleaner, more type-safe API
- * with discriminated union states. Import from `@openfort/react` or `@openfort/react/ethereum`.
+ * @deprecated For UI that works with the current chain (EVM or Solana), use `useEmbeddedWallet()` from
+ * `@openfort/react`. For EVM-only APIs use `useEthereumEmbeddedWallet`; for Solana use `useSolanaEmbeddedWallet`.
  * This hook will be removed in a future version.
  *
- * @example Migration to useEthereumEmbeddedWallet:
+ * @example Migration to useEmbeddedWallet:
  * ```tsx
- * // Before:
- * import { useWallets } from '@openfort/react';
- * const { wallets, createWallet } = useWallets();
- *
- * // After (same package, main or ethereum entry):
- * import { useEthereumEmbeddedWallet } from '@openfort/react';
- * // or: import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum';
- * const ethereum = useEthereumEmbeddedWallet();
- * if (ethereum.status === 'connected') {
- *   console.log(ethereum.activeWallet.address);
+ * import { useEmbeddedWallet } from '@openfort/react';
+ * const embedded = useEmbeddedWallet();
+ * if (embedded.status === 'connected') {
+ *   console.log(embedded.activeWallet.address);
  * }
+ * embedded.create(); // or embedded.setActive({ address });
  * ```
  */
 let useWalletsDeprecationWarned = false
@@ -283,7 +279,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   if (process.env.NODE_ENV === 'development' && !useWalletsDeprecationWarned) {
     useWalletsDeprecationWarned = true
     logger.warn(
-      '[Openfort] useWallets is deprecated. Use useEthereumEmbeddedWallet from @openfort/react (or @openfort/react/ethereum) for a cleaner API with discriminated union states.'
+      '[Openfort] useWallets is deprecated. Use useEmbeddedWallet() for current-chain UI, or useEthereumEmbeddedWallet / useSolanaEmbeddedWallet for chain-specific APIs.'
     )
   }
 
@@ -385,63 +381,22 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     [walletConfig]
   )
 
-  const isWalletRecoveryOTPEnabled = useMemo(() => {
-    return !!walletConfig && (!!walletConfig.requestWalletRecoverOTP || !!walletConfig.requestWalletRecoverOTPEndpoint)
-  }, [walletConfig])
+  const { isEnabled: isWalletRecoveryOTPEnabled, requestOTP } = useRecoveryOTP()
 
   const requestWalletRecoverOTP = useCallback(async (): Promise<RequestWalletRecoverOTPResponse> => {
     try {
-      logger.log('Requesting wallet recover OTP for user', { userId: user?.id })
-      if (!walletConfig) {
-        throw new Error('No walletConfig found')
-      }
-
-      const accessToken = await client.getAccessToken()
-      if (!accessToken) {
-        throw new OpenfortError('Openfort access token not found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
-      }
-      if (!user?.id) {
-        throw new OpenfortError('User not found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
-      }
-      const userId = user.id
-      const email = user.email
-      const phone = user.email ? undefined : user.phoneNumber
-
-      if (!email && !phone) {
-        throw new OpenfortError('No email or phone number found for user', OpenfortReactErrorType.AUTHENTICATION_ERROR)
-      }
-
-      logger.log('Requesting wallet recover OTP for user', { userId, email, phone })
-      if (walletConfig.requestWalletRecoverOTP) {
-        await walletConfig.requestWalletRecoverOTP({ userId, accessToken, email, phone })
-        return { sentTo: email ? 'email' : 'phone', email, phone }
-      }
-
-      if (!walletConfig.requestWalletRecoverOTPEndpoint) {
-        throw new Error('No requestWalletRecoverOTPEndpoint set in walletConfig')
-      }
-
-      const resp = await fetch(walletConfig.requestWalletRecoverOTPEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: userId, email, phone }),
-      })
-
-      if (!resp.ok) {
-        throw new Error('Failed to request wallet recover OTP')
-      }
-      return { sentTo: email ? 'email' : 'phone', email, phone }
+      return await requestOTP()
     } catch (err) {
-      logger.log('Error requesting wallet recover OTP:', err)
-      const error = new OpenfortError('Failed to request wallet recover OTP', OpenfortReactErrorType.WALLET_ERROR)
+      const error =
+        err instanceof OpenfortError
+          ? err
+          : new OpenfortError('Failed to request wallet recover OTP', OpenfortReactErrorType.WALLET_ERROR)
       return onError({
         error,
         hookOptions,
       })
     }
-  }, [walletConfig])
+  }, [requestOTP, hookOptions])
 
   const parseWalletRecovery = useMemo(
     () =>

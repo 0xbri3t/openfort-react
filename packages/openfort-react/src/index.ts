@@ -86,6 +86,8 @@ export {
 export { useConnectLifecycle } from './hooks/useConnectLifecycle'
 export { useConnectRoutes } from './hooks/useConnectRoutes'
 export { type UseDisconnectReturnType, useDisconnect } from './hooks/useDisconnect'
+export type { EmbeddedWalletState } from './hooks/useEmbeddedWallet'
+export { useEmbeddedWallet } from './hooks/useEmbeddedWallet'
 export { type UseSwitchChainReturnType, useSwitchChain } from './hooks/useSwitchChain'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'

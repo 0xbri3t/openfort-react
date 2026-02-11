@@ -1,24 +1,23 @@
-import type { EmbeddedAccount } from '@openfort/openfort-js'
 import { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
-
 import { FingerPrintIcon, KeyIcon, LockIcon } from '../../../assets/icons'
 import { embeddedWalletId } from '../../../constants/openfort'
-import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import type { ConnectedEmbeddedEthereumWallet } from '../../../ethereum/types'
-import { type EthereumUserWallet, embeddedAccountToSolanaUserWallet } from '../../../hooks/openfort/useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../../../hooks/openfort/useWallets'
+import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
-import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
+import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import { truncateEthAddress } from '../../../utils'
 import { walletConfigs } from '../../../wallets/walletConfigs'
 import Button from '../../Common/Button'
 import { ModalHeading } from '../../Common/Modal/styles'
+import { externalWalletRecoverRoute, recoverRoute } from '../../Openfort/routeHelpers'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { ProviderIcon, ProviderLabel, ProvidersButton } from '../Providers/styles'
 
-function asEthereumUserWallet(w: ConnectedEmbeddedEthereumWallet): EthereumUserWallet {
+function toEthereumUserWallet(w: ConnectedEmbeddedEthereumWallet): EthereumUserWallet {
   return {
     id: w.id,
     address: w.address,
@@ -29,6 +28,17 @@ function asEthereumUserWallet(w: ConnectedEmbeddedEthereumWallet): EthereumUserW
     recoveryMethod: w.recoveryMethod,
     ownerAddress: w.ownerAddress as EthereumUserWallet['ownerAddress'],
     implementationType: w.implementationType,
+  }
+}
+
+function toSolanaUserWallet(w: ConnectedEmbeddedSolanaWallet): SolanaUserWallet {
+  return {
+    id: w.id,
+    address: w.address,
+    chainType: ChainTypeEnum.SVM,
+    isAvailable: true,
+    accounts: [{ id: w.id }],
+    recoveryMethod: w.recoveryMethod,
   }
 }
 
@@ -45,67 +55,60 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 
-/** EVM: one wallet row; converts to EthereumUserWallet for routes. */
-const EVMWalletButton = ({ wallet }: { wallet: ConnectedEmbeddedEthereumWallet }) => {
-  const { chainType } = useChain()
+function WalletRow({
+  chainType,
+  wallet,
+}: {
+  chainType: ChainTypeEnum
+  wallet: ConnectedEmbeddedEthereumWallet | ConnectedEmbeddedSolanaWallet
+}) {
+  const { setRoute, setConnector } = useOpenfort()
   const identity = useResolvedIdentity({
     address: wallet.address,
     chainType,
     enabled: !!wallet.address,
   })
-  const ensName = identity.status === 'success' ? identity.name : undefined
-  const walletDisplay = ensName ?? truncateEthAddress(wallet.address)
-  const { setRoute, setConnector } = useOpenfort()
+  const display =
+    chainType === ChainTypeEnum.SVM
+      ? wallet.address.length > 12
+        ? `${wallet.address.slice(0, 4)}...${wallet.address.slice(-4)}`
+        : wallet.address
+      : identity.status === 'success'
+        ? (identity.name ?? truncateEthAddress(wallet.address))
+        : truncateEthAddress(wallet.address)
 
   const walletIcon = () => {
     if (wallet.id === embeddedWalletId) {
       return <WalletRecoveryIcon recovery={wallet.recoveryMethod} />
     }
-    const walletConfig = Object.entries(walletConfigs).find(([key]) => key.includes(wallet.id))?.[1]
-    if (walletConfig) return walletConfig.icon
-  }
-
-  return (
-    <ProvidersButton>
-      <Button
-        onClick={() => {
-          const walletForRoute = asEthereumUserWallet(wallet)
-          if (wallet.id === embeddedWalletId) {
-            setRoute({ route: routes.RECOVER_WALLET, wallet: walletForRoute })
-          } else {
-            setRoute({ route: routes.CONNECT, connectType: 'recover', wallet: walletForRoute })
-            setConnector({ id: wallet.id })
-          }
-        }}
-      >
-        <ProviderLabel>{walletDisplay}</ProviderLabel>
-        <ProviderIcon>{walletIcon()}</ProviderIcon>
-      </Button>
-    </ProvidersButton>
-  )
-}
-
-/** Solana: one wallet row; uses SolanaUserWallet for routes. Always route to SOL_RECOVER_WALLET (not EVM CONNECT). */
-const SolanaWalletButton = ({ account }: { account: EmbeddedAccount }) => {
-  const { setRoute } = useOpenfort()
-  const walletForRoute = embeddedAccountToSolanaUserWallet(account)
-  const display =
-    account.address.length > 12 ? `${account.address.slice(0, 4)}...${account.address.slice(-4)}` : account.address
-
-  const walletIcon = () => {
-    if (account.id === embeddedWalletId) {
-      return <WalletRecoveryIcon recovery={account.recoveryMethod} />
+    if (chainType === ChainTypeEnum.EVM) {
+      const walletConfig = Object.entries(walletConfigs).find(([key]) => key.includes(wallet.id))?.[1]
+      if (walletConfig) return walletConfig.icon
     }
     return null
   }
 
+  const handleClick = () => {
+    if (chainType === ChainTypeEnum.SVM) {
+      const walletForRoute = toSolanaUserWallet(wallet as ConnectedEmbeddedSolanaWallet)
+      setRoute(recoverRoute(chainType, walletForRoute))
+      return
+    }
+    const walletForRoute = toEthereumUserWallet(wallet as ConnectedEmbeddedEthereumWallet)
+    if (wallet.id === embeddedWalletId) {
+      setRoute(recoverRoute(chainType, walletForRoute))
+    } else {
+      const externalRoute = externalWalletRecoverRoute(chainType, walletForRoute)
+      if (externalRoute) {
+        setRoute(externalRoute)
+        setConnector({ id: wallet.id })
+      }
+    }
+  }
+
   return (
     <ProvidersButton>
-      <Button
-        onClick={() => {
-          setRoute({ route: routes.SOL_RECOVER_WALLET, wallet: walletForRoute })
-        }}
-      >
+      <Button onClick={handleClick}>
         <ProviderLabel>{display}</ProviderLabel>
         <ProviderIcon>{walletIcon()}</ProviderIcon>
       </Button>
@@ -115,17 +118,10 @@ const SolanaWalletButton = ({ account }: { account: EmbeddedAccount }) => {
 
 export default function SelectWalletToRecover() {
   const { chainType } = useChain()
-  const { walletConfig } = useOpenfort()
-  const { embeddedAccounts } = useOpenfortCore()
-  const chainId = walletConfig?.ethereum?.chainId ?? 80002
-  const { wallets: evmWallets } = useEthereumEmbeddedWallet({ chainId })
+  const embeddedWallet = useEmbeddedWallet()
+  const wallets = embeddedWallet.wallets
 
-  const isSolana = chainType === ChainTypeEnum.SVM
-  const solanaWallets = (embeddedAccounts ?? []).filter((a) => a.chainType === ChainTypeEnum.SVM)
-
-  const list = isSolana
-    ? solanaWallets.map((account) => <SolanaWalletButton key={account.id} account={account} />)
-    : evmWallets.map((wallet) => <EVMWalletButton key={wallet.address} wallet={wallet} />)
+  const list = wallets.map((wallet) => <WalletRow key={wallet.id} chainType={chainType} wallet={wallet} />)
 
   return (
     <PageContent onBack={routes.PROVIDERS} logoutOnBack>

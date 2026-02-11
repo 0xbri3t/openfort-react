@@ -1,5 +1,7 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
+import { routes } from '../components/Openfort/types'
+import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { useSignOut } from '../hooks/openfort/auth/useSignOut'
 import { useConnectedWallet } from '../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../openfort/useOpenfort'
@@ -10,6 +12,7 @@ import { useSolanaSendTransaction } from '../solana/hooks/useSolanaSendTransacti
 import { lamportsToSol } from '../solana/hooks/utils'
 import { signMessage as signMessageOp } from '../solana/operations'
 import { useSolanaContext } from '../solana/providers/SolanaContextProvider'
+import { logger } from '../utils/logger'
 import type {
   SolanaCluster,
   UseBalanceLike,
@@ -76,6 +79,7 @@ export function useSolanaSwitchCluster(): UseSolanaSwitchClusterLike {
 
 export function useSolanaSignMessageAdapter(): UseSolanaSignMessageLike {
   const core = useOpenfortCore()
+  const { setOpen, setRoute } = useOpenfort()
   const wallet = useSolanaEmbeddedWallet()
   const [data, setData] = useState<string | undefined>(undefined)
   const [isPending, setIsPending] = useState(false)
@@ -83,25 +87,68 @@ export function useSolanaSignMessageAdapter(): UseSolanaSignMessageLike {
 
   const signMessage = useCallback(
     async (params: { message: string }) => {
-      if (!core?.client || wallet.status !== 'connected') {
+      logger.log('[Solana signMessage] called', {
+        hasClient: !!core?.client,
+        walletStatus: wallet.status,
+        activeAddress: wallet.status === 'connected' ? wallet.activeWallet?.address : undefined,
+        walletsCount: wallet.wallets?.length ?? 0,
+        messageLength: params.message?.length,
+      })
+      if (!core?.client) {
+        logger.log('[Solana signMessage] abort: no client')
+        setError(new Error('Wallet not connected'))
+        return
+      }
+      if (wallet.status !== 'connected') {
+        const list = wallet.wallets ?? []
+        if (list.length > 0) {
+          logger.log('[Solana signMessage] opening modal to recover wallet', { walletsCount: list.length })
+          setOpen(true)
+          if (list.length > 1) {
+            setRoute(routes.SELECT_WALLET_TO_RECOVER)
+          } else {
+            const w = list[0]
+            setRoute({
+              route: routes.SOL_RECOVER_WALLET,
+              wallet: {
+                id: w.id,
+                address: w.address,
+                chainType: ChainTypeEnum.SVM,
+                isAvailable: true,
+                accounts: [{ id: w.id }],
+                recoveryMethod: w.recoveryMethod,
+              },
+            })
+          }
+          setError(new Error('Recover your wallet in the modal to sign'))
+          return
+        }
+        logger.log('[Solana signMessage] abort: wallet not ready', { walletStatus: wallet.status })
         setError(new Error('Wallet not connected'))
         return
       }
       setError(null)
       setIsPending(true)
       try {
+        logger.log('[Solana signMessage] signing...', { messageLength: params.message?.length })
         const signature = await signMessageOp({
           message: params.message,
           client: core.client,
         })
+        logger.log('[Solana signMessage] success', {
+          signatureLength: signature?.length,
+          signaturePreview: signature ? `${signature.slice(0, 12)}...${signature.slice(-8)}` : undefined,
+        })
         setData(signature)
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(String(err)))
+        const errorObj = err instanceof Error ? err : new Error(String(err))
+        logger.log('[Solana signMessage] error', { message: errorObj.message, error: errorObj })
+        setError(errorObj)
       } finally {
         setIsPending(false)
       }
     },
-    [core?.client, wallet.status]
+    [core?.client, wallet.status, wallet.wallets?.length, setOpen, setRoute]
   )
 
   return { data, signMessage, isPending, error }
