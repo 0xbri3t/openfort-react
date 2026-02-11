@@ -26,7 +26,8 @@ type InternalState = {
 
 /** Hook for managing Solana embedded wallets. */
 export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): EmbeddedSolanaWalletState {
-  const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts } = useOpenfortCore()
+  const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =
+    useOpenfortCore()
   const { walletConfig } = useOpenfort()
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
@@ -147,6 +148,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           provider,
           error: null,
         })
+        setActiveEmbeddedAddress(account.address)
 
         createOptions?.onSuccess?.({ account })
         return account
@@ -168,26 +170,34 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         throw error
       }
     },
-    [client, walletConfig, createProviderForAccount, updateEmbeddedAccounts]
+    [client, walletConfig, createProviderForAccount, updateEmbeddedAccounts, setActiveEmbeddedAddress]
   )
 
   const setActive = useCallback(
     async (activeOptions: SetActiveSolanaWalletOptions): Promise<void> => {
       const run = async (): Promise<void> => {
-        setState((s) => ({ ...s, status: 'connecting', error: null }))
+        const account = solanaAccounts.find((acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase())
+
+        if (!account) {
+          throw new OpenfortError(
+            `Solana wallet not found: ${activeOptions.address}`,
+            OpenfortReactErrorType.WALLET_ERROR
+          )
+        }
+
+        const connectingStub: ConnectedEmbeddedSolanaWallet = {
+          id: account.id,
+          address: account.address,
+          chainType: ChainTypeEnum.SVM,
+          walletIndex: solanaAccounts.indexOf(account),
+          recoveryMethod: account.recoveryMethod,
+          getProvider: async () => {
+            throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
+          },
+        }
+        setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
 
         try {
-          const account = solanaAccounts.find(
-            (acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase()
-          )
-
-          if (!account) {
-            throw new OpenfortError(
-              `Solana wallet not found: ${activeOptions.address}`,
-              OpenfortReactErrorType.WALLET_ERROR
-            )
-          }
-
           const password = activeOptions.password ?? activeOptions.recoveryPassword
           const hasExplicitRecovery =
             activeOptions.recoveryParams != null || password != null || activeOptions.recoveryMethod !== undefined
@@ -251,6 +261,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
             provider,
             error: null,
           })
+          setActiveEmbeddedAddress(account.address)
         } catch (err) {
           const error =
             err instanceof OpenfortError
@@ -279,7 +290,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         if (setActiveInProgressRef.current === promise) setActiveInProgressRef.current = null
       }
     },
-    [client, walletConfig, solanaAccounts, createProviderForAccount]
+    [client, walletConfig, solanaAccounts, createProviderForAccount, setActiveEmbeddedAddress]
   )
 
   const setRecovery = useCallback(
@@ -348,6 +359,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
             provider,
             error: null,
           })
+          setActiveEmbeddedAddress(account.address)
         }
       })
       .catch(() => {
@@ -356,7 +368,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     return () => {
       cancelled = true
     }
-  }, [isLoadingAccounts, state.status, solanaAccounts, client, createProviderForAccount])
+  }, [isLoadingAccounts, state.status, solanaAccounts, client, createProviderForAccount, setActiveEmbeddedAddress])
 
   // Handle loading state
   if (isLoadingAccounts) {

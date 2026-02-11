@@ -357,7 +357,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       .get()
       .then((active) => {
         if (cancelled || !active) return
-        const addr = active.chainType === ChainTypeEnum.EVM ? active.address : undefined
+        const addr = active.address
         if (addr) setActiveEmbeddedAddress(addr)
       })
       .catch(() => {})

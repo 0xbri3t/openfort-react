@@ -1,4 +1,4 @@
-import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
+import { useSolanaEmbeddedWallet } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'

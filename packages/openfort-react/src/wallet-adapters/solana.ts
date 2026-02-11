@@ -1,5 +1,5 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { routes } from '../components/Openfort/types'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { useSignOut } from '../hooks/openfort/auth/useSignOut'
@@ -79,11 +79,34 @@ export function useSolanaSwitchCluster(): UseSolanaSwitchClusterLike {
 
 export function useSolanaSignMessageAdapter(): UseSolanaSignMessageLike {
   const core = useOpenfortCore()
-  const { setOpen, setRoute } = useOpenfort()
+  const { open, setOpen, setRoute } = useOpenfort()
   const wallet = useSolanaEmbeddedWallet()
   const [data, setData] = useState<string | undefined>(undefined)
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const pendingSignRef = useRef<{ message: string } | null>(null)
+  const prevOpenRef = useRef(open)
+
+  useEffect(() => {
+    const wasOpen = prevOpenRef.current
+    prevOpenRef.current = open
+    if (wasOpen && !open && pendingSignRef.current && wallet.status === 'connected' && core?.client) {
+      const params = pendingSignRef.current
+      pendingSignRef.current = null
+      setError(null)
+      setIsPending(true)
+      signMessageOp({ message: params.message, client: core.client })
+        .then((sig) => {
+          setData(sig)
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err : new Error(String(err)))
+        })
+        .finally(() => {
+          setIsPending(false)
+        })
+    }
+  }, [open, wallet.status, core?.client])
 
   const signMessage = useCallback(
     async (params: { message: string }) => {
@@ -103,6 +126,7 @@ export function useSolanaSignMessageAdapter(): UseSolanaSignMessageLike {
         const list = wallet.wallets ?? []
         if (list.length > 0) {
           logger.log('[Solana signMessage] opening modal to recover wallet', { walletsCount: list.length })
+          pendingSignRef.current = { message: params.message }
           setOpen(true)
           if (list.length > 1) {
             setRoute(routes.SELECT_WALLET_TO_RECOVER)
@@ -120,7 +144,7 @@ export function useSolanaSignMessageAdapter(): UseSolanaSignMessageLike {
               },
             })
           }
-          setError(new Error('Recover your wallet in the modal to sign'))
+          setError(new Error('Recover your wallet in the modal — sign will complete automatically after recovery'))
           return
         }
         logger.log('[Solana signMessage] abort: wallet not ready', { walletStatus: wallet.status })

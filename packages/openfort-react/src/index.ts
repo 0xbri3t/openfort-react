@@ -97,13 +97,15 @@ export { type ExplorerUrlOptions, getExplorerUrl } from './shared/utils/explorer
 export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validation'
 // SIWE utilities for direct SDK usage (no wagmi required)
 export { createSIWEMessage } from './siwe/create-siwe-message'
-// Solana exports temporarily excluded from main build for ETH/viem-only testing. Re-enable and build ./solana when fixing @solana/kit types.
-// export { useSolanaBalance } from './solana/hooks/useSolanaBalance'
-// export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
-// export type { SolanaSendTransactionStatus, UseSolanaSendTransactionResult } from './solana/hooks/useSolanaSendTransaction'
-// export { useSolanaSendTransaction } from './solana/hooks/useSolanaSendTransaction'
-// export { useSolanaMessageSigner, useSolanaSigner } from './solana/hooks/useSolanaSigner'
-// export type { SolanaConfig } from './solana/types'
+export { useSolanaBalance } from './solana/hooks/useSolanaBalance'
+export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
+export type {
+  SolanaSendTransactionStatus,
+  UseSolanaSendTransactionResult,
+} from './solana/hooks/useSolanaSendTransaction'
+export { useSolanaSendTransaction } from './solana/hooks/useSolanaSendTransaction'
+export { useSolanaMessageSigner, useSolanaSigner } from './solana/hooks/useSolanaSigner'
+export type { SolanaConfig } from './solana/types'
 export type { CustomTheme } from './styles/customTheme'
 export type {
   CustomAvatarProps,

@@ -1,5 +1,4 @@
-import { RecoveryMethod, useEthereumEmbeddedWallet } from '@openfort/react'
-import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
+import { RecoveryMethod, useEthereumEmbeddedWallet, useSolanaEmbeddedWallet } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { polygonAmoy } from 'viem/chains'
 import { Layout } from '@/components/Layout'

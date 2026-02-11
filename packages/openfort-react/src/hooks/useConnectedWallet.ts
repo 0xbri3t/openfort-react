@@ -79,7 +79,7 @@ function useEthereumWalletFromStrategy(): WalletInternalState | null {
 
 function useSolanaWalletInternal(): WalletInternalState | null {
   const context = useContext(SolanaContext)
-  const { embeddedAccounts, isLoadingAccounts } = useOpenfortCore()
+  const { embeddedAccounts, isLoadingAccounts, activeEmbeddedAddress } = useOpenfortCore()
 
   if (!context) return null
 
@@ -93,7 +93,11 @@ function useSolanaWalletInternal(): WalletInternalState | null {
     return { status: 'not-created' }
   }
 
-  const activeAccount = solAccounts[0]
+  const activeAccount = activeEmbeddedAddress
+    ? solAccounts.find((a) => a.address.toLowerCase() === activeEmbeddedAddress.toLowerCase())
+    : undefined
+  if (!activeAccount) return { status: 'not-created' }
+
   return {
     status: 'connected',
     address: activeAccount.address,

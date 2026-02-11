@@ -1,12 +1,13 @@
 import { useConnectedWallet, useSignOut, useUser } from '@openfort/react'
-import { SendSOLCard } from '@/components/Showcase/app/SendSOLCard'
+import { CreateSessionKeyCardSolana } from '@/components/Showcase/app/CreateSessionKeyCardSolana'
+import { MintTokensCard } from '@/components/Showcase/app/MintTokensCard'
 import { SessionKeysCard } from '@/components/Showcase/app/SessionKeys'
 import { SessionKeysCardEVM } from '@/components/Showcase/app/SessionKeysCardEVM'
 import { SetActiveWalletsCard } from '@/components/Showcase/app/SetActiveWallets'
+import { SetActiveWalletsCardSolana } from '@/components/Showcase/app/SetActiveWalletsCardSolana'
 import { SignaturesCard } from '@/components/Showcase/app/Signatures'
 import { SignaturesCardEVM } from '@/components/Showcase/app/SignaturesCardEVM'
 import { SignaturesCardSolana } from '@/components/Showcase/app/SignaturesCardSolana'
-import { SolanaBalanceCard } from '@/components/Showcase/app/SolanaBalanceCard'
 import { SwitchChainCard } from '@/components/Showcase/app/SwitchChain'
 import { SwitchChainCardEVM } from '@/components/Showcase/app/SwitchChainCardEVM'
 import { SwitchClusterCardSolana } from '@/components/Showcase/app/SwitchClusterCardSolana'
@@ -49,9 +50,10 @@ export const App = () => {
         {isSolana ? (
           <>
             <SignaturesCardSolana />
-            <SendSOLCard />
+            <MintTokensCard />
             <SwitchClusterCardSolana />
-            <SolanaBalanceCard />
+            <CreateSessionKeyCardSolana />
+            <SetActiveWalletsCardSolana />
           </>
         ) : hasWagmi ? (
           <>

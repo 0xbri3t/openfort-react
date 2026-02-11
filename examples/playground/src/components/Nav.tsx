@@ -1,12 +1,14 @@
-import { ChainTypeEnum, OpenfortButton } from '@openfort/react'
+import { ChainTypeEnum, OpenfortButton, useDisconnect } from '@openfort/react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { ModeToggle } from '@/components/mode-toggle'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Logo } from '@/components/ui/logo'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { clearModeSwitchStorage } from '@/lib/clearModeSwitchCache'
 import { navRoutes } from '@/lib/navRoute'
 import type { OpenfortPlaygroundMode } from '@/providers'
 import { usePlaygroundMode } from '@/providers'
@@ -30,6 +32,23 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
   const location = useLocation()
   const path = location.pathname.includes('showcase') ? '/' : overridePath || location.pathname
   const { mode, setMode } = usePlaygroundMode()
+  const queryClient = useQueryClient()
+  const { disconnectAsync } = useDisconnect()
+
+  const handleModeSwitch = useCallback(
+    async (next: OpenfortPlaygroundMode) => {
+      if (next === mode) return
+      try {
+        await disconnectAsync()
+      } catch {
+        /* no-op */
+      }
+      clearModeSwitchStorage()
+      queryClient.clear()
+      setMode(next)
+    },
+    [mode, disconnectAsync, queryClient, setMode]
+  )
 
   const effectiveNavRoutes = useMemo(() => {
     const hasWagmi = mode === 'evm-wagmi'
@@ -124,7 +143,7 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {(['evm-only', 'solana-only', 'evm-wagmi'] as const).map((m) => (
-                  <DropdownMenuItem key={m} onClick={() => setMode(m)}>
+                  <DropdownMenuItem key={m} onClick={() => void handleModeSwitch(m)}>
                     {MODE_LABELS[m]}
                   </DropdownMenuItem>
                 ))}

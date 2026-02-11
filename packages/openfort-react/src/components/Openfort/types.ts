@@ -86,6 +86,7 @@ export const routes = {
   SOL_SWITCH_CLUSTER: 'sol:switchCluster',
   SOL_SEND: 'sol:send',
   SOL_RECEIVE: 'sol:receive',
+  SOL_WALLETS: 'sol:wallets',
 
   // ==========================================================================
   // Multi-chain Routes

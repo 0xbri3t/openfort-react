@@ -148,6 +148,8 @@ const SolanaConnected: React.FC = () => {
               </ModalBody>
             )}
           </>
+        ) : embeddedWallet.wallets && embeddedWallet.wallets.length > 0 ? (
+          <Button onClick={() => setRoute(routes.SOL_WALLETS)}>Manage wallets</Button>
         ) : (
           <Button onClick={() => setRoute(routes.SOL_CREATE_WALLET)}>Create Solana Wallet</Button>
         )}
