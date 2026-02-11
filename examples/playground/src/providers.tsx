@@ -49,22 +49,24 @@ export function Providers({ children }: { children?: React.ReactNode }) {
   const { providerOptions } = useAppStore()
   const [queryClient] = useState(() => new QueryClient())
 
+  const evmWalletConfig = {
+    ...providerOptions.walletConfig,
+    ethereum: {
+      chainId: polygonAmoy.id,
+      rpcUrls: {
+        [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
+        [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',
+        [baseSepolia.id]: 'https://sepolia.base.org',
+      },
+    },
+  }
+
   const openfortProps =
     mode === 'evm-only'
       ? {
           ...providerOptions,
           chainType: ChainTypeEnum.EVM,
-          walletConfig: {
-            ...providerOptions.walletConfig,
-            ethereum: {
-              chainId: polygonAmoy.id,
-              rpcUrls: {
-                [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
-                [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',
-                [baseSepolia.id]: 'https://sepolia.base.org',
-              },
-            },
-          },
+          walletConfig: evmWalletConfig,
         }
       : mode === 'solana-only'
         ? {
@@ -75,36 +77,43 @@ export function Providers({ children }: { children?: React.ReactNode }) {
               solana: { cluster: 'devnet' },
             },
           }
-        : providerOptions
+        : {
+            ...providerOptions,
+            chainType: ChainTypeEnum.EVM,
+            walletConfig: evmWalletConfig,
+          }
 
-  const content = (
-    <QueryClientProvider client={queryClient}>
-      <OpenfortProvider
-        key={mode}
-        {...openfortProps}
-        walletConfig={
-          (providerOptions.walletConfig && openfortProps.walletConfig
-            ? { ...providerOptions.walletConfig, ...openfortProps.walletConfig }
-            : providerOptions.walletConfig) as OpenfortWalletConfig | undefined
-        }
-        uiConfig={{
-          ...openfortProps.uiConfig,
-        }}
-      >
-        {children}
-      </OpenfortProvider>
-    </QueryClientProvider>
+  const openfortContent = (
+    <OpenfortProvider
+      key={mode}
+      {...openfortProps}
+      walletConfig={
+        (providerOptions.walletConfig && openfortProps.walletConfig
+          ? { ...providerOptions.walletConfig, ...openfortProps.walletConfig }
+          : providerOptions.walletConfig) as OpenfortWalletConfig | undefined
+      }
+      uiConfig={{
+        ...openfortProps.uiConfig,
+      }}
+    >
+      {children}
+    </OpenfortProvider>
   )
+
+  const content =
+    mode === 'evm-wagmi' ? (
+      <QueryClientProvider client={queryClient}>
+        <Suspense fallback={null}>
+          <WagmiWrapper>{openfortContent}</WagmiWrapper>
+        </Suspense>
+      </QueryClientProvider>
+    ) : (
+      <QueryClientProvider client={queryClient}>{openfortContent}</QueryClientProvider>
+    )
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      {mode === 'evm-wagmi' ? (
-        <Suspense fallback={null}>
-          <WagmiWrapper>{content}</WagmiWrapper>
-        </Suspense>
-      ) : (
-        content
-      )}
+      {content}
     </ThemeProvider>
   )
 }
