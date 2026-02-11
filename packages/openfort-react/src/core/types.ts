@@ -5,45 +5,9 @@
  * for the wagmi-free architecture.
  */
 
-import type { EmbeddedAccount, EmbeddedState, Openfort, OpenfortSDKConfiguration, User } from '@openfort/openfort-js'
+import type { Openfort, OpenfortSDKConfiguration } from '@openfort/openfort-js'
 
 import type { SolanaConfig } from '../solana/types'
-
-/**
- * RPC URL configuration for Ethereum chains
- * Maps chainId to RPC URL
- *
- * @example
- * ```ts
- * const rpcUrls: EthereumRpcConfig = {
- *   1: 'https://eth-mainnet.g.alchemy.com/v2/...',
- *   137: 'https://polygon-mainnet.g.alchemy.com/v2/...',
- * }
- * ```
- */
-export type EthereumRpcConfig = Record<number, string>
-
-/**
- * RPC URL configuration for Solana clusters
- * Maps cluster name to RPC URL
- *
- * @example
- * ```ts
- * const rpcUrls: SolanaRpcConfig = {
- *   'mainnet-beta': 'https://api.mainnet-beta.solana.com',
- *   'devnet': 'https://api.devnet.solana.com',
- * }
- * ```
- */
-export type SolanaRpcConfig = Partial<Record<'mainnet-beta' | 'devnet' | 'testnet', string>>
-
-/**
- * Combined RPC configuration
- */
-export type RpcConfig = {
-  ethereum?: EthereumRpcConfig
-  solana?: SolanaRpcConfig
-}
 
 /**
  * Core provider configuration
@@ -61,7 +25,10 @@ export type CoreProviderConfig = {
    * Custom RPC URLs (optional)
    * If not provided, Openfort uses default public RPCs
    */
-  rpcUrls?: RpcConfig
+  rpcUrls?: {
+    ethereum?: Record<number, string>
+    solana?: Partial<Record<'mainnet-beta' | 'devnet' | 'testnet', string>>
+  }
 
   /**
    * Solana configuration
@@ -110,55 +77,6 @@ export type CoreContextValue = {
  * Use with useOpenfort() to decide: create wallet vs recovery form vs dashboard.
  */
 export type WalletReadiness = 'not-created' | 'needs-recovery' | 'ready' | 'loading'
-
-/**
- * Standard async operation status
- */
-export type AsyncStatus = 'idle' | 'loading' | 'success' | 'error'
-
-/**
- * Base async state for hooks
- */
-export type AsyncState<T> = {
-  data: T | undefined
-  status: AsyncStatus
-  error: Error | null
-  isLoading: boolean
-  isError: boolean
-  isSuccess: boolean
-  isIdle: boolean
-}
-
-/**
- * Auth context value (mapped from CoreOpenfortProvider).
- * Shape of auth-related values from the core context (useOpenfort / useOpenfortCore).
- */
-export type AuthContextValue = {
-  user: User | null
-  isAuthenticated: boolean
-  embeddedState: EmbeddedState
-  embeddedAccounts: EmbeddedAccount[] | undefined
-  isLoadingAccounts: boolean
-  refetchAccounts: (options?: { silent?: boolean }) => Promise<void>
-  logout: () => Promise<void>
-  updateUser: (user?: User) => Promise<User | null>
-  needsRecovery: boolean
-}
-
-/**
- * Callback for successful authentication
- */
-export type OnAuthSuccess = (user: User) => void
-
-/**
- * Callback for authentication errors
- */
-export type OnAuthError = (error: Error) => void
-
-/**
- * Callback for wallet operations
- */
-export type OnWalletEvent = (account: EmbeddedAccount) => void
 
 export type { OpenfortHookOptions } from '../types'
 export { OpenfortError, OpenfortReactErrorType } from '../types'

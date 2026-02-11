@@ -113,33 +113,6 @@ export const ClusterBadge = styled.div<{ $cluster: string }>`
   white-space: nowrap;
 `
 
-export const TabContainer = styled.div`
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--ck-body-background-secondary);
-  border-radius: 12px;
-  margin-bottom: 16px;
-`
-
-export const Tab = styled.button<{ $active: boolean }>`
-  flex: 1;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 150ms ease;
-  background: ${(props) => (props.$active ? 'var(--ck-body-background)' : 'transparent')};
-  color: ${(props) => (props.$active ? 'var(--ck-body-color)' : 'var(--ck-body-color-muted)')};
-  box-shadow: ${(props) => (props.$active ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none')};
-
-  &:hover {
-    color: var(--ck-body-color);
-  }
-`
-
 export const LinkedProvidersToggle = styled.button`
   align-self: flex-start;
   display: inline-flex;

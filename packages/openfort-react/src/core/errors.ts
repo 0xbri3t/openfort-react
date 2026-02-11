@@ -103,36 +103,12 @@ export class OpenfortReactError extends Error {
 }
 
 /**
- * Error thrown when provider context is missing
- */
-export class ProviderNotFoundError extends OpenfortReactError {
-  constructor(hookName: string) {
-    super(
-      `${hookName} must be used within OpenfortProvider. ` +
-        'Make sure you have wrapped your app with <OpenfortProvider>.',
-      OpenfortErrorCode.MISSING_PROVIDER
-    )
-    this.name = 'ProviderNotFoundError'
-  }
-}
-
-/**
  * Error thrown for configuration issues
  */
 export class ConfigurationError extends OpenfortReactError {
   constructor(message: string, cause?: unknown) {
     super(message, OpenfortErrorCode.INVALID_CONFIG, { cause })
     this.name = 'ConfigurationError'
-  }
-}
-
-/**
- * Error thrown for authentication failures
- */
-export class AuthenticationError extends OpenfortReactError {
-  constructor(message: string, code: OpenfortErrorCode = OpenfortErrorCode.AUTH_FAILED, cause?: unknown) {
-    super(message, code, { cause })
-    this.name = 'AuthenticationError'
   }
 }
 
@@ -171,24 +147,4 @@ export class OpenfortTransactionError extends OpenfortReactError {
  */
 export function isOpenfortError(error: unknown): error is OpenfortReactError {
   return error instanceof OpenfortReactError
-}
-
-/**
- * Check if error has a specific code
- */
-export function hasErrorCode(error: unknown, code: OpenfortErrorCode): boolean {
-  return isOpenfortError(error) && error.code === code
-}
-
-/**
- * Assert condition or throw error
- */
-export function invariant(
-  condition: unknown,
-  message: string,
-  code: OpenfortErrorCode = OpenfortErrorCode.UNKNOWN_ERROR
-): asserts condition {
-  if (!condition) {
-    throw new OpenfortReactError(message, code)
-  }
 }

@@ -33,8 +33,6 @@ const safeRoutes: {
 
 const allRoutes: ModalRoutes[] = [...safeRoutes.connected, ...safeRoutes.disconnected]
 
-type ValidRoutes = ModalRoutes
-
 export function useUI() {
   const { open, setOpen, setRoute, chainType } = useOpenfort()
   const { isLoading, user, needsRecovery, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
@@ -52,8 +50,8 @@ export function useUI() {
     else setRoute(connectedRouteByChain[chainType])
   }
 
-  const gotoAndOpen = (route: ValidRoutes) => {
-    let validRoute: ValidRoutes = route
+  const gotoAndOpen = (route: ModalRoutes) => {
+    let validRoute: ModalRoutes = route
 
     if (!allRoutes.includes(route)) {
       validRoute = isConnected ? routes.CONNECTED : routes.PROVIDERS

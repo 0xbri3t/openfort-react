@@ -40,17 +40,8 @@ export {
   type UseEthereumWriteContractReturn,
   useEthereumWriteContract,
 } from './hooks/useEthereumWriteContract'
-export { ethToWei, GWEI_PER_ETH, WEI_PER_ETH, weiToEth } from './hooks/utils'
 
-export {
-  getEthereumProvider,
-  type SendTransactionParams,
-  type SignMessageParams,
-  type SignTypedDataParams,
-  sendTransaction,
-  signMessage,
-  signTypedData,
-} from './operations'
+export { type SignMessageParams, signMessage } from './operations'
 export type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,

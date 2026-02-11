@@ -103,8 +103,6 @@ type CreateWalletOptions = {
   accountType?: AccountTypeEnum
 } & OpenfortHookOptions<CreateWalletResult>
 
-type RecoverEmbeddedWalletResult = SetActiveWalletResult
-
 type SetRecoveryOptions = {
   previousRecovery: RecoveryParams
   newRecovery: RecoveryParams
@@ -928,7 +926,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   )
 
   const setRecovery = useCallback(
-    async (params: SetRecoveryOptions): Promise<RecoverEmbeddedWalletResult> => {
+    async (params: SetRecoveryOptions): Promise<SetActiveWalletResult> => {
       try {
         setStatus({
           status: 'loading',

@@ -24,7 +24,6 @@ import {
   type DebugModeOptions,
   defaultBuyFormState,
   defaultSendFormState,
-  type ErrorMessage,
   notStoredInHistoryRoutes,
   type OpenfortUIOptionsExtended,
   type OpenfortWalletConfig,
@@ -199,8 +198,6 @@ export const OpenfortProvider = ({
   const [route, setRoute] = useState<RouteOptions>({ route: routes.LOADING })
   const [routeHistory, setRouteHistory] = useState<RouteOptions[]>([])
 
-  const [errorMessage, setErrorMessage] = useState<ErrorMessage>('')
-
   const [resize, onResize] = useState<number>(0)
   const [emailInput, setEmailInput] = useState('')
   const [phoneInput, setPhoneInput] = useState('')
@@ -223,7 +220,6 @@ export const OpenfortProvider = ({
   useEffect(() => setMode(safeUiConfig.mode ?? 'auto'), [safeUiConfig.mode])
   useEffect(() => setCustomTheme(safeUiConfig.customTheme ?? {}), [safeUiConfig.customTheme])
   useEffect(() => setLang(safeUiConfig.language || 'en-US'), [safeUiConfig.language])
-  useEffect(() => setErrorMessage(null), [])
 
   const chain = bridge?.account.chain
   const isConnected = bridge?.account.isConnected ?? false
@@ -245,10 +241,6 @@ export const OpenfortProvider = ({
   useEffect(() => {
     logger.log('ROUTE', route)
   }, [route])
-
-  useEffect(() => {
-    setHeaderLeftSlot(null)
-  }, [])
 
   const typedSetRoute = useCallback(
     (options: SetRouteOptions) => {
@@ -308,7 +300,6 @@ export const OpenfortProvider = ({
       setRouteHistory,
       connector,
       setConnector,
-      errorMessage,
       debugMode: debugModeOptions,
       resize,
       triggerResize,
@@ -340,7 +331,6 @@ export const OpenfortProvider = ({
       setPreviousRoute,
       routeHistory,
       connector,
-      errorMessage,
       debugModeOptions,
       resize,
       triggerResize,

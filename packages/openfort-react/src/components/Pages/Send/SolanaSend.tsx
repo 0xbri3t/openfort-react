@@ -220,5 +220,3 @@ export function SolanaSend() {
     </PageContent>
   )
 }
-
-export default SolanaSend

@@ -161,8 +161,6 @@ const ConnectModal: React.FC<{
   const route = context.route.route
   const chainType = context.chainType
 
-  const _showInfoButton = closeable && route !== routes.CONNECTED
-
   const sharedPages = useMemo(buildSharedPages, [])
   const pages = useMemo(() => ({ ...sharedPages, ...CHAIN_PREFIXED_PAGES[chainType] }), [sharedPages, chainType])
   const effectivePageId =

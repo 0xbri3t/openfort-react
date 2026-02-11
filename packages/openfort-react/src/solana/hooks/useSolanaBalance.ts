@@ -97,29 +97,3 @@ export function useSolanaBalance(address: string | undefined, options?: UseSolan
     retry: 2,
   })
 }
-
-/**
- * Format SOL balance for display
- *
- * @param sol - SOL amount
- * @param decimals - Number of decimal places (default: 4)
- * @returns Formatted string
- *
- * @internal
- */
-export function formatSolBalance(sol: number, decimals = 4): string {
-  return sol.toFixed(decimals)
-}
-
-/**
- * Format lamports for display as SOL
- *
- * @param lamports - Lamports amount
- * @param decimals - Number of decimal places (default: 4)
- * @returns Formatted string
- *
- * @internal
- */
-export function formatLamportsAsSol(lamports: bigint, decimals = 4): string {
-  return formatSolBalance(lamportsToSol(lamports), decimals)
-}

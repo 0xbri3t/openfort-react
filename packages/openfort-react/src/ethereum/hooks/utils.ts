@@ -9,20 +9,6 @@ import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
 
 /**
- * Recovery options for Ethereum wallet operations
- */
-export type EthereumRecoveryOptions = {
-  /** Recovery method to use */
-  recoveryMethod?: RecoveryMethod
-  /** Passkey ID for PASSKEY recovery */
-  passkeyId?: string
-  /** Password for PASSWORD recovery */
-  password?: string
-  /** OTP code for automatic recovery */
-  otpCode?: string
-}
-
-/**
  * Build recovery params from recovery options
  *
  * @param options - Recovery options
@@ -30,7 +16,14 @@ export type EthereumRecoveryOptions = {
  * @returns Recovery params for Openfort SDK
  */
 export async function buildRecoveryParams(
-  options: EthereumRecoveryOptions | undefined,
+  options:
+    | {
+        recoveryMethod?: RecoveryMethod
+        passkeyId?: string
+        password?: string
+        otpCode?: string
+      }
+    | undefined,
   config: {
     walletConfig: OpenfortWalletConfig | undefined
     getAccessToken: () => Promise<string | null>
@@ -130,27 +123,3 @@ async function getEncryptionSession(params: {
     OpenfortReactErrorType.CONFIGURATION_ERROR
   )
 }
-
-/**
- * Format wei to ETH
- */
-export function weiToEth(wei: bigint): number {
-  return Number(wei) / 1e18
-}
-
-/**
- * Format ETH to wei
- */
-export function ethToWei(eth: number): bigint {
-  return BigInt(Math.floor(eth * 1e18))
-}
-
-/**
- * WEI_PER_ETH constant (1 ETH = 10^18 wei)
- */
-export const WEI_PER_ETH = BigInt('1000000000000000000')
-
-/**
- * GWEI_PER_ETH constant (1 ETH = 10^9 gwei)
- */
-export const GWEI_PER_ETH = BigInt(1_000_000_000)

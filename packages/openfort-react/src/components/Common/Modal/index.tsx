@@ -25,7 +25,6 @@ import {
   CloseButton,
   Container,
   ControllerContainer,
-  ErrorMessage,
   InfoButton,
   InnerContainer,
   ModalContainer,
@@ -382,34 +381,6 @@ const Modal: React.FC<ModalProps> = ({
                   </DisclaimerBackground>
                 )}
             </AnimatePresence> */}
-            <AnimatePresence initial={false}>
-              {context.errorMessage && (
-                <ErrorMessage
-                  initial={{ y: '10%', x: '-50%' }}
-                  animate={{ y: '-100%' }}
-                  exit={{ y: '100%' }}
-                  transition={{ duration: 0.2, ease: 'easeInOut' }}
-                >
-                  <span>{context.errorMessage}</span>
-                  <button
-                    type="button"
-                    aria-label={flattenChildren(locales.close).toString()}
-                    style={{
-                      position: 'absolute',
-                      right: 24,
-                      top: 24,
-                      cursor: 'pointer',
-                      background: 'transparent',
-                      border: 'none',
-                      padding: 0,
-                      display: 'flex',
-                    }}
-                  >
-                    <CloseIcon />
-                  </button>
-                </ErrorMessage>
-              )}
-            </AnimatePresence>
             <ControllerContainer>
               {onClose && (
                 <CloseButton aria-label={flattenChildren(locales.close).toString()} onClick={onClose}>

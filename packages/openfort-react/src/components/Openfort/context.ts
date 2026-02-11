@@ -22,7 +22,6 @@ type Connector =
       id: OAuthProvider
       type: 'oauth'
     }
-type ErrorMessage = string | React.ReactNode | null
 
 export type ContextValue = {
   chainType: ChainTypeEnum
@@ -47,7 +46,6 @@ export type ContextValue = {
   setRouteHistory: React.Dispatch<React.SetStateAction<RouteOptions[]>>
   connector: Connector
   setConnector: React.Dispatch<React.SetStateAction<Connector>>
-  errorMessage: ErrorMessage
   debugMode: Required<DebugModeOptions>
   resize: number
   triggerResize: () => void
