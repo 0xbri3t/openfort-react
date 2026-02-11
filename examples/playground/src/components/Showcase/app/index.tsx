@@ -5,6 +5,7 @@ import { SessionKeysCard } from '@/components/Showcase/app/SessionKeys'
 import { SessionKeysCardEVM } from '@/components/Showcase/app/SessionKeysCardEVM'
 import { SetActiveWalletsCard } from '@/components/Showcase/app/SetActiveWallets'
 import { SetActiveWalletsCardSolana } from '@/components/Showcase/app/SetActiveWalletsCardSolana'
+import { SetActiveWalletsCardWagmi } from '@/components/Showcase/app/SetActiveWalletsCardWagmi'
 import { SignaturesCard } from '@/components/Showcase/app/Signatures'
 import { SignaturesCardEVM } from '@/components/Showcase/app/SignaturesCardEVM'
 import { SignaturesCardSolana } from '@/components/Showcase/app/SignaturesCardSolana'
@@ -70,7 +71,7 @@ export const App = () => {
             <SessionKeysCardEVM />
           </>
         )}
-        {!isSolana && <SetActiveWalletsCard />}
+        {!isSolana && (hasWagmi ? <SetActiveWalletsCardWagmi /> : <SetActiveWalletsCard />)}
       </div>
     </div>
   )
