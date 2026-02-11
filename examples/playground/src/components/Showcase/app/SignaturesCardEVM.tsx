@@ -1,10 +1,12 @@
 import { useEVMSignMessage } from '@openfort/react'
+import type { ReactNode } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 
-export const SignaturesCardEVM = () => {
+export const SignaturesCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { data, signMessage, isPending } = useEVMSignMessage()
 
   return (
@@ -33,9 +35,25 @@ export const SignaturesCardEVM = () => {
               defaultValue="Hello from Openfort!"
             />
           </label>
-          <Button className="btn btn-accent w-full" disabled={isPending}>
-            {isPending ? 'Signing...' : 'Sign a message'}
-          </Button>
+          {tooltip ? (
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Button className="btn btn-accent w-full" disabled={isPending}>
+                    {isPending ? 'Signing...' : 'Sign a message'}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <h3 className="text-base mb-1">{tooltip.hook}</h3>
+                {tooltip.body}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button className="btn btn-accent w-full" disabled={isPending}>
+              {isPending ? 'Signing...' : 'Sign a message'}
+            </Button>
+          )}
           <InputMessage
             message={`Signed message: ${data?.slice(0, 10)}...${data?.slice(-10)}`}
             show={!!data}

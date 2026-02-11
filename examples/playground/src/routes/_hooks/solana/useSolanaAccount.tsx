@@ -1,4 +1,4 @@
-import { useSolanaAccount } from '@openfort/react'
+import { useSVMAccount } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <Layout>
       <HookVariable
-        name="useSolanaAccount"
-        hook={useSolanaAccount}
+        name="useSVMAccount"
+        hook={useSVMAccount}
         description="Solana adapter: connected address (Base58), cluster, and isConnected."
       />
     </Layout>

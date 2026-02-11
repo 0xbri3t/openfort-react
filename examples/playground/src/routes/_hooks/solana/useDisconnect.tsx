@@ -1,4 +1,4 @@
-import { useSolanaDisconnect } from '@openfort/react'
+import { useSVMDisconnect } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <Layout>
       <HookVariable
-        name="useSolanaDisconnect"
-        hook={useSolanaDisconnect}
+        name="useSVMDisconnect"
+        hook={useSVMDisconnect}
         description="Solana adapter: disconnect (sign out) the wallet."
       />
     </Layout>

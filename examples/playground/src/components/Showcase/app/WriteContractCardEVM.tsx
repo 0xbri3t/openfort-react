@@ -1,9 +1,11 @@
 import { ChainTypeEnum, getExplorerUrl, useEVMAccount, useEVMReadContract, useEVMWriteContract } from '@openfort/react'
+import type { ReactNode } from 'react'
 import { formatUnits, getAddress } from 'viem'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 
 const CONTRACT_ADDRESS = '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac' as const
@@ -17,7 +19,7 @@ const BALANCE_ABI = [
   },
 ] as const
 
-export const WriteContractCardEVM = () => {
+export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address, chainId } = useEVMAccount()
 
   const {
@@ -84,9 +86,25 @@ export const WriteContractCardEVM = () => {
               name="amount"
             />
           </label>
-          <Button className="btn btn-accent w-full" disabled={isPending || !address}>
-            {isPending ? 'Minting...' : 'Mint Tokens'}
-          </Button>
+          {tooltip ? (
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Button className="btn btn-accent w-full" disabled={isPending || !address}>
+                    {isPending ? 'Minting...' : 'Mint Tokens'}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <h3 className="text-base mb-1">{tooltip.hook}</h3>
+                {tooltip.body}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button className="btn btn-accent w-full" disabled={isPending || !address}>
+              {isPending ? 'Minting...' : 'Mint Tokens'}
+            </Button>
+          )}
           <InputMessage message={`Transaction hash: ${hash}`} show={!!hash} variant="success" />
           {hash && chainId && (
             <a

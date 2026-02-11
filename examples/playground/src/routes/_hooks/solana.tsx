@@ -10,10 +10,10 @@ export const Route = createFileRoute('/_hooks/solana')({
 })
 
 const nav = [
-  { href: '/solana/useSolanaAccount', label: 'useSolanaAccount' },
-  { href: '/solana/useSolanaBalance', label: 'useSolanaBalance' },
-  { href: '/solana/useDisconnect', label: 'useDisconnect' },
-  { href: '/solana/useSwitchCluster', label: 'useSwitchCluster' },
+  { href: '/solana/useSolanaAccount', label: 'useSVMAccount' },
+  { href: '/solana/useSolanaBalance', label: 'useSVMBalance' },
+  { href: '/solana/useDisconnect', label: 'useSVMDisconnect' },
+  { href: '/solana/useSwitchCluster', label: 'useSVMSwitchCluster' },
 ]
 
 function RouteComponent() {

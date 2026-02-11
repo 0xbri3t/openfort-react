@@ -1,4 +1,4 @@
-import { useSolanaSwitchCluster } from '@openfort/react'
+import { useSVMSwitchCluster } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <Layout>
       <HookVariable
-        name="useSolanaSwitchCluster"
-        hook={useSolanaSwitchCluster}
+        name="useSVMSwitchCluster"
+        hook={useSVMSwitchCluster}
         description="Solana adapter: clusters, currentCluster, switchCluster (mainnet-beta, devnet, testnet)."
       />
     </Layout>

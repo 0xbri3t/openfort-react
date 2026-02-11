@@ -1,4 +1,7 @@
-import { useConnectedWallet, useSignOut, useUser } from '@openfort/react'
+import { embeddedWalletId, useConnectedWallet, useSignOut, useUser } from '@openfort/react'
+import { Link } from '@tanstack/react-router'
+import { useAccount } from 'wagmi'
+import { ConnectExternalWalletCard } from '@/components/Showcase/app/ConnectExternalWalletCard'
 import { CreateSessionKeyCardSolana } from '@/components/Showcase/app/CreateSessionKeyCardSolana'
 import { MintTokensCard } from '@/components/Showcase/app/MintTokensCard'
 import { SessionKeysCard } from '@/components/Showcase/app/SessionKeys'
@@ -16,7 +19,36 @@ import { WriteContractCard } from '@/components/Showcase/app/WriteContract'
 import { WriteContractCardEVM } from '@/components/Showcase/app/WriteContractCardEVM'
 import { SampleTooltipLink } from '@/components/Showcase/auth/SampleTooltipLink'
 import { Button } from '@/components/Showcase/ui/Button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { usePlaygroundMode } from '@/providers'
+
+function SetActiveWalletsCardWagmiWhenOpenfort() {
+  const { connector, isConnected } = useAccount()
+  const isOpenfortActive = isConnected && connector?.id === embeddedWalletId
+  if (!isOpenfortActive) {
+    return (
+      <Card className="opacity-75 pointer-events-none">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <CardTitle>Wallets</CardTitle>
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              Switch to Openfort
+            </span>
+          </div>
+          <CardDescription>
+            Create and switch embedded wallets. Connect Openfort from the Wallet card to use this.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Connect to Openfort embedded wallet above to create and manage your wallets.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+  return <SetActiveWalletsCardWagmi />
+}
 
 export const App = () => {
   const { user } = useUser()
@@ -50,28 +82,108 @@ export const App = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {isSolana ? (
           <>
-            <SignaturesCardSolana />
-            <MintTokensCard />
-            <SwitchClusterCardSolana />
+            <SignaturesCardSolana
+              tooltip={{
+                hook: 'useSVMSignMessage',
+                body: <>Uses useSVMSignMessage for signing messages.</>,
+              }}
+            />
+            <MintTokensCard
+              tooltip={{
+                hook: 'useSVMWriteContract',
+                body: <>Uses useSVMWriteContract for minting devnet SOL.</>,
+              }}
+            />
+            <SwitchClusterCardSolana
+              tooltip={{
+                hook: 'useSVMSwitchCluster',
+                body: (
+                  <>
+                    Uses{' '}
+                    <Link to="/solana/useSwitchCluster" className="px-1 group">
+                      useSVMSwitchCluster
+                    </Link>{' '}
+                    to switch clusters.
+                  </>
+                ),
+              }}
+            />
             <CreateSessionKeyCardSolana />
             <SetActiveWalletsCardSolana />
           </>
         ) : hasWagmi ? (
           <>
-            <SignaturesCard />
-            <WriteContractCard />
-            <SwitchChainCard />
-            <SessionKeysCard />
+            <SignaturesCard
+              tooltip={{
+                hook: 'useSignMessage',
+                body: <>Uses useSignMessage (wagmi) for signing messages.</>,
+              }}
+            />
+            <WriteContractCard
+              tooltip={{
+                hook: 'useWriteContract',
+                body: <>Uses useWriteContract (wagmi) for minting tokens.</>,
+              }}
+            />
+            <SwitchChainCard
+              tooltip={{
+                hook: 'useSwitchChain',
+                body: (
+                  <>
+                    Uses{' '}
+                    <Link to="/wagmi/useSwitchChain" className="px-1 group">
+                      useChainId
+                    </Link>
+                    , useSwitchChain (wagmi).
+                  </>
+                ),
+              }}
+            />
+            <SessionKeysCard
+              tooltip={{
+                hook: 'useGrantPermissions',
+                body: <>Uses useGrantPermissions to create session keys.</>,
+              }}
+            />
+            <ConnectExternalWalletCard />
           </>
         ) : (
           <>
-            <SignaturesCardEVM />
-            <WriteContractCardEVM />
-            <SwitchChainCardEVM />
-            <SessionKeysCardEVM />
+            <SignaturesCardEVM
+              tooltip={{
+                hook: 'useEVMSignMessage',
+                body: <>Uses useEVMSignMessage (EVM adapter) for signing messages.</>,
+              }}
+            />
+            <WriteContractCardEVM
+              tooltip={{
+                hook: 'useEVMWriteContract',
+                body: <>Uses useEVMWriteContract for minting tokens.</>,
+              }}
+            />
+            <SwitchChainCardEVM
+              tooltip={{
+                hook: 'useEVMSwitchChain',
+                body: (
+                  <>
+                    Uses{' '}
+                    <Link to="/adapter/useSwitchChain" className="px-1 group">
+                      useEVMSwitchChain
+                    </Link>
+                    .
+                  </>
+                ),
+              }}
+            />
+            <SessionKeysCardEVM
+              tooltip={{
+                hook: 'useGrantPermissions',
+                body: <>Uses useGrantPermissions to create session keys.</>,
+              }}
+            />
           </>
         )}
-        {!isSolana && (hasWagmi ? <SetActiveWalletsCardWagmi /> : <SetActiveWalletsCard />)}
+        {!isSolana && (hasWagmi ? <SetActiveWalletsCardWagmiWhenOpenfort /> : <SetActiveWalletsCard />)}
       </div>
     </div>
   )

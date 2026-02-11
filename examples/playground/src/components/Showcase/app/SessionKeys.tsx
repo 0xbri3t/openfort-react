@@ -1,5 +1,6 @@
 import { useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { useAccount, useChainId, useSignMessage } from 'wagmi'
@@ -10,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/cn'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
 
-export const SessionKeysCard = () => {
+export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
   const [sessionKeys, setSessionKeys] = useState<StoredData[]>([])
@@ -88,9 +89,25 @@ export const SessionKeysCard = () => {
             }
           }}
         >
-          <Button className="btn btn-accent w-full" disabled={isLoading}>
-            {isLoading ? 'Creating...' : 'Create session key'}
-          </Button>
+          {tooltip ? (
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Button className="btn btn-accent w-full" disabled={isLoading}>
+                    {isLoading ? 'Creating...' : 'Create session key'}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <h3 className="text-base mb-1">{tooltip.hook}</h3>
+                {tooltip.body}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button className="btn btn-accent w-full" disabled={isLoading}>
+              {isLoading ? 'Creating...' : 'Create session key'}
+            </Button>
+          )}
           {sessionKeys.map(({ privateKey, publicKey, sessionKeyId, active }) => (
             <Tooltip key={privateKey}>
               <TooltipTrigger asChild>

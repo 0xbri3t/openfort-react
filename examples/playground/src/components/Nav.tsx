@@ -17,8 +17,15 @@ import type { FileRoutesByTo } from '../routeTree.gen'
 
 const MODE_LABELS: Record<OpenfortPlaygroundMode, string> = {
   'evm-only': 'EVM only',
-  'solana-only': 'Solana only',
+  'solana-only': 'SVM only',
   'evm-wagmi': 'EVM + Wagmi',
+}
+
+/** Hooks used in each mode – shown as helper text on mode buttons */
+const MODE_HOOKS: Record<OpenfortPlaygroundMode, string> = {
+  'evm-only': 'useEthereumEmbeddedWallet, useAdapter (viem)',
+  'solana-only': 'useSolanaEmbeddedWallet, useWallets',
+  'evm-wagmi': 'useWallets, useEVMConnectors, wagmi hooks',
 }
 
 export type NavRoute = {
@@ -128,11 +135,18 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
           </div>
           <div className="flex gap-4 sm:border-l pl-4 items-center">
             <DropdownMenu>
-              <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground min-w-[7rem] flex items-center justify-center gap-2">
-                {MODE_ICONS[mode]}
-                {MODE_LABELS[mode]}
-                <ChevronDown className="size-4" />
-              </DropdownMenuTrigger>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground min-w-[7rem] flex items-center justify-center gap-2">
+                    {MODE_ICONS[mode]}
+                    {MODE_LABELS[mode]}
+                    <ChevronDown className="size-4" />
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <p className="text-xs">{MODE_HOOKS[mode]}</p>
+                </TooltipContent>
+              </Tooltip>
               <DropdownMenuContent align="end">
                 {(['evm-only', 'solana-only', 'evm-wagmi'] as const).map((m) => (
                   <DropdownMenuItem

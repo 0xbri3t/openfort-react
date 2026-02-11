@@ -1,15 +1,11 @@
-import {
-  ChainTypeEnum,
-  getExplorerUrl,
-  useSolanaAccount,
-  useSolanaSendSOL,
-  useSolanaSwitchCluster,
-} from '@openfort/react'
+import { ChainTypeEnum, getExplorerUrl, useSVMAccount, useSVMSwitchCluster, useSVMWriteContract } from '@openfort/react'
+import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 
 const LAMPORTS_PER_SOL = 1_000_000_000
@@ -18,10 +14,10 @@ function solToLamports(sol: number): bigint {
   return BigInt(Math.floor(sol * LAMPORTS_PER_SOL))
 }
 
-export const MintTokensCard = () => {
-  const { address } = useSolanaAccount()
-  const { sendSOL, data: txSignature, isPending, error, reset } = useSolanaSendSOL()
-  const { currentCluster } = useSolanaSwitchCluster()
+export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
+  const { address } = useSVMAccount()
+  const { sendSOL, data: txSignature, isPending, error, reset } = useSVMWriteContract()
+  const { currentCluster } = useSVMSwitchCluster()
 
   const explorerUrl = useMemo(() => {
     if (!txSignature || !currentCluster) return null
@@ -61,9 +57,25 @@ export const MintTokensCard = () => {
               defaultValue="0.001"
             />
           </label>
-          <Button className="btn btn-accent w-full" disabled={isPending || !address}>
-            {isPending ? 'Minting...' : 'Mint Tokens'}
-          </Button>
+          {tooltip ? (
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Button className="btn btn-accent w-full" disabled={isPending || !address}>
+                    {isPending ? 'Minting...' : 'Mint Tokens'}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <h3 className="text-base mb-1">{tooltip.hook}</h3>
+                {tooltip.body}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button className="btn btn-accent w-full" disabled={isPending || !address}>
+              {isPending ? 'Minting...' : 'Mint Tokens'}
+            </Button>
+          )}
           <InputMessage
             message={txSignature ? `Tx: ${txSignature.slice(0, 12)}...` : ''}
             show={!!txSignature}

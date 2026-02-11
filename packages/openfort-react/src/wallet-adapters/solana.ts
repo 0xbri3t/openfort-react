@@ -25,7 +25,7 @@ import type {
 
 const DEFAULT_CLUSTERS: SolanaCluster[] = ['devnet', 'testnet']
 
-export function useSolanaAccount(): UseSolanaAccountLike {
+export function useSVMAccount(): UseSolanaAccountLike {
   const wallet = useConnectedWallet()
   const { chainType } = useChain()
   const isConnected = wallet.status === 'connected' && chainType === ChainTypeEnum.SVM && !!wallet.address
@@ -36,8 +36,8 @@ export function useSolanaAccount(): UseSolanaAccountLike {
   }
 }
 
-export function useSolanaBalanceAdapter(): UseBalanceLike {
-  const { address, isConnected } = useSolanaAccount()
+export function useSVMBalance(): UseBalanceLike {
+  const { address, isConnected } = useSVMAccount()
   const { data, refetch, isLoading, error } = useSolanaBalance(address, { enabled: isConnected && !!address })
   const refetchCb = () => refetch()
   return {
@@ -55,11 +55,11 @@ export function useSolanaBalanceAdapter(): UseBalanceLike {
   }
 }
 
-export function useSolanaDisconnect(): UseDisconnectLike {
+export function useSVMDisconnect(): UseDisconnectLike {
   return useDisconnectAdapter()
 }
 
-export function useSolanaSwitchCluster(): UseSolanaSwitchClusterLike {
+export function useSVMSwitchCluster(): UseSolanaSwitchClusterLike {
   const { cluster, setCluster } = useSolanaContext()
   return {
     clusters: DEFAULT_CLUSTERS,
@@ -70,7 +70,7 @@ export function useSolanaSwitchCluster(): UseSolanaSwitchClusterLike {
   }
 }
 
-export function useSolanaSignMessageAdapter(): UseSolanaSignMessageLike {
+export function useSVMSignMessage(): UseSolanaSignMessageLike {
   const core = useOpenfortCore()
   const { open, setOpen, setRoute } = useOpenfort()
   const wallet = useSolanaEmbeddedWallet()
@@ -171,7 +171,7 @@ export function useSolanaSignMessageAdapter(): UseSolanaSignMessageLike {
   return { data, signMessage, isPending, error }
 }
 
-export function useSolanaSendSOL(): UseSolanaSendSOLLike {
+export function useSVMWriteContract(): UseSolanaSendSOLLike {
   const { sendTransaction, status, error, reset } = useSolanaSendTransaction()
   const [data, setData] = useState<string | undefined>(undefined)
 
@@ -199,3 +199,10 @@ export function useSolanaSendSOL(): UseSolanaSendSOLLike {
     reset: resetWithClear,
   }
 }
+
+export const useSolanaAccount = useSVMAccount
+export const useSolanaBalanceAdapter = useSVMBalance
+export const useSolanaDisconnect = useSVMDisconnect
+export const useSolanaSendSOL = useSVMWriteContract
+export const useSolanaSignMessageAdapter = useSVMSignMessage
+export const useSolanaSwitchCluster = useSVMSwitchCluster

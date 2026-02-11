@@ -165,6 +165,12 @@ export {
   useSolanaSendSOL,
   useSolanaSignMessageAdapter,
   useSolanaSwitchCluster,
+  useSVMAccount,
+  useSVMBalance,
+  useSVMDisconnect,
+  useSVMSignMessage,
+  useSVMSwitchCluster,
+  useSVMWriteContract,
 } from './wallet-adapters'
 export { wallets } from './wallets'
 export { useEVMConnectors, useWallet, type WalletProps } from './wallets/useEVMConnectors'

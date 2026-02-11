@@ -21,6 +21,12 @@ export {
   useSolanaSendSOL,
   useSolanaSignMessageAdapter,
   useSolanaSwitchCluster,
+  useSVMAccount,
+  useSVMBalance,
+  useSVMDisconnect,
+  useSVMSignMessage,
+  useSVMSwitchCluster,
+  useSVMWriteContract,
 } from './solana'
 export type {
   SolanaCluster,
