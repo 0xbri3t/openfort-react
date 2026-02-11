@@ -10,6 +10,7 @@ import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
+import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import type {
   ConnectedEmbeddedSolanaWallet,
@@ -492,17 +493,4 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         activeWallet: null,
       } as EmbeddedSolanaWalletState
   }
-}
-
-function getTransactionBytes(transaction: SolanaTransaction): Uint8Array {
-  if (transaction instanceof Uint8Array) {
-    return transaction
-  }
-  if ('messageBytes' in transaction) {
-    return transaction.messageBytes
-  }
-  if ('serializeMessage' in transaction && typeof transaction.serializeMessage === 'function') {
-    return transaction.serializeMessage()
-  }
-  throw new OpenfortError('Unsupported transaction format', OpenfortReactErrorType.VALIDATION_ERROR)
 }

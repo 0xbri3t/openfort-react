@@ -9,13 +9,14 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 import { type Abi, createPublicClient, getAddress, http } from 'viem'
+import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useCoreContext } from '../core/CoreContext'
 import { useEthereumWriteContract } from '../ethereum/hooks/useEthereumWriteContract'
 import { signMessage as signMessageOp } from '../ethereum/operations'
-import { useSignOut } from '../hooks/openfort/auth/useSignOut'
 import { useBalance as useBalanceHook } from '../hooks/useBalance'
 import { useChains } from '../hooks/useChains'
 import { useConnectedWallet } from '../hooks/useConnectedWallet'
+import { useDisconnectAdapter } from '../hooks/useDisconnectAdapter'
 import { useOpenfortCore } from '../openfort/useOpenfort'
 import { useChain } from '../shared/hooks/useChain'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
@@ -43,7 +44,7 @@ export function useEVMAccount(): UseAccountLike {
 
 export function useEVMBalance(): UseBalanceLike {
   const { address, chainId, isConnected } = useEVMAccount()
-  const chainIdNum = chainId ?? 80002
+  const chainIdNum = chainId ?? DEFAULT_TESTNET_CHAIN_ID
   const balanceState = useBalanceHook({
     address: address ?? '',
     chainType: ChainTypeEnum.EVM,
@@ -81,12 +82,7 @@ export function useEVMBalance(): UseBalanceLike {
 }
 
 export function useEVMDisconnect(): UseDisconnectLike {
-  const { signOut } = useSignOut()
-  return {
-    disconnect: () => {
-      signOut()
-    },
-  }
+  return useDisconnectAdapter()
 }
 
 export function useEVMSwitchChain(): UseSwitchChainLike {
@@ -175,7 +171,7 @@ export function useEVMReadContract(params: {
 }): UseReadContractLike {
   const { config } = useCoreContext()
   const { chainId: connectedChainId } = useEVMAccount()
-  const chainId = params.chainId ?? connectedChainId ?? 80002
+  const chainId = params.chainId ?? connectedChainId ?? DEFAULT_TESTNET_CHAIN_ID
   const rpcUrl = config?.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)
 
   const query = useQuery({

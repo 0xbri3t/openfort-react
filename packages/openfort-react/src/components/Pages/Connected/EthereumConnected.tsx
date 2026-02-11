@@ -45,6 +45,14 @@ import {
   Unsupported,
 } from './styles'
 
+function getFirstBalanceAsset(
+  assets: Awaited<ReturnType<typeof useWalletAssets>>['data']
+): (NonNullable<typeof assets>[number] & { balance: bigint }) | undefined {
+  return assets?.find((a) => a.balance && a.balance > BigInt(0)) as
+    | (NonNullable<typeof assets>[number] & { balance: bigint })
+    | undefined
+}
+
 const EthereumConnected: React.FC = () => {
   const context = useOpenfort()
   const themeContext = useThemeContext()
@@ -167,7 +175,7 @@ const EthereumConnected: React.FC = () => {
                     <TextLinkButton
                       type="button"
                       onClick={() => {
-                        const firstBalanceAsset = assets?.find((a) => a.balance && a.balance > BigInt(0))
+                        const firstBalanceAsset = getFirstBalanceAsset(assets)
                         if (!firstBalanceAsset) {
                           setRoute(routes.NO_ASSETS_AVAILABLE)
                           return
@@ -201,12 +209,11 @@ const EthereumConnected: React.FC = () => {
                   <ActionButton
                     icon={<SendIcon />}
                     onClick={() => {
-                      const firstBalanceAsset = assets?.find((a) => a.balance && a.balance > BigInt(0))
+                      const firstBalanceAsset = getFirstBalanceAsset(assets)
                       if (!firstBalanceAsset) {
                         setRoute(routes.NO_ASSETS_AVAILABLE)
                         return
                       }
-
                       setSendForm({ ...defaultSendFormState, asset: firstBalanceAsset })
                       context.setRoute(routes.SEND)
                     }}

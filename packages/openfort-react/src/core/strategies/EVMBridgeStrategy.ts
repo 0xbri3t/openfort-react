@@ -3,6 +3,7 @@ import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import type { WalletProps } from '../../wallets/useEVMConnectors'
 import type { ConnectionStrategy } from '../ConnectionStrategy'
 import type { OpenfortEVMBridgeValue } from '../OpenfortEVMBridgeContext'
+import { resolveEthereumPolicy } from '../strategyUtils'
 
 export function createEVMBridgeStrategy(bridge: OpenfortEVMBridgeValue, connectors: WalletProps[]): ConnectionStrategy {
   return {
@@ -31,14 +32,7 @@ export function createEVMBridgeStrategy(bridge: OpenfortEVMBridgeValue, connecto
 
     async initProvider(openfort: Openfort, walletConfig: OpenfortWalletConfig) {
       const chainId = bridge.chainId
-      const policy = walletConfig?.ethereumProviderPolicyId
-      const policyObj = !policy
-        ? undefined
-        : typeof policy === 'string'
-          ? { policy }
-          : typeof policy === 'object' && chainId in policy
-            ? { policy: (policy as Record<number, string>)[chainId] }
-            : undefined
+      const policyObj = chainId != null ? resolveEthereumPolicy(walletConfig, chainId) : undefined
 
       const rpcUrls = bridge.config.chains.reduce(
         (acc, ch) => {

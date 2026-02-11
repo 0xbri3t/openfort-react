@@ -2,8 +2,8 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { routes } from '../components/Openfort/types'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
-import { useSignOut } from '../hooks/openfort/auth/useSignOut'
 import { useConnectedWallet } from '../hooks/useConnectedWallet'
+import { useDisconnectAdapter } from '../hooks/useDisconnectAdapter'
 import { useOpenfortCore } from '../openfort/useOpenfort'
 import { useChain } from '../shared/hooks/useChain'
 import { useSolanaBalance } from '../solana/hooks/useSolanaBalance'
@@ -58,12 +58,7 @@ export function useSolanaBalanceAdapter(): UseBalanceLike {
 }
 
 export function useSolanaDisconnect(): UseDisconnectLike {
-  const { signOut } = useSignOut()
-  return {
-    disconnect: () => {
-      signOut()
-    },
-  }
+  return useDisconnectAdapter()
 }
 
 export function useSolanaSwitchCluster(): UseSolanaSwitchClusterLike {

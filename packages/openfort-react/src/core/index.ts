@@ -10,6 +10,7 @@ export {
   type ConnectionStrategyState,
   type ConnectRoute,
   DEFAULT_DEV_CHAIN_ID,
+  DEFAULT_TESTNET_CHAIN_ID,
 } from './ConnectionStrategy'
 export { ConnectionStrategyProvider, useConnectionStrategy } from './ConnectionStrategyContext'
 export { CoreProvider, type CoreProviderProps, useCoreContext, useHasCoreProvider } from './CoreContext'

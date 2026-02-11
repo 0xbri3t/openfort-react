@@ -1,5 +1,6 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useMemo } from 'react'
+import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useChain } from '../shared/hooks/useChain'
 import { useBalance } from './useBalance'
 import { useConnectedWallet } from './useConnectedWallet'
@@ -31,7 +32,8 @@ export function useAccountBalance(): UseAccountBalanceReturnType {
   const { isEvm } = useChain()
   const wallet = useConnectedWallet()
   const address = isEvm && wallet.status === 'connected' ? wallet.address : undefined
-  const chainId = isEvm && wallet.status === 'connected' ? (wallet.chainId ?? 80002) : 80002
+  const chainId =
+    isEvm && wallet.status === 'connected' ? (wallet.chainId ?? DEFAULT_TESTNET_CHAIN_ID) : DEFAULT_TESTNET_CHAIN_ID
 
   const balanceState = useBalance({
     address: address ?? '',

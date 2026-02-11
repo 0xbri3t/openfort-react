@@ -2,7 +2,7 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { address, createSolanaRpc } from '@solana/kit'
 import { useQuery } from '@tanstack/react-query'
 import { createPublicClient, formatEther, http } from 'viem'
-
+import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useCoreContext } from '../core/CoreContext'
 import { lamportsToSol } from '../solana/hooks/utils'
 import type { SolanaCluster } from '../solana/types'
@@ -60,7 +60,7 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
   const {
     address,
     chainType,
-    chainId = 80002,
+    chainId = DEFAULT_TESTNET_CHAIN_ID,
     cluster = 'devnet',
     commitment = 'confirmed',
     enabled = true,

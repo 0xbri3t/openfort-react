@@ -5,6 +5,9 @@ import type { WalletProps } from '../wallets/useEVMConnectors'
 /** Default chain when EVM without Wagmi and walletConfig.ethereum.chainId is missing. Sepolia. */
 export const DEFAULT_DEV_CHAIN_ID = 11155111
 
+/** Default testnet chain for balance/hooks when no chain context. Polygon Amoy. */
+export const DEFAULT_TESTNET_CHAIN_ID = 80002
+
 export interface ConnectionStrategyState {
   user: User | null
   embeddedAccounts: EmbeddedAccount[] | undefined
