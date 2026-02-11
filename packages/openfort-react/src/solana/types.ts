@@ -253,27 +253,6 @@ export interface SolanaWalletActions {
   exportPrivateKey(): Promise<string>
 }
 
-/**
- * Solana embedded wallet state machine
- *
- * Uses discriminated union pattern for type-safe state handling.
- * Mirrors the Ethereum state machine for API consistency.
- *
- * @example
- * ```tsx
- * const solana = useSolanaEmbeddedWallet();
- *
- * switch (solana.status) {
- *   case 'disconnected':
- *     return <button onClick={() => solana.create()}>Create Wallet</button>;
- *   case 'connected':
- *     return <p>Address: {solana.activeWallet.address}</p>;
- *   case 'needs-recovery':
- *     return <RecoveryFlow wallet={solana.activeWallet} />;
- *   // ... handle other states
- * }
- * ```
- */
 export type EmbeddedSolanaWalletState =
   | (SolanaWalletActions & { status: 'disconnected'; activeWallet: null })
   | (SolanaWalletActions & { status: 'fetching-wallets'; activeWallet: null })

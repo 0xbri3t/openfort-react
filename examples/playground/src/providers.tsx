@@ -60,7 +60,7 @@ export function Providers({ children }: { children?: React.ReactNode }) {
               chainId: polygonAmoy.id,
               rpcUrls: {
                 [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
-                [beamTestnet.id]: 'https://subnets.avax.network/beam/testnet/rpc',
+                [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',
                 [baseSepolia.id]: 'https://sepolia.base.org',
               },
             },

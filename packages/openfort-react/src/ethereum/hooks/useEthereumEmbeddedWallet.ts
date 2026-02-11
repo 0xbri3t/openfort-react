@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { WalletStatus } from '../../shared/types'
+import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
 import type {
   ConnectedEmbeddedEthereumWallet,
@@ -22,14 +23,8 @@ type InternalState = {
   error: string | null
 }
 
-/** Polygon Amoy testnet — dev/test default; no mainnet (chain 1) in default config. */
 const DEFAULT_CHAIN_ID = 80002
 
-/**
- * Core hook for managing Ethereum embedded wallets. Uses only viem/openfort-js; no wagmi.
- * ChainId comes from options or defaults to 80002 (Polygon Amoy testnet). For chainId from wagmi
- * (e.g. connected wallet chain), use the wagmi extension's useEthereumEmbeddedWallet.
- */
 export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOptions): EmbeddedEthereumWalletState {
   const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =
     useOpenfortCore()
@@ -115,7 +110,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
             ? AccountTypeEnum.EOA
             : (walletConfig.accountType ?? AccountTypeEnum.SMART_ACCOUNT)
 
-        // Create the wallet
         const account = await client.embeddedWallet.create({
           chainType: ChainTypeEnum.EVM,
           accountType,
@@ -125,7 +119,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
 
         await updateEmbeddedAccounts({ silent: true })
 
-        // Create provider and update state
         const provider = await createProviderForAccount(account)
         const connectedWallet: ConnectedEmbeddedEthereumWallet = {
           id: account.id,
@@ -375,7 +368,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     }
   }, [isLoadingAccounts, state.status, ethereumAccounts, client, createProviderForAccount, setActiveEmbeddedAddress])
 
-  // Handle loading state
   if (isLoadingAccounts) {
     return {
       ...actions,
@@ -384,71 +376,5 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     } as EmbeddedEthereumWalletState
   }
 
-  // Return discriminated union based on status
-  switch (state.status) {
-    case 'disconnected':
-      return {
-        ...actions,
-        status: 'disconnected',
-        activeWallet: null,
-      } as EmbeddedEthereumWalletState
-
-    case 'fetching-wallets':
-      return {
-        ...actions,
-        status: 'fetching-wallets',
-        activeWallet: null,
-      } as EmbeddedEthereumWalletState
-
-    case 'connecting':
-      return {
-        ...actions,
-        status: 'connecting',
-        activeWallet: state.activeWallet!,
-      } as EmbeddedEthereumWalletState
-
-    case 'reconnecting':
-      return {
-        ...actions,
-        status: 'reconnecting',
-        activeWallet: state.activeWallet!,
-      } as EmbeddedEthereumWalletState
-
-    case 'creating':
-      return {
-        ...actions,
-        status: 'creating',
-        activeWallet: null,
-      } as EmbeddedEthereumWalletState
-
-    case 'needs-recovery':
-      return {
-        ...actions,
-        status: 'needs-recovery',
-        activeWallet: state.activeWallet!,
-      } as EmbeddedEthereumWalletState
-
-    case 'connected':
-      return {
-        ...actions,
-        status: 'connected',
-        activeWallet: state.activeWallet!,
-        provider: state.provider!,
-      } as EmbeddedEthereumWalletState
-
-    case 'error':
-      return {
-        ...actions,
-        status: 'error',
-        activeWallet: state.activeWallet,
-        error: state.error!,
-      } as EmbeddedEthereumWalletState
-
-    default:
-      return {
-        ...actions,
-        status: 'disconnected',
-        activeWallet: null,
-      } as EmbeddedEthereumWalletState
-  }
+  return buildEmbeddedWalletStatusResult(state, actions) as EmbeddedEthereumWalletState
 }

@@ -1,14 +1,10 @@
-import {
-  AccountTypeEnum,
-  ChainTypeEnum,
-  type EmbeddedAccount,
-  EmbeddedState,
-  RecoveryMethod,
-} from '@openfort/openfort-js'
+import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
+import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
+import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
@@ -22,7 +18,7 @@ import type {
   SolanaTransaction,
   UseEmbeddedSolanaWalletOptions,
 } from '../types'
-import { buildRecoveryParams } from './utils'
+import { resolveRecoveryForSetActive } from './recoveryResolver'
 
 type InternalState = {
   status: WalletStatus
@@ -31,7 +27,6 @@ type InternalState = {
   error: string | null
 }
 
-/** Hook for managing Solana embedded wallets. */
 export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): EmbeddedSolanaWalletState {
   const {
     client,
@@ -64,7 +59,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       return createSolanaProvider({
         account,
         signMessage: async (message: string): Promise<string> => {
-          // CRITICAL: Use hashMessage: false for Ed25519 (Solana)
           const signature = await client.embeddedWallet.signMessage(message, {
             hashMessage: false, // Ed25519 - no keccak256
           })
@@ -72,7 +66,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         },
         signTransaction: async (transaction: SolanaTransaction): Promise<SignedSolanaTransaction> => {
           const messageBytes = getTransactionBytes(transaction)
-          // Sign the transaction bytes (base64 encoded)
           const signature = await client.embeddedWallet.signMessage(Buffer.from(messageBytes).toString('base64'), {
             hashMessage: false, // Ed25519 - no keccak256
           })
@@ -82,7 +75,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           }
         },
         signAllTransactions: async (transactions: SolanaTransaction[]): Promise<SignedSolanaTransaction[]> => {
-          // Sign each transaction
           const results = await Promise.all(
             transactions.map(async (tx) => {
               const messageBytes = getTransactionBytes(tx)
@@ -136,7 +128,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           }
         )
 
-        // Create the wallet (Solana wallets are always EOA - no Smart Accounts)
         const account = await client.embeddedWallet.create({
           chainType: ChainTypeEnum.SVM,
           accountType: AccountTypeEnum.EOA,
@@ -145,7 +136,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
 
         await updateEmbeddedAccounts({ silent: true })
 
-        // Create provider and update state
         const provider = createProviderForAccount(account)
         const connectedWallet: ConnectedEmbeddedSolanaWallet = {
           id: account.id,
@@ -212,46 +202,18 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
 
         try {
-          const password = activeOptions.password ?? activeOptions.recoveryPassword
-          const hasExplicitRecovery =
-            activeOptions.recoveryParams != null || password != null || activeOptions.recoveryMethod !== undefined
-
-          let recoveryParams = activeOptions.recoveryParams
-          if (!recoveryParams && !hasExplicitRecovery) {
-            if (account.recoveryMethod === RecoveryMethod.PASSKEY) {
-              recoveryParams = { recoveryMethod: RecoveryMethod.PASSKEY }
-              if (activeOptions.passkeyId)
-                (recoveryParams as typeof recoveryParams & { passkeyId?: string }).passkeyId = activeOptions.passkeyId
-            } else if (account.recoveryMethod === RecoveryMethod.PASSWORD) {
-              setState((s) => ({ ...s, status: 'needs-recovery', error: null }))
-              return
-            } else {
-              recoveryParams = await buildRecoveryParams(
-                { recoveryMethod: undefined, otpCode: activeOptions.otpCode },
-                {
-                  walletConfig,
-                  getAccessToken: () => client.getAccessToken(),
-                  getUserId: () => client.user.get().then((u) => u?.id),
-                }
-              )
-            }
-          } else if (!recoveryParams && hasExplicitRecovery) {
-            recoveryParams = await buildRecoveryParams(
-              {
-                recoveryMethod:
-                  activeOptions.recoveryMethod ?? (password != null ? RecoveryMethod.PASSWORD : undefined),
-                passkeyId: activeOptions.passkeyId,
-                password,
-                otpCode: activeOptions.otpCode,
-              },
-              {
-                walletConfig,
-                getAccessToken: () => client.getAccessToken(),
-                getUserId: () => client.user.get().then((u) => u?.id),
-              }
-            )
+          const config: BuildRecoveryParamsConfig = {
+            walletConfig,
+            getAccessToken: () => client.getAccessToken(),
+            getUserId: () => client.user.get().then((u) => u?.id),
+          }
+          const resolved = await resolveRecoveryForSetActive(account, activeOptions, config)
+          if (resolved.needsRecovery) {
+            setState((s) => ({ ...s, status: 'needs-recovery', error: null }))
+            return
           }
 
+          const recoveryParams = resolved.recoveryParams
           if (recoveryParams) {
             await client.embeddedWallet.recover({
               account: account.id,
@@ -417,7 +379,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     setActiveEmbeddedAddress,
   ])
 
-  // Handle loading state
   if (isLoadingAccounts) {
     return {
       ...actions,
@@ -426,71 +387,5 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     } as EmbeddedSolanaWalletState
   }
 
-  // Return discriminated union based on status
-  switch (state.status) {
-    case 'disconnected':
-      return {
-        ...actions,
-        status: 'disconnected',
-        activeWallet: null,
-      } as EmbeddedSolanaWalletState
-
-    case 'fetching-wallets':
-      return {
-        ...actions,
-        status: 'fetching-wallets',
-        activeWallet: null,
-      } as EmbeddedSolanaWalletState
-
-    case 'connecting':
-      return {
-        ...actions,
-        status: 'connecting',
-        activeWallet: state.activeWallet!,
-      } as EmbeddedSolanaWalletState
-
-    case 'reconnecting':
-      return {
-        ...actions,
-        status: 'reconnecting',
-        activeWallet: state.activeWallet!,
-      } as EmbeddedSolanaWalletState
-
-    case 'creating':
-      return {
-        ...actions,
-        status: 'creating',
-        activeWallet: null,
-      } as EmbeddedSolanaWalletState
-
-    case 'needs-recovery':
-      return {
-        ...actions,
-        status: 'needs-recovery',
-        activeWallet: state.activeWallet!,
-      } as EmbeddedSolanaWalletState
-
-    case 'connected':
-      return {
-        ...actions,
-        status: 'connected',
-        activeWallet: state.activeWallet!,
-        provider: state.provider!,
-      } as EmbeddedSolanaWalletState
-
-    case 'error':
-      return {
-        ...actions,
-        status: 'error',
-        activeWallet: state.activeWallet,
-        error: state.error!,
-      } as EmbeddedSolanaWalletState
-
-    default:
-      return {
-        ...actions,
-        status: 'disconnected',
-        activeWallet: null,
-      } as EmbeddedSolanaWalletState
-  }
+  return buildEmbeddedWalletStatusResult(state, actions) as EmbeddedSolanaWalletState
 }

@@ -525,7 +525,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   }, [userLinkedWalletConnectors, userEmbeddedWallets])
 
   const wallets = useMemo<EthereumUserWallet[]>(() => {
-    // logger.log("Mapping wallets", { rawWallets, status, address, isConnected, connector: connector?.id });
     return rawWallets.map((w) => ({
       ...w,
       isConnecting: status.status === 'connecting' && status.address?.toLowerCase() === w.address.toLowerCase(),
@@ -910,7 +909,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         // Set embedded wallet recovery method
         await client.embeddedWallet.setRecoveryMethod(params.previousRecovery, params.newRecovery)
 
-        // Get the updated embedded account
         const embeddedAccount = await client.embeddedWallet.get()
 
         setStatus({ status: 'success' })

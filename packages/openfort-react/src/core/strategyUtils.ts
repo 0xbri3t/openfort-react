@@ -1,13 +1,6 @@
-/**
- * Shared strategy utilities (EVM + Solana)
- */
-
 import type { ChainTypeEnum, EmbeddedAccount } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../components/Openfort/types'
 
-/**
- * Get first embedded account address for given chain type
- */
 export function firstEmbeddedAddress(
   accounts: EmbeddedAccount[] | undefined,
   chainType: ChainTypeEnum
@@ -17,9 +10,6 @@ export function firstEmbeddedAddress(
   return acc?.address
 }
 
-/**
- * Resolve ethereum policy from config for a given chainId
- */
 export function resolveEthereumPolicy(
   config: OpenfortWalletConfig | undefined,
   chainId: number

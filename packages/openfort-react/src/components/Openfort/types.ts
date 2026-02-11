@@ -13,9 +13,6 @@ export type { SolanaUIOptions } from '../../solana/types'
 import type { CustomAvatarProps, CustomTheme, Languages, Mode, Theme } from '../../types'
 
 export const routes = {
-  // ==========================================================================
-  // Shared Routes (both chains)
-  // ==========================================================================
   PROVIDERS: 'providers',
   SOCIAL_PROVIDERS: 'socialProviders',
   PROFILE: 'profile',
@@ -65,9 +62,6 @@ export const routes = {
   BUY_COMPLETE: 'buyComplete',
   BUY_PROVIDER_SELECT: 'buyProviderSelect',
 
-  // ==========================================================================
-  // Ethereum-specific Routes (chain-prefixed)
-  // ==========================================================================
   ETH_CONNECTED: 'eth:connected',
   ETH_CREATE_WALLET: 'eth:createWallet',
   ETH_RECOVER_WALLET: 'eth:recoverWallet',
@@ -77,9 +71,6 @@ export const routes = {
   ETH_BUY: 'eth:buy',
   ETH_CONNECTORS: 'eth:connectors',
 
-  // ==========================================================================
-  // Solana-specific Routes (chain-prefixed)
-  // ==========================================================================
   SOL_CONNECTED: 'sol:connected',
   SOL_CREATE_WALLET: 'sol:createWallet',
   SOL_RECOVER_WALLET: 'sol:recoverWallet',
@@ -88,9 +79,6 @@ export const routes = {
   SOL_RECEIVE: 'sol:receive',
   SOL_WALLETS: 'sol:wallets',
 
-  // ==========================================================================
-  // Multi-chain Routes
-  // ==========================================================================
   WALLET_OVERVIEW: 'walletOverview',
 } as const
 
@@ -113,8 +101,6 @@ type ConnectOptions =
       connectType: 'recover'
       wallet: EthereumUserWallet | SolanaUserWallet
     }
-
-// export type ConnectType = ConnectOptions['connectType']
 
 type RoutesWithOptions =
   | ({ route: typeof routes.CONNECTORS } & ConnectOptions)
@@ -412,7 +398,6 @@ export type OpenfortUIOptionsExtended = {
   }
 } & OpenfortUIOptions
 
-// export type Asset = getAssets.Asset<false>
 export type Asset =
   | {
       type: 'native'

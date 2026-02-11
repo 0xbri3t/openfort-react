@@ -1,6 +1,11 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 
+const CHAIN_NAMES: Record<ChainTypeEnum, string> = {
+  [ChainTypeEnum.EVM]: 'Ethereum',
+  [ChainTypeEnum.SVM]: 'Solana',
+}
+
 export function useChain(): {
   chainType: ChainTypeEnum
   isEvm: boolean
@@ -12,6 +17,6 @@ export function useChain(): {
     chainType,
     isEvm: chainType === ChainTypeEnum.EVM,
     isSolana: chainType === ChainTypeEnum.SVM,
-    name: chainType === ChainTypeEnum.EVM ? 'Ethereum' : 'Solana',
+    name: CHAIN_NAMES[chainType] ?? chainType,
   }
 }

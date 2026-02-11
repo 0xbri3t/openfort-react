@@ -115,11 +115,6 @@ export interface EthereumWalletActions {
 /** Re-export for backward compatibility */
 export type SetRecoveryOptions = SharedSetRecoveryOptions
 
-/**
- * Ethereum embedded wallet state machine
- *
- * Uses discriminated union pattern for type-safe state handling.
- */
 export type EmbeddedEthereumWalletState =
   | (EthereumWalletActions & { status: 'disconnected'; activeWallet: null })
   | (EthereumWalletActions & { status: 'fetching-wallets'; activeWallet: null })
@@ -138,9 +133,6 @@ export type EmbeddedEthereumWalletState =
       error: string
     })
 
-/**
- * Options for useEthereumEmbeddedWallet hook
- */
 export type UseEmbeddedEthereumWalletOptions = {
   /** Chain ID for smart account operations */
   chainId?: number

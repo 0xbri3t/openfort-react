@@ -20,6 +20,7 @@ import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
 import { useBalance } from '../../../hooks/useBalance'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useChain } from '../../../shared/hooks/useChain'
+import { getExplorerUrl } from '../../../shared/utils/explorer'
 import { truncateEthAddress } from '../../../utils'
 import { parseTransactionError } from '../../../utils/errorHandling'
 import { logger } from '../../../utils/logger'
@@ -48,26 +49,6 @@ import {
   SummaryList,
 } from './styles'
 
-/** Get block explorer URL for chain */
-function getBlockExplorerUrl(chainId: number): string {
-  const explorers: Record<number, string> = {
-    1: 'https://etherscan.io',
-    10: 'https://optimistic.etherscan.io',
-    137: 'https://polygonscan.com',
-    8453: 'https://basescan.org',
-    42161: 'https://arbiscan.io',
-    43114: 'https://snowtrace.io',
-    56: 'https://bscscan.com',
-    // Testnets
-    5: 'https://goerli.etherscan.io',
-    11155111: 'https://sepolia.etherscan.io',
-    80001: 'https://mumbai.polygonscan.com',
-    84532: 'https://sepolia.basescan.org',
-    421614: 'https://sepolia.arbiscan.io',
-  }
-  return explorers[chainId] ?? 'https://etherscan.io'
-}
-
 /** Check if chain is a testnet */
 function isTestnetChain(chainId: number): boolean {
   const testnets = new Set([5, 11155111, 80001, 84532, 421614, 97, 4002])
@@ -90,7 +71,7 @@ const SendConfirmation = () => {
         name: getChainName(chainId),
         blockExplorers: {
           default: {
-            url: getBlockExplorerUrl(chainId),
+            url: getExplorerUrl(ChainTypeEnum.EVM, { chainId }),
           },
         },
         testnet: isTestnetChain(chainId),

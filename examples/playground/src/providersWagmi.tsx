@@ -10,8 +10,8 @@ const config = createConfig(
     chains: [polygonAmoy, beamTestnet, baseSepolia],
     transports: {
       [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology'),
-      [beamTestnet.id]: http('https://subnets.avax.network/beam/testnet/rpc'),
-      [baseSepolia.id]: http(),
+      [beamTestnet.id]: http('https://build.onbeam.com/rpc/testnet'),
+      [baseSepolia.id]: http('https://sepolia.base.org'),
     },
   })
 )

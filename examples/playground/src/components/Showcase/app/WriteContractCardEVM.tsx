@@ -1,4 +1,4 @@
-import { useChains, useEVMAccount, useEVMReadContract, useEVMWriteContract } from '@openfort/react'
+import { ChainTypeEnum, getExplorerUrl, useEVMAccount, useEVMReadContract, useEVMWriteContract } from '@openfort/react'
 import { formatUnits, getAddress } from 'viem'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
@@ -19,7 +19,6 @@ const BALANCE_ABI = [
 
 export const WriteContractCardEVM = () => {
   const { address, chainId } = useEVMAccount()
-  const chains = useChains()
 
   const {
     data: balance,
@@ -91,7 +90,7 @@ export const WriteContractCardEVM = () => {
           <InputMessage message={`Transaction hash: ${hash}`} show={!!hash} variant="success" />
           {hash && chainId && (
             <a
-              href={`${chains.find((c) => c.id === chainId)?.blockExplorers?.default?.url}/tx/${hash}`}
+              href={getExplorerUrl(ChainTypeEnum.EVM, { chainId, txHash: hash })}
               target="_blank"
               rel="noopener noreferrer"
               className="underline text-blue-400"

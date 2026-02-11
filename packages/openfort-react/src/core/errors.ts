@@ -1,13 +1,3 @@
-/**
- * Error handling for @openfort/react
- *
- * Provides typed error classes with error codes for better error handling.
- * Maintains backwards compatibility with existing OpenfortError.
- */
-
-/**
- * Error codes for Openfort React SDK
- */
 export const OpenfortErrorCode = {
   // Configuration errors
   MISSING_PROVIDER: 'MISSING_PROVIDER',

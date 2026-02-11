@@ -1,7 +1,3 @@
-/**
- * Shared recovery utilities for embedded wallet (EVM + Solana)
- */
-
 import { RecoveryMethod, type RecoveryParams } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
@@ -19,9 +15,6 @@ export type BuildRecoveryParamsConfig = {
   getUserId: () => Promise<string | undefined>
 }
 
-/**
- * Build recovery params from recovery options
- */
 export async function buildRecoveryParams(
   options: RecoveryOptions | undefined,
   config: BuildRecoveryParamsConfig
@@ -75,9 +68,6 @@ export async function buildRecoveryParams(
   }
 }
 
-/**
- * Get encryption session for automatic recovery
- */
 export async function getEncryptionSession(params: {
   accessToken: string
   userId: string

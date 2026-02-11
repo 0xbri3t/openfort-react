@@ -41,7 +41,6 @@ const SolanaConnected: React.FC = () => {
   const { setHeaderLeftSlot, setRoute } = context
   const locales = useLocales()
 
-  // Get Solana context for cluster info
   const { cluster } = useSolanaContext()
 
   const wallet = useConnectedWallet()

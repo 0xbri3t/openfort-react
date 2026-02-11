@@ -1,5 +1,6 @@
+import { ChainTypeEnum, getExplorerUrl } from '@openfort/react'
 import { formatUnits, getAddress, parseAbi } from 'viem'
-import { useAccount, useChainId, useChains, useReadContract, useWriteContract } from 'wagmi'
+import { useAccount, useChainId, useReadContract, useWriteContract } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
@@ -8,7 +9,6 @@ import { cn } from '@/lib/cn'
 
 export const WriteContractCard = () => {
   const { address } = useAccount()
-  const chains = useChains()
   const chainId = useChainId()
 
   const {
@@ -85,14 +85,14 @@ export const WriteContractCard = () => {
             {isPending ? 'Minting...' : 'Mint Tokens'}
           </Button>
           <InputMessage message={`Transaction hash: ${hash}`} show={!!hash} variant="success" />
-          {hash && (
+          {hash && chainId && (
             <a
-              href={`${chains.find((c) => c.id === chainId)?.blockExplorers?.default.url}/tx/${hash}`}
+              href={getExplorerUrl(ChainTypeEnum.EVM, { chainId, txHash: hash })}
               target="_blank"
               rel="noopener noreferrer"
               className="underline text-blue-400"
             >
-              View on Etherscan
+              View on Explorer
             </a>
           )}
           <InputMessage message={`Error: ${error?.message}`} show={!!error} variant="error" />

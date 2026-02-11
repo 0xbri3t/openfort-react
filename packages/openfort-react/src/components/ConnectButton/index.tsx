@@ -165,7 +165,6 @@ const ConnectedLabel = ({ separator }: { separator?: string }) => {
   const { user } = useOpenfortCore()
   const wallet = useConnectedWallet()
 
-  // Use discriminated union pattern
   switch (wallet.status) {
     case 'loading':
       return 'Loading...'

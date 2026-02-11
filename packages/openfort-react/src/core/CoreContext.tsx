@@ -37,7 +37,6 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
     throw new ConfigurationError('publishableKey is required. Get your key from https://dashboard.openfort.io')
   }
 
-  // Build shield configuration if provided
   const shieldConfiguration = config.shieldPublishableKey
     ? {
         shieldPublishableKey: config.shieldPublishableKey,
@@ -93,10 +92,8 @@ export type CoreProviderProps = PropsWithChildren<
  * ```
  */
 export function CoreProvider({ children, queryClient: externalQueryClient, ...config }: CoreProviderProps): ReactNode {
-  // Create or use provided query client
   const queryClient = useMemo(() => externalQueryClient ?? createQueryClient(), [externalQueryClient])
 
-  // Build SDK configuration
   const sdkConfig = useMemo(
     () => buildSdkConfig(config),
     // Only rebuild if these specific config values change
@@ -104,12 +101,10 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
     [config.publishableKey, config.shieldPublishableKey, config.debug]
   )
 
-  // Create Openfort client (singleton per provider instance)
   const client = useMemo(() => {
     return new Openfort(sdkConfig)
   }, [sdkConfig])
 
-  // Build full config object
   const fullConfig: OpenfortConfig = useMemo(
     () => ({
       ...config,
@@ -118,7 +113,6 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
     [config, sdkConfig]
   )
 
-  // Context value
   const value: CoreContextValue = useMemo(
     () => ({
       client,

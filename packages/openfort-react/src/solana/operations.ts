@@ -68,7 +68,7 @@ export async function signMessage(params: SignMessageParams): Promise<string> {
 
   try {
     const signature = await client.embeddedWallet.signMessage(messageString, {
-      hashMessage: false, // CRITICAL: Ed25519 - no keccak256
+      hashMessage: false,
     })
 
     logger.log('[Solana operations.signMessage] client.embeddedWallet.signMessage returned', {
@@ -108,7 +108,7 @@ export async function signTransaction(params: SignTransactionParams): Promise<Si
 
     // Sign the transaction bytes (base64 encoded)
     const signature = await client.embeddedWallet.signMessage(Buffer.from(messageBytes).toString('base64'), {
-      hashMessage: false, // CRITICAL: Ed25519 - no keccak256
+      hashMessage: false,
     })
 
     return {

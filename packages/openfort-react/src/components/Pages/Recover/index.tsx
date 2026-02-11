@@ -369,26 +369,25 @@ const RecoverAutomaticWallet = ({
   )
 }
 
-const RecoverWallet = ({
-  wallet,
-  onBack,
-  logoutOnBack,
-}: {
+type RecoverWalletProps = {
   wallet: EthereumUserWallet | SolanaUserWallet
   onBack: SetOnBackFunction
   logoutOnBack?: boolean
-}) => {
-  switch (wallet.recoveryMethod) {
-    case RecoveryMethod.PASSWORD:
-      return <RecoverPasswordWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
-    case RecoveryMethod.AUTOMATIC:
-      return <RecoverAutomaticWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
-    case RecoveryMethod.PASSKEY:
-      return <RecoverPasskeyWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
-    default:
-      logger.error(`Unsupported recovery method: ${wallet.recoveryMethod}, defaulting to automatic.`)
-      return <RecoverAutomaticWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
+}
+
+const RECOVER_WALLET_REGISTRY: Partial<Record<RecoveryMethod, React.FC<RecoverWalletProps>>> = {
+  [RecoveryMethod.PASSWORD]: RecoverPasswordWallet,
+  [RecoveryMethod.AUTOMATIC]: RecoverAutomaticWallet,
+  [RecoveryMethod.PASSKEY]: RecoverPasskeyWallet,
+}
+
+const RecoverWallet = ({ wallet, onBack, logoutOnBack }: RecoverWalletProps) => {
+  const Component = RECOVER_WALLET_REGISTRY[wallet.recoveryMethod ?? RecoveryMethod.AUTOMATIC]
+  if (!Component) {
+    logger.error(`Unsupported recovery method: ${wallet.recoveryMethod}, defaulting to automatic.`)
+    return <RecoverAutomaticWallet wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
   }
+  return <Component wallet={wallet} onBack={onBack} logoutOnBack={logoutOnBack} />
 }
 
 const RecoverPage: React.FC = () => {

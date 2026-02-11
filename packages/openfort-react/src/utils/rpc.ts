@@ -15,7 +15,7 @@ import type { SolanaCluster } from '../solana/types'
 export const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
   80002: 'https://rpc-amoy.polygon.technology',
   84532: 'https://sepolia.base.org',
-  13337: 'https://subnets.avax.network/beam/testnet/rpc',
+  13337: 'https://build.onbeam.com/rpc/testnet',
   11155111: 'https://rpc.sepolia.org',
   11155420: 'https://sepolia.optimism.io',
   421614: 'https://sepolia-rollup.arbitrum.io/rpc',
@@ -53,6 +53,7 @@ export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string | undefin
 export const CHAIN_NAMES: Record<number, string> = {
   80002: 'Polygon Amoy',
   84532: 'Base Sepolia',
+  13337: 'Beam Testnet',
   11155111: 'Sepolia',
   11155420: 'Optimism Sepolia',
   421614: 'Arbitrum Sepolia',
@@ -73,6 +74,7 @@ export interface NativeCurrency {
 export const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
   80002: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
   84532: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  13337: { name: 'BEAM', symbol: 'BEAM', decimals: 18 },
   11155111: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   11155420: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   421614: { name: 'Ether', symbol: 'ETH', decimals: 18 },
@@ -103,6 +105,7 @@ export function getNativeCurrency(chainId: number): NativeCurrency {
 export const BLOCK_EXPLORERS: Record<number, string> = {
   80002: 'https://amoy.polygonscan.com',
   84532: 'https://sepolia.basescan.org',
+  13337: 'https://subnets-test.avax.network/beam',
   11155111: 'https://sepolia.etherscan.io',
   11155420: 'https://sepolia-optimism.etherscan.io',
   421614: 'https://sepolia.arbiscan.io',
