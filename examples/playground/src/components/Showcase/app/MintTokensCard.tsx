@@ -70,7 +70,12 @@ export const MintTokensCard = () => {
             variant="success"
           />
           {explorerUrl && (
-            <a href={explorerUrl} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
+            <a
+              href={explorerUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-green-600 dark:text-green-400 hover:underline"
+            >
               View on Explorer
             </a>
           )}

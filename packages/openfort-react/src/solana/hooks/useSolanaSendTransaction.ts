@@ -1,9 +1,11 @@
+import type { Base64EncodedWireTransaction } from '@solana/kit'
 import {
   address,
   appendTransactionMessageInstruction,
   compileTransaction,
   createSolanaRpc,
   createTransactionMessage,
+  getBase58Encoder,
   pipe,
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
@@ -91,16 +93,29 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
         )
 
         const compiled = compileTransaction(message)
-        const signed = await provider.signTransaction({ messageBytes: compiled as any }) //TODO: fix this
+        const messageBytes = Uint8Array.from(compiled.messageBytes as Iterable<number>)
+        const signed = await provider.signTransaction({ messageBytes })
 
         setStatus('sending')
 
+        const sigStr = typeof signed.signature === 'string' ? signed.signature : String(signed.signature)
+        const signatureBytes = new Uint8Array(getBase58Encoder().encode(sigStr))
+        if (signatureBytes.length !== 64) {
+          throw new OpenfortTransactionError(
+            `Invalid signature length: ${signatureBytes.length}, expected 64`,
+            TransactionErrorCode.SIGNING_FAILED
+          )
+        }
+        const wire = new Uint8Array(1 + signatureBytes.length + messageBytes.length)
+        wire[0] = 1
+        wire.set(signatureBytes, 1)
+        wire.set(messageBytes, 1 + signatureBytes.length)
+        const base64Wire = Buffer.from(wire).toString('base64')
         const result = await rpc
-          .sendTransaction(new Uint8Array(Buffer.from(signed.signature, 'base64')) as any, {
-            //TODO: fix this
+          .sendTransaction(base64Wire as Base64EncodedWireTransaction, {
             encoding: 'base64',
             preflightCommitment: 'confirmed',
-            skipPreflight: false,
+            skipPreflight: true,
           })
           .send()
         const signatureValue = result.valueOf() as string | undefined
@@ -125,6 +140,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
                 { cause: err }
               )
         setError(wrapped)
+        return
       }
     },
     [wallet, rpc, rpcUrl, queryClient]

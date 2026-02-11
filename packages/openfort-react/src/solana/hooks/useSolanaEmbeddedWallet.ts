@@ -1,4 +1,10 @@
-import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  type EmbeddedAccount,
+  EmbeddedState,
+  RecoveryMethod,
+} from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
@@ -26,8 +32,15 @@ type InternalState = {
 
 /** Hook for managing Solana embedded wallets. */
 export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): EmbeddedSolanaWalletState {
-  const { client, embeddedAccounts, embeddedState, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =
-    useOpenfortCore()
+  const {
+    client,
+    embeddedAccounts,
+    embeddedState,
+    isLoadingAccounts,
+    activeEmbeddedAddress,
+    updateEmbeddedAccounts,
+    setActiveEmbeddedAddress,
+  } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
@@ -327,14 +340,37 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
   )
 
   useEffect(() => {
-    if (
-      isLoadingAccounts ||
-      state.status !== 'disconnected' ||
-      solanaAccounts.length === 0 ||
-      embeddedState !== EmbeddedState.READY
-    ) {
+    if (isLoadingAccounts || solanaAccounts.length === 0 || embeddedState !== EmbeddedState.READY) {
       return
     }
+    const accountByAddress = activeEmbeddedAddress
+      ? solanaAccounts.find((acc) => acc.address.toLowerCase() === activeEmbeddedAddress.toLowerCase())
+      : undefined
+    const currentMatches =
+      state.status === 'connected' && state.activeWallet?.address.toLowerCase() === activeEmbeddedAddress?.toLowerCase()
+    if (!activeEmbeddedAddress && state.status === 'connected') {
+      setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
+      return
+    }
+    if (accountByAddress && !currentMatches) {
+      const provider = createProviderForAccount(accountByAddress)
+      const connectedWallet: ConnectedEmbeddedSolanaWallet = {
+        id: accountByAddress.id,
+        address: accountByAddress.address,
+        chainType: ChainTypeEnum.SVM,
+        walletIndex: solanaAccounts.indexOf(accountByAddress),
+        recoveryMethod: accountByAddress.recoveryMethod,
+        getProvider: async () => provider,
+      }
+      setState({
+        status: 'connected',
+        activeWallet: connectedWallet,
+        provider,
+        error: null,
+      })
+      return
+    }
+    if (state.status !== 'disconnected') return
     if (autoReconnectAttemptedRef.current) return
     autoReconnectAttemptedRef.current = true
     let cancelled = false
@@ -369,7 +405,17 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     return () => {
       cancelled = true
     }
-  }, [isLoadingAccounts, state.status, solanaAccounts, embeddedState, client, createProviderForAccount, setActiveEmbeddedAddress])
+  }, [
+    isLoadingAccounts,
+    state.status,
+    state.activeWallet?.address,
+    solanaAccounts,
+    embeddedState,
+    activeEmbeddedAddress,
+    client,
+    createProviderForAccount,
+    setActiveEmbeddedAddress,
+  ])
 
   // Handle loading state
   if (isLoadingAccounts) {
