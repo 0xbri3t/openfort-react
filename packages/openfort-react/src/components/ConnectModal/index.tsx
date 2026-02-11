@@ -145,9 +145,11 @@ const ConnectModal: React.FC<{
     () => ({
       user: core.user,
       embeddedAccounts: core.embeddedAccounts,
+      activeEmbeddedAddress: core.activeEmbeddedAddress,
       chainType: context.chainType,
+      embeddedState: core.embeddedState,
     }),
-    [core.user, core.embeddedAccounts, context.chainType]
+    [core.user, core.embeddedAccounts, core.activeEmbeddedAddress, context.chainType, core.embeddedState]
   )
   const isConnected = strategy?.isConnected(state) ?? false
   const chainId = strategy?.getChainId()

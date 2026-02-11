@@ -1,4 +1,4 @@
-import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
@@ -26,7 +26,7 @@ type InternalState = {
 
 /** Hook for managing Solana embedded wallets. */
 export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): EmbeddedSolanaWalletState {
-  const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =
+  const { client, embeddedAccounts, embeddedState, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =
     useOpenfortCore()
   const { walletConfig } = useOpenfort()
 
@@ -331,10 +331,11 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       isLoadingAccounts ||
       state.status !== 'disconnected' ||
       solanaAccounts.length === 0 ||
-      autoReconnectAttemptedRef.current
+      embeddedState !== EmbeddedState.READY
     ) {
       return
     }
+    if (autoReconnectAttemptedRef.current) return
     autoReconnectAttemptedRef.current = true
     let cancelled = false
     client.embeddedWallet
@@ -368,7 +369,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     return () => {
       cancelled = true
     }
-  }, [isLoadingAccounts, state.status, solanaAccounts, client, createProviderForAccount, setActiveEmbeddedAddress])
+  }, [isLoadingAccounts, state.status, solanaAccounts, embeddedState, client, createProviderForAccount, setActiveEmbeddedAddress])
 
   // Handle loading state
   if (isLoadingAccounts) {

@@ -1,3 +1,4 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import type React from 'react'
 import { useUI } from '../../hooks/openfort/useUI'
@@ -196,10 +197,11 @@ function OpenfortButtonInner({
   const { chainType } = useChain()
   const wallet = useConnectedWallet()
   const isConnected = wallet.status === 'connected'
-  const address = isConnected ? (wallet.address as `0x${string}`) : undefined
+  const address = isConnected ? wallet.address : undefined
   const chainId = isConnected ? wallet.chainId : undefined
 
   const isChainSupported = useChainIsSupported(chainId)
+  const showUnsupportedWarning = chainType === ChainTypeEnum.EVM && !isChainSupported
 
   const identity = useResolvedIdentity({
     address: address ?? '',
@@ -227,7 +229,7 @@ function OpenfortButtonInner({
           {showAvatar && (
             <IconContainer>
               <AnimatePresence initial={false}>
-                {!isChainSupported && (
+                {showUnsupportedWarning && (
                   <UnsupportedNetworkContainer initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <title>Unsupported network</title>

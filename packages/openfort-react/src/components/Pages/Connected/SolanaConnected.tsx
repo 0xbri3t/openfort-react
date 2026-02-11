@@ -5,11 +5,13 @@
  * Uses the internal useSolanaBalance hook for balance display.
  */
 
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import type React from 'react'
 import { useEffect } from 'react'
 import { ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
-import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useSolanaBalance } from '../../../solana/hooks/useSolanaBalance'
 import { useSolanaContext } from '../../../solana/providers/SolanaContextProvider'
 import { nFormatter, truncateEthAddress } from '../../../utils'
@@ -42,8 +44,10 @@ const SolanaConnected: React.FC = () => {
   // Get Solana context for cluster info
   const { cluster } = useSolanaContext()
 
-  const embeddedWallet = useEmbeddedWallet()
-  const address = embeddedWallet.status === 'connected' ? embeddedWallet.activeWallet.address : undefined
+  const wallet = useConnectedWallet()
+  const { embeddedAccounts } = useOpenfortCore()
+  const hasSolanaWallets = (embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.SVM) ?? []).length > 0
+  const address = wallet.status === 'connected' ? wallet.address : undefined
 
   // Fetch balance using internal hook
   const { data: balance, isLoading: isBalanceLoading } = useSolanaBalance(address)
@@ -128,27 +132,17 @@ const SolanaConnected: React.FC = () => {
                   )}
                 </BalanceContainer>
                 <ActionButtonsContainer>
-                  <ActionButton
-                    icon={<SendIcon />}
-                    onClick={() => {
-                      context.setRoute(routes.SOL_SEND)
-                    }}
-                  >
+                  <ActionButton icon={<SendIcon />} onClick={() => context.setRoute(routes.SOL_SEND)}>
                     Send
                   </ActionButton>
-                  <ActionButton
-                    icon={<ReceiveIcon />}
-                    onClick={() => {
-                      context.setRoute(routes.SOL_RECEIVE)
-                    }}
-                  >
-                    Receive
+                  <ActionButton icon={<ReceiveIcon />} onClick={() => context.setRoute(routes.SOL_RECEIVE)}>
+                    Get
                   </ActionButton>
                 </ActionButtonsContainer>
               </ModalBody>
             )}
           </>
-        ) : embeddedWallet.wallets && embeddedWallet.wallets.length > 0 ? (
+        ) : hasSolanaWallets ? (
           <Button onClick={() => setRoute(routes.SOL_WALLETS)}>Manage wallets</Button>
         ) : (
           <Button onClick={() => setRoute(routes.SOL_CREATE_WALLET)}>Create Solana Wallet</Button>

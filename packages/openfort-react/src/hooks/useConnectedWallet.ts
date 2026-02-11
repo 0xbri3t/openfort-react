@@ -1,4 +1,4 @@
-import { ChainTypeEnum, type EmbeddedAccount } from '@openfort/openfort-js'
+import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
 import { useContext } from 'react'
 import { useConnectionStrategy } from '../core/ConnectionStrategyContext'
 import { useOpenfortCore } from '../openfort/useOpenfort'
@@ -79,7 +79,7 @@ function useEthereumWalletFromStrategy(): WalletInternalState | null {
 
 function useSolanaWalletInternal(): WalletInternalState | null {
   const context = useContext(SolanaContext)
-  const { embeddedAccounts, isLoadingAccounts, activeEmbeddedAddress } = useOpenfortCore()
+  const { embeddedAccounts, isLoadingAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
 
   if (!context) return null
 
@@ -97,6 +97,8 @@ function useSolanaWalletInternal(): WalletInternalState | null {
     ? solAccounts.find((a) => a.address.toLowerCase() === activeEmbeddedAddress.toLowerCase())
     : undefined
   if (!activeAccount) return { status: 'not-created' }
+
+  if (embeddedState !== EmbeddedState.READY) return { status: 'not-created' }
 
   return {
     status: 'connected',

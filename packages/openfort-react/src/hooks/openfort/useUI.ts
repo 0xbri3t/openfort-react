@@ -37,9 +37,9 @@ type ValidRoutes = ModalRoutes
 
 export function useUI() {
   const { open, setOpen, setRoute, chainType } = useOpenfort()
-  const { isLoading, user, needsRecovery, embeddedAccounts } = useOpenfortCore()
+  const { isLoading, user, needsRecovery, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
   const strategy = useConnectionStrategy()
-  const state = { user, embeddedAccounts, chainType }
+  const state = { user, embeddedAccounts, chainType, activeEmbeddedAddress, embeddedState }
   const isConnected = strategy?.isConnected(state) ?? false
 
   function defaultOpen() {

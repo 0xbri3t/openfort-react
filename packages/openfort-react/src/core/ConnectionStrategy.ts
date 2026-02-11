@@ -1,4 +1,4 @@
-import type { ChainTypeEnum, EmbeddedAccount, Openfort, User } from '@openfort/openfort-js'
+import type { ChainTypeEnum, EmbeddedAccount, EmbeddedState, Openfort, User } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../components/Openfort/types'
 import type { WalletProps } from '../wallets/useEVMConnectors'
 
@@ -11,6 +11,8 @@ export interface ConnectionStrategyState {
   /** When set, strategy uses this as the connected address (e.g. after user switches active embedded wallet). */
   activeEmbeddedAddress?: string | null
   chainType: ChainTypeEnum
+  /** For Solana embedded: only treat as connected when READY (wallet actually recovered). */
+  embeddedState?: EmbeddedState
 }
 
 export type ConnectRoute = 'embedded' | 'external-wallets'

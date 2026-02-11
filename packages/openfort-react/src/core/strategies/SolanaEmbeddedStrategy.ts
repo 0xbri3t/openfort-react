@@ -1,4 +1,4 @@
-import { ChainTypeEnum, type EmbeddedAccount, type Openfort } from '@openfort/openfort-js'
+import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState, type Openfort } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import type { ConnectionStrategy, ConnectionStrategyState } from '../ConnectionStrategy'
 
@@ -10,7 +10,15 @@ function firstSolanaAddress(accounts: EmbeddedAccount[] | undefined): string | u
 
 function hasEmbeddedSolana(state: ConnectionStrategyState): boolean {
   if (!state.user) return false
-  return !!firstSolanaAddress(state.embeddedAccounts)
+  const svmAddress = firstSolanaAddress(state.embeddedAccounts)
+  if (!svmAddress) return false
+  if (!state.activeEmbeddedAddress) return false
+  if (state.embeddedState !== EmbeddedState.READY) return false
+  return (
+    state.embeddedAccounts?.some(
+      (a) => a.chainType === ChainTypeEnum.SVM && a.address.toLowerCase() === state.activeEmbeddedAddress?.toLowerCase()
+    ) ?? false
+  )
 }
 
 export function createSolanaEmbeddedStrategy(

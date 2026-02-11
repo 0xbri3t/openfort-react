@@ -16,6 +16,7 @@ import { useChains } from '../../../hooks/useChains'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
 import { nFormatter, truncateEthAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
@@ -49,8 +50,9 @@ const EthereumConnected: React.FC = () => {
   const themeContext = useThemeContext()
   const { setHeaderLeftSlot, setRoute } = context
 
-  // Use new abstraction hooks (no wagmi)
   const wallet = useConnectedWallet()
+  const { embeddedAccounts } = useOpenfortCore()
+  const hasEthereumWallets = (embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.EVM) ?? []).length > 0
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? (wallet.address as `0x${string}`) : undefined
   const chainId = isConnected ? wallet.chainId : undefined
@@ -244,6 +246,8 @@ const EthereumConnected: React.FC = () => {
               </ModalBody>
             )}
           </>
+        ) : hasEthereumWallets ? (
+          <Button onClick={() => context.setRoute(routes.LOAD_WALLETS)}>Manage wallets</Button>
         ) : (
           <Button
             onClick={() => context.setRoute({ route: routes.CONNECTORS, connectType: 'link' })}

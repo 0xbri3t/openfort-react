@@ -346,10 +346,14 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [strategy, walletConfig?.ethereum, activeChainId, setActiveChainId])
 
-  // Sync active embedded address from SDK on load (so top-right and strategy match after refresh)
+  // Sync active embedded address from SDK on load (only when wallet is actually recovered)
   useEffect(() => {
     if (!openfort || !embeddedAccounts?.length) {
       if (!embeddedAccounts?.length) setActiveEmbeddedAddress(undefined)
+      return
+    }
+    if (embeddedState !== EmbeddedState.READY) {
+      setActiveEmbeddedAddress(undefined)
       return
     }
     let cancelled = false
@@ -364,7 +368,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     return () => {
       cancelled = true
     }
-  }, [openfort, embeddedAccounts?.length])
+  }, [openfort, embeddedAccounts?.length, embeddedState])
 
   useEffect(() => {
     if (!openfort || !walletConfig || !strategy) return

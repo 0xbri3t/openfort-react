@@ -25,6 +25,8 @@ export function useConnectLifecycle(
       user: core.user,
       embeddedAccounts: core.embeddedAccounts,
       chainType: ui.chainType,
+      activeEmbeddedAddress: core.activeEmbeddedAddress,
+      embeddedState: core.embeddedState,
     }
     const connected = strategy.isConnected(state)
 
