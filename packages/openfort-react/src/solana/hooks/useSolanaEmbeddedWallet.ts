@@ -189,7 +189,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
   const setActive = useCallback(
     async (activeOptions: SetActiveSolanaWalletOptions): Promise<void> => {
       const run = async (): Promise<void> => {
-        const account = solanaAccounts.find((acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase())
+        const account = solanaAccounts.find((acc) => acc.address === activeOptions.address)
 
         if (!account) {
           throw new OpenfortError(
@@ -344,10 +344,9 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       return
     }
     const accountByAddress = activeEmbeddedAddress
-      ? solanaAccounts.find((acc) => acc.address.toLowerCase() === activeEmbeddedAddress.toLowerCase())
+      ? solanaAccounts.find((acc) => acc.address === activeEmbeddedAddress)
       : undefined
-    const currentMatches =
-      state.status === 'connected' && state.activeWallet?.address.toLowerCase() === activeEmbeddedAddress?.toLowerCase()
+    const currentMatches = state.status === 'connected' && state.activeWallet?.address === activeEmbeddedAddress
     if (!activeEmbeddedAddress && state.status === 'connected') {
       setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
       return
@@ -378,7 +377,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       .get()
       .then((active: EmbeddedAccount | null | undefined) => {
         if (cancelled || !active || active.chainType !== ChainTypeEnum.SVM) return
-        const account = solanaAccounts.find((acc) => acc.address.toLowerCase() === active.address.toLowerCase())
+        const account = solanaAccounts.find((acc) => acc.address === active.address)
         if (!account) return
         const provider = createProviderForAccount(account)
         const connectedWallet: ConnectedEmbeddedSolanaWallet = {

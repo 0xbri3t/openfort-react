@@ -495,7 +495,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
           })
       : []
     return userWallets
-  }, [linkedAccounts, embeddedAccounts])
+  }, [linkedAccounts, availableWallets])
 
   const userEmbeddedWallets = useMemo<EthereumUserWallet[]>(() => {
     const newRawWallets = [] as EthereumUserWallet[]

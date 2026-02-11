@@ -61,7 +61,7 @@ export function Providers({ children }: { children?: React.ReactNode }) {
               rpcUrls: {
                 [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
                 [beamTestnet.id]: 'https://subnets.avax.network/beam/testnet/rpc',
-                [baseSepolia.id]: 'https://mainnet.base.org',
+                [baseSepolia.id]: 'https://sepolia.base.org',
               },
             },
           },

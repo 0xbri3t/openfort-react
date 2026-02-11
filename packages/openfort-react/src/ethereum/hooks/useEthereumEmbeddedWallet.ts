@@ -22,12 +22,13 @@ type InternalState = {
   error: string | null
 }
 
-const DEFAULT_CHAIN_ID = 1
+/** Polygon Amoy testnet — dev/test default; no mainnet (chain 1) in default config. */
+const DEFAULT_CHAIN_ID = 80002
 
 /**
  * Core hook for managing Ethereum embedded wallets. Uses only viem/openfort-js; no wagmi.
- * ChainId comes from options or defaults to mainnet (1). For chainId from wagmi (e.g. connected
- * wallet chain), use the wagmi extension's useEthereumEmbeddedWallet.
+ * ChainId comes from options or defaults to 80002 (Polygon Amoy testnet). For chainId from wagmi
+ * (e.g. connected wallet chain), use the wagmi extension's useEthereumEmbeddedWallet.
  */
 export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOptions): EmbeddedEthereumWalletState {
   const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =

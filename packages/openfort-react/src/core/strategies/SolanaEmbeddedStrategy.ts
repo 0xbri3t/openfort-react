@@ -16,7 +16,7 @@ function hasEmbeddedSolana(state: ConnectionStrategyState): boolean {
   if (state.embeddedState !== EmbeddedState.READY) return false
   return (
     state.embeddedAccounts?.some(
-      (a) => a.chainType === ChainTypeEnum.SVM && a.address.toLowerCase() === state.activeEmbeddedAddress?.toLowerCase()
+      (a) => a.chainType === ChainTypeEnum.SVM && a.address === state.activeEmbeddedAddress
     ) ?? false
   )
 }

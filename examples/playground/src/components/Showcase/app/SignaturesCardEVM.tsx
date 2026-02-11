@@ -27,7 +27,7 @@ export const SignaturesCardEVM = () => {
           <label className={cn('input w-full')}>
             <input
               name="message"
-              type="username"
+              type="text"
               placeholder="Enter a message to sign"
               className="grow peer"
               defaultValue="Hello from Openfort!"

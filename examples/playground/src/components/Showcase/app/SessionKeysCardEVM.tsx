@@ -1,4 +1,4 @@
-import { useEVMAccount, useEVMSignMessage, useGrantPermissions, useRevokePermissions } from '@openfort/react'
+import { useEVMAccount, useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
@@ -17,7 +17,6 @@ export const SessionKeysCardEVM = () => {
   const { addPrivateKey, getPrivateKeys, clearAll, removePrivateKey, updatePrivateKey } =
     useSessionKeysStorage_backendSimulation()
   const { address, chainId } = useEVMAccount()
-  const { data } = useEVMSignMessage()
   const key = useMemo(() => (chainId != null && address ? `${chainId}-${address}` : ''), [chainId, address])
   const grantDisabled = isLoading || submitting
 
@@ -137,11 +136,6 @@ export const SessionKeysCardEVM = () => {
               </TooltipContent>
             </Tooltip>
           ))}
-          <InputMessage
-            message={`Signed message: ${data?.slice(0, 10)}...${data?.slice(-10)}`}
-            show={!!data}
-            variant="success"
-          />
           <InputMessage
             message={error?.message || 'An error occurred while granting permissions.'}
             show={!!error}

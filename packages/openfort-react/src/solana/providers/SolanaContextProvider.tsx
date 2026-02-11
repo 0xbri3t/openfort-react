@@ -77,9 +77,12 @@ function readStoredCluster(): StoredCluster {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
+    // Dev/test environment: only allow devnet, testnet, custom — never mainnet-beta
+    if (raw === 'mainnet-beta') return null
     if (DEFAULT_CLUSTERS.includes(raw as SolanaCluster)) return { cluster: raw as SolanaCluster }
     if (raw === 'custom') return { cluster: 'custom' }
     const parsed = JSON.parse(raw) as { cluster?: string; rpcUrl?: string }
+    if (parsed?.cluster === 'mainnet-beta') return null
     if (parsed?.cluster === 'custom' && typeof parsed?.rpcUrl === 'string')
       return { cluster: 'custom', rpcUrl: parsed.rpcUrl }
     return null
@@ -111,10 +114,16 @@ function resolveRpcUrl(cluster: SolanaCluster, rpcUrlOverride: string | undefine
   return getDefaultRpcUrl(cluster)
 }
 
+const DEFAULT_CLUSTER: SolanaCluster = 'devnet'
+
 export function SolanaContextProvider({ config, children }: SolanaContextProviderProps) {
   const [cluster, setClusterState] = useState<SolanaCluster>(() => {
     const s = readStoredCluster()
-    return s?.cluster ?? config.cluster
+    const fromStored = s?.cluster
+    const fromConfig = config.cluster
+    // Dev/test environment: never use mainnet-beta as default
+    if (fromStored === 'mainnet-beta' || fromConfig === 'mainnet-beta') return DEFAULT_CLUSTER
+    return fromStored ?? fromConfig
   })
   const [rpcUrlOverride, setRpcUrlOverride] = useState<string | undefined>(() => readStoredCluster()?.rpcUrl)
 
