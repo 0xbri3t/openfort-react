@@ -51,7 +51,6 @@ import { SolanaSend } from '../Pages/Send/SolanaSend'
 import SendConfirmation from '../Pages/SendConfirmation'
 import SocialProviders from '../Pages/SoicalProviders'
 import SolanaWallets from '../Pages/SolanaWallets'
-import SwitchCluster from '../Pages/SwitchCluster'
 import SwitchNetworks from '../Pages/SwitchNetworks'
 import ConnectUsing from './ConnectUsing'
 import ConnectWithMobile from './ConnectWithMobile'
@@ -120,7 +119,6 @@ const CHAIN_PREFIXED_PAGES: Record<ChainTypeEnum, RoutePages> = {
     'sol:connected': <Connected />,
     'sol:createWallet': <CreateWallet />,
     'sol:recoverWallet': <RecoverPage />,
-    'sol:switchCluster': <SwitchCluster />,
     'sol:send': <SolanaSend />,
     'sol:receive': <Receive />,
     'sol:wallets': <SolanaWallets />,

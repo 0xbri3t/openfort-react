@@ -14,7 +14,6 @@ import { SignaturesCardEVM } from '@/components/Showcase/app/SignaturesCardEVM'
 import { SignaturesCardSolana } from '@/components/Showcase/app/SignaturesCardSolana'
 import { SwitchChainCard } from '@/components/Showcase/app/SwitchChain'
 import { SwitchChainCardEVM } from '@/components/Showcase/app/SwitchChainCardEVM'
-import { SwitchClusterCardSolana } from '@/components/Showcase/app/SwitchClusterCardSolana'
 import { WriteContractCard } from '@/components/Showcase/app/WriteContract'
 import { WriteContractCardEVM } from '@/components/Showcase/app/WriteContractCardEVM'
 import { SampleTooltipLink } from '@/components/Showcase/auth/SampleTooltipLink'
@@ -92,20 +91,6 @@ export const App = () => {
               tooltip={{
                 hook: 'useSVMWriteContract',
                 body: <>Uses useSVMWriteContract for minting devnet SOL.</>,
-              }}
-            />
-            <SwitchClusterCardSolana
-              tooltip={{
-                hook: 'useSVMSwitchCluster',
-                body: (
-                  <>
-                    Uses{' '}
-                    <Link to="/solana/useSwitchCluster" className="px-1 group">
-                      useSVMSwitchCluster
-                    </Link>{' '}
-                    to switch clusters.
-                  </>
-                ),
               }}
             />
             <CreateSessionKeyCardSolana />

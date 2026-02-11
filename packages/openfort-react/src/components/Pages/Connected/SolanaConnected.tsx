@@ -13,12 +13,10 @@ import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useSolanaBalance } from '../../../solana/hooks/useSolanaBalance'
-import { useSolanaContext } from '../../../solana/providers/SolanaContextProvider'
 import { nFormatter, truncateSolanaAddress } from '../../../utils'
 import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
 import { TextLinkButton } from '../../Common/Button/styles'
-import ClusterSelector from '../../Common/ClusterSelect'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { ModalBody, ModalContent, ModalH1 } from '../../Common/Modal/styles'
 import PoweredByFooter from '../../Common/PoweredByFooter'
@@ -33,7 +31,6 @@ import {
   AvatarInner,
   Balance,
   BalanceContainer,
-  ChainSelectorContainer,
   LinkedProvidersToggle,
   LoadingBalance,
 } from './styles'
@@ -42,8 +39,6 @@ const SolanaConnected: React.FC = () => {
   const context = useOpenfort()
   const { setHeaderLeftSlot, setRoute } = context
   const locales = useLocales()
-
-  const { cluster } = useSolanaContext()
 
   const wallet = useConnectedWallet()
   const { embeddedAccounts } = useOpenfortCore()
@@ -77,8 +72,6 @@ const SolanaConnected: React.FC = () => {
 
   const themeContext = useThemeContext()
   const solanaUI = context.walletConfig?.solana?.ui
-  const clusterDisplay = cluster === 'mainnet-beta' ? 'Mainnet' : cluster.charAt(0).toUpperCase() + cluster.slice(1)
-  const showClusterSelector = !solanaUI?.hideClusterSelector
   const CustomAvatar = solanaUI?.customAvatar
   const separator = ['web95', 'rounded', 'minimal'].includes(themeContext.theme ?? context.uiConfig.theme ?? '')
     ? '....'
@@ -91,11 +84,6 @@ const SolanaConnected: React.FC = () => {
           <>
             <AvatarContainer>
               <AvatarInner>
-                {showClusterSelector ? (
-                  <ChainSelectorContainer>
-                    <ClusterSelector cluster={cluster} clusterDisplay={clusterDisplay} />
-                  </ChainSelectorContainer>
-                ) : null}
                 {CustomAvatar ? <CustomAvatar address={address} /> : <Avatar address={address} />}
               </AvatarInner>
             </AvatarContainer>

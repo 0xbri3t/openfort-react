@@ -11,19 +11,14 @@ import { useSolanaEmbeddedWallet } from '../solana/hooks/useSolanaEmbeddedWallet
 import { useSolanaSendTransaction } from '../solana/hooks/useSolanaSendTransaction'
 import { lamportsToSol } from '../solana/hooks/utils'
 import { signMessage as signMessageOp } from '../solana/operations'
-import { useSolanaContext } from '../solana/providers/SolanaContextProvider'
 import { logger } from '../utils/logger'
 import type {
-  SolanaCluster,
   UseBalanceLike,
   UseDisconnectLike,
   UseSolanaAccountLike,
   UseSolanaSendSOLLike,
   UseSolanaSignMessageLike,
-  UseSolanaSwitchClusterLike,
 } from './types'
-
-const DEFAULT_CLUSTERS: SolanaCluster[] = ['devnet', 'testnet']
 
 export function useSVMAccount(): UseSolanaAccountLike {
   const wallet = useConnectedWallet()
@@ -57,17 +52,6 @@ export function useSVMBalance(): UseBalanceLike {
 
 export function useSVMDisconnect(): UseDisconnectLike {
   return useDisconnectAdapter()
-}
-
-export function useSVMSwitchCluster(): UseSolanaSwitchClusterLike {
-  const { cluster, setCluster } = useSolanaContext()
-  return {
-    clusters: DEFAULT_CLUSTERS,
-    currentCluster: cluster,
-    switchCluster: (c: SolanaCluster) => setCluster(c),
-    isPending: false,
-    error: null,
-  }
 }
 
 export function useSVMSignMessage(): UseSolanaSignMessageLike {

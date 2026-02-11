@@ -13,7 +13,6 @@ const nav = [
   { href: '/solana/useSolanaAccount', label: 'useSVMAccount' },
   { href: '/solana/useSolanaBalance', label: 'useSVMBalance' },
   { href: '/solana/useDisconnect', label: 'useSVMDisconnect' },
-  { href: '/solana/useSwitchCluster', label: 'useSVMSwitchCluster' },
 ]
 
 function RouteComponent() {

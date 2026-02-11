@@ -1,4 +1,4 @@
-import { ChainTypeEnum, getExplorerUrl, useSVMAccount, useSVMSwitchCluster, useSVMWriteContract } from '@openfort/react'
+import { ChainTypeEnum, getExplorerUrl, useSVMAccount, useSVMWriteContract } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
@@ -15,14 +15,13 @@ function solToLamports(sol: number): bigint {
 }
 
 export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { address } = useSVMAccount()
+  const { address, cluster } = useSVMAccount()
   const { sendSOL, data: txSignature, isPending, error, reset } = useSVMWriteContract()
-  const { currentCluster } = useSVMSwitchCluster()
 
   const explorerUrl = useMemo(() => {
-    if (!txSignature || !currentCluster) return null
-    return getExplorerUrl(ChainTypeEnum.SVM, { txHash: txSignature, cluster: currentCluster })
-  }, [txSignature, currentCluster])
+    if (!txSignature || !cluster) return null
+    return getExplorerUrl(ChainTypeEnum.SVM, { txHash: txSignature, cluster })
+  }, [txSignature, cluster])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

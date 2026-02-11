@@ -146,7 +146,6 @@ export type {
   UseSolanaAccountLike,
   UseSolanaSendSOLLike,
   UseSolanaSignMessageLike,
-  UseSolanaSwitchClusterLike,
   UseSwitchChainLike,
   UseWriteContractLike,
   WalletAdapterChain,
@@ -163,7 +162,6 @@ export {
   useSVMBalance,
   useSVMDisconnect,
   useSVMSignMessage,
-  useSVMSwitchCluster,
   useSVMWriteContract,
 } from './wallet-adapters'
 export { wallets } from './wallets'

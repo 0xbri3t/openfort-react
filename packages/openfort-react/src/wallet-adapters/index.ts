@@ -19,7 +19,6 @@ export {
   useSVMBalance,
   useSVMDisconnect,
   useSVMSignMessage,
-  useSVMSwitchCluster,
   useSVMWriteContract,
 } from './solana'
 export type {
@@ -32,7 +31,6 @@ export type {
   UseSolanaAccountLike,
   UseSolanaSendSOLLike,
   UseSolanaSignMessageLike,
-  UseSolanaSwitchClusterLike,
   UseSwitchChainLike,
   UseWriteContractLike,
   WalletAdapterChain,

@@ -25,7 +25,6 @@ import { Route as HooksWagmiUseDisconnectRouteImport } from './routes/_hooks/wag
 import { Route as HooksWagmiUseBalanceRouteImport } from './routes/_hooks/wagmi/useBalance'
 import { Route as HooksWagmiUseAccountRouteImport } from './routes/_hooks/wagmi/useAccount'
 import { Route as HooksUtilsUseUIRouteImport } from './routes/_hooks/utils/useUI'
-import { Route as HooksSolanaUseSwitchClusterRouteImport } from './routes/_hooks/solana/useSwitchCluster'
 import { Route as HooksSolanaUseSolanaBalanceRouteImport } from './routes/_hooks/solana/useSolanaBalance'
 import { Route as HooksSolanaUseSolanaAccountRouteImport } from './routes/_hooks/solana/useSolanaAccount'
 import { Route as HooksSolanaUseDisconnectRouteImport } from './routes/_hooks/solana/useDisconnect'
@@ -129,12 +128,6 @@ const HooksUtilsUseUIRoute = HooksUtilsUseUIRouteImport.update({
   path: '/utils/useUI',
   getParentRoute: () => HooksRoute,
 } as any)
-const HooksSolanaUseSwitchClusterRoute =
-  HooksSolanaUseSwitchClusterRouteImport.update({
-    id: '/useSwitchCluster',
-    path: '/useSwitchCluster',
-    getParentRoute: () => HooksSolanaRoute,
-  } as any)
 const HooksSolanaUseSolanaBalanceRoute =
   HooksSolanaUseSolanaBalanceRouteImport.update({
     id: '/useSolanaBalance',
@@ -274,7 +267,6 @@ export interface FileRoutesByFullPath {
   '/solana/useDisconnect': typeof HooksSolanaUseDisconnectRoute
   '/solana/useSolanaAccount': typeof HooksSolanaUseSolanaAccountRoute
   '/solana/useSolanaBalance': typeof HooksSolanaUseSolanaBalanceRoute
-  '/solana/useSwitchCluster': typeof HooksSolanaUseSwitchClusterRoute
   '/utils/useUI': typeof HooksUtilsUseUIRoute
   '/wagmi/useAccount': typeof HooksWagmiUseAccountRoute
   '/wagmi/useBalance': typeof HooksWagmiUseBalanceRoute
@@ -312,7 +304,6 @@ export interface FileRoutesByTo {
   '/solana/useDisconnect': typeof HooksSolanaUseDisconnectRoute
   '/solana/useSolanaAccount': typeof HooksSolanaUseSolanaAccountRoute
   '/solana/useSolanaBalance': typeof HooksSolanaUseSolanaBalanceRoute
-  '/solana/useSwitchCluster': typeof HooksSolanaUseSwitchClusterRoute
   '/utils/useUI': typeof HooksUtilsUseUIRoute
   '/wagmi/useAccount': typeof HooksWagmiUseAccountRoute
   '/wagmi/useBalance': typeof HooksWagmiUseBalanceRoute
@@ -352,7 +343,6 @@ export interface FileRoutesById {
   '/_hooks/solana/useDisconnect': typeof HooksSolanaUseDisconnectRoute
   '/_hooks/solana/useSolanaAccount': typeof HooksSolanaUseSolanaAccountRoute
   '/_hooks/solana/useSolanaBalance': typeof HooksSolanaUseSolanaBalanceRoute
-  '/_hooks/solana/useSwitchCluster': typeof HooksSolanaUseSwitchClusterRoute
   '/_hooks/utils/useUI': typeof HooksUtilsUseUIRoute
   '/_hooks/wagmi/useAccount': typeof HooksWagmiUseAccountRoute
   '/_hooks/wagmi/useBalance': typeof HooksWagmiUseBalanceRoute
@@ -392,7 +382,6 @@ export interface FileRouteTypes {
     | '/solana/useDisconnect'
     | '/solana/useSolanaAccount'
     | '/solana/useSolanaBalance'
-    | '/solana/useSwitchCluster'
     | '/utils/useUI'
     | '/wagmi/useAccount'
     | '/wagmi/useBalance'
@@ -430,7 +419,6 @@ export interface FileRouteTypes {
     | '/solana/useDisconnect'
     | '/solana/useSolanaAccount'
     | '/solana/useSolanaBalance'
-    | '/solana/useSwitchCluster'
     | '/utils/useUI'
     | '/wagmi/useAccount'
     | '/wagmi/useBalance'
@@ -469,7 +457,6 @@ export interface FileRouteTypes {
     | '/_hooks/solana/useDisconnect'
     | '/_hooks/solana/useSolanaAccount'
     | '/_hooks/solana/useSolanaBalance'
-    | '/_hooks/solana/useSwitchCluster'
     | '/_hooks/utils/useUI'
     | '/_hooks/wagmi/useAccount'
     | '/_hooks/wagmi/useBalance'
@@ -606,13 +593,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/utils/useUI'
       preLoaderRoute: typeof HooksUtilsUseUIRouteImport
       parentRoute: typeof HooksRoute
-    }
-    '/_hooks/solana/useSwitchCluster': {
-      id: '/_hooks/solana/useSwitchCluster'
-      path: '/useSwitchCluster'
-      fullPath: '/solana/useSwitchCluster'
-      preLoaderRoute: typeof HooksSolanaUseSwitchClusterRouteImport
-      parentRoute: typeof HooksSolanaRoute
     }
     '/_hooks/solana/useSolanaBalance': {
       id: '/_hooks/solana/useSolanaBalance'
@@ -786,14 +766,12 @@ interface HooksSolanaRouteChildren {
   HooksSolanaUseDisconnectRoute: typeof HooksSolanaUseDisconnectRoute
   HooksSolanaUseSolanaAccountRoute: typeof HooksSolanaUseSolanaAccountRoute
   HooksSolanaUseSolanaBalanceRoute: typeof HooksSolanaUseSolanaBalanceRoute
-  HooksSolanaUseSwitchClusterRoute: typeof HooksSolanaUseSwitchClusterRoute
 }
 
 const HooksSolanaRouteChildren: HooksSolanaRouteChildren = {
   HooksSolanaUseDisconnectRoute: HooksSolanaUseDisconnectRoute,
   HooksSolanaUseSolanaAccountRoute: HooksSolanaUseSolanaAccountRoute,
   HooksSolanaUseSolanaBalanceRoute: HooksSolanaUseSolanaBalanceRoute,
-  HooksSolanaUseSwitchClusterRoute: HooksSolanaUseSwitchClusterRoute,
 }
 
 const HooksSolanaRouteWithChildren = HooksSolanaRoute._addFileChildren(

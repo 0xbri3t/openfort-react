@@ -81,14 +81,6 @@ export interface UseSolanaAccountLike {
   isConnected: boolean
 }
 
-export interface UseSolanaSwitchClusterLike {
-  clusters: SolanaCluster[]
-  currentCluster: SolanaCluster | undefined
-  switchCluster: (cluster: SolanaCluster) => void
-  isPending: boolean
-  error: Error | null
-}
-
 export interface UseSolanaSignMessageLike {
   data: string | undefined
   signMessage: (params: { message: string }) => Promise<void>
