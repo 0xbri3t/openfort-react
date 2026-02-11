@@ -43,9 +43,7 @@ export function mapBridgeConnectorsToWalletProps(
       connector,
       iconShape: 'squircle',
       isInstalled:
-        connector.type === 'mock' ||
-        (connector.type === 'injected' && connector.id !== 'metaMask') ||
-        isCoinbaseWalletConnector(connector.id),
+        connector.type === 'mock' || connector.type === 'injected' || isCoinbaseWalletConnector(connector.id),
     }
 
     if (walletId) {

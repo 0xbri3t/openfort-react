@@ -97,12 +97,12 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
         })
         handleError(error)
       },
-      onConnect: () => {
+      onConnect: async () => {
         logger.log('Successfully connected with SIWE')
         setStatus({
           status: 'success',
         })
-        updateUser()
+        await updateUser()
         onSuccess({
           hookOptions,
           options: {},

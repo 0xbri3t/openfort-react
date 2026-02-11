@@ -20,8 +20,14 @@ import {
   useWalletClient,
 } from 'wagmi'
 
-function mapConnector(c: { id: string; name: string; icon?: string; type?: string }): OpenfortEVMBridgeConnector {
-  return { id: c.id, name: c.name, icon: c.icon, type: c.type }
+function mapConnector(c: {
+  id: string
+  name: string
+  icon?: string
+  type?: string
+  getProvider?: () => Promise<unknown>
+}): OpenfortEVMBridgeConnector {
+  return { id: c.id, name: c.name, icon: c.icon, type: c.type, getProvider: c.getProvider }
 }
 
 export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) => {

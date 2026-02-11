@@ -70,7 +70,7 @@ const ConnectWithInjector: React.FC<{
   const bridge = useEVMBridge()
   const connectWithSiwe = useConnectWithSiwe()
   const props = useRouteProps(routes.CONNECT)
-  const { linkedAccounts } = useUser()
+  const { linkedAccounts, user } = useUser()
   const { triggerResize, connector: c } = useOpenfort()
   const id = c.id
   const wallet = useWallet(id)
@@ -86,7 +86,10 @@ const ConnectWithInjector: React.FC<{
   }, [setOpen, triggerResize])
 
   const handleConnectSettled = useCallback(
-    async (walletItem: NonNullable<typeof wallet>) => {
+    async (
+      walletItem: NonNullable<typeof wallet>,
+      connectResult?: { accounts: readonly `0x${string}`[]; chainId: number }
+    ) => {
       if (!bridge) return
       const disconnect = bridge.disconnect
       const getConnectorAccounts = bridge.getConnectorAccounts
@@ -102,11 +105,14 @@ const ConnectWithInjector: React.FC<{
         return
       }
 
-      const userWallets = linkedAccounts?.filter(
-        (acc) =>
-          acc.walletClientType === walletItem.connector?.name?.toLowerCase() ||
-          acc.walletClientType === walletItem.connector?.id
-      )
+      // Only skip SIWE when user is logged in AND this wallet is already linked (reconnecting)
+      const userWallets = user
+        ? linkedAccounts?.filter(
+            (acc) =>
+              acc.walletClientType === walletItem.connector?.name?.toLowerCase() ||
+              acc.walletClientType === walletItem.connector?.id
+          )
+        : []
       if (userWallets && userWallets.length > 0 && getConnectorAccounts) {
         const acc = await getConnectorAccounts(walletItem.connector)
         if (acc.some((v) => userWallets.some((w) => w.accountId === v))) {
@@ -116,7 +122,11 @@ const ConnectWithInjector: React.FC<{
       }
 
       setStatus(states.SIWE)
+      const addressFromResult = connectResult?.accounts?.[0]
       connectWithSiwe({
+        address: addressFromResult,
+        connectorType: walletItem.connector?.type,
+        walletClientType: walletItem.connector?.id,
         onError: (error, _errorType) => {
           logger.error(error)
           disconnect()
@@ -129,6 +139,7 @@ const ConnectWithInjector: React.FC<{
     },
     [
       bridge,
+      user,
       linkedAccounts,
       onConnect,
       props.connectType,
@@ -207,8 +218,13 @@ const ConnectWithInjector: React.FC<{
     }
     setStatus(states.CONNECTING)
     try {
+      let connectResult: { accounts: readonly `0x${string}`[]; chainId: number } | undefined
       if (bridge.connectAsync) {
-        await bridge.connectAsync({ connector: wallet.connector })
+        const result = await bridge.connectAsync({ connector: wallet.connector })
+        connectResult =
+          result && typeof result === 'object' && 'accounts' in result
+            ? (result as { accounts: readonly `0x${string}`[]; chainId: number })
+            : undefined
       } else {
         bridge.connect({ connector: wallet.connector })
         return
@@ -219,7 +235,7 @@ const ConnectWithInjector: React.FC<{
         return
       }
       logger.log('Connect type is:', props.connectType)
-      await handleConnectSettled(wallet)
+      await handleConnectSettled(wallet, connectResult)
     } catch (err: unknown) {
       logger.error(err)
       handleConnectError(

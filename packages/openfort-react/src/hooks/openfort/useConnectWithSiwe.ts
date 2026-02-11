@@ -21,21 +21,24 @@ export function useConnectWithSiwe() {
     async ({
       onError,
       onConnect,
+      address: propsAddress,
       connectorType: propsConnectorType,
       walletClientType: propsWalletClientType,
       link = !!user,
     }: {
+      address?: `0x${string}`
       connectorType?: string
       walletClientType?: string
       onError?: (error: string, openfortError?: OpenfortError) => void
       onConnect?: () => void
       link?: boolean
     } = {}) => {
+      const addressToUse = propsAddress ?? address
       const connectorType = propsConnectorType ?? connector?.type
       const walletClientType = propsWalletClientType ?? connector?.id
 
-      if (!address || !connectorType || !walletClientType) {
-        logger.log('No address found', { address, connectorType, walletClientType })
+      if (!addressToUse || !connectorType || !walletClientType) {
+        logger.log('No address found', { address: addressToUse, connectorType, walletClientType })
         onError?.('No address found')
         return
       }
@@ -52,14 +55,14 @@ export function useConnectWithSiwe() {
 
         let nonce: string
         if (link) {
-          const resp = await client.auth.initLinkSiwe({ address })
+          const resp = await client.auth.initLinkSiwe({ address: addressToUse })
           nonce = resp.nonce
         } else {
-          const resp = await client.auth.initSiwe({ address })
+          const resp = await client.auth.initSiwe({ address: addressToUse })
           nonce = resp.nonce
         }
 
-        const SIWEMessage = createSIWEMessage(address, nonce, chainId)
+        const SIWEMessage = createSIWEMessage(addressToUse, nonce, chainId)
 
         const signature = await signMessage({ message: SIWEMessage })
 
@@ -70,7 +73,7 @@ export function useConnectWithSiwe() {
             message: SIWEMessage,
             connectorType,
             walletClientType,
-            address,
+            address: addressToUse,
             chainId,
           })
         } else {
@@ -80,13 +83,13 @@ export function useConnectWithSiwe() {
             message: SIWEMessage,
             connectorType,
             walletClientType,
-            address,
+            address: addressToUse,
           })
         }
 
         await updateUser()
 
-        onConnect?.()
+        await Promise.resolve(onConnect?.())
       } catch (err) {
         logger.log('Failed to connect with SIWE', {
           error: err,
