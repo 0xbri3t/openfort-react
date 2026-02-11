@@ -284,7 +284,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
   const { client, embeddedAccounts, isLoadingAccounts: isLoadingWallets, updateEmbeddedAccounts } = useOpenfortCore()
   const { linkedAccounts, user } = useUser()
-  const { walletConfig, setOpen, setRoute, setConnector, uiConfig } = useOpenfort()
+  const { walletConfig, setOpen, setRoute, setConnector } = useOpenfort()
   const strategy = useConnectionStrategy()
   const bridge = useEVMBridge()
   const connector = bridge?.account?.connector
@@ -812,16 +812,23 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   )
 
   useEffect(() => {
-    ;(async () => {
-      if (shouldSwitchToChain && switchChainAsync) {
-        logger.log(`Switching to chain ${shouldSwitchToChain}.`)
-        const res = await switchChainAsync({ chainId: shouldSwitchToChain })
-        logger.log('Switched to chain', res)
-        updateEmbeddedAccounts()
-        setShouldSwitchToChain(null)
-      }
-    })()
-  }, [shouldSwitchToChain, switchChainAsync])
+    if (!shouldSwitchToChain || !switchChainAsync) return
+    let cancelled = false
+    switchChainAsync({ chainId: shouldSwitchToChain })
+      .then((res) => {
+        if (!cancelled) {
+          logger.log('Switched to chain', res)
+          updateEmbeddedAccounts()
+          setShouldSwitchToChain(null)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) logger.error('Failed to switch chain', err)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [shouldSwitchToChain, switchChainAsync, updateEmbeddedAccounts])
 
   const queryClient = useQueryClient()
   const createWallet = useCallback(
@@ -896,7 +903,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         return { error, isOTPRequired }
       }
     },
-    [client, uiConfig, chainId, walletConfig?.ethereum?.chainId]
+    [client, chainId, walletConfig?.ethereum?.chainId]
   )
 
   const setRecovery = useCallback(

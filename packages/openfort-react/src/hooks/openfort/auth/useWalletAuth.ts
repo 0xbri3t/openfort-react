@@ -18,9 +18,9 @@ type ConnectWalletOptions = {
  *
  * For SIWE auth without wagmi, use the SDK directly:
  * ```ts
- * import { useOpenfortClient, createSIWEMessage } from '@openfort/react'
+ * import { useCoreContext, createSIWEMessage } from '@openfort/react'
  *
- * const { client } = useOpenfortClient()
+ * const { client } = useCoreContext()
  * const { nonce } = await client.auth.initSiwe({ address })
  * const message = createSIWEMessage(address, nonce, chainId)
  * const signature = await yourWallet.signMessage(message)

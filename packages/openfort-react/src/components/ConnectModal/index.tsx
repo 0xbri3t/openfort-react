@@ -1,6 +1,8 @@
 import { ChainTypeEnum, OAuthProvider } from '@openfort/openfort-js'
 import { useEffect, useMemo } from 'react'
-import type { ValueOf } from 'viem/_types/types/utils'
+
+type ValueOf<T> = T[keyof T]
+
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import { useOpenfortCore } from '../../openfort/useOpenfort'

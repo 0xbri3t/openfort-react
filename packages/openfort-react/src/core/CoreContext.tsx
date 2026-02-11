@@ -8,8 +8,7 @@
 import { Openfort, type OpenfortSDKConfiguration } from '@openfort/openfort-js'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createContext, type PropsWithChildren, type ReactNode, useContext, useMemo } from 'react'
-import { OpenfortError, OpenfortReactErrorType } from '../types'
-import { ConfigurationError } from './errors'
+import { ConfigurationError, ProviderNotFoundError } from './errors'
 import type { CoreContextValue, CoreProviderConfig, OpenfortConfig } from './types'
 
 const CoreContext = createContext<CoreContextValue | null>(null)
@@ -110,7 +109,15 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
       ...config,
       _sdkConfig: sdkConfig,
     }),
-    [config, sdkConfig]
+    [
+      config.publishableKey,
+      config.shieldPublishableKey,
+      config.rpcUrls,
+      config.solana,
+      config.ethereumPolicyId,
+      config.debug,
+      sdkConfig,
+    ]
   )
 
   const value: CoreContextValue = useMemo(
@@ -130,15 +137,13 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
 }
 
 /**
- * Hook to access the core context
- * @internal Use useOpenfortClient() instead for public API
+ * Hook to access the core context (Openfort client, config, debug)
  */
 export function useCoreContext(): CoreContextValue {
   const context = useContext(CoreContext)
   if (!context) {
-    throw new OpenfortError(
-      'useCoreContext must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.',
-      OpenfortReactErrorType.CONFIGURATION_ERROR
+    throw new ProviderNotFoundError(
+      'useCoreContext must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.'
     )
   }
   return context

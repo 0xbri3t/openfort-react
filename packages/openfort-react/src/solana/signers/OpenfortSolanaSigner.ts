@@ -5,13 +5,9 @@
  * These signers can be used directly with @solana/kit and @solana/react-hooks.
  */
 
-import type { OpenfortEmbeddedSolanaWalletProvider, SignatureDictionary } from '../types'
+import type { OpenfortEmbeddedSolanaWalletProvider, SignatureDictionary, SolanaAddress } from '../types'
 
-/**
- * Solana address type (Base58 encoded string)
- * Compatible with @solana/addresses Address type
- */
-export type Address = string & { readonly __brand?: unique symbol }
+export type { SolanaAddress as Address }
 
 /**
  * Transaction message bytes interface
@@ -104,7 +100,7 @@ export interface MessagePartialSigner<TAddress extends string = string> {
  * ```
  */
 export class OpenfortTransactionPartialSigner implements TransactionPartialSigner {
-  readonly address: Address
+  readonly address: SolanaAddress
   private readonly provider: OpenfortEmbeddedSolanaWalletProvider
 
   /**
@@ -113,7 +109,7 @@ export class OpenfortTransactionPartialSigner implements TransactionPartialSigne
    * @param address - The Solana address of this signer (Base58)
    * @param provider - The OpenfortSolanaProvider to use for signing
    */
-  constructor(address: Address, provider: OpenfortEmbeddedSolanaWalletProvider) {
+  constructor(address: SolanaAddress, provider: OpenfortEmbeddedSolanaWalletProvider) {
     this.address = address
     this.provider = provider
   }
@@ -166,7 +162,7 @@ export class OpenfortTransactionPartialSigner implements TransactionPartialSigne
  * ```
  */
 export class OpenfortMessagePartialSigner implements MessagePartialSigner {
-  readonly address: Address
+  readonly address: SolanaAddress
   private readonly provider: OpenfortEmbeddedSolanaWalletProvider
 
   /**
@@ -175,7 +171,7 @@ export class OpenfortMessagePartialSigner implements MessagePartialSigner {
    * @param address - The Solana address of this signer (Base58)
    * @param provider - The OpenfortSolanaProvider to use for signing
    */
-  constructor(address: Address, provider: OpenfortEmbeddedSolanaWalletProvider) {
+  constructor(address: SolanaAddress, provider: OpenfortEmbeddedSolanaWalletProvider) {
     this.address = address
     this.provider = provider
   }
@@ -221,7 +217,7 @@ export class OpenfortMessagePartialSigner implements MessagePartialSigner {
 export function createTransactionSigner(
   provider: OpenfortEmbeddedSolanaWalletProvider
 ): OpenfortTransactionPartialSigner {
-  return new OpenfortTransactionPartialSigner(provider.publicKey as Address, provider)
+  return new OpenfortTransactionPartialSigner(provider.publicKey as SolanaAddress, provider)
 }
 
 /**
@@ -237,5 +233,5 @@ export function createTransactionSigner(
  * ```
  */
 export function createMessageSigner(provider: OpenfortEmbeddedSolanaWalletProvider): OpenfortMessagePartialSigner {
-  return new OpenfortMessagePartialSigner(provider.publicKey as Address, provider)
+  return new OpenfortMessagePartialSigner(provider.publicKey as SolanaAddress, provider)
 }

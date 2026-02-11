@@ -3,10 +3,16 @@ import type React from 'react'
 import { createConfig, http, WagmiProvider } from 'wagmi'
 import { baseSepolia, beamTestnet, polygonAmoy } from 'wagmi/chains'
 
+const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
+
+if (!walletConnectProjectId) {
+  throw new Error('VITE_WALLETCONNECT_PROJECT_ID is not set')
+}
+
 const config = createConfig(
   getDefaultConfig({
     appName: 'Openfort demo',
-    walletConnectProjectId: 'fc3261354522f71e19adc4081a7e9f53',
+    walletConnectProjectId,
     chains: [polygonAmoy, beamTestnet, baseSepolia],
     transports: {
       [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology'),

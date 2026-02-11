@@ -28,6 +28,7 @@ export {
   DEFAULT_DEV_CHAIN_ID,
 } from './core/ConnectionStrategy'
 export { ConnectionStrategyProvider, useConnectionStrategy } from './core/ConnectionStrategyContext'
+export { CoreProvider, type CoreProviderProps, useCoreContext, useHasCoreProvider } from './core/CoreContext'
 export { OpenfortTransactionError, TransactionErrorCode } from './core/errors'
 export {
   type OpenfortEVMBridgeAccount,
@@ -42,7 +43,7 @@ export {
 export { queryKeys } from './core/queryKeys'
 export { createEVMBridgeStrategy } from './core/strategies/EVMBridgeStrategy'
 export { createEVMEmbeddedStrategy } from './core/strategies/EVMEmbeddedStrategy'
-export type { WalletReadiness } from './core/types'
+export type { CoreContextValue, WalletReadiness } from './core/types'
 // Ethereum context types
 export type { ChainId, SetChainResult } from './ethereum/EthereumContext'
 // Convenience re-export for Ethereum hook (can also import from '@openfort/react/ethereum')

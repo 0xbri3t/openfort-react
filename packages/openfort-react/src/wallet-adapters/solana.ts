@@ -39,9 +39,7 @@ export function useSolanaAccount(): UseSolanaAccountLike {
 export function useSolanaBalanceAdapter(): UseBalanceLike {
   const { address, isConnected } = useSolanaAccount()
   const { data, refetch, isLoading, error } = useSolanaBalance(address, { enabled: isConnected && !!address })
-  const refetchCb = useCallback(() => {
-    refetch()
-  }, [refetch])
+  const refetchCb = () => refetch()
   return {
     data: data
       ? {

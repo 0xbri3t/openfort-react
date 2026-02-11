@@ -41,10 +41,8 @@ export function useConnectLifecycle(
     } else if (!connected && prevConnected.current) {
       prevConnected.current = false
       onDisconnect?.()
-    } else if (connected) {
-      prevConnected.current = true
     } else {
-      prevConnected.current = false
+      prevConnected.current = connected
     }
   }, [strategy, core, ui, onConnect, onDisconnect])
 }

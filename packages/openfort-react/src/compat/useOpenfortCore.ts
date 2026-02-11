@@ -17,7 +17,7 @@ let hasWarned = false
  * @deprecated Use specific hooks instead:
  * - `useConnectUI()` for modal/navigation state
  * - `useUser()` for user authentication state
- * - `useOpenfortClient()` for SDK access
+ * - `useCoreContext()` for SDK access
  * - `useEthereumEmbeddedWallet()` for Ethereum wallet operations
  * - `useSolanaEmbeddedWallet()` for Solana wallet operations
  *
@@ -39,7 +39,7 @@ export function useOpenfortCore(): ContextValue | null {
         'Migration guide:\n' +
         '  - Modal/navigation state: useConnectUI()\n' +
         '  - User authentication: useUser()\n' +
-        '  - SDK access: useOpenfortClient()\n' +
+        '  - SDK access: useCoreContext()\n' +
         '  - Ethereum wallet: useEthereumEmbeddedWallet()\n' +
         '  - Solana wallet: useSolanaEmbeddedWallet()\n' +
         'See: https://openfort.io/docs/migration/v3'

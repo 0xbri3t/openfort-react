@@ -52,9 +52,7 @@ export function useEVMBalance(): UseBalanceLike {
     enabled: isConnected && !!address,
   })
 
-  const refetch = useCallback(() => {
-    balanceState.refetch()
-  }, [balanceState.refetch])
+  const refetch = () => balanceState.refetch()
 
   if (!isConnected || !address) {
     return { data: undefined, refetch, isLoading: false }

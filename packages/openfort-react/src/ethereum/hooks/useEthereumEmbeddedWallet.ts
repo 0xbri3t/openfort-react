@@ -47,13 +47,10 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     return embeddedAccounts.filter((acc) => acc.chainType === ChainTypeEnum.EVM)
   }, [embeddedAccounts])
 
-  const createProviderForAccount = useCallback(
-    async (_account: EmbeddedAccount): Promise<OpenfortEmbeddedEthereumWalletProvider> => {
-      const provider = await client.embeddedWallet.getEthereumProvider()
-      return provider as OpenfortEmbeddedEthereumWalletProvider
-    },
-    [client]
-  )
+  const getEmbeddedEthereumProvider = useCallback(async (): Promise<OpenfortEmbeddedEthereumWalletProvider> => {
+    const provider = await client.embeddedWallet.getEthereumProvider()
+    return provider as OpenfortEmbeddedEthereumWalletProvider
+  }, [client])
 
   const wallets = useMemo<ConnectedEmbeddedEthereumWallet[]>(() => {
     const uniqueAddresses = new Map<string, EmbeddedAccount>()
@@ -72,11 +69,9 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       chainType: ChainTypeEnum.EVM,
       walletIndex: index,
       recoveryMethod: acc.recoveryMethod,
-      getProvider: async () => {
-        return createProviderForAccount(acc)
-      },
+      getProvider: getEmbeddedEthereumProvider,
     }))
-  }, [ethereumAccounts, createProviderForAccount])
+  }, [ethereumAccounts, getEmbeddedEthereumProvider])
 
   const create = useCallback(
     async (createOptions?: CreateEthereumWalletOptions): Promise<EmbeddedAccount> => {
@@ -119,7 +114,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
 
         await updateEmbeddedAccounts({ silent: true })
 
-        const provider = await createProviderForAccount(account)
+        const provider = await getEmbeddedEthereumProvider()
         const connectedWallet: ConnectedEmbeddedEthereumWallet = {
           id: account.id,
           address: account.address as `0x${string}`,
@@ -159,7 +154,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         throw error
       }
     },
-    [client, walletConfig, chainId, createProviderForAccount, updateEmbeddedAccounts, setActiveEmbeddedAddress]
+    [client, walletConfig, chainId, getEmbeddedEthereumProvider, updateEmbeddedAccounts, setActiveEmbeddedAddress]
   )
 
   const setActive = useCallback(
@@ -238,7 +233,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
             })
           }
 
-          const provider = await createProviderForAccount(account)
+          const provider = await getEmbeddedEthereumProvider()
           const connectedWallet: ConnectedEmbeddedEthereumWallet = {
             id: account.id,
             address: account.address as `0x${string}`,
@@ -285,7 +280,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         if (setActiveInProgressRef.current === promise) setActiveInProgressRef.current = null
       }
     },
-    [client, walletConfig, ethereumAccounts, createProviderForAccount, setActiveEmbeddedAddress]
+    [client, walletConfig, ethereumAccounts, getEmbeddedEthereumProvider, setActiveEmbeddedAddress]
   )
 
   const setRecovery = useCallback(
@@ -340,7 +335,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           (acc) => acc.address.toLowerCase() === (active.address as string).toLowerCase()
         )
         if (!account) return
-        const provider = await createProviderForAccount(account)
+        const provider = await getEmbeddedEthereumProvider()
         if (cancelled) return
         const connectedWallet: ConnectedEmbeddedEthereumWallet = {
           id: account.id,
@@ -366,7 +361,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     return () => {
       cancelled = true
     }
-  }, [isLoadingAccounts, state.status, ethereumAccounts, client, createProviderForAccount, setActiveEmbeddedAddress])
+  }, [isLoadingAccounts, state.status, ethereumAccounts, client, getEmbeddedEthereumProvider, setActiveEmbeddedAddress])
 
   if (isLoadingAccounts) {
     return {

@@ -19,9 +19,9 @@ export {
   isOpenfortError,
   OpenfortErrorCode,
   OpenfortReactError,
+  ProviderNotFoundError,
   WalletError,
 } from './errors'
-export { type UseOpenfortClientReturn, useOpenfortClient } from './hooks/useOpenfortClient'
 export {
   type OpenfortEVMBridgeAccount,
   type OpenfortEVMBridgeChain,

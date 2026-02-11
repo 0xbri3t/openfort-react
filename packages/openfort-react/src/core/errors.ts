@@ -93,6 +93,16 @@ export class OpenfortReactError extends Error {
 }
 
 /**
+ * Error thrown when a hook is used outside its required provider
+ */
+export class ProviderNotFoundError extends OpenfortReactError {
+  constructor(message: string) {
+    super(message, OpenfortErrorCode.MISSING_PROVIDER)
+    this.name = 'ProviderNotFoundError'
+  }
+}
+
+/**
  * Error thrown for configuration issues
  */
 export class ConfigurationError extends OpenfortReactError {

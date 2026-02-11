@@ -74,15 +74,13 @@ export type RecoveryRegistryByChain = {
   automatic: RecoveryEntry
 }
 
+const RECOVERY_REGISTRY: RecoveryRegistryByChain = {
+  password: passwordEntry,
+  passkey: passkeyEntry,
+  automatic: automaticEntry,
+}
+
 export const recoveryRegistry: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, RecoveryRegistryByChain> = {
-  [ChainTypeEnum.EVM]: {
-    password: passwordEntry,
-    passkey: passkeyEntry,
-    automatic: automaticEntry,
-  },
-  [ChainTypeEnum.SVM]: {
-    password: passwordEntry,
-    passkey: passkeyEntry,
-    automatic: automaticEntry,
-  },
+  [ChainTypeEnum.EVM]: RECOVERY_REGISTRY,
+  [ChainTypeEnum.SVM]: RECOVERY_REGISTRY,
 }
