@@ -68,7 +68,7 @@ export async function buildRecoveryParams(
   }
 }
 
-export async function getEncryptionSession(params: {
+async function getEncryptionSession(params: {
   accessToken: string
   userId: string
   otpCode?: string

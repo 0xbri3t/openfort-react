@@ -1,6 +1,3 @@
-export type { RecoveryOptions as SolanaRecoveryOptions } from '../../shared/utils/recovery'
-export { buildRecoveryParams } from '../../shared/utils/recovery'
-
 export function lamportsToSol(lamports: bigint): number {
   return Number(lamports) / 1_000_000_000
 }

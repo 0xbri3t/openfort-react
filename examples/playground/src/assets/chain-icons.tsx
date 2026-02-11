@@ -1,7 +1,7 @@
 import type React from 'react'
 import type { OpenfortPlaygroundMode } from '@/providers'
 
-export const EthereumIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
+const EthereumIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
   <svg
     className={className}
     width={size}
@@ -25,7 +25,7 @@ export const EthereumIcon = ({ className, size = 20 }: { className?: string; siz
   </svg>
 )
 
-export const SolanaIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
+const SolanaIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
   <svg
     className={className}
     width={size}
@@ -64,7 +64,7 @@ export const SolanaIcon = ({ className, size = 20 }: { className?: string; size?
   </svg>
 )
 
-export const WagmiIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
+const WagmiIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
   <svg
     className={className}
     role="img"

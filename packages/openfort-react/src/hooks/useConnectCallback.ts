@@ -6,7 +6,7 @@ import useIsMounted from './useIsMounted'
 
 export type { ConnectCallbackProps as useConnectCallbackProps } from '../openfort/connectCallbackTypes'
 
-export const useConnectCallback = ({ onConnect, onDisconnect }: ConnectCallbackProps) => {
+function _useConnectCallback({ onConnect, onDisconnect }: ConnectCallbackProps) {
   const { user } = useOpenfortCore()
   const bridge = useEVMBridge()
   const address = bridge?.account?.address

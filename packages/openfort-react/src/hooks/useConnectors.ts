@@ -6,7 +6,7 @@ function useConnectors(): OpenfortEVMBridgeConnector[] {
   return bridge?.connectors ?? []
 }
 
-export function useConnector(id: string, uuid?: string): OpenfortEVMBridgeConnector | undefined {
+function useConnector(id: string, uuid?: string): OpenfortEVMBridgeConnector | undefined {
   const connectors = useConnectors()
   if (id === 'injected' && uuid) {
     return connectors.find((c) => c.id === id && c.name === uuid)

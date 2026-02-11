@@ -23,9 +23,3 @@ export const queryKeys = {
       [...queryKeys.ethereum.all(), 'balance', address, chainId] as const,
   },
 }
-
-export const authQueryKeys = {
-  all: queryKeys.auth.all,
-  user: queryKeys.auth.user,
-  embeddedAccounts: queryKeys.accounts.embedded,
-}

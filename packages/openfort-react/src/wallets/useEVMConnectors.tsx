@@ -112,9 +112,3 @@ export const useWallet = (id: string): WalletProps | null => {
   if (!wallet) return null
   return wallet
 }
-
-/**
- * @deprecated Use useEVMConnectors() instead. Same return value (list of connectors for the connect UI).
- * useWallets() is different: it returns the user's wallets and actions (createWallet, setActiveWallet, etc.).
- */
-export const useWagmiWallets = (): WalletProps[] => useEVMConnectors()

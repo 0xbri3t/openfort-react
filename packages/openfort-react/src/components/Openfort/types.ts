@@ -8,8 +8,6 @@ import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/
 import type { UserAccount } from '../../openfortCustomTypes'
 import type { SolanaConfig } from '../../solana/types'
 
-export type { SolanaUIOptions } from '../../solana/types'
-
 import type { CustomAvatarProps, CustomTheme, Languages, Mode, Theme } from '../../types'
 
 export const routes = {
@@ -140,7 +138,7 @@ export enum UIAuthProvider {
   GUEST = 'guest',
 }
 
-export type ErrorMessage = string | React.ReactNode | null
+type _ErrorMessage = string | React.ReactNode | null
 
 export const socialProviders = [
   UIAuthProvider.GOOGLE,
@@ -158,7 +156,7 @@ export enum LinkWalletOnSignUpOption {
 
 type PolicyConfig = string | Record<number, string>
 
-export type EthereumWalletConfig = {
+type EthereumWalletConfig = {
   chainId: number
   rpcUrls?: Record<number, string>
 }

@@ -8,7 +8,7 @@ export type RecoverableWallet = {
   accounts: { id: string }[]
 }
 
-export interface BaseWalletActions<
+interface _BaseWalletActions<
   TWallet,
   TCreateOptions extends object = object,
   TSetActiveOptions extends object = object,
@@ -35,11 +35,11 @@ export type WalletStatus =
   | 'connected'
   | 'error'
 
-export type BaseCreateWalletOptions<TResult> = {
+type _BaseCreateWalletOptions<TResult> = {
   recoveryPassword?: string
   otpCode?: string
 } & OpenfortHookOptions<TResult>
 
-export type BaseSetActiveWalletOptions = {
+type _BaseSetActiveWalletOptions = {
   recoveryParams?: RecoveryParams
 }

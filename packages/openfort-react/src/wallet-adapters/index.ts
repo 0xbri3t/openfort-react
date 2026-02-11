@@ -15,12 +15,6 @@ export {
   useEVMWriteContract,
 } from './evm'
 export {
-  useSolanaAccount,
-  useSolanaBalanceAdapter,
-  useSolanaDisconnect,
-  useSolanaSendSOL,
-  useSolanaSignMessageAdapter,
-  useSolanaSwitchCluster,
   useSVMAccount,
   useSVMBalance,
   useSVMDisconnect,

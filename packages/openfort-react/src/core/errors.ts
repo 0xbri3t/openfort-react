@@ -1,4 +1,4 @@
-export const OpenfortErrorCode = {
+const OpenfortErrorCode = {
   // Configuration errors
   MISSING_PROVIDER: 'MISSING_PROVIDER',
   INVALID_CONFIG: 'INVALID_CONFIG',
@@ -37,7 +37,7 @@ export const TransactionErrorCode = {
 
 export type TransactionErrorCode = (typeof TransactionErrorCode)[keyof typeof TransactionErrorCode]
 
-export type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCode]
+type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCode]
 
 /**
  * Base error class for Openfort React SDK (new architecture)
@@ -60,7 +60,7 @@ export type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof Openfort
  * }
  * ```
  */
-export class OpenfortReactError extends Error {
+class OpenfortReactError extends Error {
   readonly code: OpenfortErrorCode
   readonly cause?: unknown
 
@@ -115,7 +115,7 @@ export class ConfigurationError extends OpenfortReactError {
 /**
  * Error thrown for wallet operations
  */
-export class WalletError extends OpenfortReactError {
+class _WalletError extends OpenfortReactError {
   readonly address?: string
 
   constructor(
@@ -145,6 +145,6 @@ export class OpenfortTransactionError extends OpenfortReactError {
 /**
  * Check if error is an Openfort error
  */
-export function isOpenfortError(error: unknown): error is OpenfortReactError {
+function _isOpenfortError(error: unknown): error is OpenfortReactError {
   return error instanceof OpenfortReactError
 }

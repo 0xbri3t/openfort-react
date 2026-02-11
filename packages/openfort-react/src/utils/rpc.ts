@@ -12,7 +12,7 @@ import type { SolanaCluster } from '../solana/types'
  * Default Ethereum RPC URLs by chain ID — testnets only.
  * Production apps must provide their own RPCs via walletConfig.ethereum.rpcUrls.
  */
-export const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
+const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
   80002: 'https://rpc-amoy.polygon.technology',
   84532: 'https://sepolia.base.org',
   13337: 'https://build.onbeam.com/rpc/testnet',
@@ -25,7 +25,7 @@ export const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
  * Default Solana RPC URLs by cluster — testnets only.
  * Production apps must provide their own RPCs via walletConfig.solana.
  */
-export const DEFAULT_SOLANA_RPC_URLS: Partial<Record<Exclude<SolanaCluster, 'custom'>, string>> = {
+const DEFAULT_SOLANA_RPC_URLS: Partial<Record<Exclude<SolanaCluster, 'custom'>, string>> = {
   devnet: 'https://api.devnet.solana.com',
   testnet: 'https://api.testnet.solana.com',
 }
@@ -50,7 +50,7 @@ export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string | undefin
 /**
  * Chain names by chain ID
  */
-export const CHAIN_NAMES: Record<number, string> = {
+const CHAIN_NAMES: Record<number, string> = {
   80002: 'Polygon Amoy',
   84532: 'Base Sepolia',
   13337: 'Beam Testnet',
@@ -71,7 +71,7 @@ export interface NativeCurrency {
 /**
  * Native currencies by chain ID
  */
-export const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
+const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
   80002: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
   84532: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   13337: { name: 'BEAM', symbol: 'BEAM', decimals: 18 },
@@ -102,7 +102,7 @@ export function getNativeCurrency(chainId: number): NativeCurrency {
 /**
  * Block explorer URLs by chain ID
  */
-export const BLOCK_EXPLORERS: Record<number, string> = {
+const BLOCK_EXPLORERS: Record<number, string> = {
   80002: 'https://amoy.polygonscan.com',
   84532: 'https://sepolia.basescan.org',
   13337: 'https://subnets-test.avax.network/beam',
@@ -114,14 +114,14 @@ export const BLOCK_EXPLORERS: Record<number, string> = {
 /**
  * Get block explorer URL for a chain
  */
-export function getBlockExplorerUrl(chainId: number): string | undefined {
+function getBlockExplorerUrl(chainId: number): string | undefined {
   return BLOCK_EXPLORERS[chainId]
 }
 
 /**
  * Get transaction URL on block explorer
  */
-export function getTransactionUrl(chainId: number, txHash: string): string | undefined {
+function _getTransactionUrl(chainId: number, txHash: string): string | undefined {
   const explorer = BLOCK_EXPLORERS[chainId]
   return explorer ? `${explorer}/tx/${txHash}` : undefined
 }
@@ -129,7 +129,7 @@ export function getTransactionUrl(chainId: number, txHash: string): string | und
 /**
  * Get address URL on block explorer
  */
-export function getAddressUrl(chainId: number, address: string): string | undefined {
+function _getAddressUrl(chainId: number, address: string): string | undefined {
   const explorer = BLOCK_EXPLORERS[chainId]
   return explorer ? `${explorer}/address/${address}` : undefined
 }

@@ -22,7 +22,7 @@ export function formatSolanaAddress(address: string): string {
   return `${address.slice(0, 4)}...${address.slice(-4)}`
 }
 
-export const addressFormatters: Record<ChainTypeEnum, (address: string) => string> = {
+const addressFormatters: Record<ChainTypeEnum, (address: string) => string> = {
   [ChainTypeEnum.EVM]: formatEVMAddress,
   [ChainTypeEnum.SVM]: formatSolanaAddress,
 }

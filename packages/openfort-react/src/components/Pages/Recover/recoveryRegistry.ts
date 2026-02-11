@@ -3,7 +3,7 @@ import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import type { RecoverableWallet } from '../../../shared/types'
 import { routes, type SetRouteOptions } from '../../Openfort/types'
 
-export type RecoveryContext = {
+type RecoveryContext = {
   setActive: (opts: {
     address: string
     recoveryPassword?: string
@@ -68,7 +68,7 @@ async function automaticEntry(wallet: RecoverableWallet, ctx: RecoveryContext): 
   }
 }
 
-export type RecoveryRegistryByChain = {
+type RecoveryRegistryByChain = {
   password: RecoveryEntry
   passkey: RecoveryEntry
   automatic: RecoveryEntry

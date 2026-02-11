@@ -14,6 +14,7 @@ import { useThemeFont } from '../../hooks/useGoogleFont'
 import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
 import { SolanaContextProvider, type SolanaContextProviderProps } from '../../solana/providers/SolanaContextProvider'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
+import { ConnectUIContext, type ConnectUIValue } from '../../ui/ConnectUIContext'
 import { logger } from '../../utils/logger'
 import { isFamily } from '../../utils/wallets'
 import ConnectKitModal from '../ConnectModal'
@@ -349,6 +350,44 @@ export const OpenfortProvider = ({
     ]
   )
 
+  const connectUIValue: ConnectUIValue = useMemo(
+    () => ({
+      isOpen: open,
+      openModal: () => setOpen(true),
+      closeModal: () => setOpen(false),
+      currentRoute: route,
+      navigate: typedSetRoute,
+      goBack: setPreviousRoute,
+      routeHistory,
+      theme: ckTheme,
+      mode: safeUiConfig.mode ?? ckMode,
+      setTheme,
+      setMode,
+      forms: { send: sendForm, buy: buyForm },
+      updateSendForm: (updates) => setSendForm((prev) => ({ ...prev, ...updates })),
+      updateBuyForm: (updates) => setBuyForm((prev) => ({ ...prev, ...updates })),
+      triggerResize,
+    }),
+    [
+      open,
+      setOpen,
+      route,
+      typedSetRoute,
+      setPreviousRoute,
+      routeHistory,
+      ckTheme,
+      safeUiConfig.mode,
+      ckMode,
+      setTheme,
+      setMode,
+      sendForm,
+      buyForm,
+      setSendForm,
+      setBuyForm,
+      triggerResize,
+    ]
+  )
+
   const coreProviderConfig = useMemo(
     () => ({
       publishableKey,
@@ -412,32 +451,36 @@ export const OpenfortProvider = ({
     : innerChildren
 
   return createElement(
-    OpenfortContext.Provider,
-    { value },
+    ConnectUIContext.Provider,
+    { value: connectUIValue },
     createElement(
-      CoreProvider,
-      coreProviderConfig,
+      OpenfortContext.Provider,
+      { value },
       createElement(
-        CoreOpenfortProvider,
-        {
-          openfortConfig: {
-            baseConfiguration: {
-              publishableKey,
+        CoreProvider,
+        coreProviderConfig,
+        createElement(
+          CoreOpenfortProvider,
+          {
+            openfortConfig: {
+              baseConfiguration: {
+                publishableKey,
+              },
+              shieldConfiguration: walletConfig
+                ? {
+                    shieldPublishableKey: walletConfig.shieldPublishableKey,
+                    debug: debugModeOptions.shieldDebugMode,
+                  }
+                : undefined,
+              debug: debugModeOptions.openfortCoreDebugMode,
+              overrides,
+              thirdPartyAuth,
             },
-            shieldConfiguration: walletConfig
-              ? {
-                  shieldPublishableKey: walletConfig.shieldPublishableKey,
-                  debug: debugModeOptions.shieldDebugMode,
-                }
-              : undefined,
-            debug: debugModeOptions.openfortCoreDebugMode,
-            overrides,
-            thirdPartyAuth,
+            onConnect,
+            onDisconnect,
           },
-          onConnect,
-          onDisconnect,
-        },
-        coreOpenfortChildren
+          coreOpenfortChildren
+        )
       )
     )
   )

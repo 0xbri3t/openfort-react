@@ -23,7 +23,7 @@ export interface OpenfortEVMBridgeAccount {
   ensAvatar?: string
 }
 
-export interface OpenfortEVMBridgeStorage {
+interface OpenfortEVMBridgeStorage {
   getItem: (key: string) => Promise<string | null>
   setItem: (key: string, value: string) => void
 }

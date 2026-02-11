@@ -28,7 +28,7 @@ const connectedRouteRegistry: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, () =
   [ChainTypeEnum.SVM]: () => routes.SOL_CONNECTED,
 }
 
-export function connectedRoute(chainType: ChainTypeEnum): SetRouteOptions {
+function _connectedRoute(chainType: ChainTypeEnum): SetRouteOptions {
   return connectedRouteRegistry[chainType]()
 }
 

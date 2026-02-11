@@ -199,10 +199,3 @@ export function useSVMWriteContract(): UseSolanaSendSOLLike {
     reset: resetWithClear,
   }
 }
-
-export const useSolanaAccount = useSVMAccount
-export const useSolanaBalanceAdapter = useSVMBalance
-export const useSolanaDisconnect = useSVMDisconnect
-export const useSolanaSendSOL = useSVMWriteContract
-export const useSolanaSignMessageAdapter = useSVMSignMessage
-export const useSolanaSwitchCluster = useSVMSwitchCluster

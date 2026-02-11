@@ -107,7 +107,7 @@ const _isLedgerConnector = (connectorId?: string) => connectorId === 'ledger'
 
 const _isPortoConnector = (connectorId?: string) => connectorId === 'xyz.ithaca.porto'
 
-export const isSafeConnector = (connectorId?: string) => connectorId === 'safe'
+const _isSafeConnector = (connectorId?: string) => connectorId === 'safe'
 
 export const isInjectedConnector = (connectorId?: string) => connectorId === 'injected'
 

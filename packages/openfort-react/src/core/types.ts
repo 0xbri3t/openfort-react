@@ -25,6 +25,3 @@ export type CoreContextValue = {
 }
 
 export type WalletReadiness = 'not-created' | 'needs-recovery' | 'ready' | 'loading'
-
-export type { OpenfortHookOptions } from '../types'
-export { OpenfortError, OpenfortReactErrorType } from '../types'
