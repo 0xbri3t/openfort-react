@@ -4,6 +4,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
+import { MODE_ICONS } from '@/assets/chain-icons'
 import { ModeToggle } from '@/components/mode-toggle'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Logo } from '@/components/ui/logo'
@@ -137,13 +138,19 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
           </div>
           <div className="flex gap-4 sm:border-l pl-4 items-center">
             <DropdownMenu>
-              <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground min-w-[7rem] flex items-center justify-center gap-1">
+              <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground min-w-[7rem] flex items-center justify-center gap-2">
+                {MODE_ICONS[mode]}
                 {MODE_LABELS[mode]}
                 <ChevronDown className="size-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {(['evm-only', 'solana-only', 'evm-wagmi'] as const).map((m) => (
-                  <DropdownMenuItem key={m} onClick={() => void handleModeSwitch(m)}>
+                  <DropdownMenuItem
+                    key={m}
+                    onClick={() => void handleModeSwitch(m)}
+                    className="flex items-center gap-2"
+                  >
+                    {MODE_ICONS[m]}
                     {MODE_LABELS[m]}
                   </DropdownMenuItem>
                 ))}
