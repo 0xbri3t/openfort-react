@@ -308,7 +308,8 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       solanaAccounts.length === 0 ||
       embeddedState !== EmbeddedState.READY ||
       state.status === 'connecting' ||
-      state.status === 'reconnecting'
+      state.status === 'reconnecting' ||
+      state.status === 'creating'
     ) {
       return
     }
