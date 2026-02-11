@@ -67,25 +67,20 @@ export const SolanaIcon = ({ className, size = 20 }: { className?: string; size?
 export const WagmiIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
   <svg
     className={className}
-    width={size}
-    height={size}
+    role="img"
     viewBox="0 0 24 24"
-    fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
+    id="Wagmi--Streamline-Simple-Icons"
+    height={size}
+    width={size}
   >
-    <rect width="24" height="24" rx="6" fill="url(#wagmi-bg)" />
-    <path d="M7 8l5 8 5-8-2.5 4L12 16l-2.5-4L7 8z" fill="url(#wagmi-fg)" />
-    <defs>
-      <linearGradient id="wagmi-bg" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#8B5CF6" />
-        <stop offset="1" stopColor="#6366F1" />
-      </linearGradient>
-      <linearGradient id="wagmi-fg" x1="7" y1="8" x2="17" y2="16" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#fff" />
-        <stop offset="1" stopColor="#E0E7FF" />
-      </linearGradient>
-    </defs>
+    <desc>Wagmi Streamline Icon: https://streamlinehq.com</desc>
+    <title>Wagmi</title>
+    <path
+      d="M2.7391 13.2065c0 0.7564 0.6132 1.3696 1.3696 1.3696h2.7391c0.7564 0 1.3696 -0.6132 1.3696 -1.3696V7.7283c0 -0.7564 0.6132 -1.3696 1.3696 -1.3696s1.3695 0.6132 1.3695 1.3696v5.4782c0 0.7564 0.6132 1.3696 1.3696 1.3696h2.7391c0.7564 0 1.3696 -0.6132 1.3696 -1.3696V7.7283c0 -0.7564 0.6131 -1.3696 1.3695 -1.3696s1.3696 0.6132 1.3696 1.3696v8.2174c0 0.7564 -0.6132 1.3695 -1.3696 1.3695H1.3696C0.6132 17.3152 0 16.7021 0 15.9457V7.7283c0 -0.7564 0.6132 -1.3696 1.3696 -1.3696s1.3695 0.6132 1.3695 1.3696zm19.4348 4.4348c1.0085 0 1.8261 -0.8176 1.8261 -1.826 0 -1.0086 -0.8176 -1.8262 -1.826 -1.8262 -1.0086 0 -1.8262 0.8176 -1.8262 1.8261 0 1.0085 0.8176 1.826 1.8261 1.826z"
+      fill="#000000"
+      stroke-width="1"
+    ></path>
   </svg>
 )
 
