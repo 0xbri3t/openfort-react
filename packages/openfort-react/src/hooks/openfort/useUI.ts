@@ -48,6 +48,18 @@ function routeInList(route: ModalRoutes, list: ModalRoutes[]): boolean {
   return list.some((r) => routeEquals(route, r))
 }
 
+/**
+ * Returns modal control and navigation helpers for the connect modal.
+ *
+ * @returns isOpen, open, close, openProfile, openSwitchNetworks, openProviders, openWallets
+ *
+ * @example
+ * ```tsx
+ * const { open, openProfile } = useUI()
+ * <button onClick={open}>Connect</button>
+ * <button onClick={openProfile}>Profile</button>
+ * ```
+ */
 export function useUI() {
   const { open, setOpen, setRoute, chainType } = useOpenfort()
   const { isLoading, user, needsRecovery, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()

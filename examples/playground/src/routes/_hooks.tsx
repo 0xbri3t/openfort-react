@@ -1,4 +1,4 @@
-import { useChains, useConnectedWallet, useEthereumEmbeddedWallet, useUser } from '@openfort/react'
+import { useConnectedWallet, useEthereumEmbeddedWallet, useEthereumSwitchChain, useUser } from '@openfort/react'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { type PropsWithChildren, useMemo } from 'react'
@@ -34,18 +34,11 @@ const SidebarInfo = () => {
   const ethereum = useEthereumEmbeddedWallet(
     wallet.status === 'connected' && wallet.chainId != null ? { chainId: wallet.chainId } : undefined
   )
-  const activeWallet =
-    mode === 'solana-only'
-      ? null
-      : ethereum.status === 'connected' ||
-          ethereum.status === 'connecting' ||
-          ethereum.status === 'reconnecting' ||
-          ethereum.status === 'needs-recovery'
-        ? ethereum.activeWallet
-        : null
-  const address = wallet.status === 'connected' ? wallet.address : undefined
-  const chainId = wallet.status === 'connected' ? wallet.chainId : undefined
-  const chains = useChains()
+  const activeWallet = mode !== 'solana-only' && ethereum.activeWallet ? ethereum.activeWallet : null
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
+  const { chains } = useEthereumSwitchChain()
 
   const connectedChain = useMemo(() => chains.find((c) => c.id === chainId), [chains, chainId])
 

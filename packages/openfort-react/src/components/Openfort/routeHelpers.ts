@@ -23,15 +23,6 @@ export function createRoute(chainType: ChainTypeEnum): SetRouteOptions {
   return createRouteRegistry[chainType]()
 }
 
-const connectedRouteRegistry: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, () => SetRouteOptions> = {
-  [ChainTypeEnum.EVM]: () => routes.ETH_CONNECTED,
-  [ChainTypeEnum.SVM]: () => routes.SOL_CONNECTED,
-}
-
-function _connectedRoute(chainType: ChainTypeEnum): SetRouteOptions {
-  return connectedRouteRegistry[chainType]()
-}
-
 const externalWalletRecoverRouteRegistry: Record<
   ChainTypeEnum.EVM | ChainTypeEnum.SVM,
   (wallet: EthereumUserWallet) => SetRouteOptions | null

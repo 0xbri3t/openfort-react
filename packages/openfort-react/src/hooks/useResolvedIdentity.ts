@@ -96,6 +96,7 @@ export function useResolvedIdentity(options: UseResolvedIdentityOptions): Resolv
     queryFn: () => resolveEthereumIdentity(address, rpcUrl!),
     enabled: isEnabled,
     staleTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   })
 
   // Discriminated union return - status-based

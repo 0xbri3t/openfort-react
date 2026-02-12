@@ -119,22 +119,6 @@ function getBlockExplorerUrl(chainId: number): string | undefined {
 }
 
 /**
- * Get transaction URL on block explorer
- */
-function _getTransactionUrl(chainId: number, txHash: string): string | undefined {
-  const explorer = BLOCK_EXPLORERS[chainId]
-  return explorer ? `${explorer}/tx/${txHash}` : undefined
-}
-
-/**
- * Get address URL on block explorer
- */
-function _getAddressUrl(chainId: number, address: string): string | undefined {
-  const explorer = BLOCK_EXPLORERS[chainId]
-  return explorer ? `${explorer}/address/${address}` : undefined
-}
-
-/**
  * Build a viem Chain from chainId and optional rpcUrls (e.g. from walletConfig.ethereum.rpcUrls).
  * Used when no bridge is present (embedded strategy) so useChains() and viem clients have a Chain.
  */

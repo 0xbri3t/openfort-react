@@ -1,31 +1,42 @@
 import { createElement } from 'react'
 import { useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import type { OpenfortEVMBridgeConnector, OpenfortEVMBridgeValue } from '../core/OpenfortEVMBridgeContext'
+import type {
+  OpenfortEthereumBridgeConnector,
+  OpenfortEthereumBridgeValue,
+} from '../ethereum/OpenfortEthereumBridgeContext'
 import { isCoinbaseWalletConnector, isInjectedConnector } from '../utils'
 import { type WalletConfigProps, walletConfigs } from './walletConfigs'
 
 export type WalletProps = {
   id: string
-  connector: OpenfortEVMBridgeConnector
+  connector: OpenfortEthereumBridgeConnector
   isInstalled?: boolean
 } & WalletConfigProps
 
 export type MapBridgeConnectorsOptions = { walletConnectName?: string }
 
-/** Maps bridge.connectors to WalletProps[]. Used by EVMBridgeStrategy and useEVMConnectors. */
+/** Maps bridge.connectors to WalletProps[]. Used by EthereumBridgeStrategy and useEthereumConnectors. */
 export function mapBridgeConnectorsToWalletProps(
-  bridge: OpenfortEVMBridgeValue,
+  bridge: OpenfortEthereumBridgeValue,
   options: MapBridgeConnectorsOptions = {}
 ): WalletProps[] {
   const { walletConnectName } = options
   const wallets = bridge.connectors.map((connector): WalletProps => {
-    const walletId = Object.keys(walletConfigs).find(
+    let walletId = Object.keys(walletConfigs).find(
       (id) =>
         id
           .split(',')
           .map((i) => i.trim())
           .indexOf(connector.id) !== -1
     )
+    // Fallback: when connector.id is 'injected', match by name for known wallets (e.g. MetaMask)
+    if (!walletId && connector.id === 'injected' && connector.name) {
+      const nameLower = connector.name.toLowerCase()
+      if (nameLower.includes('metamask')) {
+        walletId =
+          Object.keys(walletConfigs).find((k) => walletConfigs[k].name?.toLowerCase() === 'metamask') ?? undefined
+      }
+    }
 
     const c: WalletProps = {
       id: connector.id,
@@ -96,8 +107,8 @@ export function mapBridgeConnectorsToWalletProps(
     })
 }
 
-/** Returns the list of EVM connectors (MetaMask, WalletConnect, etc.) for the connect UI. Uses strategy when available; returns [] when embedded-only (no bridge). */
-export function useEVMConnectors(): WalletProps[] {
+/** Returns the list of Ethereum connectors (MetaMask, WalletConnect, etc.) for the connect UI. Uses strategy when available; returns [] when embedded-only (no bridge). */
+export function useEthereumConnectors(): WalletProps[] {
   const strategy = useConnectionStrategy()
   if (!strategy) return []
   return strategy.getConnectors()
@@ -105,7 +116,7 @@ export function useEVMConnectors(): WalletProps[] {
 
 /** Single connector by id. */
 export const useWallet = (id: string): WalletProps | null => {
-  const connectors = useEVMConnectors()
+  const connectors = useEthereumConnectors()
   const wallet = connectors.find((c) => c.id === id)
   if (!wallet) return null
   return wallet

@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { logger } from '../../utils/logger'
-import { useWallet } from '../../wallets/useEVMConnectors'
+import { useWallet } from '../../wallets/useEthereumConnectors'
 import Alert from '../Common/Alert'
 import { contentVariants } from '../Common/Modal'
 import { useOpenfort } from '../Openfort/useOpenfort'

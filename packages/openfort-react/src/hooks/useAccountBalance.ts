@@ -20,6 +20,9 @@ export type UseAccountBalanceReturnType = {
  * wallet address and chain from useConnectedWallet() and returns a flat
  * data + flags shape. Works in both bridge and embedded mode.
  *
+ * @deprecated When using wagmi, use wagmi's `useBalance` instead. When using EVM-only (no wagmi),
+ * use `useEthereumBalance` from the adapter API.
+ *
  * @example
  * ```tsx
  * const { data, isLoading, isError, refetch } = useAccountBalance()

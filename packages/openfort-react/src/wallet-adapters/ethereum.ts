@@ -31,6 +31,16 @@ import type {
   WalletAdapterChain,
 } from './types'
 
+/**
+ * Returns the connected EVM account. Use when not using wagmi (EVM-only mode).
+ *
+ * @returns address, chainId, and isConnected
+ *
+ * @example
+ * ```tsx
+ * const { address, chainId, isConnected } = useEthereumAccount()
+ * ```
+ */
 export function useEthereumAccount(): UseAccountLike {
   const wallet = useConnectedWallet()
   const { chainType } = useChain()
@@ -42,6 +52,17 @@ export function useEthereumAccount(): UseAccountLike {
   }
 }
 
+/**
+ * Returns the native token balance for the connected EVM account.
+ *
+ * @returns data (value, formatted, symbol, decimals), refetch, isLoading, error
+ *
+ * @example
+ * ```tsx
+ * const { data, isLoading } = useEthereumBalance()
+ * if (data) console.log(data.formatted, data.symbol)
+ * ```
+ */
 export function useEthereumBalance(): UseBalanceLike {
   const { address, chainId, isConnected } = useEthereumAccount()
   const chainIdNum = chainId ?? DEFAULT_TESTNET_CHAIN_ID
@@ -79,10 +100,26 @@ export function useEthereumBalance(): UseBalanceLike {
   return { data: undefined, refetch, isLoading: false }
 }
 
+/**
+ * Disconnects the wallet and logs out. Full logout (auth + wallet).
+ *
+ * @returns disconnect, disconnectAsync, isPending, error, reset
+ */
 export function useEthereumDisconnect(): UseDisconnectLike {
   return useDisconnectAdapter()
 }
 
+/**
+ * Returns configured chains and switchChain for EVM multi-chain. Use when not using wagmi.
+ *
+ * @returns chains, currentChainId, switchChain, data, error, isPending
+ *
+ * @example
+ * ```tsx
+ * const { chains, switchChain } = useEthereumSwitchChain()
+ * switchChain?.({ chainId: 84532 })
+ * ```
+ */
 export function useEthereumSwitchChain(): UseSwitchChainLike {
   const chains = useChains()
   const { chainId: currentChainId } = useEthereumAccount()
@@ -129,6 +166,17 @@ export function useEthereumSwitchChain(): UseSwitchChainLike {
   }
 }
 
+/**
+ * Signs a message with the connected EVM wallet.
+ *
+ * @returns signMessage(params), data, isPending, error
+ *
+ * @example
+ * ```tsx
+ * const { signMessage } = useEthereumSignMessage()
+ * const sig = await signMessage({ message: 'Hello' })
+ * ```
+ */
 export function useEthereumSignMessage(): UseSignMessageLike {
   const { client } = useOpenfortCore()
   const [data, setData] = useState<`0x${string}` | undefined>(undefined)
@@ -160,6 +208,12 @@ export function useEthereumSignMessage(): UseSignMessageLike {
 }
 
 /** useReadContract-like: read one view function (address, abi, functionName, args) */
+/**
+ * Reads contract data. Use when not using wagmi.
+ *
+ * @param params - address, abi, functionName, args
+ * @returns data, isLoading, error, refetch
+ */
 export function useEthereumReadContract(params: {
   address: `0x${string}`
   abi: Abi
@@ -195,6 +249,17 @@ export function useEthereumReadContract(params: {
 }
 
 /** useWriteContract-like: writeContract({ address, abi, functionName, args }) */
+/**
+ * Writes to a contract. Use when not using wagmi.
+ *
+ * @returns writeContract, data, isPending, error, reset
+ *
+ * @example
+ * ```tsx
+ * const { writeContract } = useEthereumWriteContract()
+ * await writeContract({ address, abi, functionName: 'mint', args: [] })
+ * ```
+ */
 export function useEthereumWriteContract(): UseWriteContractLike {
   const { address, chainId } = useEthereumAccount()
   const { writeContractAsync, data, isPending, error } = useEthereumWriteContractInternal()

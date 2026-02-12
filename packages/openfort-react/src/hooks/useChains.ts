@@ -3,11 +3,11 @@ import type { Chain } from 'viem'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 import { buildChainFromConfig } from '../utils/rpc'
 
 export function useChains(): Chain[] {
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const strategy = useConnectionStrategy()
   const { walletConfig } = useOpenfort()
 

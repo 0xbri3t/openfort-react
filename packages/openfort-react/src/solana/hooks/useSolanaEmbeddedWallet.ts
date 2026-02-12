@@ -6,6 +6,7 @@ import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
+import { logger } from '../../utils/logger'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import type {
@@ -27,6 +28,21 @@ type InternalState = {
   error: string | null
 }
 
+/**
+ * Returns state for Solana embedded wallets: create, recover, list, active wallet, and provider.
+ * Use for creating accounts, recovering existing ones, and signing transactions.
+ *
+ * @param _options - Reserved for future options
+ * @returns State with status, wallets, activeWallet, create, recover, setActive, provider
+ *
+ * @example
+ * ```tsx
+ * const solana = useSolanaEmbeddedWallet()
+ * if (solana.status === 'connected' && solana.provider) {
+ *   const sig = await solana.provider.signTransaction(tx)
+ * }
+ * ```
+ */
 export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): EmbeddedSolanaWalletState {
   const {
     client,
@@ -369,7 +385,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         }
       })
       .catch(() => {
-        autoReconnectAttemptedRef.current = false
+        logger.warn('Failed to get active Solana wallet')
       })
     return () => {
       cancelled = true

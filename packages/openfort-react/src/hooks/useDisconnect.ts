@@ -15,6 +15,9 @@ export type UseDisconnectReturnType = {
  * Wagmi-compatible disconnect hook. Performs full logout (auth + wallet).
  * Works in both bridge and embedded mode.
  *
+ * @deprecated When using wagmi, use wagmi's `useDisconnect` instead. When using EVM-only (no wagmi),
+ * use `useEthereumDisconnect` from the adapter API.
+ *
  * @example
  * ```tsx
  * const { disconnect, disconnectAsync, isPending } = useDisconnect()

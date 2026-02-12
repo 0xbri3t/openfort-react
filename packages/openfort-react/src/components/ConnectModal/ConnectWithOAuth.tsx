@@ -23,6 +23,7 @@ const ConnectWithOAuth: React.FC = () => {
 
   useEffect(() => {
     ;(async () => {
+      if (typeof window === 'undefined' || typeof document === 'undefined') return
       if (connector.type !== 'oauth') throw new Error('Invalid connector type')
 
       const url = new URL(window.location.href.replace('?access_token=', '&access_token=')) // handle both ? and & cases

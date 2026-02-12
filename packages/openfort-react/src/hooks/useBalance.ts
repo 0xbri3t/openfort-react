@@ -83,6 +83,7 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
         : fetchSolanaBalance(address, rpcUrl, commitment),
     enabled: isEnabled,
     refetchInterval,
+    gcTime: 5 * 60 * 1000,
   })
 
   const refetch = query.refetch

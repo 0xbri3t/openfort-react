@@ -12,6 +12,12 @@ function hasEmbeddedSolana(state: ConnectionStrategyState): boolean {
   )
 }
 
+/**
+ * Creates the Solana embedded strategy. Returns null if walletConfig.solana is not set.
+ *
+ * @param walletConfig - Wallet config with solana config
+ * @returns ConnectionStrategy or null
+ */
 export function createSolanaEmbeddedStrategy(
   walletConfig: OpenfortWalletConfig | undefined
 ): ConnectionStrategy | null {

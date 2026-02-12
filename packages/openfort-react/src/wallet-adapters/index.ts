@@ -5,6 +5,7 @@
  * Use EVM hooks when in evm-only mode; use Solana hooks when in solana-only mode.
  */
 
+export { useSolanaBalance } from '../solana/hooks/useSolanaBalance'
 export {
   useEthereumAccount,
   useEthereumBalance,
@@ -16,7 +17,6 @@ export {
 } from './ethereum'
 export {
   useSolanaAccount,
-  useSolanaBalanceAdapter,
   useSolanaDisconnect,
   useSolanaSignMessage,
   useSolanaWriteContract,

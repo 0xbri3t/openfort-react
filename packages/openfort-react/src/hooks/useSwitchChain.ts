@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { Chain } from 'viem'
 import { useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 import { useChains } from './useChains'
 
 export type UseSwitchChainReturnType = {
@@ -16,6 +16,9 @@ export type UseSwitchChainReturnType = {
 /**
  * Wagmi-compatible switch chain hook. In bridge mode delegates to the bridge;
  * in embedded mode switchChain/switchChainAsync are undefined (single chain).
+ *
+ * @deprecated When using wagmi, use wagmi's `useSwitchChain` instead. When using EVM-only (no wagmi),
+ * use `useEthereumSwitchChain` from the adapter API.
  *
  * @example
  * ```tsx
@@ -32,7 +35,7 @@ export type UseSwitchChainReturnType = {
  */
 export function useSwitchChain(): UseSwitchChainReturnType {
   const strategy = useConnectionStrategy()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const chains = useChains()
 
   return useMemo(() => {

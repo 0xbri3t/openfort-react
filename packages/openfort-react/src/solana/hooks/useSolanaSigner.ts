@@ -13,6 +13,19 @@ import {
 } from '../signers/OpenfortSolanaSigner'
 import { useSolanaEmbeddedWallet } from './useSolanaEmbeddedWallet'
 
+/**
+ * Returns a transaction signer for @solana/kit when wallet is connected.
+ *
+ * @returns TransactionPartialSigner or undefined when disconnected
+ *
+ * @example
+ * ```tsx
+ * const signer = useSolanaSigner()
+ * if (signer) {
+ *   const [signed] = await signAndSendTransaction({ transaction, signers: [signer] })
+ * }
+ * ```
+ */
 export function useSolanaSigner(): TransactionPartialSigner | undefined {
   const solana = useSolanaEmbeddedWallet()
 
@@ -27,6 +40,19 @@ export function useSolanaSigner(): TransactionPartialSigner | undefined {
   return signer
 }
 
+/**
+ * Returns a message signer for @solana/kit when wallet is connected.
+ *
+ * @returns MessagePartialSigner or undefined when disconnected
+ *
+ * @example
+ * ```tsx
+ * const signer = useSolanaMessageSigner()
+ * if (signer) {
+ *   const sig = await signMessage({ message, signer })
+ * }
+ * ```
+ */
 export function useSolanaMessageSigner(): MessagePartialSigner | undefined {
   const solana = useSolanaEmbeddedWallet()
 

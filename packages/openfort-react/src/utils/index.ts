@@ -1,38 +1,7 @@
 import { detect } from 'detect-browser'
 import React from 'react'
 import { formatWithDynamicDecimals } from '../components/Pages/Buy/utils'
-
-const truncateRegex = /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/
-
-const playerRegex = /^(pla_[a-zA-Z0-9]{4})[a-zA-Z0-9-]+([a-zA-Z0-9]{4})$/
-
-const truncateEthAddress = (address?: string, separator: string = '••••') => {
-  if (!address) return ''
-  const match = address.match(truncateRegex)
-  if (!match) return address
-  return `${match[1]}${separator}${match[2]}`
-}
-
-const truncateSolanaAddress = (address?: string, separator: string = '••••') => {
-  if (!address) return ''
-  if (address.length <= 14) return address
-  return `${address.slice(0, 6)}${separator}${address.slice(-4)}`
-}
-
-const _truncateENSAddress = (ensName: string, maxLength: number) => {
-  if (ensName.length > maxLength) {
-    return `${ensName.replace('.eth', '').slice(0, maxLength)}...`
-  } else {
-    return ensName
-  }
-}
-
-const _truncateUserId = (playerId?: string, separator: string = '••••') => {
-  if (!playerId) return ''
-  const match = playerId.match(playerRegex)
-  if (!match) return playerId
-  return `${match[1]}${separator}${match[2]}`
-}
+import { truncateEthAddress, truncateSolanaAddress } from './format'
 
 const nFormatter = (num: number, digits: number = 2) => {
   // Handle zero case
@@ -95,19 +64,7 @@ function flattenChildren(children: React.ReactNode): ReactChildArray {
 
 export const isWalletConnectConnector = (connectorId?: string) => connectorId === 'walletConnect'
 
-const _isFamilyAccountsConnector = (connectorId?: string) => connectorId === 'familyAccountsProvider'
-
-const _isFamilyConnector = (connectorId?: string) => connectorId === 'co.family.wallet'
-
-const _isMetaMaskConnector = (connectorId?: string) => connectorId === 'metaMaskSDK'
-
 export const isCoinbaseWalletConnector = (connectorId?: string) => connectorId === 'coinbaseWalletSDK'
-
-const _isLedgerConnector = (connectorId?: string) => connectorId === 'ledger'
-
-const _isPortoConnector = (connectorId?: string) => connectorId === 'xyz.ithaca.porto'
-
-const _isSafeConnector = (connectorId?: string) => connectorId === 'safe'
 
 export const isInjectedConnector = (connectorId?: string) => connectorId === 'injected'
 

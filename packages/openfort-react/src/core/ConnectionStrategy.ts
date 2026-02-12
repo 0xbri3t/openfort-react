@@ -1,6 +1,6 @@
 import type { ChainTypeEnum, EmbeddedAccount, EmbeddedState, Openfort, User } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../components/Openfort/types'
-import type { WalletProps } from '../wallets/useEVMConnectors'
+import type { WalletProps } from '../wallets/useEthereumConnectors'
 
 /** Default chain when EVM without Wagmi and walletConfig.ethereum.chainId is missing. Sepolia. */
 export const DEFAULT_DEV_CHAIN_ID = 11155111
@@ -32,6 +32,7 @@ export interface ConnectionStrategy {
   /** External wallet connectors; only when wagmi/bridge exists. Otherwise []. */
   getConnectors(): WalletProps[]
 
-  initProvider(openfort: Openfort, walletConfig: OpenfortWalletConfig): Promise<void>
+  /** @param chainId - Current chain for EVM; when provided, uses this for policy/rpc instead of config default. */
+  initProvider(openfort: Openfort, walletConfig: OpenfortWalletConfig, chainId?: number): Promise<void>
   disconnect(openfort: Openfort): Promise<void>
 }

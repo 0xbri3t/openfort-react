@@ -1,10 +1,15 @@
 import { expect, test } from '../fixtures/test'
+import { EVM_ADDRESS_REGEX, SOLANA_ADDRESS_DISPLAY_REGEX } from '../utils/mode'
 
 test.describe('Dashboard integration - wallets + signatures', () => {
-  test('create new wallet (password) -> wallet appears -> can still sign message', async ({ page, dashboardPage }) => {
-    await dashboardPage.ensureReady()
+  test('create new wallet (password) -> wallet appears -> can still sign message', async ({
+    page,
+    dashboardPage,
+    mode,
+  }) => {
+    const m = mode
+    await dashboardPage.ensureReady(m)
 
-    // --- Wallets card (by title)
     const walletsTitle = page
       .locator('[data-slot="card-title"]')
       .filter({ hasText: /^wallets$/i })
@@ -14,8 +19,9 @@ test.describe('Dashboard integration - wallets + signatures', () => {
     const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
     await expect(walletsCard).toBeVisible({ timeout: 60_000 })
 
+    const addressRegex = m === 'solana-only' ? SOLANA_ADDRESS_DISPLAY_REGEX : EVM_ADDRESS_REGEX
     const walletRowLocator = walletsCard.locator('button').filter({
-      hasText: /0x[a-f0-9]{4,}\.\.\.[a-f0-9]{4,}/i,
+      hasText: addressRegex,
     })
 
     const initialCount = await walletRowLocator.count()
@@ -43,8 +49,7 @@ test.describe('Dashboard integration - wallets + signatures', () => {
     // New wallet appears (count increases)
     await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
 
-    // --- Now we validate that signing is still possible (dashboard is not broken)
     const msg = `Cross-feature sign ${Date.now()}`
-    await dashboardPage.signMessage(msg)
+    await dashboardPage.signMessage(msg, m)
   })
 })

@@ -1,9 +1,15 @@
 import { expect, test } from '../fixtures/test'
+import { EVM_ADDRESS_REGEX } from '../utils/mode'
 
 test.describe('Dashboard integration - wallets + chain', () => {
-  test('create wallet (password) -> switch chain -> wallets list still present', async ({ page, dashboardPage }) => {
+  test('create wallet (password) -> switch chain -> wallets list still present', async ({
+    page,
+    dashboardPage,
+    mode,
+  }) => {
     test.setTimeout(180_000)
-    await dashboardPage.ensureReady()
+    const m = mode
+    await dashboardPage.ensureReady(m)
 
     // Wallets card
     const walletsTitle = page
@@ -16,7 +22,7 @@ test.describe('Dashboard integration - wallets + chain', () => {
     await expect(walletsCard).toBeVisible({ timeout: 60_000 })
 
     const walletRowLocator = walletsCard.locator('button').filter({
-      hasText: /0x[a-f0-9]{4,}\.\.\.[a-f0-9]{4,}/i,
+      hasText: EVM_ADDRESS_REGEX,
     })
 
     const initialCount = await walletRowLocator.count()

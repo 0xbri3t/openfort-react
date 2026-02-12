@@ -11,7 +11,7 @@ export const SignaturesCardSolana = ({ tooltip }: { tooltip?: { hook: string; bo
 
   const SignButton = () => (
     <Button className="btn btn-accent w-full" disabled={isPending}>
-      {isPending ? 'Signing...' : 'Sign message'}
+      {isPending ? 'Signing...' : 'Sign a message'}
     </Button>
   )
 

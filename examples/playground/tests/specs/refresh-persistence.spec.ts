@@ -1,9 +1,10 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Dashboard regression - refresh persistence', () => {
-  test('switch chain persists after reload and dashboard remains usable', async ({ page, dashboardPage }) => {
+  test('switch chain persists after reload and dashboard remains usable', async ({ page, dashboardPage, mode }) => {
     test.setTimeout(180_000)
-    await dashboardPage.ensureReady()
+    const m = mode
+    await dashboardPage.ensureReady(m)
 
     const chainCard = await dashboardPage.getCardByTitle(/switch chain/i)
 
@@ -29,7 +30,7 @@ test.describe('Dashboard regression - refresh persistence', () => {
     await page.reload({ waitUntil: 'domcontentloaded' })
 
     // Still logged in + chain remains
-    await dashboardPage.expectLoaded()
+    await dashboardPage.expectLoaded(m)
     await expect(currentChain).toContainText(/beam testnet/i, { timeout: 90_000 })
 
     // Sanity: signatures input still exists (dashboard not broken)

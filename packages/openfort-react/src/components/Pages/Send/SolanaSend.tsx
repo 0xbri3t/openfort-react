@@ -39,9 +39,11 @@ export function SolanaSend() {
   const walletAddress = wallet.status === 'connected' ? wallet.activeWallet.address : undefined
   const provider = wallet.status === 'connected' ? wallet.provider : null
 
-  const { data: balanceData, refetch: refetchBalance } = useSolanaBalance(walletAddress)
+  const balanceResult = useSolanaBalance(walletAddress ? { address: walletAddress } : undefined)
+  const balanceData = balanceResult.data
+  const refetchBalance = balanceResult.refetch
 
-  const balanceLamports = balanceData?.lamports ?? BigInt(0)
+  const balanceLamports = balanceData?.value ?? BigInt(0)
   const recipientValid = recipient.length > 0 && isValidSolanaAddress(recipient)
 
   const amountNum = amount === '' || amount === '.' ? null : parseFloat(amount)

@@ -1,4 +1,4 @@
-import { OpenfortButton, useDisconnect } from '@openfort/react'
+import { OpenfortButton, useOpenfort } from '@openfort/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
@@ -24,8 +24,8 @@ const MODE_LABELS: Record<OpenfortPlaygroundMode, string> = {
 /** Hooks used in each mode – shown as helper text on mode buttons */
 const MODE_HOOKS: Record<OpenfortPlaygroundMode, string> = {
   'evm-only': 'useEthereumEmbeddedWallet, useAdapter (viem)',
-  'solana-only': 'useSolanaEmbeddedWallet, useWallets',
-  'evm-wagmi': 'useWallets, useEVMConnectors, wagmi hooks',
+  'solana-only': 'useSolanaEmbeddedWallet, useEmbeddedWallet',
+  'evm-wagmi': 'useEmbeddedWallet, wagmi hooks',
 }
 
 export type NavRoute = {
@@ -40,7 +40,8 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const path = location.pathname.includes('showcase') ? '/' : location.pathname
   const { mode, setMode } = usePlaygroundMode()
   const queryClient = useQueryClient()
-  const { disconnectAsync } = useDisconnect()
+  const { logout } = useOpenfort()
+  const disconnectAsync = () => logout()
 
   const handleModeSwitch = useCallback(
     async (next: OpenfortPlaygroundMode) => {
