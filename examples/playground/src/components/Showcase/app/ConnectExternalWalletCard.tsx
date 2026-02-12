@@ -1,6 +1,5 @@
-import { embeddedWalletId, useEmbeddedWallet, useEthereumBridge } from '@openfort/react'
+import { embeddedWalletId, useConnectedWallet, useEmbeddedWallet, useEthereumBridge } from '@openfort/react'
 import type React from 'react'
-import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
 
@@ -24,17 +23,19 @@ function getConnectorIconUrl(connector: { id: string; icon?: string }): string |
 
 /**
  * Switch between Openfort embedded wallet and external wallets.
- * Openfort in its own section; external wallets in another. One mode at a time.
+ * Uses `useConnectedWallet()` from the SDK for wallet-type detection — no manual
+ * connector matching or transition-flag juggling needed.
  */
 export const ConnectExternalWalletCard = () => {
-  const { connector, isConnected } = useAccount()
+  const wallet = useConnectedWallet()
   const bridge = useEthereumBridge()
   const embedded = useEmbeddedWallet()
   const externalWallets = bridge?.connectors ?? []
-  const isSwitchingToOpenfort = embedded.status === 'connecting'
 
-  const isOpenfortActive = isConnected && connector?.id === embeddedWalletId
-  const isExternalActive = isConnected && !isOpenfortActive
+  // SDK gives us clean booleans — no need for manual wagmi state inspection
+  const isOpenfortActive = wallet.isConnected && wallet.isEmbedded
+  const isExternalActive = wallet.isConnected && wallet.isExternal
+  const isSwitching = wallet.isConnecting
 
   const handleSwitchToOpenfort = () => {
     if (!isOpenfortActive) {
@@ -96,13 +97,13 @@ export const ConnectExternalWalletCard = () => {
             <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Embedded</p>
             <WalletButton
               isActive={isOpenfortActive}
-              disabled={isOpenfortActive || isSwitchingToOpenfort}
+              disabled={isOpenfortActive || isSwitching}
               onClick={handleSwitchToOpenfort}
             >
               <img src="/openfort-dark.svg" alt="Openfort" className="h-5 w-5 dark:hidden" />
               <img src="/openfort-light.svg" alt="Openfort" className="h-5 w-5 hidden dark:block" />
               <span>Openfort</span>
-              {isSwitchingToOpenfort && !isOpenfortActive && (
+              {isSwitching && !isOpenfortActive && (
                 <span className="ml-auto text-xs text-muted-foreground">Switching…</span>
               )}
             </WalletButton>
@@ -119,24 +120,24 @@ export const ConnectExternalWalletCard = () => {
             <div className="flex flex-col gap-0.5">
               {externalWallets
                 .filter((w) => w.id !== embeddedWalletId)
-                .map((wallet) => {
-                  const isActive = isConnected && connector?.id === wallet.id
-                  const iconUrl = typeof wallet.icon === 'string' ? wallet.icon : getConnectorIconUrl(wallet)
+                .map((w) => {
+                  const isActive = wallet.isConnected && wallet.connectorId === w.id
+                  const iconUrl = typeof w.icon === 'string' ? w.icon : getConnectorIconUrl(w)
                   return (
                     <WalletButton
-                      key={wallet.id}
+                      key={w.id}
                       isActive={!!isActive}
                       disabled={!!isActive}
-                      onClick={() => handleConnectExternal(wallet)}
+                      onClick={() => handleConnectExternal(w)}
                     >
                       {iconUrl ? (
-                        <img src={iconUrl} alt={wallet.name} className="h-5 w-5 rounded object-contain" />
+                        <img src={iconUrl} alt={w.name} className="h-5 w-5 rounded object-contain" />
                       ) : (
                         <span className="h-5 w-5 rounded bg-base-300 flex items-center justify-center text-[10px] font-medium">
-                          {wallet.name?.[0] ?? '?'}
+                          {w.name?.[0] ?? '?'}
                         </span>
                       )}
-                      <span>{wallet.name ?? wallet.id}</span>
+                      <span>{w.name ?? w.id}</span>
                     </WalletButton>
                   )
                 })}

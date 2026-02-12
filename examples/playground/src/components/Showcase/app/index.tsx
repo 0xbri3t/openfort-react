@@ -1,6 +1,5 @@
-import { embeddedWalletId, useConnectedWallet, useSignOut, useUser } from '@openfort/react'
+import { useConnectedWallet, useSignOut, useUser } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
-import { useAccount } from 'wagmi'
 import { ConnectExternalWalletCard } from '@/components/Showcase/app/ConnectExternalWalletCard'
 import { CreateSessionKeyCardSolana } from '@/components/Showcase/app/CreateSessionKeyCardSolana'
 import { MintTokensCard } from '@/components/Showcase/app/MintTokensCard'
@@ -22,9 +21,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { usePlaygroundMode } from '@/providers'
 
 function SetActiveWalletsCardWagmiWhenOpenfort() {
-  const { connector, isConnected } = useAccount()
-  const isOpenfortActive = isConnected && connector?.id === embeddedWalletId
-  if (!isOpenfortActive) {
+  const wallet = useConnectedWallet()
+  const isExternalConnected = wallet.isConnected && wallet.isExternal
+  const isOpenfortConnected = wallet.isConnected && wallet.isEmbedded
+
+  if (!isOpenfortConnected && isExternalConnected) {
     return (
       <Card className="opacity-75 pointer-events-none">
         <CardHeader>

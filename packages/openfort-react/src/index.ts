@@ -86,6 +86,7 @@ export {
   type ConnectedWalletState,
   type ConnectedWalletStatus,
   useConnectedWallet,
+  type WalletType,
 } from './hooks/useConnectedWallet'
 export { useConnectLifecycle } from './hooks/useConnectLifecycle'
 export { useConnectRoutes } from './hooks/useConnectRoutes'
