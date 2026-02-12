@@ -9,7 +9,7 @@ import {
   getEnsName as getEnsNameAction,
 } from '@wagmi/core'
 import type React from 'react'
-import { createElement, type PropsWithChildren, useCallback, useMemo } from 'react'
+import { createElement, type PropsWithChildren, useCallback, useMemo, useRef } from 'react'
 import { normalize } from 'viem/ens'
 import {
   useAccount,
@@ -35,7 +35,7 @@ function mapConnector(c: {
 }
 
 export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) => {
-  const { address, chain, isConnected, connector } = useAccount()
+  const { address, chain, isConnected, isConnecting, isReconnecting, connector } = useAccount()
   const chainId = useChainId()
   const config = useConfig()
   const { disconnectAsync } = useDisconnect()
@@ -52,21 +52,42 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
   const { signMessageAsync } = useSignMessage()
   const { data: walletClient } = useWalletClient()
 
+  // Stabilize connectors — wagmi's useConnect() returns a new array reference every render,
+  // which would cause infinite re-renders when used as a useMemo dependency.
+  const connectorKey = connectors.map((c) => c.id).join(',')
+  const connectorsRef = useRef(connectors)
+  if (connectorsRef.current.map((c) => c.id).join(',') !== connectorKey) {
+    connectorsRef.current = connectors
+  }
+  const stableConnectors = connectorsRef.current
+
+  // Dedup connectors so all bridge consumers get a clean list.
+  // Mirrors the dedup logic from mapBridgeConnectorsToWalletProps.
+  const bridgeConnectors: OpenfortEthereumBridgeConnector[] = useMemo(() => {
+    const mapped = stableConnectors.map((c) => mapConnector(c))
+    const hasIoMetamask = mapped.some((w) => w.id === 'io.metamask' || w.id === 'io.metamask.mobile')
+    const hasCoinbaseWallet = mapped.some((w) => w.id === 'com.coinbase.wallet')
+    return mapped
+      .filter((w, i, self) => self.findIndex((x) => x.id === w.id) === i)
+      .filter((w) => !(hasIoMetamask && (w.id === 'metaMask' || w.id === 'metaMaskSDK')))
+      .filter((w) => !(hasCoinbaseWallet && w.id === 'coinbaseWalletSDK'))
+  }, [stableConnectors])
+
   const connectBridge = useCallback(
     (params: { connector: OpenfortEthereumBridgeConnector }) => {
-      const c = connectors.find((x) => x.id === params.connector.id && x.name === params.connector.name)
+      const c = stableConnectors.find((x) => x.id === params.connector.id && x.name === params.connector.name)
       if (c) connect({ connector: c })
     },
-    [connectors, connect]
+    [stableConnectors, connect]
   )
 
   const connectAsyncBridge = useCallback(
     async (params: { connector: OpenfortEthereumBridgeConnector }) => {
-      const c = connectors.find((x) => x.id === params.connector.id && x.name === params.connector.name)
+      const c = stableConnectors.find((x) => x.id === params.connector.id && x.name === params.connector.name)
       if (!c) throw new Error('Connector not found')
       return wagmiConnectAsync({ connector: c })
     },
-    [connectors, wagmiConnectAsync]
+    [stableConnectors, wagmiConnectAsync]
   )
 
   const getEnsAddress = useCallback(
@@ -104,12 +125,12 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
 
   const getConnectorAccounts = useCallback(
     async (connectorBridge: OpenfortEthereumBridgeConnector): Promise<`0x${string}`[]> => {
-      const c = connectors.find((x) => x.id === connectorBridge.id && x.name === connectorBridge.name)
+      const c = stableConnectors.find((x) => x.id === connectorBridge.id && x.name === connectorBridge.name)
       if (!c?.getAccounts) return []
       const accounts = await c.getAccounts()
       return accounts as `0x${string}`[]
     },
-    [connectors]
+    [stableConnectors]
   )
 
   const signMessage = useCallback(
@@ -127,7 +148,10 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
       account: {
         address,
         chain: chain ? { id: chain.id, name: chain.name } : undefined,
-        isConnected: isConnected ?? false,
+        // Stable: only true when fully connected (not mid-transition)
+        isConnected: (isConnected ?? false) && !isConnecting && !isReconnecting,
+        isConnecting: isConnecting ?? false,
+        isReconnecting: isReconnecting ?? false,
         connector: connector ? mapConnector(connector) : undefined,
         ensName: ensName ?? undefined,
         ensAvatar: ensAvatar ?? undefined,
@@ -154,7 +178,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
       connect: connectBridge,
       connectAsync: connectAsyncBridge,
       reset,
-      connectors: connectors.map((c) => mapConnector(c)),
+      connectors: bridgeConnectors,
       switchChain: {
         chains: chains.map((ch) => ({ id: ch.id, name: ch.name })),
         switchChain: switchChain ?? undefined,
@@ -173,6 +197,8 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
       address,
       chain,
       isConnected,
+      isConnecting,
+      isReconnecting,
       connector,
       chainId,
       config,
@@ -180,7 +206,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
       connectBridge,
       connectAsyncBridge,
       reset,
-      connectors,
+      bridgeConnectors,
       chains,
       switchChain,
       isSwitchChainPending,

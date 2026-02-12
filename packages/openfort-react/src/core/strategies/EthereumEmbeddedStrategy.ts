@@ -64,10 +64,15 @@ export function createEthereumEmbeddedStrategy(walletConfig: OpenfortWalletConfi
       })
       // Tell the provider which chain is active (EIP-1193). Without this, the provider
       // stays on its initial chain (e.g. 80002) while policy resolution is per-chain.
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: `0x${chainId.toString(16)}` }],
-      })
+      // Non-fatal: switch-chain can 422 (e.g. validation failed).
+      try {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${chainId.toString(16)}` }],
+        })
+      } catch (switchErr) {
+        logger.log('Embedded wallet switch chain failed (non-fatal)', switchErr)
+      }
     },
 
     async disconnect(openfort: Openfort) {

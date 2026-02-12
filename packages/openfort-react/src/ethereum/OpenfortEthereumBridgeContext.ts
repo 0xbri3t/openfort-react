@@ -18,6 +18,8 @@ export interface OpenfortEthereumBridgeAccount {
   address: `0x${string}` | undefined
   chain?: OpenfortEthereumBridgeChain
   isConnected: boolean
+  isConnecting: boolean
+  isReconnecting: boolean
   connector?: OpenfortEthereumBridgeConnector
   ensName?: string
   ensAvatar?: string

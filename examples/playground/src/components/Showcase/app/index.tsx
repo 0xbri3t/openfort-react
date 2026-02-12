@@ -7,7 +7,6 @@ import { SessionKeysCard } from '@/components/Showcase/app/SessionKeys'
 import { SessionKeysCardEVM } from '@/components/Showcase/app/SessionKeysCardEVM'
 import { SetActiveWalletsCard } from '@/components/Showcase/app/SetActiveWallets'
 import { SetActiveWalletsCardSolana } from '@/components/Showcase/app/SetActiveWalletsCardSolana'
-import { SetActiveWalletsCardWagmi } from '@/components/Showcase/app/SetActiveWalletsCardWagmi'
 import { SignaturesCard } from '@/components/Showcase/app/Signatures'
 import { SignaturesCardEVM } from '@/components/Showcase/app/SignaturesCardEVM'
 import { SignaturesCardSolana } from '@/components/Showcase/app/SignaturesCardSolana'
@@ -17,38 +16,7 @@ import { WriteContractCard } from '@/components/Showcase/app/WriteContract'
 import { WriteContractCardEVM } from '@/components/Showcase/app/WriteContractCardEVM'
 import { SampleTooltipLink } from '@/components/Showcase/auth/SampleTooltipLink'
 import { Button } from '@/components/Showcase/ui/Button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { usePlaygroundMode } from '@/providers'
-
-function SetActiveWalletsCardWagmiWhenOpenfort() {
-  const wallet = useConnectedWallet()
-  const isExternalConnected = wallet.isConnected && wallet.isExternal
-  const isOpenfortConnected = wallet.isConnected && wallet.isEmbedded
-
-  if (!isOpenfortConnected && isExternalConnected) {
-    return (
-      <Card className="opacity-75 pointer-events-none">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>Wallets</CardTitle>
-            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-              Switch to Openfort
-            </span>
-          </div>
-          <CardDescription>
-            Create and switch embedded wallets. Connect Openfort from the Wallet card to use this.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Connect to Openfort embedded wallet above to create and manage your wallets.
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
-  return <SetActiveWalletsCardWagmi />
-}
 
 export const App = () => {
   const { user } = useUser()
@@ -131,7 +99,9 @@ export const App = () => {
                 body: <>Uses useGrantPermissions to create session keys.</>,
               }}
             />
-            <ConnectExternalWalletCard />
+            <div className="lg:col-span-2 xl:col-span-3">
+              <ConnectExternalWalletCard />
+            </div>
           </>
         ) : (
           <>
@@ -169,7 +139,7 @@ export const App = () => {
             />
           </>
         )}
-        {!isSolana && (hasWagmi ? <SetActiveWalletsCardWagmiWhenOpenfort /> : <SetActiveWalletsCard />)}
+        {!isSolana && !hasWagmi && <SetActiveWalletsCard />}
       </div>
     </div>
   )

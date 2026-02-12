@@ -22,13 +22,21 @@ export function mapBridgeConnectorsToWalletProps(
 ): WalletProps[] {
   const { walletConnectName } = options
   const wallets = bridge.connectors.map((connector): WalletProps => {
-    const walletId = Object.keys(walletConfigs).find(
+    let walletId = Object.keys(walletConfigs).find(
       (id) =>
         id
           .split(',')
           .map((i) => i.trim())
           .indexOf(connector.id) !== -1
     )
+    // Fallback: when connector.id is 'injected', match by name for known wallets (e.g. MetaMask)
+    if (!walletId && connector.id === 'injected' && connector.name) {
+      const nameLower = connector.name.toLowerCase()
+      if (nameLower.includes('metamask')) {
+        walletId =
+          Object.keys(walletConfigs).find((k) => walletConfigs[k].name?.toLowerCase() === 'metamask') ?? undefined
+      }
+    }
 
     const c: WalletProps = {
       id: connector.id,

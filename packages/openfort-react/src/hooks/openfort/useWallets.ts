@@ -7,7 +7,7 @@ import {
   type RecoveryParams,
 } from '@openfort/openfort-js'
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Hex } from 'viem'
 import { type GetEncryptionSessionParams, routes, UIAuthProvider } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
@@ -298,18 +298,25 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   const [connectToConnector, setConnectToConnector] = useState<
     { address?: Hex; connector: OpenfortEthereumBridgeConnector } | undefined
   >(undefined)
+  const connectToConnectorRef = useRef(connectToConnector)
+  connectToConnectorRef.current = connectToConnector
+  const connectInProgressRef = useRef(false)
   const switchChainAsync = bridge?.switchChain?.switchChainAsync
 
   const connectWithBridge = useCallback(
     (params: { connector: OpenfortEthereumBridgeConnector }) => {
       if (!bridge?.connectAsync) return
       const conn = params.connector
-      const pending = connectToConnector
+      const pending = connectToConnectorRef.current
+      const clearInProgress = () => {
+        connectInProgressRef.current = false
+      }
       bridge
         .connectAsync({ connector: conn })
         .then((data: unknown) => {
           const resolved = data as { accounts?: string[] }
           setConnectToConnector(undefined)
+          clearInProgress()
           logger.log('Connected with wallet', resolved, pending)
           if (
             pending?.address &&
@@ -329,16 +336,18 @@ export function useWallets(hookOptions: WalletOptions = {}) {
           setStatus({ status: 'success' })
         })
         .catch((e) => {
+          clearInProgress()
           const error = new OpenfortError(
             'Failed to connect with wallet: ',
             OpenfortReactErrorType.AUTHENTICATION_ERROR,
             e
           )
           setStatus({ status: 'error', error })
+          setConnectToConnector(undefined)
           onError({ error, options: hookOptions })
         })
     },
-    [bridge, connectToConnector, hookOptions]
+    [bridge, hookOptions]
   )
 
   const openfortConnector = useMemo(
@@ -536,14 +545,17 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
   const [shouldSwitchToChain, setShouldSwitchToChain] = useState<number | null>(null)
   useEffect(() => {
-    if (connectToConnector && bridge) connectWithBridge({ connector: connectToConnector.connector })
+    if (!connectToConnector || !bridge) return
+    if (connectInProgressRef.current) return
+    connectInProgressRef.current = true
+    connectWithBridge({ connector: connectToConnector.connector })
   }, [connectToConnector, bridge, connectWithBridge])
 
   const setActiveWallet = useCallback(
     async (options: SetActiveWalletOptions | string): Promise<SetActiveWalletResult> => {
       const optionsObject: SetActiveWalletOptions = typeof options === 'string' ? { walletId: options } : options
 
-      const { showUI } = optionsObject
+      let { showUI } = optionsObject
 
       let connector: OpenfortEthereumBridgeConnector | null = null
 
@@ -572,10 +584,12 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         return { wallet: activeWallet }
       }
 
-      if (disconnectAsync) await disconnectAsync()
+      // External wallets always need showUI (SIWE flow); headless path has no SIWE.
+      if (connector.id !== embeddedWalletId) showUI = true
 
       if (showUI) {
-        const walletToConnect = wallets.find((w) => w.id === connector.id)
+        const walletToConnect =
+          wallets.find((w) => w.id === connector.id) ?? availableWallets.find((w) => w.id === connector.id)
         if (!walletToConnect) {
           logger.log('Wallet not found', connector)
           return onError({
@@ -598,6 +612,9 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         }
         return {}
       }
+
+      // Headless path only: disconnect before connecting to embedded wallet.
+      if (disconnectAsync) await disconnectAsync()
 
       function isOpenfortWallet(opts: SetActiveWalletOptions) {
         return opts.walletId === embeddedWalletId

@@ -96,13 +96,17 @@ function useEthereumWalletFromStrategy(): WalletInternalState | null {
   }
 
   if (core.isLoadingAccounts) return { status: 'loading' }
-  // When switching or creating embedded wallets (bridge/evm-wagmi), treat as loading
+  // When switching or creating embedded wallets, treat as loading
   // so we don't show wrong "connected" or "disconnected" state during the transition
   if (
     strategy.kind === 'bridge' &&
     core.walletStatus &&
     (core.walletStatus.status === 'creating' || core.walletStatus.status === 'connecting')
   ) {
+    return { status: 'loading' }
+  }
+  // Bridge-level wagmi transitions (connecting/reconnecting) — show loading
+  if (strategy.kind === 'bridge' && bridge && (bridge.account.isConnecting || bridge.account.isReconnecting)) {
     return { status: 'loading' }
   }
   if (!strategy.isConnected(state)) return { status: 'not-created' }

@@ -1,6 +1,7 @@
 import { ChainTypeEnum, type Openfort } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import type { OpenfortEthereumBridgeValue } from '../../ethereum/OpenfortEthereumBridgeContext'
+import { logger } from '../../utils/logger'
 import type { WalletProps } from '../../wallets/useEthereumConnectors'
 import type { ConnectionStrategy } from '../ConnectionStrategy'
 import { resolveEthereumPolicy } from '../strategyUtils'
@@ -21,7 +22,7 @@ export function createEthereumBridgeStrategy(
     chainType: ChainTypeEnum.EVM,
 
     isConnected(state) {
-      return !!(bridge.account.address && state.user)
+      return !!(bridge.account.isConnected && bridge.account.address && state.user)
     },
 
     getChainId() {
@@ -56,13 +57,24 @@ export function createEthereumBridgeStrategy(
       const provider = await openfort.embeddedWallet.getEthereumProvider({
         ...policyObj,
         chains: rpcUrls,
+        announceProvider: true,
+        providerInfo: {
+          name: 'Openfort',
+          rdns: 'xyz.openfort',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>',
+        },
       })
       // Tell the provider which chain is active (EIP-1193). Keeps provider in sync with wagmi.
+      // Non-fatal: switch-chain can 422 (e.g. guest with no embedded wallet on that chain).
       if (chainId != null) {
-        await provider.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: `0x${chainId.toString(16)}` }],
-        })
+        try {
+          await provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: `0x${chainId.toString(16)}` }],
+          })
+        } catch (switchErr) {
+          logger.log('Embedded wallet switch chain failed (non-fatal)', switchErr)
+        }
       }
     },
 
