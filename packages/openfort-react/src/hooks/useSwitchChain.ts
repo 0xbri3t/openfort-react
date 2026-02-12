@@ -17,8 +17,7 @@ export type UseSwitchChainReturnType = {
  * Wagmi-compatible switch chain hook. In bridge mode delegates to the bridge;
  * in embedded mode switchChain/switchChainAsync are undefined (single chain).
  *
- * @deprecated When using wagmi, use wagmi's `useSwitchChain` instead. When using EVM-only (no wagmi),
- * use `useEthereumSwitchChain` from the adapter API.
+ * @deprecated Use @openfort/wagmi for wagmi integration. For EVM-only (no wagmi), use `useEthereumSwitchChain`.
  *
  * @example
  * ```tsx

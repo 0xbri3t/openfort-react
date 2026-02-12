@@ -16,7 +16,6 @@ export type All = {
 export type { CustomAvatarProps } from './components/Common/Avatar'
 export type {
   ConnectUIOptions as OpenfortOptions,
-  CustomizableRoutes,
   OpenfortWalletConfig,
   PhoneConfig,
 } from './components/Openfort/types'
@@ -32,24 +31,63 @@ export enum OpenfortReactErrorType {
 interface Data {
   [key: string]: any
 }
+
+export type OpenfortErrorOptions = Data & { cause?: unknown }
+
 export class OpenfortError extends Error {
-  type: OpenfortReactErrorType
-  data: Data
-  constructor(message: string, type: OpenfortReactErrorType, data?: Data) {
+  readonly type: OpenfortReactErrorType
+  readonly data: Data
+  readonly cause?: unknown
+
+  constructor(message: string, type: OpenfortReactErrorType, data?: OpenfortErrorOptions) {
+    const cause = data?.cause ?? (data?.error instanceof Error ? data.error : undefined)
+
     if (data?.error instanceof OpenfortError) {
       super(data.error.message)
       this.data = data.error.data
       this.type = data.error.type
-      this.name = data.error.name
+      this.name = 'OpenfortError'
+      this.cause = data.error.cause
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, OpenfortError)
+      }
       return
     } else if (data?.error instanceof Error) {
       super(data.error.message)
+      this.type = type
+      this.data = { ...data, error: data.error }
+      this.cause = data.error
     } else {
       super(message)
+      this.type = type
+      this.data = data || {}
+      this.cause = cause
     }
-    this.type = type
-    this.data = data || {}
+
     this.name = 'OpenfortError'
+
+    // Maintains proper stack trace for where error was thrown (mirrors OpenfortReactError)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, OpenfortError)
+    }
+  }
+
+  /**
+   * Create error from unknown error type (mirrors OpenfortReactError.from)
+   */
+  static from(
+    error: unknown,
+    fallbackType: OpenfortReactErrorType = OpenfortReactErrorType.UNEXPECTED_ERROR
+  ): OpenfortError {
+    if (error instanceof OpenfortError) {
+      return error
+    }
+
+    if (error instanceof Error) {
+      return new OpenfortError(error.message, fallbackType, { cause: error })
+    }
+
+    return new OpenfortError(String(error), fallbackType)
   }
 }
 

@@ -75,6 +75,8 @@ export type SolanaUserWallet = {
   createdAt?: number
 }
 
+export type UserWallet = EthereumUserWallet | SolanaUserWallet
+
 type WalletRecovery = {
   recoveryMethod: RecoveryMethod
   password?: string

@@ -1,4 +1,4 @@
-export const OpenfortErrorCode = {
+const OpenfortErrorCode = {
   // Configuration errors
   MISSING_PROVIDER: 'MISSING_PROVIDER',
   INVALID_CONFIG: 'INVALID_CONFIG',
@@ -60,7 +60,7 @@ type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCo
  * }
  * ```
  */
-export class OpenfortReactError extends Error {
+class OpenfortReactError extends Error {
   readonly code: OpenfortErrorCode
   readonly cause?: unknown
 

@@ -3,7 +3,6 @@ import {
   embeddedWalletId,
   RecoveryMethod,
   useConnectedWallet,
-  useConnectionStrategy,
   useEthereumBridge,
   useWallets,
 } from '@openfort/react'
@@ -291,15 +290,9 @@ export const ConnectExternalWalletCard = () => {
   const wallet = useConnectedWallet()
   const bridge = useEthereumBridge()
   const walletsHook = useWallets()
-  const strategy = useConnectionStrategy()
 
   const embeddedWallets = walletsHook.wallets.filter((w) => w.id === embeddedWalletId)
-  // Use strategy.getConnectors() for WalletProps with proper icons (Logos.Coinbase, Logos.WalletConnect);
-  // fallback to bridge.connectors when strategy isn't bridge (e.g. embedded-only).
-  const externalConnectors =
-    strategy?.getConnectors?.()?.filter((c) => c.id !== embeddedWalletId) ??
-    bridge?.connectors.filter((c) => c.id !== embeddedWalletId) ??
-    []
+  const externalConnectors = bridge?.connectors.filter((c) => c.id !== embeddedWalletId) ?? []
 
   const isOpenfortActive = wallet.isConnected && wallet.isEmbedded
   const isExternalActive = wallet.isConnected && wallet.isExternal

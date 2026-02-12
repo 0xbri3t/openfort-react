@@ -17,12 +17,12 @@ import { logger } from '../utils/logger'
  * Common chain IDs for type hints (IDE autocomplete)
  * Users can still pass any number for custom chains.
  */
-export type ChainId = 1 | 10 | 137 | 8453 | 42161 | 43114 | 56 | 250
+type ChainId = 1 | 10 | 137 | 8453 | 42161 | 43114 | 56 | 250
 
 /**
  * Result type for setChainId - forces caller to handle failure
  */
-export type SetChainResult =
+type SetChainResult =
   | { success: true; chainId: number }
   | { success: false; error: 'CHAIN_NOT_CONFIGURED'; requested: number; available: number[] }
 

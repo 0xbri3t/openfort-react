@@ -152,6 +152,6 @@ export function useCoreContext(): CoreContextValue {
 /**
  * Hook to check if inside CoreProvider
  */
-export function useHasCoreProvider(): boolean {
+function _useHasCoreProvider(): boolean {
   return useContext(CoreContext) !== null
 }
