@@ -1,8 +1,9 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Dashboard integration - chain + signatures', () => {
-  test('switch chain -> sign message -> chain stays selected', async ({ dashboardPage }) => {
-    await dashboardPage.ensureReady()
+  test('switch chain -> sign message -> chain stays selected', async ({ dashboardPage, mode }) => {
+    const m = mode
+    await dashboardPage.ensureReady(m)
 
     const chainCard = await dashboardPage.getCardByTitle(/switch chain/i)
 
@@ -24,7 +25,7 @@ test.describe('Dashboard integration - chain + signatures', () => {
     await expect(currentChain).toContainText(new RegExp(target, 'i'), { timeout: 90_000 })
 
     const msg = `Chain-sign ${Date.now()}`
-    await dashboardPage.signMessage(msg)
+    await dashboardPage.signMessage(msg, m)
 
     await expect(currentChain).toContainText(/beam testnet/i, { timeout: 30_000 })
   })

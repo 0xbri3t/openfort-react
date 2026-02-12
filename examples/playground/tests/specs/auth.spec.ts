@@ -1,11 +1,6 @@
 import { expect, test } from '@playwright/test'
+import { setPlaygroundMode } from '../utils/mode'
 import { clickableByText } from '../utils/ui'
-
-function setPlaygroundMode(page: import('@playwright/test').Page, mode: 'evm-only' | 'solana-only' | 'evm-wagmi') {
-  return page.addInitScript((mode) => {
-    localStorage.setItem('openfort-playground-mode', mode)
-  }, mode)
-}
 
 test.describe('auth screen renders correctly', () => {
   test('evm-only: guest + email visible, wallet hidden', async ({ page }) => {

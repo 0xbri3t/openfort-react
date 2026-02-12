@@ -1,4 +1,6 @@
 import { expect, type Page } from '@playwright/test'
+import type { PlaygroundMode } from '../utils/mode'
+import { EVM_SIGNED_REGEX, SOLANA_SIGNED_REGEX } from '../utils/mode'
 
 export class DashboardPage {
   constructor(private readonly page: Page) {}
@@ -13,21 +15,33 @@ export class DashboardPage {
     return this.page.getByRole('button', { name: /^sign out$/i })
   }
 
-  // Verify that the dashboard is loaded
-  async expectLoaded() {
+  /**
+   * Verify that the dashboard is loaded.
+   * @param mode - Optional; used for stricter connectivity checks.
+   */
+  async expectLoaded(mode: PlaygroundMode) {
     await expect(this.signOutButton()).toBeVisible({ timeout: 90_000 })
+    const connectedRegex = mode === 'solana-only' ? /Connected with/i : /Connected with 0x/i
+    await expect(this.page.getByText(connectedRegex)).toBeVisible({ timeout: 15_000 })
     await new Promise((r) => setTimeout(r, 1000))
   }
 
   // Ensure navigation and ready state
-  async ensureReady() {
+  async ensureReady(mode: PlaygroundMode) {
+    if (!mode) {
+      throw new Error('Mode is required')
+    }
     await this.goto()
-    await this.expectLoaded()
+    await this.expectLoaded(mode)
   }
 
-  // Sign a message and validate the result
-  async signMessage(message: string) {
-    await this.ensureReady()
+  /**
+   * Sign a message and validate the result.
+   * @param message - Message to sign
+   * @param mode - EVM uses 0x signed hash; Solana uses base58.
+   */
+  async signMessage(message: string, mode: PlaygroundMode) {
+    await this.ensureReady(mode)
 
     const messageInput = this.page.getByPlaceholder(/enter a message to sign/i)
     await expect(messageInput).toBeVisible({ timeout: 60_000 })
@@ -38,10 +52,10 @@ export class DashboardPage {
 
     await signBtn.click()
 
-    const signedHash = this.page.getByText(/signed message:\s*0x[a-f0-9]{6,}/i)
+    const signedRegex = mode === 'solana-only' ? SOLANA_SIGNED_REGEX : EVM_SIGNED_REGEX
 
     try {
-      await expect(signedHash).toBeVisible({ timeout: 120_000 })
+      await expect(this.page.getByText(signedRegex)).toBeVisible({ timeout: 120_000 })
     } catch (e) {
       await this.page.screenshot({ path: 'test-results/sign-message-failed.png', fullPage: true }).catch(() => {})
       throw e

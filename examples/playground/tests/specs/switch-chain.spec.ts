@@ -1,9 +1,9 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Switch chain', () => {
-  test('can switch between available chains and updates current chain', async ({ dashboardPage }) => {
-    // Ensure session and dashboard are ready
-    await dashboardPage.ensureReady()
+  test('can switch between EVM chains and updates current chain', async ({ dashboardPage, mode }) => {
+    const m = mode
+    await dashboardPage.ensureReady(m)
 
     // Card "Switch chain"
     const chainCard = await dashboardPage.getCardByTitle(/switch chain/i)

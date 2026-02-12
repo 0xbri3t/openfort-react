@@ -1,9 +1,10 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Session keys - multiple + delete flow', () => {
-  test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({ dashboardPage }) => {
+  test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({ dashboardPage, mode }) => {
     test.setTimeout(180_000)
-    await dashboardPage.ensureReady()
+    const m = mode
+    await dashboardPage.ensureReady(m)
 
     const sessionCard = await dashboardPage.getCardByTitle(/session keys/i)
 
