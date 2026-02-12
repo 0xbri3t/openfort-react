@@ -1,4 +1,4 @@
-import { useEVMSwitchChain } from '@openfort/react'
+import { useEthereumSwitchChain } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <Layout>
       <HookVariable
-        name="useEVMSwitchChain"
-        hook={useEVMSwitchChain}
+        name="useEthereumSwitchChain"
+        hook={useEthereumSwitchChain}
         description="EVM adapter: chains, currentChainId, switchChain({ chainId }). Same shape as wagmi useSwitchChain when not using WagmiProvider."
         variables={{
           switchChain: {

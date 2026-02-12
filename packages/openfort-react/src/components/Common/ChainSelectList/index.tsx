@@ -9,7 +9,7 @@ import { useChains } from '../../../hooks/useChains'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { isCoinbaseWalletConnector, isMobile } from '../../../utils'
-import { useEVMSwitchChain } from '../../../wallet-adapters/evm'
+import { useEthereumSwitchChain } from '../../../wallet-adapters/ethereum'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import Alert from '../Alert'
 import {
@@ -55,7 +55,7 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
   const strategy = useConnectionStrategy()
   const bridge = useEVMBridge()
   const wallet = useConnectedWallet()
-  const evmSwitchChain = useEVMSwitchChain()
+  const evmSwitchChain = useEthereumSwitchChain()
 
   const connector = bridge?.account?.connector
   const bridgeSwitchChain = bridge?.switchChain

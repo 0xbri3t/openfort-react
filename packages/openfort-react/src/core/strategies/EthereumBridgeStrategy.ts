@@ -5,7 +5,10 @@ import type { ConnectionStrategy } from '../ConnectionStrategy'
 import type { OpenfortEVMBridgeValue } from '../OpenfortEVMBridgeContext'
 import { resolveEthereumPolicy } from '../strategyUtils'
 
-export function createEVMBridgeStrategy(bridge: OpenfortEVMBridgeValue, connectors: WalletProps[]): ConnectionStrategy {
+export function createEthereumBridgeStrategy(
+  bridge: OpenfortEVMBridgeValue,
+  connectors: WalletProps[]
+): ConnectionStrategy {
   return {
     kind: 'bridge',
     chainType: ChainTypeEnum.EVM,

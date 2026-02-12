@@ -1,4 +1,4 @@
-import { useEVMSignMessage } from '@openfort/react'
+import { useEthereumSignMessage } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/cn'
 
 export const SignaturesCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { data, signMessage, isPending } = useEVMSignMessage()
+  const { data, signMessage, isPending } = useEthereumSignMessage()
 
   return (
     <Card>

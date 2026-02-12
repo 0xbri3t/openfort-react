@@ -1,4 +1,4 @@
-import { useEVMAccount, useGrantPermissions, useRevokePermissions } from '@openfort/react'
+import { useEthereumAccount, useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
@@ -17,7 +17,7 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
   const [submitting, setSubmitting] = useState(false)
   const { addPrivateKey, getPrivateKeys, clearAll, removePrivateKey, updatePrivateKey } =
     useSessionKeysStorage_backendSimulation()
-  const { address, chainId } = useEVMAccount()
+  const { address, chainId } = useEthereumAccount()
   const key = useMemo(() => (chainId != null && address ? `${chainId}-${address}` : ''), [chainId, address])
   const grantDisabled = isLoading || submitting
 

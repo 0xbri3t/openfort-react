@@ -1,7 +1,7 @@
 import type { ChainTypeEnum, OAuthProvider, SDKOverrides, ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
 import type React from 'react'
 import { createContext } from 'react'
-import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
+import type { useConnectCallbackProps } from '../../openfort/connectCallbackTypes'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import type {
   BuyFormState,

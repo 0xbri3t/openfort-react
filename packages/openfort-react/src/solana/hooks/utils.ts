@@ -1,9 +1,11 @@
+import { LAMPORTS_PER_SOL } from '../constants'
+
 export function lamportsToSol(lamports: bigint): number {
-  return Number(lamports) / 1_000_000_000
+  return Number(lamports) / Number(LAMPORTS_PER_SOL)
 }
 
 export function solToLamports(sol: number): bigint {
-  return BigInt(Math.floor(sol * 1_000_000_000))
+  return BigInt(Math.floor(sol * Number(LAMPORTS_PER_SOL)))
 }
 
-export const LAMPORTS_PER_SOL = BigInt(1_000_000_000)
+export { LAMPORTS_PER_SOL }

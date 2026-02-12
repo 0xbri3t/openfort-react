@@ -1,0 +1,4 @@
+export const TRANSFER_INSTRUCTION_INDEX = 2
+export const LAMPORTS_PER_SOL = BigInt(1_000_000_000)
+export const FEE_LAMPORTS = BigInt(5000)
+export const RENT_EXEMPT_MINIMUM_SOL = 0.00089088

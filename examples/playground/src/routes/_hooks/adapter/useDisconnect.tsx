@@ -1,4 +1,4 @@
-import { useEVMDisconnect } from '@openfort/react'
+import { useEthereumDisconnect } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <Layout>
       <HookVariable
-        name="useEVMDisconnect"
-        hook={useEVMDisconnect}
+        name="useEthereumDisconnect"
+        hook={useEthereumDisconnect}
         description="EVM adapter: disconnect(). Same shape as wagmi useDisconnect. Signs out from Openfort when in evm-only mode."
         variables={{
           disconnect: {

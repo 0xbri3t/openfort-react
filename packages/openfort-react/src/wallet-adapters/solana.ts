@@ -20,7 +20,7 @@ import type {
   UseSolanaSignMessageLike,
 } from './types'
 
-export function useSVMAccount(): UseSolanaAccountLike {
+export function useSolanaAccount(): UseSolanaAccountLike {
   const wallet = useConnectedWallet()
   const { chainType } = useChain()
   const isConnected = wallet.status === 'connected' && chainType === ChainTypeEnum.SVM && !!wallet.address
@@ -31,8 +31,8 @@ export function useSVMAccount(): UseSolanaAccountLike {
   }
 }
 
-export function useSVMBalance(): UseBalanceLike {
-  const { address, isConnected } = useSVMAccount()
+export function useSolanaBalanceAdapter(): UseBalanceLike {
+  const { address, isConnected } = useSolanaAccount()
   const { data, refetch, isLoading, error } = useSolanaBalance(address, { enabled: isConnected && !!address })
   const refetchCb = () => refetch()
   return {
@@ -50,11 +50,11 @@ export function useSVMBalance(): UseBalanceLike {
   }
 }
 
-export function useSVMDisconnect(): UseDisconnectLike {
+export function useSolanaDisconnect(): UseDisconnectLike {
   return useDisconnectAdapter()
 }
 
-export function useSVMSignMessage(): UseSolanaSignMessageLike {
+export function useSolanaSignMessage(): UseSolanaSignMessageLike {
   const core = useOpenfortCore()
   const { open, setOpen, setRoute } = useOpenfort()
   const wallet = useSolanaEmbeddedWallet()
@@ -155,7 +155,7 @@ export function useSVMSignMessage(): UseSolanaSignMessageLike {
   return { data, signMessage, isPending, error }
 }
 
-export function useSVMWriteContract(): UseSolanaSendSOLLike {
+export function useSolanaWriteContract(): UseSolanaSendSOLLike {
   const { sendTransaction, status, error, reset } = useSolanaSendTransaction()
   const [data, setData] = useState<string | undefined>(undefined)
 

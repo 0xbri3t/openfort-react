@@ -10,55 +10,22 @@ import {
 } from '@solana/kit'
 import { useCallback, useState } from 'react'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
+import { FEE_LAMPORTS, LAMPORTS_PER_SOL, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
 import { useSolanaBalance } from '../../../solana/hooks/useSolanaBalance'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { solToLamports } from '../../../solana/hooks/utils'
-import { useSolanaContext } from '../../../solana/providers/SolanaContextProvider'
+import { useSolanaContext } from '../../../solana/SolanaContext'
+import { createTransferSolInstruction } from '../../../solana/utils/transfer'
 import Button from '../../Common/Button'
 import Input from '../../Common/Input'
 import { ModalHeading } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
 import { PageContent } from '../../PageContent'
 import { AmountInputWrapper, ErrorText, Field, FieldLabel, Form, HelperText, MaxButton } from './styles'
-
-const SYSTEM_PROGRAM_ADDRESS = address('11111111111111111111111111111111')
-const TRANSFER_INSTRUCTION_INDEX = 2
-const RENT_EXEMPT_MINIMUM_SOL = 0.00089088
-const FEE_LAMPORTS = BigInt(5000)
-const LAMPORTS_PER_SOL = BigInt(1_000_000_000)
-
-function createTransferSolInstruction(
-  from: string,
-  to: string,
-  lamports: bigint
-): {
-  programAddress: ReturnType<typeof address>
-  data: Uint8Array
-  accounts: Array<{ address: ReturnType<typeof address>; role: number }>
-} {
-  const data = new Uint8Array(12)
-  const view = new DataView(data.buffer)
-  view.setUint32(0, TRANSFER_INSTRUCTION_INDEX, true)
-  view.setBigUint64(4, lamports, true)
-  return {
-    programAddress: SYSTEM_PROGRAM_ADDRESS,
-    data,
-    accounts: [
-      { address: address(from), role: 3 },
-      { address: address(to), role: 1 },
-    ],
-  }
-}
+import { sanitizeAmountInput } from './utils'
 
 function formatSol(lamports: bigint, decimals = 4): string {
   return (Number(lamports) / Number(LAMPORTS_PER_SOL)).toFixed(decimals)
-}
-
-function sanitizeAmountInput(value: string): string {
-  const trimmed = value.trim()
-  if (trimmed === '' || trimmed === '.') return trimmed
-  const match = trimmed.match(/^([0-9]*)(\.?)([0-9]*)$/)
-  return match ? match[1] + match[2] + match[3] : ''
 }
 
 export function SolanaSend() {

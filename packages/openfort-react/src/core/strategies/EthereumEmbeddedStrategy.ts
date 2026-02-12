@@ -5,13 +5,13 @@ import type { ConnectionStrategy, ConnectionStrategyState } from '../ConnectionS
 import { DEFAULT_DEV_CHAIN_ID } from '../ConnectionStrategy'
 import { firstEmbeddedAddress, resolveEthereumPolicy } from '../strategyUtils'
 
-function hasEmbeddedEVM(state: ConnectionStrategyState): boolean {
+function hasEmbeddedEthereum(state: ConnectionStrategyState): boolean {
   if (!state.user) return false
   const addr = firstEmbeddedAddress(state.embeddedAccounts, ChainTypeEnum.EVM)
   return !!addr
 }
 
-export function createEVMEmbeddedStrategy(walletConfig: OpenfortWalletConfig | undefined): ConnectionStrategy {
+export function createEthereumEmbeddedStrategy(walletConfig: OpenfortWalletConfig | undefined): ConnectionStrategy {
   const chainId = walletConfig?.ethereum?.chainId
   const effectiveChainId =
     chainId ??
@@ -27,7 +27,7 @@ export function createEVMEmbeddedStrategy(walletConfig: OpenfortWalletConfig | u
     chainType: ChainTypeEnum.EVM,
 
     isConnected(state) {
-      return hasEmbeddedEVM(state)
+      return hasEmbeddedEthereum(state)
     },
 
     getChainId() {

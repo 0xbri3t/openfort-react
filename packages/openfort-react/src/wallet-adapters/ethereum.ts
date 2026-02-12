@@ -11,7 +11,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { type Abi, createPublicClient, getAddress, http } from 'viem'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useCoreContext } from '../core/CoreContext'
-import { useEthereumWriteContract } from '../ethereum/hooks/useEthereumWriteContract'
+import { useEthereumWriteContract as useEthereumWriteContractInternal } from '../ethereum/hooks/useEthereumWriteContract'
 import { signMessage as signMessageOp } from '../ethereum/operations'
 import { useBalance as useBalanceHook } from '../hooks/useBalance'
 import { useChains } from '../hooks/useChains'
@@ -31,7 +31,7 @@ import type {
   WalletAdapterChain,
 } from './types'
 
-export function useEVMAccount(): UseAccountLike {
+export function useEthereumAccount(): UseAccountLike {
   const wallet = useConnectedWallet()
   const { chainType } = useChain()
   const isConnected = wallet.status === 'connected' && chainType === ChainTypeEnum.EVM && !!wallet.address
@@ -42,8 +42,8 @@ export function useEVMAccount(): UseAccountLike {
   }
 }
 
-export function useEVMBalance(): UseBalanceLike {
-  const { address, chainId, isConnected } = useEVMAccount()
+export function useEthereumBalance(): UseBalanceLike {
+  const { address, chainId, isConnected } = useEthereumAccount()
   const chainIdNum = chainId ?? DEFAULT_TESTNET_CHAIN_ID
   const balanceState = useBalanceHook({
     address: address ?? '',
@@ -79,13 +79,13 @@ export function useEVMBalance(): UseBalanceLike {
   return { data: undefined, refetch, isLoading: false }
 }
 
-export function useEVMDisconnect(): UseDisconnectLike {
+export function useEthereumDisconnect(): UseDisconnectLike {
   return useDisconnectAdapter()
 }
 
-export function useEVMSwitchChain(): UseSwitchChainLike {
+export function useEthereumSwitchChain(): UseSwitchChainLike {
   const chains = useChains()
-  const { chainId: currentChainId } = useEVMAccount()
+  const { chainId: currentChainId } = useEthereumAccount()
   const { setActiveChainId } = useOpenfortCore()
   const [error, setError] = useState<Error | null>(null)
   const [isPending, setIsPending] = useState(false)
@@ -129,7 +129,7 @@ export function useEVMSwitchChain(): UseSwitchChainLike {
   }
 }
 
-export function useEVMSignMessage(): UseSignMessageLike {
+export function useEthereumSignMessage(): UseSignMessageLike {
   const { client } = useOpenfortCore()
   const [data, setData] = useState<`0x${string}` | undefined>(undefined)
   const [error, setError] = useState<Error | null>(null)
@@ -160,7 +160,7 @@ export function useEVMSignMessage(): UseSignMessageLike {
 }
 
 /** useReadContract-like: read one view function (address, abi, functionName, args) */
-export function useEVMReadContract(params: {
+export function useEthereumReadContract(params: {
   address: `0x${string}`
   abi: Abi
   functionName: string
@@ -168,7 +168,7 @@ export function useEVMReadContract(params: {
   chainId?: number
 }): UseReadContractLike {
   const { config } = useCoreContext()
-  const { chainId: connectedChainId } = useEVMAccount()
+  const { chainId: connectedChainId } = useEthereumAccount()
   const chainId = params.chainId ?? connectedChainId ?? DEFAULT_TESTNET_CHAIN_ID
   const rpcUrl = config?.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)
 
@@ -195,9 +195,9 @@ export function useEVMReadContract(params: {
 }
 
 /** useWriteContract-like: writeContract({ address, abi, functionName, args }) */
-export function useEVMWriteContract(): UseWriteContractLike {
-  const { address, chainId } = useEVMAccount()
-  const { writeContractAsync, data, isPending, error } = useEthereumWriteContract()
+export function useEthereumWriteContract(): UseWriteContractLike {
+  const { address, chainId } = useEthereumAccount()
+  const { writeContractAsync, data, isPending, error } = useEthereumWriteContractInternal()
 
   const writeContract = useCallback(
     (params: { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }) => {

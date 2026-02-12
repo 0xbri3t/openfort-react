@@ -10,10 +10,10 @@ export const Route = createFileRoute('/_hooks/adapter')({
 })
 
 const nav = [
-  { href: '/adapter/useAccount', label: 'useEVMAccount' },
-  { href: '/adapter/useBalance', label: 'useEVMBalance' },
-  { href: '/adapter/useDisconnect', label: 'useEVMDisconnect' },
-  { href: '/adapter/useSwitchChain', label: 'useEVMSwitchChain' },
+  { href: '/adapter/useAccount', label: 'useEthereumAccount' },
+  { href: '/adapter/useBalance', label: 'useEthereumBalance' },
+  { href: '/adapter/useDisconnect', label: 'useEthereumDisconnect' },
+  { href: '/adapter/useSwitchChain', label: 'useEthereumSwitchChain' },
 ]
 
 function RouteComponent() {

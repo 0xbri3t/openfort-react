@@ -1,4 +1,4 @@
-import { useEVMSwitchChain } from '@openfort/react'
+import { useEthereumSwitchChain } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { currentChainId, switchChain, chains, data, error, isPending } = useEVMSwitchChain()
+  const { currentChainId, switchChain, chains, data, error, isPending } = useEthereumSwitchChain()
 
   return (
     <Card>

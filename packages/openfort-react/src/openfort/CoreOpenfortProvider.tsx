@@ -24,8 +24,8 @@ import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/Connectio
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
 import { OpenfortEVMBridgeContext } from '../core/OpenfortEVMBridgeContext'
 import { queryKeys } from '../core/queryKeys'
-import { createEVMBridgeStrategy } from '../core/strategies/EVMBridgeStrategy'
-import { createEVMEmbeddedStrategy } from '../core/strategies/EVMEmbeddedStrategy'
+import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
+import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
 import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
 import type { WalletReadiness } from '../core/types'
 import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
@@ -110,8 +110,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
       [ChainTypeEnum.SVM]: createSolanaEmbeddedStrategy(walletConfig),
       [ChainTypeEnum.EVM]: bridge
-        ? createEVMBridgeStrategy(bridge, bridgeConnectors)
-        : createEVMEmbeddedStrategy(walletConfig),
+        ? createEthereumBridgeStrategy(bridge, bridgeConnectors)
+        : createEthereumEmbeddedStrategy(walletConfig),
     }
     return strategyByChain[chainType] ?? null
   }, [bridge, chainType, walletConfig, bridgeConnectors])

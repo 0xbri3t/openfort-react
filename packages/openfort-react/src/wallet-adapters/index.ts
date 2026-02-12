@@ -6,20 +6,20 @@
  */
 
 export {
-  useEVMAccount,
-  useEVMBalance,
-  useEVMDisconnect,
-  useEVMReadContract,
-  useEVMSignMessage,
-  useEVMSwitchChain,
-  useEVMWriteContract,
-} from './evm'
+  useEthereumAccount,
+  useEthereumBalance,
+  useEthereumDisconnect,
+  useEthereumReadContract,
+  useEthereumSignMessage,
+  useEthereumSwitchChain,
+  useEthereumWriteContract,
+} from './ethereum'
 export {
-  useSVMAccount,
-  useSVMBalance,
-  useSVMDisconnect,
-  useSVMSignMessage,
-  useSVMWriteContract,
+  useSolanaAccount,
+  useSolanaBalanceAdapter,
+  useSolanaDisconnect,
+  useSolanaSignMessage,
+  useSolanaWriteContract,
 } from './solana'
 export type {
   SolanaCluster,

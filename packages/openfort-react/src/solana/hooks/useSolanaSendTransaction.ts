@@ -14,34 +14,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 import { OpenfortTransactionError, TransactionErrorCode } from '../../core/errors'
 import { queryKeys } from '../../core/queryKeys'
-import { useSolanaContext } from '../providers/SolanaContextProvider'
+import { useSolanaContext } from '../SolanaContext'
+import { toUint8Array, unwrapTransactionSignature } from '../utils/transactionHelpers'
+import { createTransferSolInstruction } from '../utils/transfer'
 import { useSolanaEmbeddedWallet } from './useSolanaEmbeddedWallet'
-
-const SYSTEM_PROGRAM_ADDRESS = address('11111111111111111111111111111111')
-const TRANSFER_INSTRUCTION_INDEX = 2
-
-function createTransferSolInstruction(
-  from: string,
-  to: string,
-  lamports: bigint
-): {
-  programAddress: ReturnType<typeof address>
-  data: Uint8Array
-  accounts: Array<{ address: ReturnType<typeof address>; role: number }>
-} {
-  const data = new Uint8Array(12)
-  const view = new DataView(data.buffer)
-  view.setUint32(0, TRANSFER_INSTRUCTION_INDEX, true)
-  view.setBigUint64(4, lamports, true)
-  return {
-    programAddress: SYSTEM_PROGRAM_ADDRESS,
-    data,
-    accounts: [
-      { address: address(from), role: 3 },
-      { address: address(to), role: 1 },
-    ],
-  }
-}
 
 export type SolanaSendTransactionStatus = 'idle' | 'signing' | 'sending' | 'confirmed' | 'error'
 
@@ -93,7 +69,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
         )
 
         const compiled = compileTransaction(message)
-        const messageBytes = Uint8Array.from(compiled.messageBytes as Iterable<number>)
+        const messageBytes = toUint8Array(compiled.messageBytes)
         const signed = await provider.signTransaction({ messageBytes })
 
         setStatus('sending')
@@ -118,7 +94,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
             skipPreflight: true,
           })
           .send()
-        const signatureValue = result.valueOf() as string | undefined
+        const signatureValue = unwrapTransactionSignature(result)
         if (signatureValue) {
           setStatus('confirmed')
           queryClient.invalidateQueries({

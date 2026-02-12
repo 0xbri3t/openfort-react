@@ -512,7 +512,7 @@ const CreateOrConnectWallet = () => {
   )
 }
 
-const EVMCreateWallet: React.FC = () => {
+const EthereumCreateWallet: React.FC = () => {
   const { uiConfig, walletConfig, setRoute } = useOpenfort()
   const { user } = useOpenfortCore()
 
@@ -539,7 +539,7 @@ const EVMCreateWallet: React.FC = () => {
 }
 
 const createWalletByChain: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, React.ReactElement> = {
-  [ChainTypeEnum.EVM]: <EVMCreateWallet />,
+  [ChainTypeEnum.EVM]: <EthereumCreateWallet />,
   [ChainTypeEnum.SVM]: <SolanaCreateWallet onBack={routes.PROVIDERS} logoutOnBack />,
 }
 

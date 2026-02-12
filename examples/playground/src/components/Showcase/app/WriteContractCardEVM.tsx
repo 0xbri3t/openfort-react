@@ -1,4 +1,10 @@
-import { ChainTypeEnum, getExplorerUrl, useEVMAccount, useEVMReadContract, useEVMWriteContract } from '@openfort/react'
+import {
+  ChainTypeEnum,
+  getExplorerUrl,
+  useEthereumAccount,
+  useEthereumReadContract,
+  useEthereumWriteContract,
+} from '@openfort/react'
 import type { ReactNode } from 'react'
 import { formatUnits, getAddress } from 'viem'
 import { Button } from '@/components/Showcase/ui/Button'
@@ -20,13 +26,13 @@ const BALANCE_ABI = [
 ] as const
 
 export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { address, chainId } = useEVMAccount()
+  const { address, chainId } = useEthereumAccount()
 
   const {
     data: balance,
     refetch,
     error: balanceError,
-  } = useEVMReadContract({
+  } = useEthereumReadContract({
     address: CONTRACT_ADDRESS,
     abi: [...BALANCE_ABI],
     functionName: 'balanceOf',
@@ -34,7 +40,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
     chainId: chainId,
   })
 
-  const { data: hash, writeContract, isPending, error } = useEVMWriteContract()
+  const { data: hash, writeContract, isPending, error } = useEthereumWriteContract()
 
   async function submit({ amount }: { amount: string }) {
     if (!address) return

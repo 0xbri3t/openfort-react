@@ -1,4 +1,4 @@
-import { useEVMBalance } from '@openfort/react'
+import { useEthereumBalance } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <Layout>
       <HookVariable
-        name="useEVMBalance"
-        hook={useEVMBalance}
+        name="useEthereumBalance"
+        hook={useEthereumBalance}
         description="EVM adapter: balance (data.value, data.formatted, refetch). Uses connected wallet address. Same shape as wagmi useBalance."
         variables={{
           refetch: {

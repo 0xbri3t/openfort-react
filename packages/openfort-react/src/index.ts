@@ -39,8 +39,8 @@ export {
   useEVMBridge,
 } from './core/OpenfortEVMBridgeContext'
 export { queryKeys } from './core/queryKeys'
-export { createEVMBridgeStrategy } from './core/strategies/EVMBridgeStrategy'
-export { createEVMEmbeddedStrategy } from './core/strategies/EVMEmbeddedStrategy'
+export { createEthereumBridgeStrategy } from './core/strategies/EthereumBridgeStrategy'
+export { createEthereumEmbeddedStrategy } from './core/strategies/EthereumEmbeddedStrategy'
 export type { CoreContextValue, WalletReadiness } from './core/types'
 // Ethereum context types
 export type { ChainId, SetChainResult } from './ethereum/EthereumContext'
@@ -151,18 +151,18 @@ export type {
   WalletAdapterChain,
 } from './wallet-adapters'
 export {
-  useEVMAccount,
-  useEVMBalance,
-  useEVMDisconnect,
-  useEVMReadContract,
-  useEVMSignMessage,
-  useEVMSwitchChain,
-  useEVMWriteContract,
-  useSVMAccount,
-  useSVMBalance,
-  useSVMDisconnect,
-  useSVMSignMessage,
-  useSVMWriteContract,
+  useEthereumAccount,
+  useEthereumBalance,
+  useEthereumDisconnect,
+  useEthereumReadContract,
+  useEthereumSignMessage,
+  useEthereumSwitchChain,
+  useEthereumWriteContract,
+  useSolanaAccount,
+  useSolanaBalanceAdapter,
+  useSolanaDisconnect,
+  useSolanaSignMessage,
+  useSolanaWriteContract,
 } from './wallet-adapters'
 export { wallets } from './wallets'
 export { useEVMConnectors, useWallet, type WalletProps } from './wallets/useEVMConnectors'

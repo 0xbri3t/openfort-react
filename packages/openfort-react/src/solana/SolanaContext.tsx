@@ -6,7 +6,7 @@
  */
 
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import type { SolanaCluster, SolanaClusterConfig, SolanaCommitment, SolanaConfig } from '../types'
+import type { SolanaCluster, SolanaClusterConfig, SolanaCommitment, SolanaConfig } from './types'
 
 const STORAGE_KEY = 'openfort:solana:cluster'
 

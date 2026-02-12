@@ -1,4 +1,4 @@
-import { ChainTypeEnum, getExplorerUrl, useSVMAccount, useSVMWriteContract } from '@openfort/react'
+import { ChainTypeEnum, getExplorerUrl, useSolanaAccount, useSolanaWriteContract } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
@@ -15,8 +15,8 @@ function solToLamports(sol: number): bigint {
 }
 
 export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { address, cluster } = useSVMAccount()
-  const { sendSOL, data: txSignature, isPending, error, reset } = useSVMWriteContract()
+  const { address, cluster } = useSolanaAccount()
+  const { sendSOL, data: txSignature, isPending, error, reset } = useSolanaWriteContract()
 
   const explorerUrl = useMemo(() => {
     if (!txSignature || !cluster) return null

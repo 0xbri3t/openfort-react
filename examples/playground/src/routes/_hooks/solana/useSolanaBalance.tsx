@@ -1,4 +1,4 @@
-import { useSVMBalance } from '@openfort/react'
+import { useSolanaBalanceAdapter } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <Layout>
       <HookVariable
-        name="useSVMBalance"
-        hook={useSVMBalance}
+        name="useSolanaBalanceAdapter"
+        hook={useSolanaBalanceAdapter}
         description="Solana adapter: SOL balance (value, formatted, symbol, decimals), refetch, isLoading, error."
       />
     </Layout>

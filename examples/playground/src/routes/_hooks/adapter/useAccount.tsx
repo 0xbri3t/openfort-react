@@ -1,4 +1,4 @@
-import { useEVMAccount } from '@openfort/react'
+import { useEthereumAccount } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -11,8 +11,8 @@ function RouteComponent() {
   return (
     <Layout>
       <HookVariable
-        name="useEVMAccount"
-        hook={useEVMAccount}
+        name="useEthereumAccount"
+        hook={useEthereumAccount}
         description="EVM adapter: account (address, chainId, isConnected). Same shape as wagmi useAccount when not using WagmiProvider."
       />
     </Layout>

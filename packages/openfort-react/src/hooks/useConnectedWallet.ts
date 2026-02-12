@@ -3,7 +3,7 @@ import { useContext } from 'react'
 import { useConnectionStrategy } from '../core/ConnectionStrategyContext'
 import { useOpenfortCore } from '../openfort/useOpenfort'
 import { useChain } from '../shared/hooks/useChain'
-import { SolanaContext } from '../solana/providers/SolanaContextProvider'
+import { SolanaContext } from '../solana/SolanaContext'
 import type { SolanaCluster } from '../solana/types'
 import { formatAddress } from '../utils/format'
 

@@ -25,8 +25,8 @@ export {
 } from './operations'
 export type { OpenfortSolanaProviderConfig } from './provider'
 export { createSolanaProvider, OpenfortSolanaProvider } from './provider'
-export type { SolanaContextProviderProps, SolanaContextValue } from './providers/SolanaContextProvider'
-export { SolanaContextProvider, useSolanaContext } from './providers/SolanaContextProvider'
+export type { SolanaContextProviderProps, SolanaContextValue } from './SolanaContext'
+export { SolanaContextProvider, useSolanaContext } from './SolanaContext'
 export type {
   Address,
   MessagePartialSigner,

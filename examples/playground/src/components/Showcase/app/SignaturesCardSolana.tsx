@@ -1,4 +1,4 @@
-import { useSVMSignMessage } from '@openfort/react'
+import { useSolanaSignMessage } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/cn'
 
 export const SignaturesCardSolana = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { data, signMessage, isPending, error } = useSVMSignMessage()
+  const { data, signMessage, isPending, error } = useSolanaSignMessage()
 
   const SignButton = () => (
     <Button className="btn btn-accent w-full" disabled={isPending}>

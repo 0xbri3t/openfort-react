@@ -83,14 +83,14 @@ export const App = () => {
           <>
             <SignaturesCardSolana
               tooltip={{
-                hook: 'useSVMSignMessage',
-                body: <>Uses useSVMSignMessage for signing messages.</>,
+                hook: 'useSolanaSignMessage',
+                body: <>Uses useSolanaSignMessage for signing messages.</>,
               }}
             />
             <MintTokensCard
               tooltip={{
-                hook: 'useSVMWriteContract',
-                body: <>Uses useSVMWriteContract for minting devnet SOL.</>,
+                hook: 'useSolanaWriteContract',
+                body: <>Uses useSolanaWriteContract for minting devnet SOL.</>,
               }}
             />
             <CreateSessionKeyCardSolana />
@@ -136,24 +136,24 @@ export const App = () => {
           <>
             <SignaturesCardEVM
               tooltip={{
-                hook: 'useEVMSignMessage',
-                body: <>Uses useEVMSignMessage (EVM adapter) for signing messages.</>,
+                hook: 'useEthereumSignMessage',
+                body: <>Uses useEthereumSignMessage (EVM adapter) for signing messages.</>,
               }}
             />
             <WriteContractCardEVM
               tooltip={{
-                hook: 'useEVMWriteContract',
-                body: <>Uses useEVMWriteContract for minting tokens.</>,
+                hook: 'useEthereumWriteContract',
+                body: <>Uses useEthereumWriteContract for minting tokens.</>,
               }}
             />
             <SwitchChainCardEVM
               tooltip={{
-                hook: 'useEVMSwitchChain',
+                hook: 'useEthereumSwitchChain',
                 body: (
                   <>
                     Uses{' '}
                     <Link to="/adapter/useSwitchChain" className="px-1 group">
-                      useEVMSwitchChain
+                      useEthereumSwitchChain
                     </Link>
                     .
                   </>
