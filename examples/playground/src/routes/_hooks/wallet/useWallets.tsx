@@ -1,108 +1,116 @@
-import { embeddedWalletId, RecoveryMethod, useWallets } from '@openfort/react'
+import { RecoveryMethod, useEthereumEmbeddedWallet, useSolanaEmbeddedWallet } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { polygonAmoy } from 'viem/chains'
+import { Layout } from '@/components/Layout'
 import { onSettledOptions } from '@/components/Variable/commonVariables'
 import { HookVariable } from '@/components/Variable/HookVariable'
-import { Layout } from '../../../components/Layout'
+import { usePlaygroundMode } from '@/providers'
 
 export const Route = createFileRoute('/_hooks/wallet/useWallets')({
   component: RouteComponent,
 })
 
-function RouteComponent() {
-  const wallets = useWallets()
-  const connectorOptions = useMemo(
-    () =>
-      wallets.wallets
-        .map((wallet) => wallet.id)
-        .reduce((acc, id) => {
-          if (!acc.includes(id)) {
-            acc.push(id)
-          }
-          return acc
-        }, [] as string[]),
-    [wallets.wallets]
+const evmDefaultOptions = { ...onSettledOptions, chainId: polygonAmoy.id }
+
+function EvmContent() {
+  return (
+    <HookVariable
+      name="useEthereumEmbeddedWallet"
+      hook={useEthereumEmbeddedWallet}
+      description="Ethereum embedded wallet hook (viem/openfort-js only, no wagmi). Use for create, setActive, wallets, and activeWallet."
+      defaultOptions={evmDefaultOptions}
+      variables={{
+        setActive: {
+          description: 'Set the active embedded wallet by address.',
+          inputs: {
+            address: {
+              type: 'text',
+              placeholder: '0x...',
+              required: true,
+            },
+            recoveryMethod: {
+              type: 'select',
+              options: ['undefined', RecoveryMethod.PASSWORD, RecoveryMethod.PASSKEY, RecoveryMethod.AUTOMATIC],
+            },
+            recoveryPassword: {
+              type: 'password',
+            },
+          },
+        },
+        exportPrivateKey: {
+          description: 'Export the private key of the active wallet.',
+        },
+        create: {
+          description: 'Create a new embedded wallet.',
+          inputs: {
+            recoveryMethod: {
+              type: 'select',
+              options: ['undefined', RecoveryMethod.PASSWORD, RecoveryMethod.PASSKEY, RecoveryMethod.AUTOMATIC],
+            },
+            recoveryPassword: {
+              type: 'password',
+            },
+          },
+        },
+        setRecovery: {
+          description: 'Update recovery method for the wallet.',
+        },
+        activeWallet: {
+          description: 'The currently active embedded wallet (when status is connected).',
+          typescriptType: 'ConnectedEmbeddedEthereumWallet | null',
+        },
+        wallets: {
+          description: 'List of embedded Ethereum wallets.',
+          typescriptType: 'ConnectedEmbeddedEthereumWallet[]',
+        },
+        status: {
+          description:
+            'Current wallet state: disconnected | fetching-wallets | connecting | creating | connected | needs-recovery | error.',
+        },
+      }}
+    />
   )
+}
 
-  const [isOpenfortWallet, setIsOpenfortWallet] = useState(connectorOptions[0] === embeddedWalletId)
+function SolanaContent() {
+  return (
+    <HookVariable
+      name="useSolanaEmbeddedWallet"
+      hook={useSolanaEmbeddedWallet}
+      description="Solana embedded wallet hook. Use for create, setActive, wallets, and activeWallet (Base58 addresses)."
+      variables={{
+        setActive: {
+          description: 'Set the active embedded wallet by address.',
+        },
+        create: {
+          description: 'Create a new Solana embedded wallet.',
+        },
+        activeWallet: {
+          description: 'The currently active embedded wallet (when status is connected).',
+        },
+        wallets: {
+          description: 'List of embedded Solana wallets.',
+        },
+        status: {
+          description:
+            'Current wallet state: disconnected | fetching-wallets | connecting | creating | connected | needs-recovery | error.',
+        },
+      }}
+    />
+  )
+}
 
-  useEffect(() => {
-    setIsOpenfortWallet(connectorOptions[0] === embeddedWalletId)
-  }, [connectorOptions])
+function RouteComponent() {
+  const { mode } = usePlaygroundMode()
+  const isSolana = mode === 'solana-only'
 
-  // wallets.setActiveWallet({
-  //   walletId,
-  //   recovery: {
-  //     password
-  //   }
-  // })
   return (
     <Layout>
-      <HookVariable
-        name="useWallets"
-        hook={useWallets}
-        description="This hook provides access to the wallets available in the application."
-        defaultOptions={onSettledOptions}
-        variables={{
-          setActiveWallet: {
-            description: 'Set the active wallet for the application.',
-            inputs: {
-              showUI: {
-                type: 'boolean',
-                defaultValue: 'false',
-                required: true,
-              },
-              walletId: {
-                type: 'select',
-                options: connectorOptions,
-                required: true,
-                onChange: (value) => {
-                  setIsOpenfortWallet(value === embeddedWalletId)
-                },
-              },
-              'recovery.recoveryMethod': {
-                type: 'select',
-                options: ['undefined', 'PASSWORD', 'PASSKEY', 'AUTOMATIC'],
-                hidden: !isOpenfortWallet,
-              },
-              'recovery.password': {
-                type: 'password',
-                hidden: !isOpenfortWallet,
-              },
-              address: {
-                type: 'text',
-                placeholder: '0x1234...',
-              },
-            },
-          },
-          exportPrivateKey: {
-            description: 'Export the private key of the active wallet.',
-          },
-          createWallet: {
-            description: 'Create a new wallet.',
-            inputs: {
-              'recovery.recoveryMethod': {
-                type: 'select',
-                options: ['undefined', RecoveryMethod.PASSWORD, RecoveryMethod.PASSKEY, RecoveryMethod.AUTOMATIC],
-              },
-              'recovery.password': {
-                type: 'password',
-              },
-            },
-          },
-          availableWallets: {
-            description: 'List of available wallets in the application.',
-          },
-          activeWallet: {
-            description: 'The currently active wallet in the application.',
-            typescriptType: 'Wallet',
-          },
-          wallets: {
-            description: 'List of the wallets of the user.',
-            typescriptType: 'Wallet[]',
-          },
-        }}
-      />
+      <p className="text-sm text-muted-foreground">
+        For app code that works with either chain, use <code>useEmbeddedWallet()</code> from{' '}
+        <code>@openfort/react</code>; this page shows the underlying chain-specific hooks for inspection.
+      </p>
+      {isSolana ? <SolanaContent /> : <EvmContent />}
     </Layout>
   )
 }

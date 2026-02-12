@@ -19,10 +19,6 @@ export function parseTransactionError(error: unknown): {
   const errorString = errorMessage.toLowerCase()
   const errorName = error instanceof Error ? error.name : ''
 
-  // ==========================================
-  // WALLET & USER INTERACTION ERRORS
-  // ==========================================
-
   // UserRejectedRequestError - User explicitly denied/rejected the request
   // https://v1.viem.sh/docs/glossary/errors.html#userrejectedrequesterror
   if (
@@ -49,10 +45,6 @@ export function parseTransactionError(error: unknown): {
       action: 'Please connect your wallet and try again.',
     }
   }
-
-  // ==========================================
-  // TRANSACTION & GAS ERRORS
-  // ==========================================
 
   // InsufficientFundsError - Not enough funds for gas
   // https://v1.viem.sh/docs/glossary/errors.html#insufficientfundserror
@@ -188,10 +180,6 @@ export function parseTransactionError(error: unknown): {
     }
   }
 
-  // ==========================================
-  // CONTRACT EXECUTION ERRORS
-  // ==========================================
-
   // ExecutionRevertedError - Contract execution reverted
   // https://v1.viem.sh/docs/glossary/errors.html#executionrevertederror
   if (errorName === 'ExecutionRevertedError' || errorString.includes('execution reverted')) {
@@ -260,10 +248,6 @@ export function parseTransactionError(error: unknown): {
       action: 'Please contact support if this issue persists.',
     }
   }
-
-  // ==========================================
-  // NETWORK & RPC ERRORS
-  // ==========================================
 
   // ChainMismatchError / ChainNotFoundError / InvalidChainIdError
   // https://v1.viem.sh/docs/glossary/errors.html#chainmismatcherror
@@ -421,10 +405,6 @@ export function parseTransactionError(error: unknown): {
       action: 'Please install a wallet extension and try again.',
     }
   }
-
-  // ==========================================
-  // GENERIC FALLBACK
-  // ==========================================
 
   // If error message is reasonably short and readable, show it
   if (errorMessage.length < 150 && !errorMessage.includes('0x')) {

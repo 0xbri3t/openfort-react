@@ -1,82 +1,94 @@
-import { RecoveryMethod } from '@openfort/openfort-js'
-import { useEnsName } from 'wagmi'
-import { FingerPrintIcon, KeyIcon, LockIcon } from '../../../assets/icons'
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { embeddedWalletId } from '../../../constants/openfort'
-import { type UserWallet, useWallets } from '../../../hooks/openfort/useWallets'
-import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
+import type { ConnectedEmbeddedEthereumWallet } from '../../../ethereum/types'
+import { toEthereumUserWallet, toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
+import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
+import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
+import { useChain } from '../../../shared/hooks/useChain'
+import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import { truncateEthAddress } from '../../../utils'
 import { walletConfigs } from '../../../wallets/walletConfigs'
 import Button from '../../Common/Button'
 import { ModalHeading } from '../../Common/Modal/styles'
+import { WalletRecoveryIcon } from '../../Common/WalletRecoveryIcon'
+import { externalWalletRecoverRoute, recoverRoute } from '../../Openfort/routeHelpers'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { ProviderIcon, ProviderLabel, ProvidersButton } from '../Providers/styles'
 
-const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
-  switch (recovery) {
-    case RecoveryMethod.PASSWORD:
-      return <KeyIcon />
-    case RecoveryMethod.PASSKEY:
-      return <FingerPrintIcon />
-    case RecoveryMethod.AUTOMATIC:
-      return <LockIcon />
-    default:
-      return null
-  }
-}
-const SelectWalletButton = ({ wallet }: { wallet: UserWallet }) => {
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address: wallet.address,
-    config: ensFallbackConfig,
-  })
-  const walletDisplay = ensName ?? truncateEthAddress(wallet.address)
+function WalletRow({
+  chainType,
+  wallet,
+}: {
+  chainType: ChainTypeEnum
+  wallet: ConnectedEmbeddedEthereumWallet | ConnectedEmbeddedSolanaWallet
+}) {
   const { setRoute, setConnector } = useOpenfort()
+  const identity = useResolvedIdentity({
+    address: wallet.address,
+    chainType,
+    enabled: !!wallet.address,
+  })
+  const display =
+    chainType === ChainTypeEnum.SVM
+      ? wallet.address.length > 12
+        ? `${wallet.address.slice(0, 4)}...${wallet.address.slice(-4)}`
+        : wallet.address
+      : identity.status === 'success'
+        ? (identity.name ?? truncateEthAddress(wallet.address))
+        : truncateEthAddress(wallet.address)
 
   const walletIcon = () => {
     if (wallet.id === embeddedWalletId) {
       return <WalletRecoveryIcon recovery={wallet.recoveryMethod} />
     }
-    const walletConfig = Object.entries(walletConfigs).find(([key]) => {
-      return key.includes(wallet.id)
-    })?.[1]
+    if (chainType === ChainTypeEnum.EVM) {
+      const walletConfig = Object.entries(walletConfigs).find(([key]) => key.includes(wallet.id))?.[1]
+      if (walletConfig) return walletConfig.icon
+    }
+    return null
+  }
 
-    if (walletConfig) {
-      return walletConfig.icon
+  const handleClick = () => {
+    if (chainType === ChainTypeEnum.SVM) {
+      const walletForRoute = toSolanaUserWallet(wallet as ConnectedEmbeddedSolanaWallet)
+      setRoute(recoverRoute(chainType, walletForRoute))
+      return
+    }
+    const walletForRoute = toEthereumUserWallet(wallet as ConnectedEmbeddedEthereumWallet)
+    if (wallet.id === embeddedWalletId) {
+      setRoute(recoverRoute(chainType, walletForRoute))
+    } else {
+      const externalRoute = externalWalletRecoverRoute(chainType, walletForRoute)
+      if (externalRoute) {
+        setRoute(externalRoute)
+        setConnector({ id: wallet.id })
+      }
     }
   }
 
   return (
     <ProvidersButton>
-      <Button
-        onClick={() => {
-          if (wallet.id === embeddedWalletId) {
-            setRoute({ route: routes.RECOVER_WALLET, wallet })
-          } else {
-            setRoute({ route: routes.CONNECT, connectType: 'recover', wallet })
-            setConnector({ id: wallet.id })
-          }
-        }}
-      >
-        <ProviderLabel>{walletDisplay}</ProviderLabel>
+      <Button onClick={handleClick}>
+        <ProviderLabel>{display}</ProviderLabel>
         <ProviderIcon>{walletIcon()}</ProviderIcon>
       </Button>
     </ProvidersButton>
   )
 }
-const SelectWalletToRecover: React.FC = () => {
-  const { wallets } = useWallets()
+
+export default function SelectWalletToRecover() {
+  const { chainType } = useChain()
+  const embeddedWallet = useEmbeddedWallet()
+  const wallets = embeddedWallet.wallets
+
+  const list = wallets.map((wallet) => <WalletRow key={wallet.id} chainType={chainType} wallet={wallet} />)
 
   return (
     <PageContent onBack={routes.PROVIDERS} logoutOnBack>
       <ModalHeading>Select a wallet to recover</ModalHeading>
-      {wallets.map((wallet) => (
-        <SelectWalletButton key={wallet.address} wallet={wallet} />
-      ))}
+      {list}
     </PageContent>
   )
 }
-
-export default SelectWalletToRecover

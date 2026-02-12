@@ -1,13 +1,32 @@
-import { OpenfortButton } from '@openfort/react'
+import { OpenfortButton, useDisconnect } from '@openfort/react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import { MODE_ICONS } from '@/assets/chain-icons'
 import { ModeToggle } from '@/components/mode-toggle'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Logo } from '@/components/ui/logo'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { clearModeSwitchStorage } from '@/lib/clearModeSwitchStorage'
 import { navRoutes } from '@/lib/navRoute'
+import type { OpenfortPlaygroundMode } from '@/providers'
+import { usePlaygroundMode } from '@/providers'
 import type { FileRoutesByTo } from '../routeTree.gen'
+
+const MODE_LABELS: Record<OpenfortPlaygroundMode, string> = {
+  'evm-only': 'EVM only',
+  'solana-only': 'SVM only',
+  'evm-wagmi': 'EVM + Wagmi',
+}
+
+/** Hooks used in each mode – shown as helper text on mode buttons */
+const MODE_HOOKS: Record<OpenfortPlaygroundMode, string> = {
+  'evm-only': 'useEthereumEmbeddedWallet, useAdapter (viem)',
+  'solana-only': 'useSolanaEmbeddedWallet, useWallets',
+  'evm-wagmi': 'useWallets, useEVMConnectors, wagmi hooks',
+}
 
 export type NavRoute = {
   href?: keyof FileRoutesByTo
@@ -16,9 +35,42 @@ export type NavRoute = {
   children?: NavRoute[]
 }
 
-export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePath?: string }) => {
+export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const location = useLocation()
-  const path = location.pathname.includes('showcase') ? '/' : overridePath || location.pathname
+  const path = location.pathname.includes('showcase') ? '/' : location.pathname
+  const { mode, setMode } = usePlaygroundMode()
+  const queryClient = useQueryClient()
+  const { disconnectAsync } = useDisconnect()
+
+  const handleModeSwitch = useCallback(
+    async (next: OpenfortPlaygroundMode) => {
+      if (next === mode) return
+      try {
+        await disconnectAsync()
+      } catch {
+        /* no-op */
+      }
+      clearModeSwitchStorage()
+      queryClient.clear()
+      setMode(next)
+    },
+    [mode, disconnectAsync, queryClient, setMode]
+  )
+
+  const effectiveNavRoutes = useMemo(() => {
+    const hasWagmi = mode === 'evm-wagmi'
+    return navRoutes.map((route) => {
+      if (route.label === 'Utils' && route.children) {
+        const children = route.children.filter((child) => {
+          if (child.label === 'wagmi') return hasWagmi
+          if (child.label === 'EVM adapter (viem)') return !hasWagmi
+          return true
+        })
+        return { ...route, children }
+      }
+      return route
+    })
+  }, [mode])
 
   const isActive = (item: NavRoute) => {
     if (item.exact) {
@@ -39,7 +91,7 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
         )}
         <div className="flex items-center gap-4 ml-auto overflow-x-auto overflow-y-hidden">
           <div className="sm:flex hidden flex gap-4 mr-4 items-center">
-            {navRoutes.map((route, i) =>
+            {effectiveNavRoutes.map((route, i) =>
               route.children ? (
                 <DropdownMenu key={route.label}>
                   <DropdownMenuTrigger
@@ -82,6 +134,32 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
             )}
           </div>
           <div className="flex gap-4 sm:border-l pl-4 items-center">
+            <DropdownMenu>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger className="text-sm text-muted-foreground hover:text-foreground min-w-[7rem] flex items-center justify-center gap-2">
+                    {MODE_ICONS[mode]}
+                    {MODE_LABELS[mode]}
+                    <ChevronDown className="size-4" />
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <p className="text-xs">{MODE_HOOKS[mode]}</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end">
+                {(['evm-only', 'solana-only', 'evm-wagmi'] as const).map((m) => (
+                  <DropdownMenuItem
+                    key={m}
+                    onClick={() => void handleModeSwitch(m)}
+                    className="flex items-center gap-2"
+                  >
+                    {MODE_ICONS[m]}
+                    {MODE_LABELS[m]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <ModeToggle className="scale-110" />
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>
@@ -108,7 +186,7 @@ export const Nav = ({ showLogo, overridePath }: { showLogo?: boolean; overridePa
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  {navRoutes.map((route, i) =>
+                  {effectiveNavRoutes.map((route, i) =>
                     route.children ? (
                       route.children.map((child) => (
                         <DropdownMenuItem key={child.href} asChild>

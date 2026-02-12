@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useAccount, useChainId } from 'wagmi'
+
 import Logos from '../../../assets/logos'
 import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalHeading } from '../../Common/Modal/styles'
 import SquircleSpinner from '../../Common/SquircleSpinner'
@@ -16,8 +17,12 @@ import { isSameToken } from '../Send/utils'
 const BuyProcessing = () => {
   const { buyForm, setRoute, triggerResize, publishableKey } = useOpenfort()
 
-  const { address } = useAccount()
-  const chainId = useChainId()
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
+
   const [popupWindow, setPopupWindow] = useState<Window | null>(null)
   const [showContinueButton, setShowContinueButton] = useState(false)
   const [isCreatingSession, setIsCreatingSession] = useState(true)
@@ -44,7 +49,7 @@ const BuyProcessing = () => {
   // Create session and open popup on mount
   useEffect(() => {
     const createSessionAndOpenPopup = async () => {
-      if (!address || !fiatAmount || fiatAmount <= 0) {
+      if (!address || !chainId || !fiatAmount || fiatAmount <= 0) {
         setRoute(routes.BUY_SELECT_PROVIDER)
         return
       }

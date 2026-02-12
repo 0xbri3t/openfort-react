@@ -1,11 +1,15 @@
+import type { ReactNode } from 'react'
 import { useSignMessage } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 
-export const SignaturesCard = () => {
+export const SignaturesCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { data, signMessage } = useSignMessage()
+
+  const SignButton = () => <Button className="btn btn-accent w-full">Sign a message</Button>
 
   return (
     <Card>
@@ -33,7 +37,21 @@ export const SignaturesCard = () => {
               defaultValue="Hello from Openfort!"
             />
           </label>
-          <Button className="btn btn-accent w-full">Sign a message</Button>
+          {tooltip ? (
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <SignButton />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <h3 className="text-base mb-1">{tooltip.hook}</h3>
+                {tooltip.body}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <SignButton />
+          )}
           <InputMessage
             message={`Signed message: ${data?.slice(0, 10)}...${data?.slice(-10)}`}
             show={!!data}

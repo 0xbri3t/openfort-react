@@ -1,8 +1,8 @@
 import React from 'react'
-import { Openfortcontext } from './context'
+import { OpenfortContext } from './context'
 
 export const useOpenfort = () => {
-  const context = React.useContext(Openfortcontext)
+  const context = React.useContext(OpenfortContext)
   if (!context) throw Error('Openfort Hook must be inside a Provider.')
   return context
 }

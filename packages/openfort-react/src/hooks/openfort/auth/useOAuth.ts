@@ -4,7 +4,7 @@ import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
 import { onError, onSuccess } from '../hookConsistency'
 import { useUI } from '../useUI'
-import type { UserWallet } from '../useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../useWallets'
 import { buildCallbackUrl } from './requestEmailVerification'
 import { type BaseFlowState, mapStatus } from './status'
 import { type CreateWalletPostAuthOptions, useConnectToWalletPostAuth } from './useConnectToWalletPostAuth'
@@ -22,7 +22,7 @@ type InitOAuthReturnType = {
 export type StoreCredentialsResult = {
   // type: "storeCredentials";
   user?: User
-  wallet?: UserWallet
+  wallet?: EthereumUserWallet | SolanaUserWallet
   error?: OpenfortError
 }
 type StoreCredentialsOptions = {

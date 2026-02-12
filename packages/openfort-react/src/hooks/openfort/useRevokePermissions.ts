@@ -1,10 +1,15 @@
 import type { RevokePermissionsRequestParams, SessionResponse } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
 import type { Hex } from 'viem'
-import { useChainId, useWalletClient } from 'wagmi'
+import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
+import { getEmbeddedWalletClient } from '../../ethereum/hooks/getEmbeddedWalletClient'
+import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
+import type { OpenfortEmbeddedEthereumWalletProvider } from '../../ethereum/types'
+import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
 import { useChains } from '../useChains'
+import { useConnectedWallet } from '../useConnectedWallet'
 import { type BaseFlowState, mapStatus } from './auth/status'
 import { onError, onSuccess } from './hookConsistency'
 
@@ -58,12 +63,15 @@ type RevokePermissionsHookOptions = OpenfortHookOptions<RevokePermissionsHookRes
  * ```
  */
 export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions = {}) => {
+  const bridge = useEVMBridge()
   const chains = useChains()
-  const chainId = useChainId()
+  const wallet = useConnectedWallet()
+  const { client } = useOpenfortCore()
+  const ethereum = useEthereumEmbeddedWallet()
+  const chainId = bridge?.chainId ?? (wallet.status === 'connected' ? wallet.chainId : undefined) ?? 0
   const [status, setStatus] = useState<BaseFlowState>({
     status: 'idle',
   })
-  const { data: walletClient } = useWalletClient()
   const [data, setData] = useState<RevokePermissionsResult | null>(null)
   const revokePermissions = useCallback(
     async (
@@ -71,8 +79,9 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
       options: RevokePermissionsHookOptions = {}
     ): Promise<RevokePermissionsHookResult> => {
       try {
-        if (!walletClient) {
-          throw new OpenfortError('Wallet client not available', OpenfortReactErrorType.WALLET_ERROR)
+        const chain = chains.find((c) => c.id === chainId)
+        if (!chain) {
+          throw new OpenfortError('No chain configured', OpenfortReactErrorType.CONFIGURATION_ERROR)
         }
 
         logger.log('Revoking permissions for session key:', sessionKey)
@@ -80,26 +89,43 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
           status: 'loading',
         })
 
-        // Get the current chain configuration
-        const chain = chains.find((c) => c.id === chainId)
-        if (!chain) {
-          throw new OpenfortError('No chain configured', OpenfortReactErrorType.CONFIGURATION_ERROR)
+        const revokeParams = [
+          {
+            permissionContext: sessionKey,
+          },
+        ] as [RevokePermissionsRequestParams]
+
+        let revokePermissionsResult: SessionResponse
+        if (bridge) {
+          const walletClient = await bridge.getWalletClient?.()
+          if (!walletClient) {
+            throw new OpenfortError('Wallet client not available', OpenfortReactErrorType.WALLET_ERROR)
+          }
+          revokePermissionsResult = await walletClient.request<{
+            Method: 'wallet_revokePermissions'
+            Parameters: [RevokePermissionsRequestParams]
+            ReturnType: SessionResponse
+          }>({
+            method: 'wallet_revokePermissions',
+            params: revokeParams,
+          })
+        } else {
+          let provider: OpenfortEmbeddedEthereumWalletProvider
+          if (ethereum.status === 'connected') {
+            provider = await ethereum.activeWallet.getProvider()
+          } else {
+            provider = (await client.embeddedWallet.getEthereumProvider()) as OpenfortEmbeddedEthereumWalletProvider
+          }
+          const walletClient = await getEmbeddedWalletClient(provider, chain)
+          revokePermissionsResult = await walletClient.request<{
+            Method: 'wallet_revokePermissions'
+            Parameters: [RevokePermissionsRequestParams]
+            ReturnType: SessionResponse
+          }>({
+            method: 'wallet_revokePermissions',
+            params: revokeParams,
+          })
         }
-
-        // Get the account address
-        const revokePermissionsResult = await walletClient.request<{
-          Method: 'wallet_revokePermissions'
-          Parameters: [RevokePermissionsRequestParams]
-          ReturnType: SessionResponse
-        }>({
-          method: 'wallet_revokePermissions',
-
-          params: [
-            {
-              permissionContext: sessionKey,
-            },
-          ],
-        })
 
         logger.log('Revoke permissions result:', revokePermissionsResult)
 
@@ -132,7 +158,7 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
         })
       }
     },
-    [chains, chainId, setStatus, hookOptions]
+    [bridge, chains, chainId, client, ethereum, hookOptions]
   )
 
   return {

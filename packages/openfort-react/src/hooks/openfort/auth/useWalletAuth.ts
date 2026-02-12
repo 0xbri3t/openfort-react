@@ -1,23 +1,49 @@
 import { useCallback, useEffect, useState } from 'react'
-import { type Connector, useDisconnect } from 'wagmi'
+import type { OpenfortEVMBridgeConnector } from '../../../core/OpenfortEVMBridgeContext'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
 import { logger } from '../../../utils/logger'
-import { useWagmiWallets } from '../../../wallets/useWagmiWallets'
-import { useConnect } from '../../useConnect'
+import { useEVMConnectors } from '../../../wallets/useEVMConnectors'
 import { onError, onSuccess } from '../hookConsistency'
 import { useConnectWithSiwe } from '../useConnectWithSiwe'
 import { type BaseFlowState, mapStatus } from './status'
 
 type ConnectWalletOptions = {
-  connector: Connector | string
+  connector: OpenfortEVMBridgeConnector | string
 } // onConnect is handled by the hookOptions because useConnect needs to finish the connection process
 
+/**
+ * @deprecated This hook requires wagmi as a peer dependency.
+ *
+ * For SIWE auth without wagmi, use the SDK directly:
+ * ```ts
+ * import { useCoreContext, createSIWEMessage } from '@openfort/react'
+ *
+ * const { client } = useCoreContext()
+ * const { nonce } = await client.auth.initSiwe({ address })
+ * const message = createSIWEMessage(address, nonce, chainId)
+ * const signature = await yourWallet.signMessage(message)
+ * await client.auth.loginWithSiwe({ signature, message, address, connectorType, walletClientType })
+ * ```
+ *
+ * For wagmi convenience hooks, use @openfort/wagmi package (coming soon).
+ */
 export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
+  // Deprecation warning in development
+  if (process.env.NODE_ENV !== 'production') {
+    logger.warn(
+      '[Openfort] useWalletAuth is deprecated. ' +
+        'This hook requires wagmi. For SIWE auth without wagmi, use client.auth.loginWithSiwe() directly with createSIWEMessage(). ' +
+        'For wagmi convenience, @openfort/wagmi package is coming soon.'
+    )
+  }
+
   const { updateUser } = useOpenfortCore()
+  const bridge = useEVMBridge()
   const siwe = useConnectWithSiwe()
-  const availableWallets = useWagmiWallets() // TODO: Use this to get the wallet client type
-  const { disconnect } = useDisconnect()
+  const availableWallets = useEVMConnectors()
+  const disconnect = bridge?.disconnect
   const [walletConnectingTo, setWalletConnectingTo] = useState<string | null>(null)
   const [shouldConnectWithSiwe, setShouldConnectWithSiwe] = useState(false)
 
@@ -34,25 +60,27 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
       })
       return onError({
         error,
-        options: hookOptions,
+        hookOptions,
       })
     },
     [hookOptions]
   )
 
-  const { connectAsync } = useConnect({
-    mutation: {
-      onError: (e) => {
+  const connectAsync = useCallback(
+    async (params: { connector: OpenfortEVMBridgeConnector }) => {
+      if (!bridge?.connectAsync) throw new Error('EVM bridge not available')
+      try {
+        await bridge.connectAsync(params)
+        setShouldConnectWithSiwe(true)
+      } catch (e) {
         const error = new OpenfortError('Failed to connect with wallet', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
           error: e,
         })
         handleError(error)
-      },
-      onSuccess: () => {
-        setShouldConnectWithSiwe(true)
-      },
+      }
     },
-  })
+    [bridge, handleError]
+  )
 
   useEffect(() => {
     // Ensure it has been connected with a wallet before connecting with SIWE
@@ -63,25 +91,26 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
     siwe({
       onError: (e) => {
         logger.log('Error connecting with SIWE', e)
-        disconnect()
+        disconnect?.()
         const error = new OpenfortError('Failed to connect with siwe', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
           error: e,
         })
         handleError(error)
       },
-      onConnect: () => {
+      onConnect: async () => {
         logger.log('Successfully connected with SIWE')
         setStatus({
           status: 'success',
         })
-        updateUser()
+        await updateUser()
         onSuccess({
           hookOptions,
+          options: {},
           data: {},
         })
       },
     })
-  }, [shouldConnectWithSiwe, siwe, updateUser])
+  }, [shouldConnectWithSiwe, siwe, updateUser, disconnect, handleError, hookOptions])
 
   // const generateSiweMessage = useCallback(
   //   async (args) => {
@@ -170,7 +199,7 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
       setStatus({
         status: 'loading',
       })
-      let connector: Connector | null = null
+      let connector: OpenfortEVMBridgeConnector | null = null
 
       if (typeof options.connector === 'string') {
         const wallet = availableWallets.find((c) => c.id === options.connector)
@@ -188,24 +217,18 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
 
       setWalletConnectingTo(connector.id)
 
-      const hasDisconnected = new Promise<void>((resolve) => {
-        disconnect(undefined, {
-          onSuccess: () => {
-            resolve()
-          },
-          onError: (e) => {
-            logger.error('Error disconnecting', e)
-
-            const error = new OpenfortError('Failed to disconnect', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
-              error: e,
-            })
-            handleError(error)
-
-            resolve()
-          },
-        })
-      })
-      await hasDisconnected
+      if (disconnect) {
+        try {
+          await disconnect()
+        } catch (e) {
+          logger.error('Error disconnecting', e)
+          const error = new OpenfortError('Failed to disconnect', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+            error: e,
+          })
+          handleError(error)
+          return
+        }
+      }
 
       try {
         await connectAsync({
@@ -217,7 +240,7 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
         handleError(new OpenfortError('Failed to connect', OpenfortReactErrorType.AUTHENTICATION_ERROR, { error }))
       }
     },
-    [siwe, disconnect, updateUser, availableWallets, setStatus, hookOptions]
+    [siwe, disconnect, updateUser, availableWallets, setStatus, hookOptions, connectAsync, handleError]
   )
 
   return {

@@ -1,7 +1,7 @@
-import type { OAuthProvider, SDKOverrides, ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
+import type { ChainTypeEnum, OAuthProvider, SDKOverrides, ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
 import type React from 'react'
 import { createContext } from 'react'
-import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
+import type { useConnectCallbackProps } from '../../openfort/connectCallbackTypes'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import type {
   BuyFormState,
@@ -22,9 +22,9 @@ type Connector =
       id: OAuthProvider
       type: 'oauth'
     }
-type ErrorMessage = string | React.ReactNode | null
 
 export type ContextValue = {
+  chainType: ChainTypeEnum
   setTheme: React.Dispatch<React.SetStateAction<Theme>>
   mode: Mode
   setMode: React.Dispatch<React.SetStateAction<Mode>>
@@ -46,7 +46,6 @@ export type ContextValue = {
   setRouteHistory: React.Dispatch<React.SetStateAction<RouteOptions[]>>
   connector: Connector
   setConnector: React.Dispatch<React.SetStateAction<Connector>>
-  errorMessage: ErrorMessage
   debugMode: Required<DebugModeOptions>
   resize: number
   triggerResize: () => void
@@ -68,4 +67,4 @@ export type ContextValue = {
   setBuyForm: React.Dispatch<React.SetStateAction<BuyFormState>>
 } & useConnectCallbackProps
 
-export const Openfortcontext = createContext<ContextValue | null>(null)
+export const OpenfortContext = createContext<ContextValue | null>(null)

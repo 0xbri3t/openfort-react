@@ -1,30 +1,25 @@
-import { useConfig } from 'wagmi'
+import type { ConnectionStrategy } from '../core/ConnectionStrategy'
+import { useConnectionStrategy } from '../core/ConnectionStrategyContext'
+import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import { useChains } from './useChains'
 
 /**
- * Hook for checking if a blockchain chain is supported.
- *
- * This hook verifies whether a specific blockchain chain ID is part of the
- * configured Wagmi chains. Use it to validate chain compatibility before
- * attempting operations or rendering chain-specific UI.
- *
- * @param chainId - The blockchain chain ID to check for support.
- * @returns `true` when the chain is configured, `false` otherwise.
- *
- * @example
- * ```tsx
- * const ChainStatus: React.FC<{ chainId?: number }> = ({ chainId }) => {
- *   const isSupported = useChainIsSupported(chainId);
- *
- *   return (
- *     <span>
- *       {chainId ?? 'Unknown chain'}: {isSupported ? 'Supported' : 'Unsupported'}
- *     </span>
- *   );
- * };
- * ```
+ * When strategy is embedded, a chain is supported if it is in the configured chain list
+ * (walletConfig.ethereum.rpcUrls + default). When strategy is bridge, use bridge config chains.
  */
-export function useChainIsSupported(chainId?: number): boolean {
-  const { chains } = useConfig()
+export function useChainIsSupported(chainId?: number, strategy?: ConnectionStrategy | null): boolean {
+  const strategyFromContext = useConnectionStrategy()
+  const bridge = useEVMBridge()
+  const configuredChains = useChains()
+  const s = strategy ?? strategyFromContext
+
   if (chainId === undefined || chainId === null) return false
-  return chains.some((x) => x.id === chainId)
+
+  if (s?.kind === 'embedded') {
+    return configuredChains.some((c) => c.id === chainId)
+  }
+
+  const bridgeChains = bridge?.config?.chains
+  if (!bridgeChains) return false
+  return bridgeChains.some((x) => x.id === chainId)
 }

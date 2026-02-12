@@ -1,21 +1,48 @@
-import { AccountTypeEnum, type EmbeddedAccount, EmbeddedState, type Openfort, type User } from '@openfort/openfort-js'
+import {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  type EmbeddedAccount,
+  EmbeddedState,
+  type Openfort,
+  type User,
+} from '@openfort/openfort-js'
 import { type QueryObserverResult, type RefetchOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import type React from 'react'
-import { createElement, type PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useAccount, useChainId, useConfig, useDisconnect } from 'wagmi'
+import {
+  createElement,
+  Fragment,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
+import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
+import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
+import { OpenfortEVMBridgeContext } from '../core/OpenfortEVMBridgeContext'
+import { queryKeys } from '../core/queryKeys'
+import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
+import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
+import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
+import type { WalletReadiness } from '../core/types'
 import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
-import { useConnect } from '../hooks/useConnect'
-import { useConnectCallback, type useConnectCallbackProps } from '../hooks/useConnectCallback'
+import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
 import type { UserAccount } from '../openfortCustomTypes'
+import { OpenfortError, OpenfortReactErrorType } from '../types'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
+import { mapBridgeConnectorsToWalletProps } from '../wallets/useEVMConnectors'
+import type { ConnectCallbackProps } from './connectCallbackTypes'
 import { Context } from './context'
 import { createOpenfortClient, setDefaultClient } from './core'
 
-export type ContextValue = {
+export type OpenfortCoreContextValue = {
   signUpGuest: () => Promise<void>
   embeddedState: EmbeddedState
+  isAuthenticated: boolean
 
   isLoading: boolean
   needsRecovery: boolean
@@ -25,30 +52,42 @@ export type ContextValue = {
 
   embeddedAccounts?: EmbeddedAccount[]
   isLoadingAccounts: boolean
+  walletReadiness: WalletReadiness
+
+  /** Current active embedded wallet address (drives top-right / useConnectedWallet). Set by useEthereumEmbeddedWallet.setActive and synced from SDK on load. */
+  activeEmbeddedAddress: string | undefined
+  setActiveEmbeddedAddress: (address: string | undefined) => void
+
+  /** Current chain for EVM embedded (no bridge). Persisted in localStorage. When set, useConnectedWallet and writes use this chain. */
+  activeChainId: number | undefined
+  setActiveChainId: (chainId: number | undefined) => void
 
   logout: () => void
 
-  updateEmbeddedAccounts: (options?: RefetchOptions) => Promise<QueryObserverResult<EmbeddedAccount[], Error>>
+  updateEmbeddedAccounts: (
+    options?: RefetchOptions & { silent?: boolean }
+  ) => Promise<QueryObserverResult<EmbeddedAccount[], Error>>
 
   walletStatus: WalletFlowStatus
   setWalletStatus: (status: WalletFlowStatus) => void
 
+  pollingError: OpenfortError | null
+  retryPolling: () => void
+
+  providerError: unknown
   client: Openfort
 }
 
-const ConnectCallback = ({ onConnect, onDisconnect }: useConnectCallbackProps) => {
-  useConnectCallback({
-    onConnect,
-    onDisconnect,
-  })
-
+function ConnectLifecycleEffect({ onConnect, onDisconnect }: ConnectCallbackProps) {
+  const strategy = useConnectionStrategy()
+  useConnectLifecycle(strategy, onConnect, onDisconnect)
   return null
 }
 
 type CoreOpenfortProviderProps = PropsWithChildren<
   {
     openfortConfig: ConstructorParameters<typeof Openfort>[0]
-  } & useConnectCallbackProps
+  } & ConnectCallbackProps
 >
 
 export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
@@ -57,16 +96,31 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   onDisconnect,
   openfortConfig,
 }) => {
-  const { connectors, connect, reset } = useConnect()
-  const { address } = useAccount()
+  const bridge = useContext(OpenfortEVMBridgeContext)
+  const { walletConfig, chainType, uiConfig } = useOpenfort()
+
+  const bridgeConnectors = useMemo(() => {
+    if (!bridge) return []
+    return mapBridgeConnectorsToWalletProps(bridge, {
+      walletConnectName: uiConfig.walletConnectName,
+    })
+  }, [bridge, uiConfig.walletConnectName])
+
+  const strategy = useMemo(() => {
+    const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
+      [ChainTypeEnum.SVM]: createSolanaEmbeddedStrategy(walletConfig),
+      [ChainTypeEnum.EVM]: bridge
+        ? createEthereumBridgeStrategy(bridge, bridgeConnectors)
+        : createEthereumEmbeddedStrategy(walletConfig),
+    }
+    return strategyByChain[chainType] ?? null
+  }, [bridge, chainType, walletConfig, bridgeConnectors])
+
+  const address = bridge?.account.address
   const [user, setUser] = useState<User | null>(null)
+  const [providerError, setProviderError] = useState<unknown>(null)
   const [linkedAccounts, setLinkedAccounts] = useState<UserAccount[]>([])
   const [walletStatus, setWalletStatus] = useState<WalletFlowStatus>({ status: 'idle' })
-
-  const { disconnectAsync } = useDisconnect()
-  const { walletConfig } = useOpenfort()
-  const wagmiConfig = useConfig()
-  const chainId = useChainId()
 
   // ---- Openfort instance ----
   const openfort = useMemo(() => {
@@ -80,10 +134,13 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       !openfortConfig.shieldConfiguration?.passkeyRpId &&
       typeof window !== 'undefined'
     ) {
-      openfortConfig.shieldConfiguration = {
-        passkeyRpId: window.location.hostname,
-        passkeyRpName: document.title || 'Openfort DApp',
-        ...openfortConfig.shieldConfiguration,
+      const loc = window.location
+      if (loc) {
+        openfortConfig.shieldConfiguration = {
+          passkeyRpId: loc.hostname,
+          passkeyRpName: typeof document !== 'undefined' ? document.title || 'Openfort DApp' : 'Openfort DApp',
+          ...openfortConfig.shieldConfiguration,
+        }
       }
     }
 
@@ -95,8 +152,12 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   // ---- Embedded state ----
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
-  const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const [pollingError, setPollingError] = useState<OpenfortError | null>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const previousEmbeddedState = useRef<EmbeddedState>(EmbeddedState.NONE)
+  const retryCountRef = useRef(0)
+  const POLLING_RETRIES = 3
+  const POLLING_BASE_MS = 2000
 
   const pollEmbeddedState = useCallback(async () => {
     if (!openfort) return
@@ -104,11 +165,38 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     try {
       const state = await openfort.embeddedWallet.getEmbeddedState()
       setEmbeddedState(state)
+      setPollingError(null)
+      retryCountRef.current = 0
     } catch (error) {
       logger.error('Error checking embedded state with Openfort:', error)
-      if (pollingRef.current) clearInterval(pollingRef.current)
+      if (retryCountRef.current < POLLING_RETRIES) {
+        retryCountRef.current += 1
+        const delay = POLLING_BASE_MS * 2 ** retryCountRef.current
+        setTimeout(pollEmbeddedState, delay)
+      } else {
+        setPollingError(
+          error instanceof OpenfortError
+            ? error
+            : new OpenfortError('Embedded state polling failed', OpenfortReactErrorType.UNEXPECTED_ERROR, {
+                error,
+              })
+        )
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current)
+          pollingRef.current = null
+        }
+      }
     }
   }, [openfort])
+
+  const retryPolling = useCallback(() => {
+    retryCountRef.current = 0
+    setPollingError(null)
+    pollEmbeddedState()
+    if (!pollingRef.current) {
+      pollingRef.current = setInterval(pollEmbeddedState, 300)
+    }
+  }, [pollEmbeddedState])
 
   // Only log embedded state when it changes
   useEffect(() => {
@@ -124,8 +212,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [pollEmbeddedState])
 
   const stopPollingEmbeddedState = useCallback(() => {
-    clearInterval(pollingRef.current || undefined)
-    pollingRef.current = null
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
+    }
   }, [])
 
   useEffect(() => {
@@ -171,21 +261,30 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     [openfort]
   )
 
+  const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
+
+  // SVM (Solana) wallets are EOA; EVM uses walletConfig.accountType so the core sees the right list after guest signup
+  const embeddedAccountsAccountType =
+    chainType === ChainTypeEnum.SVM
+      ? undefined
+      : walletConfig?.accountType === AccountTypeEnum.EOA
+        ? undefined
+        : AccountTypeEnum.SMART_ACCOUNT
+
   // Embedded accounts list. Will reset on logout.
   const {
     data: embeddedAccounts,
-    refetch: fetchEmbeddedAccounts,
-    isPending: isLoadingAccounts,
+    refetch: refetchEmbeddedAccounts,
+    isPending: isAccountsPending,
   } = useQuery({
-    queryKey: ['openfortEmbeddedAccountsList'],
+    queryKey: queryKeys.accounts.embedded(embeddedAccountsAccountType),
     queryFn: async () => {
       try {
         return await openfort.embeddedWallet.list({
           limit: 100,
-          // If its EOA we want all accounts, otherwise we want only smart accounts
-          accountType: walletConfig?.accountType === AccountTypeEnum.EOA ? undefined : AccountTypeEnum.SMART_ACCOUNT,
+          accountType: embeddedAccountsAccountType,
         })
-      } catch (error: any) {
+      } catch (error: unknown) {
         handleOAuthConfigError(error)
         throw error
       }
@@ -195,49 +294,93 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     retry: false,
   })
 
-  // Update ethereum provider when chainId changes
-  useEffect(() => {
-    if (!openfort || !walletConfig) return
-
-    const resolvePolicy = () => {
-      const { ethereumProviderPolicyId } = walletConfig
-
-      if (!ethereumProviderPolicyId) return undefined
-
-      if (typeof ethereumProviderPolicyId === 'string') {
-        return { policy: ethereumProviderPolicyId }
+  const fetchEmbeddedAccounts = useCallback(
+    async (options?: RefetchOptions & { silent?: boolean }) => {
+      if (options?.silent) setSilentRefetchInProgress(true)
+      try {
+        return await refetchEmbeddedAccounts(options)
+      } finally {
+        if (options?.silent) setSilentRefetchInProgress(false)
       }
+    },
+    [refetchEmbeddedAccounts]
+  )
 
-      const policy = ethereumProviderPolicyId[chainId]
-      if (!policy) {
-        logger.log(`No policy found for chainId ${chainId}.`)
-        return undefined
-      }
+  const isLoadingAccounts = isAccountsPending && !silentRefetchInProgress
 
-      return { policy }
+  const [activeEmbeddedAddress, setActiveEmbeddedAddress] = useState<string | undefined>(undefined)
+
+  const ACTIVE_CHAIN_ID_KEY = 'openfort_active_chain_id'
+  const [activeChainId, setActiveChainIdState] = useState<number | undefined>(() => {
+    if (typeof window === 'undefined') return undefined
+    const s = window.localStorage.getItem(ACTIVE_CHAIN_ID_KEY)
+    if (s == null) return undefined
+    const n = parseInt(s, 10)
+    if (Number.isNaN(n)) return undefined
+    // Never restore default dev chain from storage so first render uses strategy default (avoids policy/chain mismatch)
+    if (n === DEFAULT_DEV_CHAIN_ID) {
+      window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
+      return undefined
     }
+    return n
+  })
+  const setActiveChainId = useCallback((chainId: number | undefined) => {
+    setActiveChainIdState(chainId)
+    if (typeof window !== 'undefined') {
+      if (chainId == null) window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
+      else window.localStorage.setItem(ACTIVE_CHAIN_ID_KEY, String(chainId))
+    }
+  }, [])
 
-    const rpcUrls = wagmiConfig.chains.reduce(
-      (acc, chain) => {
-        const rpcUrl = wagmiConfig.getClient({ chainId: chain.id }).transport.url
-        if (rpcUrl) {
-          acc[chain.id] = rpcUrl
-        }
-        return acc
-      },
-      {} as Record<number, string>
-    )
+  // If stored activeChainId is not in configured EVM chains (e.g. old Sepolia 11155111), reset to strategy default
+  useEffect(() => {
+    if (!strategy || strategy.kind !== 'embedded' || !walletConfig?.ethereum) return
+    const ethereum = walletConfig.ethereum
+    const configuredChainIds = new Set<number>([
+      ...(ethereum.chainId != null ? [ethereum.chainId] : []),
+      ...(ethereum.rpcUrls ? Object.keys(ethereum.rpcUrls).map(Number) : []),
+    ])
+    if (activeChainId != null && configuredChainIds.size > 0 && !configuredChainIds.has(activeChainId)) {
+      const defaultChainId = strategy.getChainId()
+      if (defaultChainId != null) setActiveChainId(defaultChainId)
+    }
+  }, [strategy, walletConfig?.ethereum, activeChainId, setActiveChainId])
 
-    logger.log('Getting ethereum provider', { chainId, rpcUrls })
+  // Sync active embedded address from SDK on load (only when wallet is actually recovered)
+  useEffect(() => {
+    if (!openfort || !embeddedAccounts?.length) {
+      if (!embeddedAccounts?.length) setActiveEmbeddedAddress(undefined)
+      return
+    }
+    if (embeddedState !== EmbeddedState.READY) {
+      setActiveEmbeddedAddress(undefined)
+      return
+    }
+    let cancelled = false
+    openfort.embeddedWallet
+      .get()
+      .then((active) => {
+        if (cancelled || !active) return
+        const addr = active.address
+        if (addr) setActiveEmbeddedAddress(addr)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [openfort, embeddedAccounts?.length, embeddedState])
 
-    openfort.embeddedWallet.getEthereumProvider({
-      ...resolvePolicy(),
-      chains: rpcUrls,
-    })
+  useEffect(() => {
+    if (!openfort || !walletConfig || !strategy) return
 
-    // Refresh embedded accounts to reflect any changes in the selected chain
-    fetchEmbeddedAccounts()
-  }, [openfort, walletConfig, chainId])
+    strategy
+      .initProvider(openfort, walletConfig)
+      .then(() => fetchEmbeddedAccounts())
+      .catch((err) => {
+        logger.error('Strategy initProvider failed', err)
+        setProviderError(err)
+      })
+  }, [openfort, walletConfig, strategy])
 
   const [isConnectedWithEmbeddedSigner, setIsConnectedWithEmbeddedSigner] = useState(false)
 
@@ -280,18 +423,17 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [embeddedState, openfort])
 
   useEffect(() => {
-    // Connect to wagmi with Embedded signer
-    if (address || !user) return
+    if (!bridge || address || !user) return
     if (isConnectedWithEmbeddedSigner) return
-
     if (embeddedState !== EmbeddedState.READY) return
-    const connector = connectors.find((connector) => connector.name === 'Openfort')
-    if (!connector) return
+
+    const openfortConnector = bridge.connectors.find((c) => c.name === 'Openfort')
+    if (!openfortConnector) return
 
     logger.log('Connecting to wagmi with Openfort')
     setIsConnectedWithEmbeddedSigner(true)
-    connect({ connector })
-  }, [connectors, embeddedState, address, user])
+    bridge.connect({ connector: openfortConnector })
+  }, [bridge, address, user, embeddedState, isConnectedWithEmbeddedSigner])
 
   // ---- Auth functions ----
 
@@ -300,14 +442,17 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     if (!openfort) return
 
     setUser(null)
+    setActiveEmbeddedAddress(undefined)
     setWalletStatus({ status: 'idle' })
     logger.log('Logging out...')
     await openfort.auth.logout()
-    await disconnectAsync()
-    queryClient.resetQueries({ queryKey: ['openfortEmbeddedAccountsList'] })
-    reset()
+    if (bridge) {
+      await bridge.disconnect()
+      bridge.reset()
+    }
+    queryClient.resetQueries({ queryKey: queryKeys.accounts.all() })
     startPollingEmbeddedState()
-  }, [openfort])
+  }, [openfort, bridge, queryClient])
 
   const signUpGuest = useCallback(async () => {
     if (!openfort) return
@@ -323,39 +468,49 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   // ---- Return values ----
 
-  const isLoading = useCallback(() => {
+  const isLoading = useMemo(() => {
     switch (embeddedState) {
       case EmbeddedState.NONE:
       case EmbeddedState.CREATING_ACCOUNT:
         return true
 
       case EmbeddedState.UNAUTHENTICATED:
-        if (user) return true // If user i<s set in unauthenticated state, it means that the embedded state is not up to date, so we should wait
+        if (user) return true
         return false
 
       case EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED:
         if (!user) return true
-
-        // If automatic recovery is enabled, we should wait for the embedded signer to be ready
         return false
+
       case EmbeddedState.READY:
-        // We should wait for the user to be set
-        if (!address || !user) return true
-        else return false
+        if (!user) return true
+        if (bridge && !address) return true
+        return false
 
       default:
         return true
     }
-  }, [embeddedState, address, user])
+  }, [embeddedState, address, user, bridge])
 
-  const needsRecovery = embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED && !address
+  const needsRecovery =
+    embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED && (embeddedAccounts?.length ?? 0) > 0
 
-  const value: ContextValue = {
+  const walletReadiness = useMemo((): WalletReadiness => {
+    if (isLoadingAccounts) return 'loading'
+    if (!embeddedAccounts || embeddedAccounts.length === 0) return 'not-created'
+    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) return 'needs-recovery'
+    return 'ready'
+  }, [isLoadingAccounts, embeddedAccounts, embeddedState])
+
+  const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
+
+  const value: OpenfortCoreContextValue = {
     signUpGuest,
     embeddedState,
+    isAuthenticated,
     logout,
 
-    isLoading: isLoading(),
+    isLoading,
     needsRecovery,
     user,
     linkedAccounts,
@@ -364,9 +519,20 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
     embeddedAccounts,
     isLoadingAccounts,
+    walletReadiness,
+
+    activeEmbeddedAddress,
+    setActiveEmbeddedAddress,
+
+    activeChainId,
+    setActiveChainId,
 
     walletStatus,
     setWalletStatus,
+
+    pollingError,
+    retryPolling,
+    providerError,
 
     client: openfort,
   }
@@ -374,9 +540,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   return createElement(
     Context.Provider,
     { value },
-    <>
-      <ConnectCallback onConnect={onConnect} onDisconnect={onDisconnect} />
-      {children}
-    </>
+    createElement(
+      ConnectionStrategyProvider,
+      { strategy },
+      createElement(Fragment, null, createElement(ConnectLifecycleEffect, { onConnect, onDisconnect }), children)
+    )
   )
 }

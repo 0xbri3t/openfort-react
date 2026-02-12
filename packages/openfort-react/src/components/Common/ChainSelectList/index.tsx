@@ -1,10 +1,15 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useId, useState } from 'react'
-import { useAccount, useSwitchChain } from 'wagmi'
 import ChainIcons from '../../../assets/chains'
 import { chainConfigs } from '../../../constants/chainConfigs'
+import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
+import { useChains } from '../../../hooks/useChains'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { isCoinbaseWalletConnector, isMobile } from '../../../utils'
+import { useEthereumSwitchChain } from '../../../wallet-adapters/ethereum'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import Alert from '../Alert'
 import {
@@ -47,8 +52,48 @@ const Spinner = () => {
 }
 
 const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => {
-  const { connector, chain } = useAccount()
-  const { chains, isPending, switchChain, error } = useSwitchChain()
+  const strategy = useConnectionStrategy()
+  const bridge = useEVMBridge()
+  const wallet = useConnectedWallet()
+  const evmSwitchChain = useEthereumSwitchChain()
+
+  const connector = bridge?.account?.connector
+  const bridgeSwitchChain = bridge?.switchChain
+  const {
+    chains: bridgeChains,
+    isPending: bridgeIsPending,
+    switchChain: bridgeSwitchChainFn,
+    error: bridgeError,
+  } = bridgeSwitchChain ?? {
+    chains: [] as { id: number; name?: string }[],
+    isPending: false,
+    switchChain: undefined,
+    error: null,
+  }
+
+  const embeddedChains = useChains()
+  const isEmbeddedEVMNoBridge = strategy?.kind === 'embedded' && strategy?.chainType === ChainTypeEnum.EVM && !bridge
+  const currentChainIdFromWallet = wallet.status === 'connected' ? wallet.chainId : undefined
+  const currentChainIdFromStrategy = strategy?.getChainId()
+
+  const bridgeChain = bridge?.account?.chain
+  const chain = isEmbeddedEVMNoBridge
+    ? currentChainIdFromWallet != null
+      ? { id: currentChainIdFromWallet }
+      : currentChainIdFromStrategy != null
+        ? { id: currentChainIdFromStrategy }
+        : bridgeChain
+    : bridgeChain
+
+  const chains =
+    isEmbeddedEVMNoBridge && (currentChainIdFromWallet != null || currentChainIdFromStrategy != null)
+      ? embeddedChains.map((c) => ({ id: c.id, name: c.name }))
+      : bridgeChains
+
+  const isPending = isEmbeddedEVMNoBridge ? evmSwitchChain.isPending : bridgeIsPending
+  const switchChain = isEmbeddedEVMNoBridge ? evmSwitchChain.switchChain : bridgeSwitchChainFn
+  const error = isEmbeddedEVMNoBridge ? evmSwitchChain.error : bridgeError
+
   const [pendingChainId, setPendingChainId] = useState<number | undefined>(undefined)
 
   const locales = useLocales({})

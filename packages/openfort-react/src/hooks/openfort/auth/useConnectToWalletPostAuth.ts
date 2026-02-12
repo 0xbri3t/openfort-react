@@ -1,10 +1,18 @@
-import { type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
-import { embeddedWalletId } from '../../../constants/openfort'
+import { queryKeys } from '../../../core/queryKeys'
+import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { useChain } from '../../../shared/hooks/useChain'
 import { logger } from '../../../utils/logger'
-import { type UserWallet, useWallets } from '../useWallets'
+import {
+  type EthereumUserWallet,
+  embeddedAccountToSolanaUserWallet,
+  embeddedAccountToUserWallet,
+  type SolanaUserWallet,
+} from '../useWallets'
 import { useSignOut } from './useSignOut'
 
 /**
@@ -44,8 +52,11 @@ export type CreateWalletPostAuthOptions = {
  * ```
  */
 export const useConnectToWalletPostAuth = () => {
-  const { createWallet, setActiveWallet } = useWallets()
+  const { chainType } = useChain()
+  const { client } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
+  const chainId = walletConfig?.ethereum?.chainId ?? 80002
+  const embeddedWallet = useEmbeddedWallet()
   const { signOut } = useSignOut()
   const queryClient = useQueryClient()
 
@@ -53,7 +64,7 @@ export const useConnectToWalletPostAuth = () => {
     async ({
       logoutOnError: signOutOnError = true,
       recoverWalletAutomatically,
-    }: CreateWalletPostAuthOptions): Promise<{ wallet?: UserWallet }> => {
+    }: CreateWalletPostAuthOptions): Promise<{ wallet?: EthereumUserWallet | SolanaUserWallet }> => {
       if (walletConfig?.recoverWalletAutomaticallyAfterAuth === false && recoverWalletAutomatically === undefined) {
         return {}
       }
@@ -65,48 +76,81 @@ export const useConnectToWalletPostAuth = () => {
         (!walletConfig?.createEncryptedSessionEndpoint && !walletConfig?.getEncryptionSession) ||
         !recoverWalletAutomatically
       ) {
-        // If there is no encryption session, we cannot create a wallet
         return {}
       }
 
+      const accountType =
+        chainType === ChainTypeEnum.SVM
+          ? undefined
+          : walletConfig?.accountType === AccountTypeEnum.EOA
+            ? undefined
+            : AccountTypeEnum.SMART_ACCOUNT
       const wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({
-        queryKey: ['openfortEmbeddedAccountsList'],
+        queryKey: queryKeys.accounts.embedded(accountType),
+        queryFn: () =>
+          client.embeddedWallet.list({
+            limit: 100,
+            accountType,
+          }),
       })
 
-      let wallet: UserWallet | undefined
+      const chainWallets = wallets.filter((w) => w.chainType === chainType)
 
-      if (wallets.length === 0) {
-        const createWalletResult = await createWallet()
-        if (createWalletResult.error && signOutOnError) {
-          logger.error('Error creating wallet:', createWalletResult.error)
-          // If there was an error and we should log out, we can call the logout function
-          await signOut()
+      if (chainWallets.length === 0) {
+        try {
+          const account =
+            chainType === ChainTypeEnum.SVM ? await embeddedWallet.create() : await embeddedWallet.create({ chainId })
+          return {
+            wallet:
+              chainType === ChainTypeEnum.SVM
+                ? embeddedAccountToSolanaUserWallet(account)
+                : embeddedAccountToUserWallet(account),
+          }
+        } catch (err) {
+          logger.error('Error creating wallet:', err)
+          if (signOutOnError) await signOut()
           return {}
         }
-        wallet = createWalletResult.wallet!
       }
 
-      // Has a wallet with automatic recovery
-      if (
-        wallets.some(
-          (w) => w.recoveryMethod === RecoveryMethod.AUTOMATIC || w.recoveryMethod === RecoveryMethod.PASSKEY
-        )
-      ) {
-        const setWalletResult = await setActiveWallet({
-          walletId: embeddedWalletId,
-        })
-
-        if (!setWalletResult.wallet || (setWalletResult.error && signOutOnError)) {
-          logger.error('Error recovering wallet:', setWalletResult.error)
-          // If there was an error and we should log out, we can call the logout function
-          await signOut()
+      const hasAutomaticOrPasskey = chainWallets.some(
+        (w) => w.recoveryMethod === RecoveryMethod.AUTOMATIC || w.recoveryMethod === RecoveryMethod.PASSKEY
+      )
+      if (hasAutomaticOrPasskey) {
+        const first = chainWallets[0]
+        if (first) {
+          try {
+            if (embeddedWallet.chainType === ChainTypeEnum.SVM) {
+              await embeddedWallet.setActive({ address: first.address })
+            } else {
+              await embeddedWallet.setActive({
+                address: first.address as `0x${string}`,
+                chainId,
+              })
+            }
+            return {
+              wallet:
+                chainType === ChainTypeEnum.SVM
+                  ? embeddedAccountToSolanaUserWallet(first)
+                  : embeddedAccountToUserWallet(first),
+            }
+          } catch (err) {
+            logger.error('Error recovering wallet:', err)
+            if (signOutOnError) await signOut()
+          }
         }
-        wallet = setWalletResult.wallet!
       }
 
-      return { wallet }
+      const first = chainWallets[0]
+      return {
+        wallet: first
+          ? chainType === ChainTypeEnum.SVM
+            ? embeddedAccountToSolanaUserWallet(first)
+            : embeddedAccountToUserWallet(first)
+          : undefined,
+      }
     },
-    [walletConfig, setActiveWallet, signOut]
+    [chainType, client, walletConfig, chainId, embeddedWallet, signOut, queryClient]
   )
 
   return {

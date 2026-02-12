@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
+
 import { DisconnectIcon, GuestIcon, KeyIcon } from '../../../assets/icons'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { isSafeConnector } from '../../../utils'
 import { LargeButton } from '../../Common/LargeButton'
 import { ModalContent, ModalHeading } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
@@ -17,7 +16,6 @@ const Profile: React.FC = () => {
 
   const locales = useLocales()
 
-  const { connector } = useAccount()
   const [shouldDisconnect, setShouldDisconnect] = useState(false)
 
   useEffect(() => {
@@ -28,7 +26,7 @@ const Profile: React.FC = () => {
     return () => {
       logout()
     }
-  }, [shouldDisconnect])
+  }, [shouldDisconnect, setOpen, logout])
 
   return (
     <PageContent onBack={routes.CONNECTED}>
@@ -54,11 +52,9 @@ const Profile: React.FC = () => {
           </LargeButton>
         </div>
       </ModalContent>
-      {!isSafeConnector(connector?.id) && (
-        <DisconnectButton onClick={() => setShouldDisconnect(true)} icon={<DisconnectIcon />}>
-          {locales.disconnect}
-        </DisconnectButton>
-      )}
+      <DisconnectButton onClick={() => setShouldDisconnect(true)} icon={<DisconnectIcon />}>
+        {locales.disconnect}
+      </DisconnectButton>
     </PageContent>
   )
 }

@@ -4,14 +4,14 @@ import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
 import { isValidEmail } from '../../../utils/validation'
 import { onError, onSuccess } from '../hookConsistency'
-import type { UserWallet } from '../useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../useWallets'
 import { type BaseFlowState, mapStatus } from './status'
 import { type CreateWalletPostAuthOptions, useConnectToWalletPostAuth } from './useConnectToWalletPostAuth'
 
 type EmailOtpAuthResult = {
   error?: OpenfortError
   user?: User
-  wallet?: UserWallet
+  wallet?: EthereumUserWallet | SolanaUserWallet
 }
 
 type LoginWithEmailOtpOptions = {

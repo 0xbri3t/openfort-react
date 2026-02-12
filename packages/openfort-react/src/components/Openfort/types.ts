@@ -3,14 +3,18 @@ import type React from 'react'
 import type { ReactNode } from 'react'
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 import type { Hex } from 'viem'
-import type { getAssets } from 'viem/_types/experimental/erc7811/actions/getAssets'
-import type { UserWallet } from '../../hooks/openfort/useWallets'
+import type { getAssets } from 'viem/experimental/erc7811'
+import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/useWallets'
 import type { UserAccount } from '../../openfortCustomTypes'
+import type { SolanaConfig } from '../../solana/types'
+
 import type { CustomAvatarProps, CustomTheme, Languages, Mode, Theme } from '../../types'
 
 export const routes = {
   PROVIDERS: 'providers',
   SOCIAL_PROVIDERS: 'socialProviders',
+  PROFILE: 'profile',
+  EXPORT_KEY: 'exportKey',
 
   LOADING: 'loading',
   LOAD_WALLETS: 'loadWallets',
@@ -37,12 +41,10 @@ export const routes = {
   CONNECT: 'connect',
   DOWNLOAD: 'download',
   CONNECTED: 'connected',
-  PROFILE: 'profile',
   SWITCHNETWORKS: 'switchNetworks',
   LINKED_PROVIDER: 'linkedProvider',
   LINKED_PROVIDERS: 'linkedProviders',
   REMOVE_LINKED_PROVIDER: 'removeLinkedProvider',
-  EXPORT_KEY: 'exportKey',
 
   NO_ASSETS_AVAILABLE: 'noAssetsAvailable',
   ASSET_INVENTORY: 'assetInventory',
@@ -57,6 +59,24 @@ export const routes = {
   BUY_PROCESSING: 'buyProcessing',
   BUY_COMPLETE: 'buyComplete',
   BUY_PROVIDER_SELECT: 'buyProviderSelect',
+
+  ETH_CONNECTED: 'eth:connected',
+  ETH_CREATE_WALLET: 'eth:createWallet',
+  ETH_RECOVER_WALLET: 'eth:recoverWallet',
+  ETH_SWITCH_NETWORK: 'eth:switchNetworks',
+  ETH_SEND: 'eth:send',
+  ETH_RECEIVE: 'eth:receive',
+  ETH_BUY: 'eth:buy',
+  ETH_CONNECTORS: 'eth:connectors',
+
+  SOL_CONNECTED: 'sol:connected',
+  SOL_CREATE_WALLET: 'sol:createWallet',
+  SOL_RECOVER_WALLET: 'sol:recoverWallet',
+  SOL_SEND: 'sol:send',
+  SOL_RECEIVE: 'sol:receive',
+  SOL_WALLETS: 'sol:wallets',
+
+  WALLET_OVERVIEW: 'walletOverview',
 } as const
 
 type AllRoutes = (typeof routes)[keyof typeof routes]
@@ -76,15 +96,14 @@ type ConnectOptions =
     }
   | {
       connectType: 'recover'
-      wallet: UserWallet
+      wallet: EthereumUserWallet | SolanaUserWallet
     }
-
-// export type ConnectType = ConnectOptions['connectType']
 
 type RoutesWithOptions =
   | ({ route: typeof routes.CONNECTORS } & ConnectOptions)
   | ({ route: typeof routes.CONNECT } & ConnectOptions)
-  | { route: typeof routes.RECOVER_WALLET; wallet: UserWallet }
+  | { route: typeof routes.RECOVER_WALLET; wallet: EthereumUserWallet }
+  | { route: typeof routes.SOL_RECOVER_WALLET; wallet: SolanaUserWallet }
   | { route: typeof routes.LINKED_PROVIDER; provider: UserAccount }
   | { route: typeof routes.REMOVE_LINKED_PROVIDER; provider: UserAccount }
 
@@ -118,7 +137,7 @@ export enum UIAuthProvider {
   GUEST = 'guest',
 }
 
-export type ErrorMessage = string | React.ReactNode | null
+type _ErrorMessage = string | React.ReactNode | null
 
 export const socialProviders = [
   UIAuthProvider.GOOGLE,
@@ -136,6 +155,11 @@ export enum LinkWalletOnSignUpOption {
 
 type PolicyConfig = string | Record<number, string>
 
+type EthereumWalletConfig = {
+  chainId: number
+  rpcUrls?: Record<number, string>
+}
+
 type CommonWalletConfig = {
   /** Publishable key for the Shield API. */
   shieldPublishableKey: string
@@ -148,6 +172,8 @@ type CommonWalletConfig = {
   assets?: {
     [chainId: number]: Hex[]
   }
+  ethereum?: EthereumWalletConfig
+  solana?: SolanaConfig
 }
 
 export type GetEncryptionSessionParams = {
@@ -289,6 +315,8 @@ export type PhoneConfig = {
 }
 
 export type ConnectUIOptions = {
+  /** App name (e.g. for WalletConnect og:title). When using getDefaultConfig from @openfort/wagmi, pass the same appName here for consistency. */
+  appName?: string
   theme?: Theme
   mode?: Mode
   customTheme?: CustomTheme
@@ -328,6 +356,7 @@ type WalletRecoveryOptionsExtended = {
 export type CustomizableRoutes = typeof routes.CONNECTED
 
 export type OpenfortUIOptionsExtended = {
+  appName?: string
   theme: Theme
   mode: Mode
   customTheme?: CustomTheme
@@ -366,7 +395,6 @@ export type OpenfortUIOptionsExtended = {
   }
 } & OpenfortUIOptions
 
-// export type Asset = getAssets.Asset<false>
 export type Asset =
   | {
       type: 'native'

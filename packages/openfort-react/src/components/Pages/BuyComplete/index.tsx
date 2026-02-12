@@ -1,6 +1,9 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useEffect } from 'react'
-import { useAccount, useChainId } from 'wagmi'
+
 import { ExternalLinkIcon } from '../../../assets/icons'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
+import { getExplorerUrl } from '../../../shared/utils/explorer'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalH1 } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
@@ -10,8 +13,12 @@ import { ContinueButtonWrapper, Section } from '../Buy/styles'
 
 const BuyComplete = () => {
   const { setRoute, triggerResize } = useOpenfort()
-  const { address } = useAccount()
-  const chainId = useChainId()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected ? wallet.chainId : undefined
 
   // Trigger resize on mount
   useEffect(() => {
@@ -31,20 +38,7 @@ const BuyComplete = () => {
     setRoute(routes.CONNECTED)
   }
 
-  const getBlockExplorerUrl = (chainId: number, address: string): string => {
-    const explorers: Record<number, string> = {
-      1: 'https://etherscan.io',
-      8453: 'https://basescan.org',
-      137: 'https://polygonscan.com',
-      42161: 'https://arbiscan.io',
-      10: 'https://optimistic.etherscan.io',
-      84532: 'https://sepolia.basescan.org',
-    }
-    const baseUrl = explorers[chainId] || 'https://basescan.org'
-    return `${baseUrl}/address/${address}`
-  }
-
-  const blockExplorerUrl = address ? getBlockExplorerUrl(chainId, address) : ''
+  const blockExplorerUrl = address && chainId ? getExplorerUrl(ChainTypeEnum.EVM, { chainId, address }) : ''
 
   return (
     <PageContent onBack={handleBack}>

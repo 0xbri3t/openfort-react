@@ -1,11 +1,6 @@
 import { useMemo } from 'react'
 import { getAddress, parseAbi } from 'viem'
-import {
-  useAccount,
-  useChains,
-  useReadContract,
-  useWriteContract
-} from 'wagmi'
+import { useAccount, useChains, useReadContract, useWriteContract } from 'wagmi'
 import { TruncateData } from '../ui/TruncateData'
 
 const MintContract = () => {

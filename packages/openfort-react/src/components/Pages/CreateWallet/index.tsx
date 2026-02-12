@@ -1,11 +1,15 @@
-import { EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
+import { ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useAccount } from 'wagmi'
+
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, PlusIcon, ShieldIcon } from '../../../assets/icons'
 import Logos from '../../../assets/logos'
-import { type RequestWalletRecoverOTPResponse, useWallets } from '../../../hooks/openfort/useWallets'
+import { useWallets } from '../../../hooks/openfort/useWallets'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { useChain } from '../../../shared/hooks/useChain'
+import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
+import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import FitText from '../../Common/FitText'
@@ -23,6 +27,7 @@ import { getPasswordStrength, MEDIUM_SCORE_THRESHOLD } from '../../PasswordStren
 import Connectors from '../Connectors'
 import { Body, FooterButtonText, FooterTextButton, ResultContainer } from '../EmailOTP/styles'
 import { ProviderIcon, ProviderLabel, ProvidersButton } from '../Providers/styles'
+import SolanaCreateWallet from './SolanaCreateWallet'
 import { OtherMethodButton } from './styles'
 
 const OtherMethod = ({
@@ -81,10 +86,11 @@ const CreateWalletAutomaticRecovery = ({
   const { embeddedState } = useOpenfortCore()
   const { setRoute, triggerResize } = useOpenfort()
   const [recoveryError, setRecoveryError] = useState<Error | null>(null)
-  const { createWallet, isWalletRecoveryOTPEnabled, requestWalletRecoverOTP } = useWallets()
+  const { createWallet } = useWallets()
+  const { isEnabled: isWalletRecoveryOTPEnabled, requestOTP } = useRecoveryOTP()
   const [shouldCreateWallet, setShouldCreateWallet] = useState(false)
   const [needsOTP, setNeedsOTP] = useState(false)
-  const [otpResponse, setOtpResponse] = useState<RequestWalletRecoverOTPResponse | null>(null)
+  const [otpResponse, setOtpResponse] = useState<OTPResponse | null>(null)
   const [otpStatus, setOtpStatus] = useState<'idle' | 'loading' | 'error' | 'success' | 'sending-otp' | 'send-otp'>(
     'idle'
   )
@@ -124,12 +130,13 @@ const CreateWalletAutomaticRecovery = ({
         const response = await createWallet()
 
         if (response.isOTPRequired && isWalletRecoveryOTPEnabled) {
-          const response = await requestWalletRecoverOTP()
-          setNeedsOTP(true)
-          setOtpResponse(response)
-          if (response.error) {
-            logger.log('Error requesting OTP for wallet recovery', response.error)
-            setRecoveryError(response.error)
+          try {
+            const res = await requestOTP()
+            setNeedsOTP(true)
+            setOtpResponse(res)
+          } catch (otpErr) {
+            logger.log('Error requesting OTP for wallet recovery', otpErr)
+            setRecoveryError(otpErr instanceof Error ? otpErr : new Error(String(otpErr)))
           }
         } else if (response.error) {
           logger.log('Error creating wallet', response.error)
@@ -505,14 +512,17 @@ const CreateOrConnectWallet = () => {
   )
 }
 
-const CreateWallet: React.FC = () => {
+const EthereumCreateWallet: React.FC = () => {
   const { uiConfig, walletConfig, setRoute } = useOpenfort()
   const { user } = useOpenfortCore()
-  const { isConnected } = useAccount()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const isConnected = wallet.status === 'connected'
 
   useEffect(() => {
     if (isConnected && user) setRoute(routes.CONNECTED_SUCCESS)
-  }, [isConnected, user])
+  }, [isConnected, user, setRoute])
 
   if (uiConfig.linkWalletOnSignUp === LinkWalletOnSignUpOption.OPTIONAL) {
     return <CreateOrConnectWallet />
@@ -526,6 +536,16 @@ const CreateWallet: React.FC = () => {
   }
 
   return <CreateEmbeddedWallet onBack={routes.PROVIDERS} logoutOnBack />
+}
+
+const createWalletByChain: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, React.ReactElement> = {
+  [ChainTypeEnum.EVM]: <EthereumCreateWallet />,
+  [ChainTypeEnum.SVM]: <SolanaCreateWallet onBack={routes.PROVIDERS} logoutOnBack />,
+}
+
+const CreateWallet: React.FC = () => {
+  const { chainType } = useChain()
+  return createWalletByChain[chainType] ?? createWalletByChain[ChainTypeEnum.EVM]
 }
 
 export default CreateWallet

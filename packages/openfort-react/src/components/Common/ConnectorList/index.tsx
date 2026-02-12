@@ -1,11 +1,11 @@
-import { useAccount, useDisconnect } from 'wagmi'
 import { embeddedWalletId } from '../../../constants/openfort'
+import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
 import { useFamilyAccountsConnector, useFamilyConnector } from '../../../hooks/useConnectors'
 
 import useIsMobile from '../../../hooks/useIsMobile'
 import { useLastConnector } from '../../../hooks/useLastConnector'
 import { isFamily } from '../../../utils/wallets'
-import { useWagmiWallets, type WalletProps } from '../../../wallets/useWagmiWallets'
+import { useEVMConnectors, type WalletProps } from '../../../wallets/useEVMConnectors'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import Alert from '../Alert'
@@ -16,7 +16,7 @@ const ConnectorList = () => {
   const context = useOpenfort()
   const isMobile = useIsMobile()
 
-  const wallets = useWagmiWallets()
+  const wallets = useEVMConnectors()
   const { lastConnectorId } = useLastConnector()
   const familyConnector = useFamilyConnector()
   const familyAccountsConnector = useFamilyAccountsConnector()
@@ -57,8 +57,8 @@ export default ConnectorList
 const ConnectorItem = ({ wallet, isRecent }: { wallet: WalletProps; isRecent?: boolean }) => {
   const isMobile = useIsMobile()
   const context = useOpenfort()
-  const { disconnectAsync } = useDisconnect()
-  const { connector } = useAccount()
+  const bridge = useEVMBridge()
+  const connector = bridge?.account?.connector
 
   const content = () => (
     <>
@@ -82,8 +82,8 @@ const ConnectorItem = ({ wallet, isRecent }: { wallet: WalletProps; isRecent?: b
       onClick={async () => {
         // Disconnect if the same connector is selected, otherwise wagmi won't trigger the connection flow
         // Disconnect for wallet connect to work
-        if (wallet.id === 'walletConnect' || wallet.id === connector?.id) {
-          await disconnectAsync()
+        if (bridge && (wallet.id === 'walletConnect' || wallet.id === connector?.id)) {
+          await bridge.disconnect()
         }
 
         context.setRoute({ route: routes.CONNECT, connectType: 'linkIfUserConnectIfNoUser' })

@@ -6,7 +6,7 @@ import { logger } from '../../../utils/logger'
 import { isValidEmail } from '../../../utils/validation'
 import { onError, onSuccess } from '../hookConsistency'
 import { useUI } from '../useUI'
-import type { UserWallet } from '../useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../useWallets'
 import { buildCallbackUrl } from './requestEmailVerification'
 import { type BaseFlowState, mapStatus } from './status'
 import { type CreateWalletPostAuthOptions, useConnectToWalletPostAuth } from './useConnectToWalletPostAuth'
@@ -14,7 +14,7 @@ import { type CreateWalletPostAuthOptions, useConnectToWalletPostAuth } from './
 type EmailAuthResult = {
   error?: OpenfortError
   user?: User
-  wallet?: UserWallet
+  wallet?: EthereumUserWallet | SolanaUserWallet
   requiresEmailVerification?: boolean
 }
 

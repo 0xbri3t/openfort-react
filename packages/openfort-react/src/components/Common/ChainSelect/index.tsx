@@ -2,8 +2,10 @@ import { motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { css } from 'styled-components'
-import { useAccount, useSwitchChain } from 'wagmi'
+
 import defaultTheme from '../../../constants/defaultTheme'
+import { useChains } from '../../../hooks/useChains'
+import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import styled from '../../../styles/styled'
 import { flattenChildren, isMobile } from '../../../utils'
@@ -126,8 +128,15 @@ const ChevronDown = ({ ...props }) => (
 const ChainSelector: React.FC = () => {
   const context = useOpenfort()
   const [isOpen, setIsOpen] = useState(false)
-  const { chain } = useAccount()
-  const { chains } = useSwitchChain()
+
+  // Use new abstraction hooks (no wagmi)
+  const wallet = useConnectedWallet()
+  const chains = useChains()
+
+  // Find current chain from connected wallet
+  const isConnected = wallet.status === 'connected'
+  const chainId = isConnected ? wallet.chainId : undefined
+  const chain = chains.find((c) => c.id === chainId)
 
   const locales = useLocales({
     CHAIN: chain?.name,

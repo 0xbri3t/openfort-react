@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import type { Hex } from 'viem'
-import { useEnsName } from 'wagmi'
+
 import { useUser } from '../../../hooks/openfort/useUser'
-import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
+import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import type { UserAccount } from '../../../openfortCustomTypes'
+import { useChain } from '../../../shared/hooks/useChain'
 import styled from '../../../styles/styled'
 import { truncateEthAddress } from '../../../utils'
 import Button from '../../Common/Button'
@@ -45,14 +46,16 @@ const ProviderIconInner = styled.div`
 
 const SiweContent = ({ provider }: { provider: UserAccount }) => {
   const address = provider.accountId as Hex
-  const ensFallbackConfig = useEnsFallbackConfig()
-  const { data: ensName } = useEnsName({
-    chainId: 1,
-    address,
-    config: ensFallbackConfig,
-  })
   const context = useOpenfort()
+  const { chainType } = useChain()
   const themeContext = useThemeContext()
+
+  const identity = useResolvedIdentity({
+    address,
+    chainType,
+    enabled: !!address,
+  })
+  const ensName = identity.status === 'success' ? identity.name : undefined
 
   const separator = ['web95', 'rounded', 'minimal'].includes(themeContext.theme ?? context.uiConfig.theme ?? '')
     ? '....'

@@ -1,13 +1,6 @@
 import { AuthProvider, type OpenfortProvider, RecoveryMethod } from '@openfort/react'
-import { beamTestnet, polygonAmoy } from 'viem/chains'
+import { baseSepolia, beamTestnet, polygonAmoy } from 'viem/chains'
 import { create } from 'zustand'
-import { customPageComponents } from '@/components/customPageComponents'
-
-type EditingEntity = {
-  id: string
-}
-
-const viewCustomComponents = false
 
 const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
   // Set the publishable key of your Openfort account. This field is required.
@@ -56,7 +49,7 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
       defaultMethod: RecoveryMethod.AUTOMATIC,
       allowedMethods: [RecoveryMethod.PASSWORD, RecoveryMethod.AUTOMATIC, RecoveryMethod.PASSKEY],
     },
-    customPageComponents: viewCustomComponents ? customPageComponents : undefined,
+    customPageComponents: undefined,
   },
 
   // Set the wallet configuration. In this example, we will be using the embedded signer.
@@ -66,6 +59,7 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
     ethereumProviderPolicyId: {
       [polygonAmoy.id]: import.meta.env.VITE_POLYGON_POLICY_ID!,
       [beamTestnet.id]: import.meta.env.VITE_BEAM_POLICY_ID!,
+      [baseSepolia.id]: import.meta.env.VITE_BASE_POLICY_ID!,
     },
 
     // If you want to use AUTOMATIC embedded wallet recovery, an encryption session is required.
@@ -113,14 +107,9 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
 interface Store {
   providerOptions: Parameters<typeof OpenfortProvider>[0]
   setProviderOptions: (options: Parameters<typeof OpenfortProvider>[0]) => void
-
-  editingEntity: EditingEntity | null
-  setEditingEntity: (entity: EditingEntity | null) => void
 }
 
 export const useAppStore = create<Store>((set) => ({
   providerOptions: defaultProviderOptions,
   setProviderOptions: (options) => set({ providerOptions: options }),
-  editingEntity: null,
-  setEditingEntity: (entity) => set({ editingEntity: entity }),
 }))

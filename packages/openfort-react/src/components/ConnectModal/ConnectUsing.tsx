@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { logger } from '../../utils/logger'
-import { useWallet } from '../../wallets/useWagmiWallets'
+import { useWallet } from '../../wallets/useEVMConnectors'
 import Alert from '../Common/Alert'
 import { contentVariants } from '../Common/Modal'
 import { useOpenfort } from '../Openfort/useOpenfort'
@@ -33,7 +33,7 @@ const ConnectUsing = () => {
     if (isOauth) return
     // if no provider, change to qrcode
     const checkProvider = async () => {
-      const res = await wallet?.connector.getProvider()
+      const res = await wallet?.connector?.getProvider?.()
       if (!res) {
         setStatus(states.QRCODE)
         setTimeout(context.triggerResize, 10) // delay required here for modal to resize

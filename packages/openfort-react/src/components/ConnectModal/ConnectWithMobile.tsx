@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import styled from '../../styles/styled'
 import { isAndroid } from '../../utils'
 import { useOnUserReturn } from '../../utils/useOnUserReturn'
-import { useWallet } from '../../wallets/useWagmiWallets'
+import { useWallet } from '../../wallets/useEVMConnectors'
 import { walletConfigs } from '../../wallets/walletConfigs'
 import Button from '../Common/Button'
 import FitText from '../Common/FitText'
@@ -38,7 +38,8 @@ const ConnectWithMobile: React.FC = () => {
   )
 
   const wallet = useWallet(connector.id) || (walletId && walletConfigs[walletId]) || {}
-  const { isConnected } = useAccount()
+  const bridge = useEVMBridge()
+  const isConnected = bridge?.account?.isConnected ?? false
 
   const [status, setStatus] = useState(isConnected ? states.INIT : states.CONNECTING)
   const [description, setDescription] = useState<string | undefined>(undefined)

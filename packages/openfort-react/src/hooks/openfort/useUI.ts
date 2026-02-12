@@ -1,10 +1,16 @@
-import { useAccount } from 'wagmi'
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
+import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { logger } from '../../utils/logger'
 
 type ModalRoutes = RoutesWithoutOptions['route'] | RouteOptions
+
+const connectedRouteByChain: Record<ChainTypeEnum, ModalRoutes> = {
+  [ChainTypeEnum.EVM]: routes.ETH_CONNECTED,
+  [ChainTypeEnum.SVM]: routes.SOL_CONNECTED,
+}
 
 const safeRoutes: {
   connected: ModalRoutes[]
@@ -13,12 +19,12 @@ const safeRoutes: {
   disconnected: [
     routes.PROVIDERS,
     { route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' },
-    // routes.ABOUT,
-    // routes.ONBOARDING,
     routes.MOBILECONNECTORS,
   ],
   connected: [
     routes.CONNECTED,
+    routes.ETH_CONNECTED,
+    routes.SOL_CONNECTED,
     { route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' },
     routes.SWITCHNETWORKS,
     routes.PROVIDERS,
@@ -27,75 +33,27 @@ const safeRoutes: {
 
 const allRoutes: ModalRoutes[] = [...safeRoutes.connected, ...safeRoutes.disconnected]
 
-type ValidRoutes = ModalRoutes
+function routeEquals(a: ModalRoutes, b: ModalRoutes): boolean {
+  if (typeof a === 'string' && typeof b === 'string') return a === b
+  if (typeof a === 'object' && typeof b === 'object' && a && b) {
+    if (a.route !== b.route) return false
+    const aOpts = a as RouteOptions & { connectType?: string }
+    const bOpts = b as RouteOptions & { connectType?: string }
+    return aOpts.connectType === bOpts.connectType
+  }
+  return false
+}
 
-/**
- * Hook for controlling Openfort UI modal and navigation
- *
- * This hook provides programmatic control over the Openfort UI modal, including opening,
- * closing, and navigating between different screens. It handles route validation and
- * automatically selects appropriate screens based on user connection and authentication state.
- * The hook ensures safe navigation by validating routes against user's current state.
- *
- * @returns UI control functions and modal state
- *
- * @example
- * ```tsx
- * const ui = useUI();
- *
- * // Check if modal is open
- * if (ui.isOpen) {
- *   console.log('Openfort modal is currently open');
- * }
- *
- * // Open modal with default route (auto-determined by user state)
- * const handleConnect = () => {
- *   ui.open(); // Opens providers screen if not connected, profile if connected
- * };
- *
- * // Close modal
- * const handleClose = () => {
- *   ui.close();
- * };
- *
- * // Programmatically control modal state
- * const toggleModal = () => {
- *   ui.setIsOpen(!ui.isOpen);
- * };
- *
- * // Open specific screens
- * const handleProfileClick = () => {
- *   ui.openProfile(); // Opens user profile screen (connected users only)
- * };
- *
- * const handleProvidersClick = () => {
- *   ui.openProviders(); // Opens authentication providers screen
- * };
- *
- * const handleWalletsClick = () => {
- *   ui.openWallets(); // Opens wallet connectors screen
- * };
- *
- * const handleNetworkClick = () => {
- *   ui.openSwitchNetworks(); // Opens network switching screen (connected users only)
- * };
- *
- * // Example usage in component
- * return (
- *   <div>
- *     <button onClick={handleConnect}>
- *       {ui.isOpen ? 'Close' : 'Open'} Openfort
- *     </button>
- *     <button onClick={handleProfileClick}>Profile</button>
- *     <button onClick={handleWalletsClick}>Wallets</button>
- *   </div>
- * );
- * ```
- */
+function routeInList(route: ModalRoutes, list: ModalRoutes[]): boolean {
+  return list.some((r) => routeEquals(route, r))
+}
+
 export function useUI() {
-  const { open, setOpen, setRoute } = useOpenfort()
-  const { isLoading, user, needsRecovery } = useOpenfortCore()
-  const { isConnected } = useAccount()
+  const { open, setOpen, setRoute, chainType } = useOpenfort()
+  const { isLoading, user, needsRecovery, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
+  const strategy = useConnectionStrategy()
+  const state = { user, embeddedAccounts, chainType, activeEmbeddedAddress, embeddedState }
+  const isConnected = strategy?.isConnected(state) ?? false
 
   function defaultOpen() {
     setOpen(true)
@@ -104,25 +62,31 @@ export function useUI() {
     else if (!user) setRoute(routes.PROVIDERS)
     else if (!isConnected) setRoute(routes.LOAD_WALLETS)
     else if (needsRecovery) setRoute(routes.LOAD_WALLETS)
-    else setRoute(routes.CONNECTED)
+    else setRoute(connectedRouteByChain[chainType])
   }
 
-  const gotoAndOpen = (route: ValidRoutes) => {
-    let validRoute: ValidRoutes = route
+  const gotoAndOpen = (route: ModalRoutes) => {
+    let validRoute: ModalRoutes = route
 
-    if (!allRoutes.includes(route)) {
+    if (!routeInList(route, allRoutes)) {
       validRoute = isConnected ? routes.CONNECTED : routes.PROVIDERS
-      logger.log(`Route ${route} is not a valid route, navigating to ${validRoute} instead.`)
+      logger.log(
+        `Route ${typeof route === 'object' ? route.route : route} is not a valid route, navigating to ${validRoute} instead.`
+      )
     } else {
       if (isConnected) {
-        if (!safeRoutes.connected.includes(route)) {
+        if (!routeInList(route, safeRoutes.connected)) {
           validRoute = routes.CONNECTED
-          logger.log(`Route ${route} is not a valid route when connected, navigating to ${validRoute} instead.`)
+          logger.log(
+            `Route ${typeof route === 'object' ? route.route : route} is not a valid route when connected, navigating to ${validRoute} instead.`
+          )
         }
       } else {
-        if (!safeRoutes.disconnected.includes(route)) {
+        if (!routeInList(route, safeRoutes.disconnected)) {
           validRoute = routes.PROVIDERS
-          logger.log(`Route ${route} is not a valid route when disconnected, navigating to ${validRoute} instead.`)
+          logger.log(
+            `Route ${typeof route === 'object' ? route.route : route} is not a valid route when disconnected, navigating to ${validRoute} instead.`
+          )
         }
       }
     }
@@ -137,7 +101,7 @@ export function useUI() {
     close: () => setOpen(false),
     setIsOpen: setOpen,
 
-    openProfile: () => gotoAndOpen(routes.CONNECTED),
+    openProfile: () => gotoAndOpen(connectedRouteByChain[chainType]),
     openSwitchNetworks: () => gotoAndOpen(routes.SWITCHNETWORKS),
     openProviders: () => gotoAndOpen(routes.PROVIDERS),
     openWallets: () => gotoAndOpen({ route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' }),
