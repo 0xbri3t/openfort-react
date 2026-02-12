@@ -6,6 +6,7 @@ import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
+import { logger } from '../../utils/logger'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import type {
@@ -384,7 +385,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         }
       })
       .catch(() => {
-        autoReconnectAttemptedRef.current = false
+        logger.warn('Failed to get active Solana wallet')
       })
     return () => {
       cancelled = true

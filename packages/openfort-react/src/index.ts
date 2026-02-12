@@ -27,7 +27,12 @@ export {
 } from './core/ConnectionStrategy'
 export { ConnectionStrategyProvider, useConnectionStrategy } from './core/ConnectionStrategyContext'
 export { CoreProvider, type CoreProviderProps, useCoreContext, useHasCoreProvider } from './core/CoreContext'
-export { OpenfortTransactionError, TransactionErrorCode } from './core/errors'
+export {
+  OpenfortErrorCode,
+  OpenfortReactError,
+  OpenfortTransactionError,
+  TransactionErrorCode,
+} from './core/errors'
 export { queryKeys } from './core/queryKeys'
 export { createEthereumBridgeStrategy } from './core/strategies/EthereumBridgeStrategy'
 export { createEthereumEmbeddedStrategy } from './core/strategies/EthereumEmbeddedStrategy'
@@ -134,6 +139,8 @@ export {
   formatEVMAddress,
   formatSol,
   formatSolanaAddress,
+  truncateEthAddress,
+  truncateSolanaAddress,
 } from './utils/format'
 export { OPENFORT_VERSION } from './version'
 // Wallet adapters: interfaces + EVM/Solana implementations

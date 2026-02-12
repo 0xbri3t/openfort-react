@@ -212,6 +212,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
     enabled: isConnected && !!chainId && !!chain && !!address,
     retry: 2,
     staleTime, // Data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000,
     throwOnError: false,
   })
 

@@ -282,6 +282,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     )
   }
 
+  const queryClient = useQueryClient()
   const { client, embeddedAccounts, isLoadingAccounts: isLoadingWallets, updateEmbeddedAccounts } = useOpenfortCore()
   const { linkedAccounts, user } = useUser()
   const { walletConfig, setOpen, setRoute, setConnector } = useOpenfort()
@@ -474,7 +475,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             throw new OpenfortError('Invalid recovery method', OpenfortReactErrorType.VALIDATION_ERROR)
         }
       },
-    [walletConfig, getEncryptionSession, user?.id]
+    [client, walletConfig, getEncryptionSession, user?.id]
   )
 
   const userLinkedWalletConnectors = useMemo<EthereumUserWallet[]>(() => {
@@ -762,12 +763,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
           } else if (typeof err === 'string') {
             error = new OpenfortError(err, OpenfortReactErrorType.WALLET_ERROR)
           } else {
-            error = new OpenfortError('Failed to recover embedded wallet', OpenfortReactErrorType.WALLET_ERROR, {
-              error: err,
-            })
-            if (error.message === 'Wrong recovery password for this embedded signer') {
-              error.message = 'Wrong password, Please try again.'
-            }
+            const message =
+              err instanceof Error && err.message === 'Wrong recovery password for this embedded signer'
+                ? 'Wrong password, Please try again.'
+                : 'Failed to recover embedded wallet'
+            error = new OpenfortError(message, OpenfortReactErrorType.WALLET_ERROR, { cause: err })
           }
 
           logger.log('Error handling recovery with Openfort:', error, err)
@@ -808,7 +808,27 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
       return {}
     },
-    [wallets, setOpen, setRoute, setConnector, disconnectAsync, address, client, walletConfig, chainId, hookOptions]
+    [
+      wallets,
+      activeWallet,
+      setOpen,
+      setRoute,
+      setConnector,
+      disconnectAsync,
+      address,
+      client,
+      walletConfig,
+      chainId,
+      hookOptions,
+      openfortConnector,
+      availableWallets,
+      queryClient,
+      onError,
+      setStatus,
+      updateEmbeddedAccounts,
+      setShouldSwitchToChain,
+      switchChainAsync,
+    ]
   )
 
   useEffect(() => {
@@ -830,7 +850,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     }
   }, [shouldSwitchToChain, switchChainAsync, updateEmbeddedAccounts])
 
-  const queryClient = useQueryClient()
   const createWallet = useCallback(
     async ({ recovery, ...options }: CreateWalletOptions = {}): Promise<CreateWalletResult> => {
       setStatus({

@@ -5,6 +5,7 @@ import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { OpenfortError, OpenfortReactErrorType } from '../../types'
+import { logger } from '../../utils/logger'
 import type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
@@ -371,7 +372,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         setActiveEmbeddedAddress(account.address)
       })
       .catch(() => {
-        autoReconnectAttemptedRef.current = false
+        logger.warn('Failed to get active Ethereum wallet')
       })
     return () => {
       cancelled = true

@@ -25,9 +25,11 @@ const BuyComplete = () => {
     triggerResize()
   }, [triggerResize])
 
-  // Clean up sessionStorage
+  // Clean up sessionStorage (SSR-safe)
   useEffect(() => {
-    sessionStorage.removeItem('buyPopupOpen')
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('buyPopupOpen')
+    }
   }, [])
 
   const handleDone = () => {
