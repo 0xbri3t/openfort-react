@@ -10,6 +10,18 @@ export type UseTransactionFlowResult = {
   execute: (sendFn: () => Promise<void>) => Promise<void>
 }
 
+/**
+ * Manages transaction flow state for async send operations.
+ * Wraps a send function and tracks status (idle, sending, confirmed, error).
+ *
+ * @returns status, error, reset, and execute(sendFn)
+ *
+ * @example
+ * ```tsx
+ * const { status, error, execute } = useTransactionFlow()
+ * await execute(() => sendTransaction({ to, amount }))
+ * ```
+ */
 export function useTransactionFlow(): UseTransactionFlowResult {
   const [status, setStatus] = useState<TransactionFlowStatus>('idle')
   const [error, setError] = useState<OpenfortTransactionError | null>(null)

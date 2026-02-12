@@ -1,4 +1,8 @@
-import { type OpenfortEVMBridgeConnector, OpenfortEVMBridgeContext, type OpenfortEVMBridgeValue } from '@openfort/react'
+import {
+  type OpenfortEthereumBridgeConnector,
+  OpenfortEthereumBridgeContext,
+  type OpenfortEthereumBridgeValue,
+} from '@openfort/react'
 import {
   getEnsAddress as getEnsAddressAction,
   getEnsAvatar as getEnsAvatarAction,
@@ -26,7 +30,7 @@ function mapConnector(c: {
   icon?: string
   type?: string
   getProvider?: () => Promise<unknown>
-}): OpenfortEVMBridgeConnector {
+}): OpenfortEthereumBridgeConnector {
   return { id: c.id, name: c.name, icon: c.icon, type: c.type, getProvider: c.getProvider }
 }
 
@@ -49,7 +53,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
   const { data: walletClient } = useWalletClient()
 
   const connectBridge = useCallback(
-    (params: { connector: OpenfortEVMBridgeConnector }) => {
+    (params: { connector: OpenfortEthereumBridgeConnector }) => {
       const c = connectors.find((x) => x.id === params.connector.id && x.name === params.connector.name)
       if (c) connect({ connector: c })
     },
@@ -57,7 +61,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
   )
 
   const connectAsyncBridge = useCallback(
-    async (params: { connector: OpenfortEVMBridgeConnector }) => {
+    async (params: { connector: OpenfortEthereumBridgeConnector }) => {
       const c = connectors.find((x) => x.id === params.connector.id && x.name === params.connector.name)
       if (!c) throw new Error('Connector not found')
       return wagmiConnectAsync({ connector: c })
@@ -99,7 +103,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
   )
 
   const getConnectorAccounts = useCallback(
-    async (connectorBridge: OpenfortEVMBridgeConnector): Promise<`0x${string}`[]> => {
+    async (connectorBridge: OpenfortEthereumBridgeConnector): Promise<`0x${string}`[]> => {
       const c = connectors.find((x) => x.id === connectorBridge.id && x.name === connectorBridge.name)
       if (!c?.getAccounts) return []
       const accounts = await c.getAccounts()
@@ -118,7 +122,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
 
   const getWalletClient = useCallback(async () => walletClient ?? undefined, [walletClient])
 
-  const value: OpenfortEVMBridgeValue = useMemo(
+  const value: OpenfortEthereumBridgeValue = useMemo(
     () => ({
       account: {
         address,
@@ -192,5 +196,5 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
     ]
   )
 
-  return createElement(OpenfortEVMBridgeContext.Provider, { value }, children)
+  return createElement(OpenfortEthereumBridgeContext.Provider, { value }, children)
 }

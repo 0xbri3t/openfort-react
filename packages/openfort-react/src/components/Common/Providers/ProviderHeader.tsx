@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Hex } from 'viem'
 import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
-import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import { useUser } from '../../../hooks/openfort/useUser'
 import type { UserAccount } from '../../../openfortCustomTypes'
 import { truncateEthAddress } from '../../../utils'
@@ -11,7 +11,7 @@ import { LinkedProviderText } from '../../Pages/LinkedProviders/styles'
 
 export const WalletDisplay = ({ walletAddress }: { walletAddress: string }) => {
   const strategy = useConnectionStrategy()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const [ensName, setEnsName] = useState<string | undefined>(undefined)
   const context = useOpenfort()
   const themeContext = useThemeContext()

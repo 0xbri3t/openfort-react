@@ -14,17 +14,17 @@ import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
 import { DEFAULT_DEV_CHAIN_ID } from '../../core/ConnectionStrategy'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
-import type { OpenfortEVMBridgeConnector } from '../../core/OpenfortEVMBridgeContext'
-import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { queryKeys } from '../../core/queryKeys'
+import type { OpenfortEthereumBridgeConnector } from '../../ethereum/OpenfortEthereumBridgeContext'
+import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useOpenfortCore, useWalletStatus } from '../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
-import { useEVMConnectors } from '../../wallets/useEVMConnectors'
+import { useEthereumConnectors } from '../../wallets/useEthereumConnectors'
 import type { BaseFlowState } from './auth/status'
 
 /** Synthetic connector for embedded wallet when EVM has no bridge (evm-only mode). */
-const SYNTHETIC_EMBEDDED_CONNECTOR: OpenfortEVMBridgeConnector = {
+const SYNTHETIC_EMBEDDED_CONNECTOR: OpenfortEthereumBridgeConnector = {
   id: embeddedWalletId,
   name: 'Openfort',
   type: 'embedded',
@@ -44,7 +44,7 @@ export type EthereumUserWallet = {
   address: Hex
   connectorType?: string
   walletClientType?: string
-  connector?: OpenfortEVMBridgeConnector
+  connector?: OpenfortEthereumBridgeConnector
   id: string
   isAvailable: boolean
   isActive?: boolean
@@ -167,7 +167,7 @@ const parseEmbeddedAccount = ({
   chainId,
 }: {
   embeddedAccount: EmbeddedAccount
-  connector: OpenfortEVMBridgeConnector | undefined
+  connector: OpenfortEthereumBridgeConnector | undefined
   simpleAccounts: SimpleAccount[]
   chainId: number
 }): EthereumUserWallet => {
@@ -286,21 +286,21 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   const { linkedAccounts, user } = useUser()
   const { walletConfig, setOpen, setRoute, setConnector } = useOpenfort()
   const strategy = useConnectionStrategy()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const connector = bridge?.account?.connector
   const isConnected = bridge?.account?.isConnected ?? false
   const address = bridge?.account?.address
   const chainId = bridge?.chainId ?? strategy?.getChainId() ?? walletConfig?.ethereum?.chainId ?? 0
-  const availableWallets = useEVMConnectors()
+  const availableWallets = useEthereumConnectors()
   const disconnectAsync = bridge?.disconnect
   const [status, setStatus] = useWalletStatus()
   const [connectToConnector, setConnectToConnector] = useState<
-    { address?: Hex; connector: OpenfortEVMBridgeConnector } | undefined
+    { address?: Hex; connector: OpenfortEthereumBridgeConnector } | undefined
   >(undefined)
   const switchChainAsync = bridge?.switchChain?.switchChainAsync
 
   const connectWithBridge = useCallback(
-    (params: { connector: OpenfortEVMBridgeConnector }) => {
+    (params: { connector: OpenfortEthereumBridgeConnector }) => {
       if (!bridge?.connectAsync) return
       const conn = params.connector
       const pending = connectToConnector
@@ -544,7 +544,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
       const { showUI } = optionsObject
 
-      let connector: OpenfortEVMBridgeConnector | null = null
+      let connector: OpenfortEthereumBridgeConnector | null = null
 
       if (optionsObject.walletId === embeddedWalletId) {
         // Embedded wallet: may not be in availableWallets when evm-only (no bridge).
@@ -558,7 +558,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         logger.log('Connecting to', wallet.connector)
         connector = wallet.connector
       } else {
-        connector = optionsObject.walletId as OpenfortEVMBridgeConnector
+        connector = optionsObject.walletId as OpenfortEthereumBridgeConnector
       }
 
       if (!connector) {

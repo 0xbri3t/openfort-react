@@ -8,7 +8,7 @@ import { Buffer } from 'buffer'
 import type React from 'react'
 import { createElement, Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { CoreProvider } from '../../core/CoreContext'
-import { OpenfortEVMBridgeContext } from '../../core/OpenfortEVMBridgeContext'
+import { OpenfortEthereumBridgeContext } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useThemeFont } from '../../hooks/useGoogleFont'
 import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
 import type { useConnectCallbackProps } from '../../openfort/connectCallbackTypes'
@@ -35,6 +35,7 @@ import {
   UIAuthProvider,
 } from './types'
 
+/** {@link OpenfortProvider} props. */
 type OpenfortProviderProps = {
   children?: React.ReactNode
   debugMode?: boolean | DebugModeOptions
@@ -49,6 +50,17 @@ type OpenfortProviderProps = {
 let openfortProviderWarnedNoWagmi = false
 
 /** Provides Openfort configuration and context to descendant components. */
+/**
+ * Root provider for Openfort. Wrap your app with this to enable connect modal, auth, and wallet features.
+ * Requires publishableKey. Use with wagmi's OpenfortProvider for EVM + wagmi.
+ *
+ * @example
+ * ```tsx
+ * <OpenfortProvider publishableKey="pk_test_..." chainType={ChainTypeEnum.EVM}>
+ *   <App />
+ * </OpenfortProvider>
+ * ```
+ */
 export const OpenfortProvider = ({
   children,
   uiConfig,
@@ -61,7 +73,7 @@ export const OpenfortProvider = ({
   overrides,
   thirdPartyAuth,
 }: OpenfortProviderProps) => {
-  const bridge = useContext(OpenfortEVMBridgeContext)
+  const bridge = useContext(OpenfortEthereumBridgeContext)
   const hasWagmi = !!bridge
   const hasSolana = !!walletConfig?.solana
   const hasEthereum = !!walletConfig?.ethereum

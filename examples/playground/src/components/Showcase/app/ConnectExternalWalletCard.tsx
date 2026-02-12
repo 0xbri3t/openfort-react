@@ -1,4 +1,4 @@
-import { embeddedWalletId, useEVMBridge, useEVMConnectors, useWallets } from '@openfort/react'
+import { embeddedWalletId, useEmbeddedWallet, useEthereumBridge } from '@openfort/react'
 import type React from 'react'
 import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,21 +28,27 @@ function getConnectorIconUrl(connector: { id: string; icon?: string }): string |
  */
 export const ConnectExternalWalletCard = () => {
   const { connector, isConnected } = useAccount()
-  const bridge = useEVMBridge()
-  const externalWallets = useEVMConnectors()
-  const { setActiveWallet, isConnecting: isSwitchingToOpenfort } = useWallets()
+  const bridge = useEthereumBridge()
+  const embedded = useEmbeddedWallet()
+  const externalWallets = bridge?.connectors ?? []
+  const isSwitchingToOpenfort = embedded.status === 'connecting'
 
   const isOpenfortActive = isConnected && connector?.id === embeddedWalletId
   const isExternalActive = isConnected && !isOpenfortActive
 
   const handleSwitchToOpenfort = () => {
     if (!isOpenfortActive) {
-      setActiveWallet({ walletId: embeddedWalletId })
+      const openfortConnector = bridge?.connectors.find((c) => c.id === embeddedWalletId)
+      if (openfortConnector) {
+        bridge?.connect({ connector: openfortConnector })
+      } else if (embedded.wallets?.length) {
+        embedded.setActive?.({ address: embedded.wallets[0].address })?.catch(() => {})
+      }
     }
   }
 
   const handleConnectExternal = (c: (typeof externalWallets)[number]) => {
-    bridge?.connect({ connector: c.connector })
+    bridge?.connect({ connector: c })
   }
 
   const WalletButton = ({
@@ -113,13 +119,9 @@ export const ConnectExternalWalletCard = () => {
             <div className="flex flex-col gap-0.5">
               {externalWallets
                 .filter((w) => w.id !== embeddedWalletId)
-
                 .map((wallet) => {
-                  const isActive = isConnected && connector?.id === wallet.connector.id
-                  const iconUrl =
-                    typeof wallet.connector.icon === 'string'
-                      ? wallet.connector.icon
-                      : getConnectorIconUrl(wallet.connector)
+                  const isActive = isConnected && connector?.id === wallet.id
+                  const iconUrl = typeof wallet.icon === 'string' ? wallet.icon : getConnectorIconUrl(wallet)
                   return (
                     <WalletButton
                       key={wallet.id}

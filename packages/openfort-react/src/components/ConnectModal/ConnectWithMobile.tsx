@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import styled from '../../styles/styled'
 import { isAndroid } from '../../utils'
 import { useOnUserReturn } from '../../utils/useOnUserReturn'
-import { useWallet } from '../../wallets/useEVMConnectors'
+import { useWallet } from '../../wallets/useEthereumConnectors'
 import { walletConfigs } from '../../wallets/walletConfigs'
 import Button from '../Common/Button'
 import FitText from '../Common/FitText'
@@ -38,7 +38,7 @@ const ConnectWithMobile: React.FC = () => {
   )
 
   const wallet = useWallet(connector.id) || (walletId && walletConfigs[walletId]) || {}
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const isConnected = bridge?.account?.isConnected ?? false
 
   const [status, setStatus] = useState(isConnected ? states.INIT : states.CONNECTING)

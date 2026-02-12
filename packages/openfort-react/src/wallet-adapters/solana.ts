@@ -6,20 +6,22 @@ import { useConnectedWallet } from '../hooks/useConnectedWallet'
 import { useDisconnectAdapter } from '../hooks/useDisconnectAdapter'
 import { useOpenfortCore } from '../openfort/useOpenfort'
 import { useChain } from '../shared/hooks/useChain'
-import { useSolanaBalance } from '../solana/hooks/useSolanaBalance'
 import { useSolanaEmbeddedWallet } from '../solana/hooks/useSolanaEmbeddedWallet'
 import { useSolanaSendTransaction } from '../solana/hooks/useSolanaSendTransaction'
-import { lamportsToSol } from '../solana/hooks/utils'
 import { signMessage as signMessageOp } from '../solana/operations'
 import { logger } from '../utils/logger'
-import type {
-  UseBalanceLike,
-  UseDisconnectLike,
-  UseSolanaAccountLike,
-  UseSolanaSendSOLLike,
-  UseSolanaSignMessageLike,
-} from './types'
+import type { UseDisconnectLike, UseSolanaAccountLike, UseSolanaSendSOLLike, UseSolanaSignMessageLike } from './types'
 
+/**
+ * Returns the connected Solana account.
+ *
+ * @returns address, cluster, and isConnected
+ *
+ * @example
+ * ```tsx
+ * const { address, cluster } = useSolanaAccount()
+ * ```
+ */
 export function useSolanaAccount(): UseSolanaAccountLike {
   const wallet = useConnectedWallet()
   const { chainType } = useChain()
@@ -31,29 +33,26 @@ export function useSolanaAccount(): UseSolanaAccountLike {
   }
 }
 
-export function useSolanaBalanceAdapter(): UseBalanceLike {
-  const { address, isConnected } = useSolanaAccount()
-  const { data, refetch, isLoading, error } = useSolanaBalance(address, { enabled: isConnected && !!address })
-  const refetchCb = () => refetch()
-  return {
-    data: data
-      ? {
-          value: data.lamports,
-          formatted: lamportsToSol(data.lamports).toFixed(9),
-          symbol: 'SOL',
-          decimals: 9,
-        }
-      : undefined,
-    refetch: refetchCb,
-    isLoading,
-    error: error ?? null,
-  }
-}
-
+/**
+ * Disconnects the Solana wallet and logs out. Full logout (auth + wallet).
+ *
+ * @returns disconnect, disconnectAsync, isPending, error, reset
+ */
 export function useSolanaDisconnect(): UseDisconnectLike {
   return useDisconnectAdapter()
 }
 
+/**
+ * Signs a message with the connected Solana wallet.
+ *
+ * @returns signMessage(params), data, isPending, error
+ *
+ * @example
+ * ```tsx
+ * const { signMessage } = useSolanaSignMessage()
+ * const sig = await signMessage({ message: 'Hello' })
+ * ```
+ */
 export function useSolanaSignMessage(): UseSolanaSignMessageLike {
   const core = useOpenfortCore()
   const { open, setOpen, setRoute } = useOpenfort()
@@ -155,6 +154,17 @@ export function useSolanaSignMessage(): UseSolanaSignMessageLike {
   return { data, signMessage, isPending, error }
 }
 
+/**
+ * Sends SOL to an address. Use when not using wagmi.
+ *
+ * @returns sendSOL({ to, lamports }), data, isPending, error, reset
+ *
+ * @example
+ * ```tsx
+ * const { sendSOL } = useSolanaWriteContract()
+ * await sendSOL({ to: address, lamports: BigInt(1e9) })
+ * ```
+ */
 export function useSolanaWriteContract(): UseSolanaSendSOLLike {
   const { sendTransaction, status, error, reset } = useSolanaSendTransaction()
   const [data, setData] = useState<string | undefined>(undefined)

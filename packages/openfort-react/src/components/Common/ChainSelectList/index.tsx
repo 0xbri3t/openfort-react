@@ -4,7 +4,7 @@ import { useId, useState } from 'react'
 import ChainIcons from '../../../assets/chains'
 import { chainConfigs } from '../../../constants/chainConfigs'
 import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
-import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import { useChains } from '../../../hooks/useChains'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
@@ -53,7 +53,7 @@ const Spinner = () => {
 
 const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => {
   const strategy = useConnectionStrategy()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const wallet = useConnectedWallet()
   const evmSwitchChain = useEthereumSwitchChain()
 

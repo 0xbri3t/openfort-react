@@ -35,7 +35,9 @@ const SolanaConnected: React.FC = () => {
   const hasSolanaWallets = (embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.SVM) ?? []).length > 0
   const address = wallet.status === 'connected' ? wallet.address : undefined
 
-  const { data: balance, isLoading: isBalanceLoading } = useSolanaBalance(address)
+  const balanceResult = useSolanaBalance(address ? { address } : undefined)
+  const balance = balanceResult.data
+  const isBalanceLoading = balanceResult.isLoading
 
   useEffect(() => {
     if (!address) {
@@ -78,7 +80,7 @@ const SolanaConnected: React.FC = () => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {nFormatter(balance.sol)} SOL
+          {nFormatter(parseFloat(balance.formatted))} SOL
         </Balance>
       </TextLinkButton>
     ) : null

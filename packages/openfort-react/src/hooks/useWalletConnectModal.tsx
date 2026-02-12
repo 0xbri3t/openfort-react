@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 import { isWalletConnectConnector } from '../utils'
 import { logger } from '../utils/logger'
 
 export function useWalletConnectModal() {
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const [isOpen, setIsOpen] = useState(false)
 
   return {

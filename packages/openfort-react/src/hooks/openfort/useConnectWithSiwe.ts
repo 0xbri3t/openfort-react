@@ -1,14 +1,25 @@
 import { OpenfortError } from '@openfort/openfort-js'
 import { AxiosError } from 'axios'
 import { useCallback } from 'react'
-import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { createSIWEMessage } from '../../siwe/create-siwe-message'
 import { logger } from '../../utils/logger'
 
+/**
+ * Returns connectWithSiwe for linking external wallets via SIWE. Use with wagmi bridge.
+ *
+ * @returns connectWithSiwe({ address?, onConnect?, onError?, link? })
+ *
+ * @example
+ * ```tsx
+ * const { connectWithSiwe } = useConnectWithSiwe()
+ * await connectWithSiwe({ onConnect: () => router.replace('/dashboard') })
+ * ```
+ */
 export function useConnectWithSiwe() {
   const { client, user, updateUser } = useOpenfortCore()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const address = bridge?.account?.address
   const connector = bridge?.account?.connector
   const chainId = bridge?.chainId ?? 0

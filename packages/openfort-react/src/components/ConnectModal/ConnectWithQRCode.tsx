@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import { useWalletConnectModal } from '../../hooks/useWalletConnectModal'
 import { truncateEthAddress } from '../../utils'
-import { useWallet } from '../../wallets/useEVMConnectors'
+import { useWallet } from '../../wallets/useEthereumConnectors'
 import { CopyText } from '../Common/CopyToClipboard/CopyText'
 import Loader from '../Common/Loading'
 import { ModalBody } from '../Common/Modal/styles'
@@ -12,7 +12,7 @@ import { useOpenfort } from '../Openfort/useOpenfort'
 import { PageContent } from '../PageContent'
 
 const ConnectWithSiwe = () => {
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const isConnected = bridge?.account?.isConnected ?? false
   const address = bridge?.account?.address
   const ensName = bridge?.account?.ensName
@@ -94,7 +94,7 @@ const ConnectWithWalletConnect = () => {
 
 const ConnectWithQRCode = () => {
   const { connector, triggerResize } = useOpenfort()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const isConnected = bridge?.account?.isConnected ?? false
 
   useEffect(() => {

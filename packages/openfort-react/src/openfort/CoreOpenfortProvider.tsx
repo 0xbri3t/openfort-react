@@ -22,19 +22,19 @@ import {
 import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import { OpenfortEVMBridgeContext } from '../core/OpenfortEVMBridgeContext'
 import { queryKeys } from '../core/queryKeys'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
 import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
 import type { WalletReadiness } from '../core/types'
+import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridgeContext'
 import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
 import type { UserAccount } from '../openfortCustomTypes'
 import { OpenfortError, OpenfortReactErrorType } from '../types'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
-import { mapBridgeConnectorsToWalletProps } from '../wallets/useEVMConnectors'
+import { mapBridgeConnectorsToWalletProps } from '../wallets/useEthereumConnectors'
 import type { ConnectCallbackProps } from './connectCallbackTypes'
 import { Context } from './context'
 import { createOpenfortClient, setDefaultClient } from './core'
@@ -96,7 +96,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   onDisconnect,
   openfortConfig,
 }) => {
-  const bridge = useContext(OpenfortEVMBridgeContext)
+  const bridge = useContext(OpenfortEthereumBridgeContext)
   const { walletConfig, chainType, uiConfig } = useOpenfort()
 
   const bridgeConnectors = useMemo(() => {
@@ -370,17 +370,33 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [openfort, embeddedAccounts?.length, embeddedState])
 
+  // Current chain for EVM provider reconfiguration. Re-runs when user switches chains.
+  const evmChainId =
+    strategy?.chainType === ChainTypeEnum.EVM
+      ? bridge
+        ? bridge.chainId
+        : (activeChainId ?? strategy.getChainId())
+      : undefined
+
   useEffect(() => {
     if (!openfort || !walletConfig || !strategy) return
 
+    let cancelled = false
     strategy
-      .initProvider(openfort, walletConfig)
-      .then(() => fetchEmbeddedAccounts())
-      .catch((err) => {
-        logger.error('Strategy initProvider failed', err)
-        setProviderError(err)
+      .initProvider(openfort, walletConfig, evmChainId)
+      .then(() => {
+        if (!cancelled) fetchEmbeddedAccounts()
       })
-  }, [openfort, walletConfig, strategy])
+      .catch((err) => {
+        if (!cancelled) {
+          logger.error('Strategy initProvider failed', err)
+          setProviderError(err)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [openfort, walletConfig, strategy, evmChainId])
 
   const [isConnectedWithEmbeddedSigner, setIsConnectedWithEmbeddedSigner] = useState(false)
 

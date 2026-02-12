@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTransition } from 'react-transition-state'
 import { AuthIcon } from '../../../assets/icons'
 import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
-import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import FocusTrap from '../../../hooks/useFocusTrap'
 import useLocales from '../../../hooks/useLocales'
 import useLockBodyScroll from '../../../hooks/useLockBodyScroll'
@@ -12,7 +12,7 @@ import usePrevious from '../../../hooks/usePrevious'
 import { ResetContainer } from '../../../styles'
 import type { CustomTheme } from '../../../types'
 import { flattenChildren, isMobile, isWalletConnectConnector } from '../../../utils'
-import { useWallet } from '../../../wallets/useEVMConnectors'
+import { useWallet } from '../../../wallets/useEthereumConnectors'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -249,7 +249,7 @@ const Modal: React.FC<ModalProps> = ({
 
   // Update layout on chain/network switch to avoid clipping
   const strategy = useConnectionStrategy()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const chainId = strategy?.getChainId() ?? bridge?.account?.chain?.id ?? bridge?.chainId
   const switchChain = bridge?.switchChain?.switchChain
 

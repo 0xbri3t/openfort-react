@@ -11,7 +11,7 @@ export const Route = createFileRoute('/_hooks/solana')({
 
 const nav = [
   { href: '/solana/useSolanaAccount', label: 'useSolanaAccount' },
-  { href: '/solana/useSolanaBalance', label: 'useSolanaBalanceAdapter' },
+  { href: '/solana/useSolanaBalance', label: 'useSolanaBalance' },
   { href: '/solana/useDisconnect', label: 'useSolanaDisconnect' },
 ]
 

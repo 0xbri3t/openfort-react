@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { OpenfortEVMBridgeConnector } from '../../../core/OpenfortEVMBridgeContext'
-import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
+import type { OpenfortEthereumBridgeConnector } from '../../../ethereum/OpenfortEthereumBridgeContext'
+import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
 import { logger } from '../../../utils/logger'
-import { useEVMConnectors } from '../../../wallets/useEVMConnectors'
+import { useEthereumConnectors } from '../../../wallets/useEthereumConnectors'
 import { onError, onSuccess } from '../hookConsistency'
 import { useConnectWithSiwe } from '../useConnectWithSiwe'
 import { type BaseFlowState, mapStatus } from './status'
 
 type ConnectWalletOptions = {
-  connector: OpenfortEVMBridgeConnector | string
+  connector: OpenfortEthereumBridgeConnector | string
 } // onConnect is handled by the hookOptions because useConnect needs to finish the connection process
 
 /**
@@ -40,9 +40,9 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
   }
 
   const { updateUser } = useOpenfortCore()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const siwe = useConnectWithSiwe()
-  const availableWallets = useEVMConnectors()
+  const availableWallets = useEthereumConnectors()
   const disconnect = bridge?.disconnect
   const [walletConnectingTo, setWalletConnectingTo] = useState<string | null>(null)
   const [shouldConnectWithSiwe, setShouldConnectWithSiwe] = useState(false)
@@ -67,7 +67,7 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
   )
 
   const connectAsync = useCallback(
-    async (params: { connector: OpenfortEVMBridgeConnector }) => {
+    async (params: { connector: OpenfortEthereumBridgeConnector }) => {
       if (!bridge?.connectAsync) throw new Error('EVM bridge not available')
       try {
         await bridge.connectAsync(params)
@@ -199,7 +199,7 @@ export const useWalletAuth = (hookOptions: OpenfortHookOptions = {}) => {
       setStatus({
         status: 'loading',
       })
-      let connector: OpenfortEVMBridgeConnector | null = null
+      let connector: OpenfortEthereumBridgeConnector | null = null
 
       if (typeof options.connector === 'string') {
         const wallet = availableWallets.find((c) => c.id === options.connector)

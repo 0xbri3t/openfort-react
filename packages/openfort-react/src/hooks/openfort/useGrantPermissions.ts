@@ -2,8 +2,8 @@ import { useCallback, useState } from 'react'
 import type { Chain, Hex } from 'viem'
 import { createWalletClient, custom } from 'viem'
 import { erc7715Actions, type GrantPermissionsParameters, type GrantPermissionsReturnType } from 'viem/experimental'
-import { useEVMBridge } from '../../core/OpenfortEVMBridgeContext'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
+import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import type { OpenfortEmbeddedEthereumWalletProvider } from '../../ethereum/types'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
@@ -119,8 +119,20 @@ async function getEmbeddedWalletClientWithErc7715(provider: OpenfortEmbeddedEthe
   return baseClient.extend(erc7715Actions())
 }
 
+/**
+ * Grants session key permissions for EIP-7702 / account abstraction.
+ *
+ * @param hookOptions - Optional callbacks and configuration
+ * @returns grantPermissions(request), status, data, error
+ *
+ * @example
+ * ```tsx
+ * const { grantPermissions } = useGrantPermissions()
+ * await grantPermissions({ request: { ... } })
+ * ```
+ */
 export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {}) => {
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const chains = useChains()
   const wallet = useConnectedWallet()
   const { client } = useOpenfortCore()

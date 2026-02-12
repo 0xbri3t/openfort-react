@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { Chain } from 'viem'
-import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 import { useChain } from '../shared/hooks/useChain'
 import { useChains } from './useChains'
 import { useConnectedWallet } from './useConnectedWallet'
@@ -21,6 +21,9 @@ export type UseAccountReturnType = {
  * Wagmi-compatible account hook. Returns connected wallet address, chain, and status
  * for both bridge (wagmi) and embedded (viem-only) strategies.
  *
+ * @deprecated When using wagmi, use wagmi's `useAccount` instead. When using EVM-only (no wagmi),
+ * use `useEthereumAccount` from the adapter API.
+ *
  * @example
  * ```tsx
  * const { address, chainId, isConnected, status } = useAccount()
@@ -33,7 +36,7 @@ export function useAccount(): UseAccountReturnType {
   const { isEvm } = useChain()
   const wallet = useConnectedWallet()
   const chains = useChains()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
 
   const status: UseAccountReturnType['status'] = useMemo(
     () => (isEvm ? wallet.normalizedStatus : 'disconnected'),

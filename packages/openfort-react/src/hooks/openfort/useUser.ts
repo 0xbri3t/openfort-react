@@ -3,6 +3,17 @@ import { useCallback } from 'react'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
 
+/**
+ * Returns the current user, linked accounts, auth state, and token helpers.
+ *
+ * @returns user, linkedAccounts, isAuthenticated, getAccessToken, validateAndRefreshToken
+ *
+ * @example
+ * ```tsx
+ * const { user, isAuthenticated, getAccessToken } = useUser()
+ * const token = await getAccessToken()
+ * ```
+ */
 export function useUser() {
   const { user, client, embeddedState, linkedAccounts } = useOpenfortCore()
 

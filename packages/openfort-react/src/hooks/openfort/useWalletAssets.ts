@@ -16,6 +16,18 @@ type WalletAssetsHookOptions = {
   staleTime?: number
 }
 
+/** Returns wallet assets (tokens, NFTs) for the connected address. Supports custom asset config. */
+/**
+ * Returns wallet assets (tokens) for the connected account. Supports ERC-7811.
+ *
+ * @param options - Optional custom assets config and staleTime
+ * @returns assets, isLoading, error, refetch
+ *
+ * @example
+ * ```tsx
+ * const { assets, isLoading } = useWalletAssets()
+ * ```
+ */
 export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }: WalletAssetsHookOptions = {}) => {
   // Use new abstraction hooks (no wagmi)
   const wallet = useConnectedWallet()

@@ -25,6 +25,21 @@ type InternalState = {
 
 const DEFAULT_CHAIN_ID = 80002
 
+/**
+ * Returns state for EVM embedded wallets: create, recover, list, active wallet, and provider.
+ * Use for creating accounts, recovering existing ones, and signing transactions.
+ *
+ * @param options - Optional chainId override for multi-chain
+ * @returns State with status, wallets, activeWallet, create, recover, setActive, provider
+ *
+ * @example
+ * ```tsx
+ * const evm = useEthereumEmbeddedWallet()
+ * if (evm.status === 'connected') {
+ *   const sig = await evm.provider?.request({ method: 'personal_sign', params: [hash, address] })
+ * }
+ * ```
+ */
 export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOptions): EmbeddedEthereumWalletState {
   const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =
     useOpenfortCore()

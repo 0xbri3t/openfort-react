@@ -11,6 +11,12 @@ function hasEmbeddedEthereum(state: ConnectionStrategyState): boolean {
   return !!addr
 }
 
+/**
+ * Creates the EVM embedded strategy for SDK-only mode (no wagmi).
+ * Uses activeChainId from context for multi-chain.
+ *
+ * @param walletConfig - Wallet config with ethereum.chainId and rpcUrls
+ */
 export function createEthereumEmbeddedStrategy(walletConfig: OpenfortWalletConfig | undefined): ConnectionStrategy {
   const chainId = walletConfig?.ethereum?.chainId
   const effectiveChainId =
@@ -47,14 +53,20 @@ export function createEthereumEmbeddedStrategy(walletConfig: OpenfortWalletConfi
       return []
     },
 
-    async initProvider(openfort: Openfort, config: OpenfortWalletConfig) {
+    async initProvider(openfort: Openfort, config: OpenfortWalletConfig, chainIdOverride?: number) {
       const ethereum = config?.ethereum
-      const chainId = ethereum?.chainId ?? DEFAULT_DEV_CHAIN_ID
+      const chainId = chainIdOverride ?? ethereum?.chainId ?? DEFAULT_DEV_CHAIN_ID
       const rpcUrls = ethereum?.rpcUrls ?? {}
       const policyObj = resolveEthereumPolicy(config, chainId)
-      await openfort.embeddedWallet.getEthereumProvider({
+      const provider = await openfort.embeddedWallet.getEthereumProvider({
         ...policyObj,
         chains: rpcUrls,
+      })
+      // Tell the provider which chain is active (EIP-1193). Without this, the provider
+      // stays on its initial chain (e.g. 80002) while policy resolution is per-chain.
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: `0x${chainId.toString(16)}` }],
       })
     },
 

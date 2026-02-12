@@ -28,16 +28,6 @@ export {
 export { ConnectionStrategyProvider, useConnectionStrategy } from './core/ConnectionStrategyContext'
 export { CoreProvider, type CoreProviderProps, useCoreContext, useHasCoreProvider } from './core/CoreContext'
 export { OpenfortTransactionError, TransactionErrorCode } from './core/errors'
-export {
-  type OpenfortEVMBridgeAccount,
-  type OpenfortEVMBridgeChain,
-  type OpenfortEVMBridgeConfig,
-  type OpenfortEVMBridgeConnector,
-  OpenfortEVMBridgeContext,
-  type OpenfortEVMBridgeSwitchChain,
-  type OpenfortEVMBridgeValue,
-  useEVMBridge,
-} from './core/OpenfortEVMBridgeContext'
 export { queryKeys } from './core/queryKeys'
 export { createEthereumBridgeStrategy } from './core/strategies/EthereumBridgeStrategy'
 export { createEthereumEmbeddedStrategy } from './core/strategies/EthereumEmbeddedStrategy'
@@ -46,6 +36,16 @@ export type { CoreContextValue, WalletReadiness } from './core/types'
 export type { ChainId, SetChainResult } from './ethereum/EthereumContext'
 // Convenience re-export for Ethereum hook (can also import from '@openfort/react/ethereum')
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
+export {
+  type OpenfortEthereumBridgeAccount,
+  type OpenfortEthereumBridgeChain,
+  type OpenfortEthereumBridgeConfig,
+  type OpenfortEthereumBridgeConnector,
+  OpenfortEthereumBridgeContext,
+  type OpenfortEthereumBridgeSwitchChain,
+  type OpenfortEthereumBridgeValue,
+  useEthereumBridge,
+} from './ethereum/OpenfortEthereumBridgeContext'
 export type { ConnectedEmbeddedEthereumWallet } from './ethereum/types'
 export { useAuthCallback } from './hooks/openfort/auth/useAuthCallback'
 export { useEmailAuth } from './hooks/openfort/auth/useEmailAuth'
@@ -73,10 +73,10 @@ export {
   SolanaUserWallet,
   useWallets,
 } from './hooks/openfort/useWallets'
+/** @deprecated Use wagmi's `useAccount` with wagmi, or `useEthereumAccount` for EVM-only. */
 export { type UseAccountReturnType, useAccount } from './hooks/useAccount'
+/** @deprecated Use wagmi's `useBalance` with wagmi, or `useEthereumBalance` for EVM-only. */
 export { type UseAccountBalanceReturnType, useAccountBalance } from './hooks/useAccountBalance'
-export { useChainIsSupported } from './hooks/useChainIsSupported'
-export { useChains } from './hooks/useChains'
 export {
   type ConnectedWalletState,
   type ConnectedWalletStatus,
@@ -84,9 +84,11 @@ export {
 } from './hooks/useConnectedWallet'
 export { useConnectLifecycle } from './hooks/useConnectLifecycle'
 export { useConnectRoutes } from './hooks/useConnectRoutes'
+/** @deprecated Use wagmi's `useDisconnect` with wagmi, or `useEthereumDisconnect` for EVM-only. */
 export { type UseDisconnectReturnType, useDisconnect } from './hooks/useDisconnect'
 export type { EmbeddedWalletState } from './hooks/useEmbeddedWallet'
 export { useEmbeddedWallet } from './hooks/useEmbeddedWallet'
+/** @deprecated Use wagmi's `useSwitchChain` with wagmi, or `useEthereumSwitchChain` for EVM-only. */
 export { type UseSwitchChainReturnType, useSwitchChain } from './hooks/useSwitchChain'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
@@ -96,7 +98,6 @@ export { type ExplorerUrlOptions, getExplorerUrl } from './shared/utils/explorer
 export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validation'
 // SIWE utilities for direct SDK usage (no wagmi required)
 export { createSIWEMessage } from './siwe/create-siwe-message'
-export { useSolanaBalance } from './solana/hooks/useSolanaBalance'
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 export type {
   SolanaSendTransactionStatus,
@@ -159,13 +160,12 @@ export {
   useEthereumSwitchChain,
   useEthereumWriteContract,
   useSolanaAccount,
-  useSolanaBalanceAdapter,
+  useSolanaBalance,
   useSolanaDisconnect,
   useSolanaSignMessage,
   useSolanaWriteContract,
 } from './wallet-adapters'
 export { wallets } from './wallets'
-export { useEVMConnectors, useWallet, type WalletProps } from './wallets/useEVMConnectors'
 
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 export type { CountryData, CountryIso2, CountrySelectorProps }

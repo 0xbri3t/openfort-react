@@ -1,12 +1,19 @@
 import { ChainTypeEnum, type Openfort } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
-import type { WalletProps } from '../../wallets/useEVMConnectors'
+import type { OpenfortEthereumBridgeValue } from '../../ethereum/OpenfortEthereumBridgeContext'
+import type { WalletProps } from '../../wallets/useEthereumConnectors'
 import type { ConnectionStrategy } from '../ConnectionStrategy'
-import type { OpenfortEVMBridgeValue } from '../OpenfortEVMBridgeContext'
 import { resolveEthereumPolicy } from '../strategyUtils'
 
+/**
+ * Creates the EVM strategy when wagmi bridge is present.
+ * Delegates to bridge for account, chain, connectors, and switchChain.
+ *
+ * @param bridge - Wagmi bridge context value
+ * @param connectors - Mapped connector props for the UI
+ */
 export function createEthereumBridgeStrategy(
-  bridge: OpenfortEVMBridgeValue,
+  bridge: OpenfortEthereumBridgeValue,
   connectors: WalletProps[]
 ): ConnectionStrategy {
   return {
@@ -33,8 +40,8 @@ export function createEthereumBridgeStrategy(
       return connectors
     },
 
-    async initProvider(openfort: Openfort, walletConfig: OpenfortWalletConfig) {
-      const chainId = bridge.chainId
+    async initProvider(openfort: Openfort, walletConfig: OpenfortWalletConfig, chainIdOverride?: number) {
+      const chainId = chainIdOverride ?? bridge.chainId
       const policyObj = chainId != null ? resolveEthereumPolicy(walletConfig, chainId) : undefined
 
       const rpcUrls = bridge.config.chains.reduce(
@@ -46,10 +53,17 @@ export function createEthereumBridgeStrategy(
         {} as Record<number, string>
       )
 
-      await openfort.embeddedWallet.getEthereumProvider({
+      const provider = await openfort.embeddedWallet.getEthereumProvider({
         ...policyObj,
         chains: rpcUrls,
       })
+      // Tell the provider which chain is active (EIP-1193). Keeps provider in sync with wagmi.
+      if (chainId != null) {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${chainId.toString(16)}` }],
+        })
+      }
     },
 
     async disconnect(openfort: Openfort) {

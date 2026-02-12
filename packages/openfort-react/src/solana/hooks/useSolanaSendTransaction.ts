@@ -28,6 +28,17 @@ export type UseSolanaSendTransactionResult = {
   reset: () => void
 }
 
+/**
+ * Returns a sendTransaction helper for Solana. Handles signing and sending via Openfort.
+ *
+ * @returns sendTransaction({ to, amount }), status, error, and reset
+ *
+ * @example
+ * ```tsx
+ * const { sendTransaction, status } = useSolanaSendTransaction()
+ * const sig = await sendTransaction({ to: address, amount: lamports })
+ * ```
+ */
 export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
   const queryClient = useQueryClient()
   const { rpcUrl } = useSolanaContext()

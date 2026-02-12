@@ -1,6 +1,6 @@
 import type { ConnectionStrategy } from '../core/ConnectionStrategy'
 import { useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 import { useChains } from './useChains'
 
 /**
@@ -9,7 +9,7 @@ import { useChains } from './useChains'
  */
 export function useChainIsSupported(chainId?: number, strategy?: ConnectionStrategy | null): boolean {
   const strategyFromContext = useConnectionStrategy()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const configuredChains = useChains()
   const s = strategy ?? strategyFromContext
 

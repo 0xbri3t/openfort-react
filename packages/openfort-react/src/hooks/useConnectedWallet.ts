@@ -143,6 +143,20 @@ function toConnectedState(chainType: ChainTypeEnum, wallet: WalletInternalState 
   }
 }
 
+/**
+ * Returns the connected wallet state for the current chain type (EVM or Solana).
+ * Provides address, chainId/cluster, status, and displayAddress in a wagmi-compatible shape.
+ *
+ * @returns Connected wallet state with status, address, chain info, and formatted displayAddress
+ *
+ * @example
+ * ```tsx
+ * const wallet = useConnectedWallet()
+ * if (wallet.status === 'connected') {
+ *   console.log(wallet.address, wallet.displayAddress)
+ * }
+ * ```
+ */
 export function useConnectedWallet(): ConnectedWalletState {
   const { chainType } = useChain()
   const ethWallet = useEthereumWalletFromStrategy()

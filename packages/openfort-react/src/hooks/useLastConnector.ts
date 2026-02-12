@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useEVMBridge } from '../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 
 export const useLastConnector = () => {
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const storage = bridge?.config?.storage
   const [lastConnectorId, setLastConnectorId] = useState<string | null>(null)
 

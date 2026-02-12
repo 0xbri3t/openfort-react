@@ -1,11 +1,11 @@
 import { embeddedWalletId } from '../../../constants/openfort'
-import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import { useFamilyAccountsConnector, useFamilyConnector } from '../../../hooks/useConnectors'
 
 import useIsMobile from '../../../hooks/useIsMobile'
 import { useLastConnector } from '../../../hooks/useLastConnector'
 import { isFamily } from '../../../utils/wallets'
-import { useEVMConnectors, type WalletProps } from '../../../wallets/useEVMConnectors'
+import { useEthereumConnectors, type WalletProps } from '../../../wallets/useEthereumConnectors'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import Alert from '../Alert'
@@ -16,7 +16,7 @@ const ConnectorList = () => {
   const context = useOpenfort()
   const isMobile = useIsMobile()
 
-  const wallets = useEVMConnectors()
+  const wallets = useEthereumConnectors()
   const { lastConnectorId } = useLastConnector()
   const familyConnector = useFamilyConnector()
   const familyAccountsConnector = useFamilyAccountsConnector()
@@ -57,7 +57,7 @@ export default ConnectorList
 const ConnectorItem = ({ wallet, isRecent }: { wallet: WalletProps; isRecent?: boolean }) => {
   const isMobile = useIsMobile()
   const context = useOpenfort()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const connector = bridge?.account?.connector
 
   const content = () => (

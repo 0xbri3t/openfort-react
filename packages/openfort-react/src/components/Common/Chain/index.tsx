@@ -36,6 +36,14 @@ const Spinner = () => {
   )
 }
 
+/**
+ * Displays chain icon. Shows loading state or unsupported when chain is not configured.
+ *
+ * @example
+ * ```tsx
+ * <Chain id={chainId} />
+ * ```
+ */
 const Chain: React.FC<{
   id?: number
   unsupported?: boolean

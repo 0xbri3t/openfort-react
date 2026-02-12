@@ -1,6 +1,7 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import type { SolanaCluster } from '../../solana/types'
 
+/** Options for building a block explorer URL. */
 export type ExplorerUrlOptions = {
   address?: string
   txHash?: string
@@ -47,6 +48,19 @@ const explorerRegistry: Record<ChainTypeEnum, ExplorerUrlBuilder> = {
   },
 }
 
+/**
+ * Builds a block explorer URL for an address or transaction on the given chain.
+ *
+ * @param chainType - EVM or SVM
+ * @param options - address, txHash, chainId (EVM), or cluster (Solana)
+ * @returns Full explorer URL
+ *
+ * @example
+ * ```tsx
+ * const url = getExplorerUrl(ChainTypeEnum.EVM, { address: '0x...', chainId: 1 })
+ * const txUrl = getExplorerUrl(ChainTypeEnum.EVM, { txHash: '0x...', chainId: 1 })
+ * ```
+ */
 export function getExplorerUrl(chainType: ChainTypeEnum, options: ExplorerUrlOptions): string {
   return explorerRegistry[chainType](options)
 }

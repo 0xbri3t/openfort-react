@@ -299,6 +299,17 @@ type OpenfortButtonProps = {
   onClick?: (open: () => void) => void
 }
 
+/**
+ * Connect button component. Shows balance, avatar, and chain when connected;
+ * opens connect modal when disconnected. Use `OpenfortButton.Custom` for custom render.
+ *
+ * @example
+ * ```tsx
+ * <OpenfortButton />
+ * <OpenfortButton label="Connect" showAvatar />
+ * <OpenfortButton.Custom>{(props) => <CustomButton {...props} />}</OpenfortButton.Custom>
+ * ```
+ */
 export function OpenfortButton({
   // Options
   label,

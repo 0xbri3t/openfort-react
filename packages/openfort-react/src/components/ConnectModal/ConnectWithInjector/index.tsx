@@ -2,14 +2,14 @@ import { AnimatePresence, type Variants } from 'framer-motion'
 import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { AlertIcon, RetryIconCircle, TickIcon } from '../../../assets/icons'
-import { useEVMBridge } from '../../../core/OpenfortEVMBridgeContext'
+import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import { useConnectWithSiwe } from '../../../hooks/openfort/useConnectWithSiwe'
 import { useUser } from '../../../hooks/openfort/useUser'
 import useLocales from '../../../hooks/useLocales'
 import { useRouteProps } from '../../../hooks/useRouteProps'
 import { detectBrowser, isWalletConnectConnector } from '../../../utils'
 import { logger } from '../../../utils/logger'
-import { useWallet } from '../../../wallets/useEVMConnectors'
+import { useWallet } from '../../../wallets/useEthereumConnectors'
 import Alert from '../../Common/Alert'
 import BrowserIcon from '../../Common/BrowserIcon'
 import Button from '../../Common/Button'
@@ -67,7 +67,7 @@ const ConnectWithInjector: React.FC<{
   forceState?: typeof states
 }> = ({ forceState }) => {
   const { setOpen } = useOpenfort()
-  const bridge = useEVMBridge()
+  const bridge = useEthereumBridge()
   const connectWithSiwe = useConnectWithSiwe()
   const props = useRouteProps(routes.CONNECT)
   const { linkedAccounts, user } = useUser()
