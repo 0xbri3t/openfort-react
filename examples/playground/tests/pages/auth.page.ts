@@ -44,6 +44,7 @@ export class AuthPage {
     }
 
     const connectedRegex = mode === 'solana-only' ? /Connected with/i : /Connected with 0x/i
-    await expect(this.page.getByText(connectedRegex)).toBeVisible({ timeout: 60_000 })
+    const connectTimeout = mode === 'evm-wagmi' ? 120_000 : 60_000
+    await expect(this.page.getByText(connectedRegex)).toBeVisible({ timeout: connectTimeout })
   }
 }

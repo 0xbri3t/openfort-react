@@ -6,7 +6,7 @@ import { getModeFromProjectName, type PlaygroundMode, setPlaygroundMode } from '
 type Fixtures = {
   authPage: AuthPage
   dashboardPage: DashboardPage
-  /** Runs inline guest login for evm-wagmi (no storageState restore). */
+  /** Runs inline guest login for evm-wagmi (wagmi state is in-memory, cannot use storageState). */
   evmWagmiLogin: undefined
   mode: PlaygroundMode
 }

@@ -26,12 +26,18 @@ export class DashboardPage {
     await new Promise((r) => setTimeout(r, 1000))
   }
 
-  // Ensure navigation and ready state
+  /**
+   * Ensure navigation and ready state.
+   * For evm-wagmi: skip goto() since wagmi state is in-memory — a reload would lose the connection.
+   * The evmWagmiLogin fixture already navigated to the dashboard.
+   */
   async ensureReady(mode: PlaygroundMode) {
     if (!mode) {
       throw new Error('Mode is required')
     }
-    await this.goto()
+    if (mode !== 'evm-wagmi') {
+      await this.goto()
+    }
     await this.expectLoaded(mode)
   }
 

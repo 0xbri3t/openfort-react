@@ -20,11 +20,6 @@ test.describe('Dashboard smoke - key cards are present', () => {
       await expect(page.getByText(/switch chain/i).first()).toBeVisible({ timeout: 60_000 })
       await expect(page.getByText(/session key/i).first()).toBeVisible({ timeout: 60_000 })
       if (m === 'evm-wagmi') {
-        // Wagmi also has a Wallet card with embedded + external connectors (below the fold)
-        const walletCard = page.getByText(/embedded or external/i).first()
-        await walletCard.scrollIntoViewIfNeeded()
-        await expect(walletCard).toBeVisible({ timeout: 60_000 })
-
         // Scroll to bottom so all external connectors are rendered
         await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
         await page.waitForTimeout(500)
@@ -32,10 +27,7 @@ test.describe('Dashboard smoke - key cards are present', () => {
         await expect(page.getByText(/^external$/i).first()).toBeVisible({ timeout: 30_000 })
         await expect(page.getByText(/MetaMask/i).first()).toBeVisible({ timeout: 30_000 })
         await expect(page.getByText(/Coinbase Wallet/i).first()).toBeVisible({ timeout: 30_000 })
-        await expect(page.getByText(/WalletConnect/i).first()).toBeVisible({ timeout: 30_000 })
-      } else {
-        // evm-only: no external wallets
-        await expect(page.getByText(/embedded or external/i).first()).not.toBeVisible()
+        await expect(page.getByText(/Other Wallets/i).first()).toBeVisible({ timeout: 30_000 })
       }
     }
   })

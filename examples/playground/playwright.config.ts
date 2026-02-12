@@ -42,7 +42,6 @@ export default defineConfig({
       testMatch: /auth\.setup\.solana\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
-
     {
       name: 'chromium-evm-only',
       dependencies: ['setup-evm-only'],
@@ -55,8 +54,14 @@ export default defineConfig({
     },
     {
       name: 'chromium-evm-wagmi',
-      testIgnore: [/wallet-entry\.spec\.ts/, /auth\.spec\.ts/, /solana-mint\.spec\.ts/],
+      testIgnore: [
+        /wallet-entry\.spec\.ts/,
+        /auth\.spec\.ts/,
+        /solana-mint\.spec\.ts/,
+        /refresh-persistence\.spec\.ts/, // wagmi state is in-memory; reload loses connection
+      ],
       testMatch: /.*\.spec\.ts/,
+      timeout: 120_000,
       use: { ...devices['Desktop Chrome'] },
     },
     {

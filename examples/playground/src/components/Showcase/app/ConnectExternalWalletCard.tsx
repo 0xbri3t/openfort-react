@@ -332,7 +332,7 @@ export const ConnectExternalWalletCard = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Wallet</CardTitle>
+        <CardTitle>Wallets</CardTitle>
         <CardDescription>Switch between external and embedded wallets.</CardDescription>
       </CardHeader>
       <CardContent>
