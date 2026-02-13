@@ -1,6 +1,6 @@
 import { RecoveryMethod, type RecoveryParams } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
-import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 
 export type RecoveryOptions = {
   recoveryMethod?: RecoveryMethod
@@ -96,9 +96,12 @@ async function getEncryptionSession(params: {
     const data = await response.json()
     if (!response.ok) {
       if (data.error === 'OTP_REQUIRED') {
-        throw new OpenfortError('OTP_REQUIRED', OpenfortErrorCode.UNKNOWN_ERROR)
+        throw new OpenfortError('OTP verification required', OpenfortErrorCode.UNKNOWN_ERROR)
       }
-      throw new OpenfortError('Failed to create encryption session', OpenfortErrorCode.WALLET_CREATION_FAILED)
+      throw new OpenfortError(
+        formatErrorWithReason('Failed to create encryption session', data.error ?? data.message ?? data),
+        OpenfortErrorCode.WALLET_CREATION_FAILED
+      )
     }
 
     return data.session

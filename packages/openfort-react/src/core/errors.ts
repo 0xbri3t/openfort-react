@@ -36,6 +36,59 @@ export const OpenfortErrorCode = {
 
 export type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCode]
 
+/** Known error patterns mapped to user-friendly reasons (safe to show in message). */
+const REASON_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
+  {
+    pattern: /user\s+rejected|user\s+denied|rejected\s+by\s+user|request\s+rejected/i,
+    reason: 'user rejected signature',
+  },
+  {
+    pattern: /password\s+is\s+required|recovery\s+password|password\s+required/i,
+    reason: 'recovery password is required',
+  },
+  { pattern: /otp\s+required|otp_required/i, reason: 'OTP verification required' },
+  { pattern: /access\s+token\s+not\s+found|not\s+authenticated/i, reason: 'not authenticated' },
+  { pattern: /user\s+not\s+found/i, reason: 'user not found' },
+  { pattern: /wallet\s+config\s+not\s+found|no\s+encryption\s+session/i, reason: 'wallet config incomplete' },
+  { pattern: /network|fetch|timeout|econnrefused|enotfound/i, reason: 'network error' },
+  { pattern: /insufficient\s+funds/i, reason: 'insufficient funds' },
+]
+
+function getMessageFromCause(cause: unknown): string {
+  if (cause instanceof Error) return cause.message
+  if (typeof cause === 'string') return cause
+  if (typeof cause === 'object' && cause !== null) {
+    const o = cause as Record<string, unknown>
+    const s = (o.message ?? o.error ?? o.reason ?? o.detail) as unknown
+    if (typeof s === 'string') return s
+  }
+  return ''
+}
+
+/**
+ * Extracts a user-friendly reason from an error cause for inclusion in the main message.
+ * Only returns known safe strings — never exposes internal details.
+ */
+export function getErrorReason(cause: unknown): string | undefined {
+  const msg = getMessageFromCause(cause)
+  if (!msg) return undefined
+  for (const { pattern, reason } of REASON_PATTERNS) {
+    if (pattern.test(msg)) return reason
+  }
+  // If it's an OpenfortError with a short message, use it (already safe)
+  if (cause instanceof OpenfortError && cause.message.length < 80) return cause.message
+  return undefined
+}
+
+/**
+ * Formats a base error message with the reason from the cause when known.
+ * Use when wrapping errors to give devs actionable feedback.
+ */
+export function formatErrorWithReason(baseMessage: string, cause: unknown): string {
+  const reason = getErrorReason(cause)
+  return reason ? `${baseMessage}: ${reason}` : baseMessage
+}
+
 /**
  * Base error class for Openfort React SDK (canonical v1)
  *

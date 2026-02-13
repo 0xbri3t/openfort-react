@@ -1,14 +1,44 @@
 /**
  * @packageDocumentation
  *
+ * ## SSR Compatibility
+ *
+ * **All hooks and interactive components are client-only.** They use React hooks and browser APIs
+ * and must run in Client Components.
+ *
+ * - **Server Components (Next.js App Router, Remix):** Do not use hooks or `OpenfortProvider` in
+ *   Server Components. Wrap your app (or the subtree that needs Openfort) in a Client Component.
+ * - **Next.js App Router:** Add `"use client"` at the top of any file that imports hooks,
+ *   `OpenfortProvider`, `OpenfortButton`, or `useConnectUI`.
+ * - **Hydration:** No hydration mismatches when used correctly. Keep the provider and any
+ *   hook-using components on the client boundary.
+ *
+ * @example
+ * ```tsx
+ * // app/providers.tsx
+ * "use client"
+ * import { OpenfortProvider } from "@openfort/react"
+ *
+ * export function Providers({ children }) {
+ *   return <OpenfortProvider publishableKey="pk_...">{children}</OpenfortProvider>
+ * }
+ * ```
+ *
  * ## Which hook should I use?
  *
  * | Need | Use |
  * |------|-----|
  * | Auth user (isAuthenticated, user, linkedAccounts) | `useUser()` |
+ * | Am I connected? (auth + wallet ready) | `useIsReady()` or `useUser().isReady` |
  * | Wallet state (chain-agnostic, any chain) | `useConnectedWallet()` |
  * | EVM-typed address/chainId | `useEthereumAccount()` |
  * | Solana address/cluster | `useSolanaAccount()` |
+ * | Send ETH/tokens | `useEthereumSendTransaction()` |
+ * | Send SOL/tokens | `useSolanaSendTransaction()` |
+ * | Write contract (EVM) | `useEthereumWriteContract()` |
+ * | Sign message | `useEthereumSignMessage()` / `useSolanaSignMessage()` |
+ * | Get balance | `useEthereumBalance()` / `useSolanaBalance()` |
+ * | Create embedded wallet | `useEthereumEmbeddedWallet()` / `useSolanaEmbeddedWallet()` |
  */
 export {
   AccountTypeEnum,
@@ -30,10 +60,20 @@ export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
 export { PageLayout, type PageLayoutProps } from './components/PageLayout'
+export type { CreateWalletConfigOptions } from './config/createWalletConfig'
+export { createWalletConfig } from './config/createWalletConfig'
 export { embeddedWalletId } from './constants/openfort'
-export { OpenfortError, OpenfortErrorCode } from './core/errors'
+export { formatErrorWithReason, getErrorReason, OpenfortError, OpenfortErrorCode } from './core/errors'
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
+export type {
+  EthereumSendTransactionParams,
+  UseEthereumSendTransactionReturn,
+} from './ethereum/hooks/useEthereumSendTransaction'
+export type {
+  EthereumWriteContractParams,
+  UseEthereumWriteContractReturn,
+} from './ethereum/hooks/useEthereumWriteContract'
 export {
   type OpenfortEthereumBridgeAccount,
   type OpenfortEthereumBridgeChain,
@@ -44,12 +84,21 @@ export {
   type OpenfortEthereumBridgeValue,
   useEthereumBridge,
 } from './ethereum/OpenfortEthereumBridgeContext'
-export type { ConnectedEmbeddedEthereumWallet } from './ethereum/types'
+export type {
+  ConnectedEmbeddedEthereumWallet,
+  CreateEthereumWalletOptions,
+  CreateEthereumWalletResult,
+  EmbeddedEthereumWalletState,
+  SetActiveEthereumWalletOptions,
+  UseEmbeddedEthereumWalletOptions,
+} from './ethereum/types'
 // ── Auth ──
 export { useAuthCallback } from './hooks/openfort/auth/useAuthCallback'
+export type { EmailVerificationResult } from './hooks/openfort/auth/useEmailAuth'
 export { useEmailAuth } from './hooks/openfort/auth/useEmailAuth'
 export { useEmailOtpAuth } from './hooks/openfort/auth/useEmailOtpAuth'
 export { useGuestAuth } from './hooks/openfort/auth/useGuestAuth'
+export type { StoreCredentialsResult } from './hooks/openfort/auth/useOAuth'
 export { useOAuth } from './hooks/openfort/auth/useOAuth'
 export { usePhoneOtpAuth } from './hooks/openfort/auth/usePhoneOtpAuth'
 export { useSignOut } from './hooks/openfort/auth/useSignOut'
@@ -79,10 +128,12 @@ export {
 } from './hooks/useConnectedWallet'
 export type { EmbeddedWalletState } from './hooks/useEmbeddedWallet'
 export { useEmbeddedWallet } from './hooks/useEmbeddedWallet'
+export { useIsReady } from './hooks/useIsReady'
 export { useOpenfortCore as useOpenfort, useWalletStatus } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
 export type { TransactionFlowStatus, UseTransactionFlowResult } from './shared/hooks/useTransactionFlow'
 export { useTransactionFlow } from './shared/hooks/useTransactionFlow'
+export type { WalletStatus } from './shared/types'
 export { type ExplorerUrlOptions, getExplorerUrl } from './shared/utils/explorer'
 export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validation'
 export { createSIWEMessage } from './siwe/create-siwe-message'
@@ -94,7 +145,14 @@ export type {
 } from './solana/hooks/useSolanaSendTransaction'
 export { useSolanaSendTransaction } from './solana/hooks/useSolanaSendTransaction'
 export { useSolanaMessageSigner, useSolanaSigner } from './solana/hooks/useSolanaSigner'
-export type { SolanaConfig } from './solana/types'
+export type {
+  ConnectedEmbeddedSolanaWallet,
+  CreateSolanaWalletOptions,
+  EmbeddedSolanaWalletState,
+  SetActiveSolanaWalletOptions,
+  SolanaConfig,
+  UseEmbeddedSolanaWalletOptions,
+} from './solana/types'
 export type { CustomTheme } from './styles/customTheme'
 export type {
   CustomAvatarProps,
@@ -138,6 +196,20 @@ export {
   useSolanaSignMessage,
   useSolanaWriteContract,
 } from './wallet-adapters'
+export type {
+  SolanaCluster,
+  UseAccountLike,
+  UseBalanceLike,
+  UseDisconnectLike,
+  UseReadContractLike,
+  UseSignMessageLike,
+  UseSolanaAccountLike,
+  UseSolanaSendSOLLike,
+  UseSolanaSignMessageLike,
+  UseSwitchChainLike,
+  UseWriteContractLike,
+  WalletAdapterChain,
+} from './wallet-adapters/types'
 export {
   type ExternalConnectorProps,
   useExternalConnector,

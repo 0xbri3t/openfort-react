@@ -49,10 +49,11 @@ type OpenfortProviderProps = {
 
 let openfortProviderWarnedNoWagmi = false
 
-/** Provides Openfort configuration and context to descendant components. */
 /**
  * Root provider for Openfort. Wrap your app with this to enable connect modal, auth, and wallet features.
  * Requires publishableKey. Use with wagmi's OpenfortProvider for EVM + wagmi.
+ *
+ * @remarks Client-only. Use in a Client Component (e.g. add `"use client"` in Next.js App Router).
  *
  * @example
  * ```tsx

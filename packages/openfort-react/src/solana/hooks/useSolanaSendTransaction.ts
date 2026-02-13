@@ -12,7 +12,7 @@ import {
 } from '@solana/kit'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
-import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { queryKeys } from '../../core/queryKeys'
 import { useSolanaContext } from '../SolanaContext'
 import { toUint8Array, unwrapTransactionSignature } from '../utils/transactionHelpers'
@@ -122,9 +122,11 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
         const wrapped =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_SIGNING_FAILED, {
-                cause: err,
-              })
+            : new OpenfortError(
+                formatErrorWithReason('Transaction failed', err),
+                OpenfortErrorCode.TRANSACTION_SIGNING_FAILED,
+                { cause: err }
+              )
         setError(wrapped)
         return
       }

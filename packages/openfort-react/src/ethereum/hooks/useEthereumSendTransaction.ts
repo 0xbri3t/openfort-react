@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
 export interface EthereumSendTransactionParams {
@@ -85,9 +85,13 @@ export function useEthereumSendTransaction(): UseEthereumSendTransactionReturn {
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_UNKNOWN, {
-                cause: err,
-              })
+            : new OpenfortError(
+                formatErrorWithReason('Transaction failed', err),
+                OpenfortErrorCode.TRANSACTION_UNKNOWN,
+                {
+                  cause: err,
+                }
+              )
         setError(error)
         setIsPending(false)
         throw error

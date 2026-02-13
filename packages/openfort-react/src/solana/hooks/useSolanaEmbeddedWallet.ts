@@ -1,7 +1,7 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
-import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
@@ -187,9 +187,11 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Failed to create Solana wallet', OpenfortErrorCode.WALLET_CREATION_FAILED, {
-                cause: err,
-              })
+            : new OpenfortError(
+                formatErrorWithReason('Failed to create Solana wallet', err),
+                OpenfortErrorCode.WALLET_CREATION_FAILED,
+                { cause: err }
+              )
 
         setState((s) => ({
           ...s,
@@ -268,9 +270,11 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           const error =
             err instanceof OpenfortError
               ? err
-              : new OpenfortError('Failed to set active Solana wallet', OpenfortErrorCode.WALLET_NOT_FOUND, {
-                  cause: err,
-                })
+              : new OpenfortError(
+                  formatErrorWithReason('Failed to set active Solana wallet', err),
+                  OpenfortErrorCode.WALLET_NOT_FOUND,
+                  { cause: err }
+                )
 
           setState((s) => ({
             ...s,
@@ -304,9 +308,11 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Failed to set recovery method', OpenfortErrorCode.WALLET_RECOVERY_REQUIRED, {
-                cause: err,
-              })
+            : new OpenfortError(
+                formatErrorWithReason('Failed to set recovery method', err),
+                OpenfortErrorCode.WALLET_RECOVERY_REQUIRED,
+                { cause: err }
+              )
         throw error
       }
     },

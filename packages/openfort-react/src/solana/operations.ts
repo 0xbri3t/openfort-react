@@ -10,7 +10,7 @@
 
 import type { Openfort } from '@openfort/openfort-js'
 
-import { OpenfortError, OpenfortErrorCode } from '../core/errors'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../core/errors'
 import { logger } from '../utils/logger'
 
 import type { SignedSolanaTransaction, SolanaTransaction } from './types'
@@ -81,7 +81,9 @@ export async function signMessage(params: SignMessageParams): Promise<string> {
     })
     throw error instanceof OpenfortError
       ? error
-      : new OpenfortError('Signing failed', OpenfortErrorCode.SIGNING_FAILED, { cause: error })
+      : new OpenfortError(formatErrorWithReason('Signing failed', error), OpenfortErrorCode.SIGNING_FAILED, {
+          cause: error,
+        })
   }
 }
 
@@ -118,7 +120,9 @@ export async function signTransaction(params: SignTransactionParams): Promise<Si
   } catch (error) {
     throw error instanceof OpenfortError
       ? error
-      : new OpenfortError('Signing failed', OpenfortErrorCode.SIGNING_FAILED, { cause: error })
+      : new OpenfortError(formatErrorWithReason('Signing failed', error), OpenfortErrorCode.SIGNING_FAILED, {
+          cause: error,
+        })
   }
 }
 
@@ -151,7 +155,9 @@ export async function signAllTransactions(params: SignAllTransactionsParams): Pr
   } catch (error) {
     throw error instanceof OpenfortError
       ? error
-      : new OpenfortError('Signing failed', OpenfortErrorCode.SIGNING_FAILED, { cause: error })
+      : new OpenfortError(formatErrorWithReason('Signing failed', error), OpenfortErrorCode.SIGNING_FAILED, {
+          cause: error,
+        })
   }
 }
 
