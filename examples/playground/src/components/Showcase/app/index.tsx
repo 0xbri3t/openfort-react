@@ -93,14 +93,16 @@ export const App = () => {
                 ),
               }}
             />
-            <SessionKeysCard
-              tooltip={{
-                hook: 'useGrantPermissions',
-                body: <>Uses useGrantPermissions to create session keys.</>,
-              }}
-            />
-            <div className="lg:col-span-2 xl:col-span-3">
-              <ConnectExternalWalletCard />
+            <div className="lg:col-span-2 xl:col-span-3 flex flex-col lg:flex-row gap-4">
+              <SessionKeysCard
+                tooltip={{
+                  hook: 'useGrantPermissions',
+                  body: <>Uses useGrantPermissions to create session keys.</>,
+                }}
+              />
+              <div className="min-w-[60%] flex-1">
+                <ConnectExternalWalletCard />
+              </div>
             </div>
           </>
         ) : (
