@@ -52,8 +52,6 @@ export { useGuestAuth } from './hooks/openfort/auth/useGuestAuth'
 export { useOAuth } from './hooks/openfort/auth/useOAuth'
 export { usePhoneOtpAuth } from './hooks/openfort/auth/usePhoneOtpAuth'
 export { useSignOut } from './hooks/openfort/auth/useSignOut'
-/** @deprecated Use @openfort/wagmi for wagmi integration. Prefer useConnectWithSiwe or ConnectModal. */
-export { useWalletAuth } from './hooks/openfort/auth/useWalletAuth'
 export {
   type SignAuthorizationParameters,
   type SignAuthorizationReturnType,
@@ -71,8 +69,6 @@ export {
   type UserWallet,
   useWallets,
 } from './hooks/openfort/useWallets'
-/** @deprecated Use @openfort/wagmi for wagmi integration. For EVM-only (no wagmi), use `useEthereumBalance`. */
-export { type UseAccountBalanceReturnType, useAccountBalance } from './hooks/useAccountBalance'
 export { useChainIsSupported } from './hooks/useChainIsSupported'
 export { useChains } from './hooks/useChains'
 export {
@@ -81,12 +77,8 @@ export {
   useConnectedWallet,
   type WalletType,
 } from './hooks/useConnectedWallet'
-/** @deprecated Use @openfort/wagmi for wagmi integration. For EVM-only (no wagmi), use `useEthereumDisconnect`. */
-export { type UseDisconnectReturnType, useDisconnect } from './hooks/useDisconnect'
 export type { EmbeddedWalletState } from './hooks/useEmbeddedWallet'
 export { useEmbeddedWallet } from './hooks/useEmbeddedWallet'
-/** @deprecated Use @openfort/wagmi for wagmi integration. For EVM-only (no wagmi), use `useEthereumSwitchChain`. */
-export { type UseSwitchChainReturnType, useSwitchChain } from './hooks/useSwitchChain'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
 export type { TransactionFlowStatus, UseTransactionFlowResult } from './shared/hooks/useTransactionFlow'
