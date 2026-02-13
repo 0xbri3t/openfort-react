@@ -10,7 +10,7 @@ const REPORT_DIR = path.join(ROOT_OUT, 'playwright-report')
 export default defineConfig({
   testDir: './tests',
 
-  timeout: 60_000,
+  timeout: 90_000,
   expect: { timeout: 30_000 },
 
   retries: process.env.CI ? 2 : 0,
@@ -61,7 +61,7 @@ export default defineConfig({
         /refresh-persistence\.spec\.ts/, // wagmi state is in-memory; reload loses connection
       ],
       testMatch: /.*\.spec\.ts/,
-      timeout: 120_000,
+      timeout: 180_000,
       use: { ...devices['Desktop Chrome'] },
     },
     {

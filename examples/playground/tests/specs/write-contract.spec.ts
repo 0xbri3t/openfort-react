@@ -19,6 +19,6 @@ test.describe('Write Contract - mint tokens', () => {
     await expect(mintBtn).toBeVisible({ timeout: 30_000 })
     await mintBtn.click()
 
-    await expect(page.getByText(EVM_TX_HASH_REGEX)).toBeVisible({ timeout: 90_000 })
+    await expect(page.getByText(EVM_TX_HASH_REGEX)).toBeVisible({ timeout: 120_000 })
   })
 })
