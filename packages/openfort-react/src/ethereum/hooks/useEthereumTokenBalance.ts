@@ -39,7 +39,7 @@ export function useEthereumTokenBalance(options: UseEthereumTokenBalanceOptions)
   const { config } = useCoreContext()
   const ethereumContext = useContext(EthereumContext)
 
-  const chainId = optionChainId ?? ethereumContext?.chainId ?? 80002
+  const chainId = optionChainId ?? ethereumContext?.chainId ?? 13337
   const rpcUrl = config.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)
 
   const isEnabled = enabled && !!tokenAddress && !!ownerAddress

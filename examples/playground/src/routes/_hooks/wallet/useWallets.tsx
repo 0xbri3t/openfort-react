@@ -1,6 +1,6 @@
 import { RecoveryMethod, useEthereumEmbeddedWallet, useSolanaEmbeddedWallet } from '@openfort/react'
 import { createFileRoute } from '@tanstack/react-router'
-import { polygonAmoy } from 'viem/chains'
+import { beamTestnet } from 'viem/chains'
 import { Layout } from '@/components/Layout'
 import { onSettledOptions } from '@/components/Variable/commonVariables'
 import { HookVariable } from '@/components/Variable/HookVariable'
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_hooks/wallet/useWallets')({
   component: RouteComponent,
 })
 
-const evmDefaultOptions = { ...onSettledOptions, chainId: polygonAmoy.id }
+const evmDefaultOptions = { ...onSettledOptions, chainId: beamTestnet.id }
 
 function EvmContent() {
   return (

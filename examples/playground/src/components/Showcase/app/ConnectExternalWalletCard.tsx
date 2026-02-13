@@ -1,11 +1,12 @@
 import {
-  type EthereumUserWallet,
+  type ConnectedEmbeddedEthereumWallet,
   embeddedWalletId,
   RecoveryMethod,
   useConnectedWallet,
   useEthereumBridge,
-  useWallets,
+  useEthereumEmbeddedWallet,
 } from '@openfort/react'
+import { useExternalConnectors } from '@openfort/wagmi'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
 import { EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon } from 'lucide-react'
@@ -54,10 +55,9 @@ const SimpleWalletButton = ({
 )
 
 const CreateWalletButton = () => {
-  const wallets = useWallets()
-  const isCreating = wallets.isCreating
-  const createWallet = wallets.createWallet
-  const error = wallets.isError ? wallets.error : null
+  const { create, status } = useEthereumEmbeddedWallet()
+  const [error, setError] = useState<string | null>(null)
+  const isCreating = status === 'creating'
   const [chooseCreateMethodOpen, setChooseCreateMethodOpen] = useState(false)
   const [creatingMethod, setCreatingMethod] = useState<RecoveryMethod | null>(null)
 
@@ -81,9 +81,14 @@ const CreateWalletButton = () => {
                 <button
                   type="button"
                   className="btn btn-accent flex flex-1 create-wallet-button"
-                  onClick={() => {
-                    createWallet({ recovery: { recoveryMethod: RecoveryMethod.AUTOMATIC } })
-                    setCreatingMethod(RecoveryMethod.AUTOMATIC)
+                  onClick={async () => {
+                    try {
+                      setCreatingMethod(RecoveryMethod.AUTOMATIC)
+                      await create({ recoveryMethod: RecoveryMethod.AUTOMATIC })
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Failed to create wallet')
+                      setCreatingMethod(null)
+                    }
                   }}
                   disabled={isCreating}
                 >
@@ -93,14 +98,17 @@ const CreateWalletButton = () => {
                 <button
                   type="button"
                   className="btn btn-accent flex flex-1 create-wallet-button"
-                  onClick={() => {
-                    createWallet({
-                      recovery: {
+                  onClick={async () => {
+                    try {
+                      setCreatingMethod(RecoveryMethod.PASSWORD)
+                      await create({
                         recoveryMethod: RecoveryMethod.PASSWORD,
-                        password: 'example-password',
-                      },
-                    })
-                    setCreatingMethod(RecoveryMethod.PASSWORD)
+                        recoveryPassword: 'example-password',
+                      })
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Failed to create wallet')
+                      setCreatingMethod(null)
+                    }
                   }}
                   disabled={isCreating}
                 >
@@ -110,9 +118,14 @@ const CreateWalletButton = () => {
                 <button
                   type="button"
                   className="btn btn-accent flex flex-1 create-wallet-button"
-                  onClick={() => {
-                    createWallet({ recovery: { recoveryMethod: RecoveryMethod.PASSKEY } })
-                    setCreatingMethod(RecoveryMethod.PASSKEY)
+                  onClick={async () => {
+                    try {
+                      setCreatingMethod(RecoveryMethod.PASSKEY)
+                      await create({ recoveryMethod: RecoveryMethod.PASSKEY })
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Failed to create wallet')
+                      setCreatingMethod(null)
+                    }
                   }}
                   disabled={isCreating}
                 >
@@ -134,10 +147,10 @@ const CreateWalletButton = () => {
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <h3 className="text-base mb-1">useWallets</h3>
+          <h3 className="text-base mb-1">useEthereumEmbeddedWallet</h3>
           Create a new wallet using
           <Link to="/wallet/useWallets" search={{ focus: 'create' }} className="px-1 group">
-            createWallet
+            create
           </Link>
           .
         </TooltipContent>
@@ -156,7 +169,7 @@ const CreateWalletButton = () => {
           </MP>
         )}
       </AnimatePresence>
-      {error && <span className="text-red-500 text-sm mt-2 block">There was an error: {String(error)}</span>}
+      {error && <span className="text-red-500 text-sm mt-2 block">There was an error: {error}</span>}
     </>
   )
 }
@@ -167,14 +180,14 @@ const EmbeddedWalletButton = ({
   connectingAddress,
   setActive,
 }: {
-  wallet: EthereumUserWallet
-  activeWallet: EthereumUserWallet | null
+  wallet: ConnectedEmbeddedEthereumWallet
+  activeWallet: ConnectedEmbeddedEthereumWallet | null
   connectingAddress: string | undefined
   setActive: (opts: {
-    walletId: string
     address: `0x${string}`
-    recovery?: { recoveryMethod: RecoveryMethod; password?: string }
-  }) => Promise<unknown>
+    recoveryMethod?: RecoveryMethod
+    recoveryPassword?: string
+  }) => Promise<void>
 }) => {
   const isConnecting = connectingAddress != null && connectingAddress.toLowerCase() === wallet.address.toLowerCase()
   const [password, setPassword] = useState('example-password')
@@ -194,18 +207,17 @@ const EmbeddedWalletButton = ({
   const handleSetActive = () => {
     if (wallet.recoveryMethod === RecoveryMethod.PASSWORD) {
       setActive({
-        walletId: embeddedWalletId,
         address: wallet.address,
-        recovery: { recoveryMethod: RecoveryMethod.PASSWORD, password },
+        recoveryMethod: RecoveryMethod.PASSWORD,
+        recoveryPassword: password,
       })
     } else if (wallet.recoveryMethod === RecoveryMethod.PASSKEY) {
       setActive({
-        walletId: embeddedWalletId,
         address: wallet.address,
-        recovery: { recoveryMethod: RecoveryMethod.PASSKEY },
+        recoveryMethod: RecoveryMethod.PASSKEY,
       })
     } else {
-      setActive({ walletId: embeddedWalletId, address: wallet.address })
+      setActive({ address: wallet.address })
     }
   }
 
@@ -289,37 +301,41 @@ const EmbeddedWalletButton = ({
 export const ConnectExternalWalletCard = () => {
   const wallet = useConnectedWallet()
   const bridge = useEthereumBridge()
-  const walletsHook = useWallets()
+  const embeddedHook = useEthereumEmbeddedWallet()
+  const allConnectors = useExternalConnectors()
 
-  const embeddedWallets = walletsHook.wallets.filter((w) => w.id === embeddedWalletId)
-  const externalConnectors = bridge?.connectors.filter((c) => c.id !== embeddedWalletId) ?? []
+  const embeddedWallets = embeddedHook.wallets
+  const externalConnectors = allConnectors.filter((c) => c.id !== embeddedWalletId)
 
   const isOpenfortActive = wallet.isConnected && wallet.isEmbedded
   const isExternalActive = wallet.isConnected && wallet.isExternal
-  const isBusy = wallet.isConnecting || walletsHook.isConnecting || walletsHook.isCreating
+  const isBusy = wallet.isConnecting || embeddedHook.status === 'connecting' || embeddedHook.status === 'creating'
 
   const connectedAddress = wallet.status === 'connected' ? wallet.address : undefined
-  const activeWalletFromHook = walletsHook.activeWallet ?? null
+  const activeWalletFromHook = embeddedHook.activeWallet ?? null
   const activeWallet =
     activeWalletFromHook != null
       ? activeWalletFromHook
       : connectedAddress != null
         ? (embeddedWallets.find((w) => w.address.toLowerCase() === connectedAddress.toLowerCase()) ?? null)
         : null
-  const connectingAddress = walletsHook.isConnecting
-    ? (embeddedWallets.find((w) => w.isConnecting)?.address ?? activeWalletFromHook?.address)
-    : undefined
+  const connectingAddress =
+    embeddedHook.status === 'connecting'
+      ? (embeddedHook.activeWallet?.address ?? activeWalletFromHook?.address)
+      : undefined
 
-  const setActive = (opts: {
-    walletId: string
-    address?: `0x${string}`
-    recovery?: { recoveryMethod: RecoveryMethod; password?: string }
-  }) => walletsHook.setActiveWallet(opts as Parameters<typeof walletsHook.setActiveWallet>[0])
+  const setActive = async (opts: {
+    address: `0x${string}`
+    recoveryMethod?: RecoveryMethod
+    recoveryPassword?: string
+  }) => {
+    await embeddedHook.setActive(opts)
+  }
 
   const handleSelectExternal = (connectorId: string) => {
-    if (isBusy) return
-    if (walletsHook.isError) walletsHook.reset()
-    walletsHook.setActiveWallet({ walletId: connectorId, showUI: true })
+    if (isBusy || !bridge) return
+    const wallet = externalConnectors.find((c) => c.id === connectorId)
+    if (wallet) bridge.connect({ connector: wallet.connector })
   }
 
   return (
@@ -341,9 +357,7 @@ export const ConnectExternalWalletCard = () => {
             <div className="flex flex-col gap-0.5">
               {externalConnectors.map((c) => {
                 const isActive = isExternalActive && wallet.status === 'connected' && wallet.connectorId === c.id
-                const icon = 'icon' in c ? c.icon : undefined
-                const iconUrl = typeof icon === 'string' ? icon : undefined
-                const IconElement = typeof icon === 'object' && icon != null ? icon : null
+                const iconNode = c.icon
 
                 return (
                   <SimpleWalletButton
@@ -352,11 +366,9 @@ export const ConnectExternalWalletCard = () => {
                     disabled={!!isActive || isBusy}
                     onClick={() => handleSelectExternal(c.id)}
                   >
-                    {iconUrl ? (
-                      <img src={iconUrl} alt={c.name} className="h-5 w-5 rounded object-contain" />
-                    ) : IconElement ? (
-                      <span className="h-5 w-5 flex shrink-0 [&>svg]:h-full [&>svg]:w-full [&>svg]:object-contain">
-                        {IconElement}
+                    {iconNode ? (
+                      <span className="h-5 w-5 flex shrink-0 [&>svg]:h-full [&>svg]:w-full [&>img]:h-full [&>img]:w-full [&>img]:object-contain">
+                        {iconNode}
                       </span>
                     ) : (
                       <span className="h-5 w-5 rounded bg-base-300 flex items-center justify-center text-[10px] font-medium">
@@ -380,10 +392,10 @@ export const ConnectExternalWalletCard = () => {
           >
             <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Embedded</p>
             <div className="flex flex-col gap-0.5">
-              {walletsHook.isLoadingWallets && (
+              {embeddedHook.status === 'fetching-wallets' && (
                 <p className="text-xs text-muted-foreground py-2 px-3">Loading wallets...</p>
               )}
-              {embeddedWallets.length === 0 && !walletsHook.isLoadingWallets && (
+              {embeddedWallets.length === 0 && embeddedHook.status !== 'fetching-wallets' && (
                 <p className="text-xs text-muted-foreground py-2 px-3">No embedded wallets yet.</p>
               )}
               {embeddedWallets.map((w) => (
@@ -400,7 +412,7 @@ export const ConnectExternalWalletCard = () => {
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="flex flex-col gap-1">
-                      <h3 className="text-base mb-1">useWallets</h3>
+                      <h3 className="text-base mb-1">useEthereumEmbeddedWallet</h3>
                       <pre className="flex text-xs flex-col gap-1">
                         {JSON.stringify({ id: w.id, address: w.address, recoveryMethod: w.recoveryMethod }, null, 2)}
                       </pre>
@@ -410,7 +422,7 @@ export const ConnectExternalWalletCard = () => {
                         <p className="text-xs opacity-70">
                           Click to set active. (
                           <Link to="/wallet/useWallets" search={{ focus: 'setActive' }}>
-                            setActiveWallet
+                            setActive
                           </Link>
                           )
                         </p>
@@ -427,7 +439,9 @@ export const ConnectExternalWalletCard = () => {
 
         {/* Status feedback */}
         {isBusy && <p className="text-xs text-muted-foreground text-center mt-3 animate-pulse">Switching wallet...</p>}
-        {walletsHook.isError && <p className="text-xs text-red-500 text-center mt-3">{String(walletsHook.error)}</p>}
+        {embeddedHook.status === 'error' && embeddedHook.error && (
+          <p className="text-xs text-red-500 text-center mt-3">{embeddedHook.error}</p>
+        )}
       </CardContent>
     </Card>
   )

@@ -4,12 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, PlusIcon, ShieldIcon } from '../../../assets/icons'
 import Logos from '../../../assets/logos'
-import { useWallets } from '../../../hooks/openfort/useWallets'
+import { OpenfortError } from '../../../core/errors'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
 import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
+import { handleOtpRecoveryError } from '../../../shared/utils/otpError'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import FitText from '../../Common/FitText'
@@ -86,7 +88,7 @@ const CreateWalletAutomaticRecovery = ({
   const { embeddedState } = useOpenfortCore()
   const { setRoute, triggerResize } = useOpenfort()
   const [recoveryError, setRecoveryError] = useState<Error | null>(null)
-  const { createWallet } = useWallets()
+  const { create } = useEthereumEmbeddedWallet()
   const { isEnabled: isWalletRecoveryOTPEnabled, requestOTP } = useRecoveryOTP()
   const [shouldCreateWallet, setShouldCreateWallet] = useState(false)
   const [needsOTP, setNeedsOTP] = useState(false)
@@ -98,38 +100,34 @@ const CreateWalletAutomaticRecovery = ({
 
   const handleCompleteOtp = async (otp: string) => {
     setOtpStatus('loading')
-
-    const response = await createWallet({
-      recovery: {
+    try {
+      await create({
         recoveryMethod: RecoveryMethod.AUTOMATIC,
         otpCode: otp,
-      },
-    })
-
-    if (response.error) {
+      })
+      setOtpStatus('success')
+      setRoute(routes.CONNECTED_SUCCESS)
+    } catch (err) {
       setOtpStatus('error')
-      setError(response.error.message || 'There was an error verifying the OTP')
-      logger.log('Error verifying OTP for wallet recovery', response.error)
+      setError(err instanceof OpenfortError ? err.message : 'There was an error verifying the OTP')
+      logger.log('Error verifying OTP for wallet recovery', err)
       setTimeout(() => {
         setOtpStatus('idle')
         setError(false)
       }, 1000)
-    } else {
-      setOtpStatus('success')
-      // setTimeout(() => {
-      //   setRoute(routes.CONNECTED_SUCCESS)
-      // }, 1000)
     }
   }
 
   useEffect(() => {
-    // To ensure the wallet is created only once
-    if (shouldCreateWallet) {
-      ;(async () => {
-        logger.log('Creating wallet Automatic recover')
-        const response = await createWallet()
-
-        if (response.isOTPRequired && isWalletRecoveryOTPEnabled) {
+    if (!shouldCreateWallet) return
+    ;(async () => {
+      logger.log('Creating wallet Automatic recover')
+      try {
+        await create({ recoveryMethod: RecoveryMethod.AUTOMATIC })
+        setRoute(routes.CONNECTED_SUCCESS)
+      } catch (err) {
+        const { error, isOTPRequired } = handleOtpRecoveryError(err, isWalletRecoveryOTPEnabled)
+        if (isOTPRequired && isWalletRecoveryOTPEnabled) {
           try {
             const res = await requestOTP()
             setNeedsOTP(true)
@@ -138,14 +136,14 @@ const CreateWalletAutomaticRecovery = ({
             logger.log('Error requesting OTP for wallet recovery', otpErr)
             setRecoveryError(new Error('Failed to send recovery code'))
           }
-        } else if (response.error) {
-          logger.log('Error creating wallet', response.error)
-          setRecoveryError(response.error)
+        } else {
+          logger.log('Error creating wallet', err)
+          setRecoveryError(error)
         }
-        triggerResize()
-      })()
-    }
-  }, [shouldCreateWallet])
+      }
+      triggerResize()
+    })()
+  }, [shouldCreateWallet, create, isWalletRecoveryOTPEnabled, requestOTP, triggerResize])
 
   const [canSendOtp, setCanSendOtp] = useState(true)
 
@@ -239,28 +237,26 @@ const CreateWalletPasskeyRecovery = ({
   onBack: SetOnBackFunction
   logoutOnBack: boolean
 }) => {
-  const { triggerResize } = useOpenfort()
-  const { createWallet, error: recoveryError } = useWallets()
+  const { triggerResize, setRoute } = useOpenfort()
+  const { create } = useEthereumEmbeddedWallet()
   const [shouldCreateWallet, setShouldCreateWallet] = useState(false)
+  const [recoveryError, setRecoveryError] = useState<Error | null>(null)
   const { embeddedState } = useOpenfortCore()
 
   useEffect(() => {
-    // To ensure the wallet is created only once
-    if (shouldCreateWallet) {
-      ;(async () => {
-        logger.log('Creating wallet passkey recovery')
-        const response = await createWallet({
-          recovery: {
-            recoveryMethod: RecoveryMethod.PASSKEY,
-          },
-        })
-        if (response.error) {
-          logger.log('Error creating wallet', response.error)
-          setShouldCreateWallet(false)
-        }
-      })()
-    }
-  }, [shouldCreateWallet])
+    if (!shouldCreateWallet) return
+    ;(async () => {
+      logger.log('Creating wallet passkey recovery')
+      try {
+        await create({ recoveryMethod: RecoveryMethod.PASSKEY })
+        setRoute(routes.CONNECTED_SUCCESS)
+      } catch (err) {
+        logger.log('Error creating wallet', err)
+        setRecoveryError(new Error('Failed to create wallet'))
+        setShouldCreateWallet(false)
+      }
+    })()
+  }, [shouldCreateWallet, create])
 
   useEffect(() => {
     if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) {
@@ -297,10 +293,10 @@ const CreateWalletPasswordRecovery = ({
 }) => {
   const [recoveryPhrase, setRecoveryPhrase] = useState('')
   const [recoveryError, setRecoveryError] = useState<false | string>(false)
-  const { triggerResize } = useOpenfort()
+  const { triggerResize, setRoute } = useOpenfort()
   const [showPasswordIsTooWeakError, setShowPasswordIsTooWeakError] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { createWallet } = useWallets()
+  const { create } = useEthereumEmbeddedWallet()
 
   const handleSubmit = async () => {
     if (getPasswordStrength(recoveryPhrase) < MEDIUM_SCORE_THRESHOLD) {
@@ -309,21 +305,17 @@ const CreateWalletPasswordRecovery = ({
     }
 
     setLoading(true)
-
-    const { error } = await createWallet({
-      recovery: {
+    try {
+      await create({
         recoveryMethod: RecoveryMethod.PASSWORD,
-        password: recoveryPhrase,
-      },
-    })
-
-    setLoading(false)
-
-    if (error) {
-      setRecoveryError(error.message || 'There was an error recovering your account')
-    } else {
+        recoveryPassword: recoveryPhrase,
+      })
       logger.log('Recovery success')
+      setRoute(routes.CONNECTED_SUCCESS)
+    } catch (err) {
+      setRecoveryError(err instanceof OpenfortError ? err.message : 'There was an error recovering your account')
     }
+    setLoading(false)
   }
 
   useEffect(() => {

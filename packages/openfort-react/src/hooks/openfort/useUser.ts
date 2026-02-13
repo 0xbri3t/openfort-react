@@ -22,7 +22,7 @@ export function useUser() {
       await client.validateAndRefreshToken()
       const token = await client.getAccessToken()
       return token
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleOAuthConfigError(error)
       throw error
     }
@@ -31,7 +31,7 @@ export function useUser() {
   const validateAndRefresh = useCallback(async () => {
     try {
       await client.validateAndRefreshToken()
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleOAuthConfigError(error)
       throw error
     }

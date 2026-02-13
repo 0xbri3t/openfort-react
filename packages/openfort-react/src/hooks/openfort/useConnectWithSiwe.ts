@@ -74,6 +74,7 @@ export function useConnectWithSiwe() {
         }
 
         const SIWEMessage = createSIWEMessage(addressToUse, nonce, chainId)
+        if (!SIWEMessage) throw new Error('SIWE message creation failed (window not available)')
 
         const signature = await signMessage({ message: SIWEMessage })
 

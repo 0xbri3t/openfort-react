@@ -412,8 +412,8 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           ...(options.name && { name: options.name }),
         })
 
-        // TODO: TMP FIX
-        if ('token' in result && result.token !== null) {
+        // API returns token when auth succeeds immediately; otherwise requires email verification
+        if ('token' in result && result.token != null) {
           const { wallet } = await tryUseWallet({
             logoutOnError: options.logoutOnError ?? hookOptions.logoutOnError,
             recoverWalletAutomatically: options.recoverWalletAutomatically ?? hookOptions.recoverWalletAutomatically,

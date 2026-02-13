@@ -5,6 +5,7 @@ import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeConte
 import { useUser } from '../../../hooks/openfort/useUser'
 import type { UserAccount } from '../../../openfortCustomTypes'
 import { truncateEthAddress } from '../../../utils'
+import { logger } from '../../../utils/logger'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { LinkedProviderText } from '../../Pages/LinkedProviders/styles'
@@ -23,7 +24,12 @@ export const WalletDisplay = ({ walletAddress }: { walletAddress: string }) => {
     bridge
       .getEnsName({ address: walletAddress as Hex })
       .then(setEnsName)
-      .catch(() => {})
+      .catch((_err) => {
+        // ENS resolution can fail on testnets; non-fatal
+        if (process.env.NODE_ENV === 'development') {
+          logger.warn('[Openfort] ENS resolution failed')
+        }
+      })
   }, [useEns, bridge, walletAddress])
 
   const separator = ['web95', 'rounded', 'minimal'].includes(themeContext.theme ?? context.uiConfig.theme ?? '')

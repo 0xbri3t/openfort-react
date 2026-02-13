@@ -95,7 +95,7 @@ const SendConfirmation = () => {
   const nativeBalance = useBalance({
     address: address ?? '',
     chainType: wallet.status === 'connected' ? wallet.chainType : chainType,
-    chainId: chainId ?? 80002,
+    chainId: chainId ?? 13337,
     cluster: wallet.status === 'connected' && wallet.chainType === ChainTypeEnum.SVM ? wallet.cluster : 'devnet',
     enabled: !!address && !isErc20,
   })
@@ -106,7 +106,7 @@ const SendConfirmation = () => {
   const erc20Balance = useEthereumTokenBalance({
     tokenAddress: isErc20 ? (token.address as `0x${string}`) : undefined,
     ownerAddress: address,
-    chainId: chainId ?? 80002,
+    chainId: chainId ?? 13337,
     enabled: Boolean(isErc20 && address),
   })
 

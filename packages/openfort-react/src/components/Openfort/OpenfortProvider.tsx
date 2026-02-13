@@ -120,7 +120,7 @@ export const OpenfortProvider = ({
           shieldDebugMode: debugMode.shieldDebugMode ?? false,
           openfortCoreDebugMode: debugMode.openfortCoreDebugMode ?? false,
           openfortReactDebugMode: debugMode.openfortReactDebugMode ?? false,
-          debugRoutes: (debugMode as any).debugRoutes ?? false,
+          debugRoutes: debugMode.debugRoutes ?? false,
         }
       }
     }
@@ -132,40 +132,43 @@ export const OpenfortProvider = ({
   const injectedConnector = bridge?.connectors?.find((c) => c.id === 'injected')
   const allowAutomaticRecovery = !!(walletConfig?.createEncryptedSessionEndpoint || walletConfig?.getEncryptionSession)
 
-  const defaultUIOptions: OpenfortUIOptionsExtended = {
-    appName: 'Openfort',
-    theme: 'auto',
-    mode: 'auto',
-    language: 'en-US',
-    hideBalance: false,
-    hideTooltips: false,
-    hideQuestionMarkCTA: false,
-    hideNoWalletCTA: false,
-    walletConnectCTA: 'link',
-    hideRecentBadge: false,
-    avoidLayoutShift: true,
-    embedGoogleFonts: false,
-    truncateLongENSAddress: true,
-    walletConnectName: undefined,
-    reducedMotion: false,
-    disclaimer: null,
-    bufferPolyfill: true,
-    customAvatar: undefined,
-    enforceSupportedChains: false,
-    ethereumOnboardingUrl: undefined,
-    walletOnboardingUrl: undefined,
-    buyWithCardUrl: undefined,
-    buyFromExchangeUrl: undefined,
-    buyTroubleshootingUrl: undefined,
-    disableSiweRedirect: false,
-    walletRecovery: {
-      allowedMethods: [RecoveryMethod.PASSWORD, ...(allowAutomaticRecovery ? [RecoveryMethod.AUTOMATIC] : [])],
-      defaultMethod: allowAutomaticRecovery ? RecoveryMethod.AUTOMATIC : RecoveryMethod.PASSWORD,
-    },
-    authProviders: hasWagmi
-      ? [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP, UIAuthProvider.WALLET]
-      : [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP],
-  }
+  const defaultUIOptions = useMemo<OpenfortUIOptionsExtended>(
+    () => ({
+      appName: 'Openfort',
+      theme: 'auto',
+      mode: 'auto',
+      language: 'en-US',
+      hideBalance: false,
+      hideTooltips: false,
+      hideQuestionMarkCTA: false,
+      hideNoWalletCTA: false,
+      walletConnectCTA: 'link',
+      hideRecentBadge: false,
+      avoidLayoutShift: true,
+      embedGoogleFonts: false,
+      truncateLongENSAddress: true,
+      walletConnectName: undefined,
+      reducedMotion: false,
+      disclaimer: null,
+      bufferPolyfill: true,
+      customAvatar: undefined,
+      enforceSupportedChains: false,
+      ethereumOnboardingUrl: undefined,
+      walletOnboardingUrl: undefined,
+      buyWithCardUrl: undefined,
+      buyFromExchangeUrl: undefined,
+      buyTroubleshootingUrl: undefined,
+      disableSiweRedirect: false,
+      walletRecovery: {
+        allowedMethods: [RecoveryMethod.PASSWORD, ...(allowAutomaticRecovery ? [RecoveryMethod.AUTOMATIC] : [])],
+        defaultMethod: allowAutomaticRecovery ? RecoveryMethod.AUTOMATIC : RecoveryMethod.PASSWORD,
+      },
+      authProviders: hasWagmi
+        ? [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP, UIAuthProvider.WALLET]
+        : [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP],
+    }),
+    [allowAutomaticRecovery, hasWagmi]
+  )
 
   const safeUiConfig: OpenfortUIOptionsExtended = Object.assign({}, defaultUIOptions, uiConfig)
 

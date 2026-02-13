@@ -1,5 +1,10 @@
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
-import { RecoveryMethod, type UserWallet, useWallets } from '@openfort/react'
+import {
+  RecoveryMethod,
+  type ConnectedEmbeddedEthereumWallet,
+  useEthereumEmbeddedWallet,
+} from '@openfort/react'
+import { useState } from 'react'
 import { Sheet } from './ui/Sheet'
 
 type CreateWalletPasswordSheetProps = {
@@ -12,14 +17,16 @@ export const CreateWalletPasswordSheet = ({
   onClose,
   onCreateWallet,
 }: CreateWalletPasswordSheetProps) => {
-  const { createWallet, error, isCreating, reset } = useWallets()
+  const { create, status } = useEthereumEmbeddedWallet()
+  const [error, setError] = useState<string | null>(null)
+  const isCreating = status === 'creating'
 
   return (
     <Sheet
       open={open}
       onClose={() => {
         onClose()
-        reset()
+        setError(null)
       }}
       title="Enter Password"
       description="Please enter the password of your wallet."
@@ -31,16 +38,15 @@ export const CreateWalletPasswordSheet = ({
           const formData = new FormData(e.target as HTMLFormElement)
           const password = formData.get('password') as string
 
-          const { error } = await createWallet({
-            recovery: {
+          try {
+            await create({
               recoveryMethod: RecoveryMethod.PASSWORD,
-              password,
-            },
-          })
-
-          if (!error) {
+              recoveryPassword: password,
+            })
             onCreateWallet?.()
             onClose()
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create wallet')
           }
         }}
       >
@@ -64,7 +70,7 @@ export const CreateWalletPasswordSheet = ({
           className="w-full mt-2 p-2 border border-gray-300 rounded"
         />
         {error && (
-          <span className="text-red-500 text-sm mt-2">{error?.message}</span>
+          <span className="text-red-500 text-sm mt-2">{error}</span>
         )}
         <button
           className="mt-4 w-full bg-zinc-700 text-white p-2 rounded cursor-pointer"
@@ -81,7 +87,7 @@ export const CreateWalletPasswordSheet = ({
 type WalletRecoverPasswordProps = {
   open: boolean
   onClose: () => void
-  wallet: UserWallet | null
+  wallet: ConnectedEmbeddedEthereumWallet | null
 }
 
 export const WalletRecoverPasswordSheet = ({
@@ -89,34 +95,38 @@ export const WalletRecoverPasswordSheet = ({
   onClose,
   wallet,
 }: WalletRecoverPasswordProps) => {
-  const { setActiveWallet, error, isConnecting, reset } = useWallets()
+  const { setActive, status } = useEthereumEmbeddedWallet()
+  const [error, setError] = useState<string | null>(null)
+  const isConnecting = status === 'connecting'
 
   return (
     <Sheet
       open={open}
       onClose={() => {
         onClose()
-        reset()
+        setError(null)
       }}
       title="Enter Password"
       description="Please enter the password of your wallet."
     >
       <form
         className="w-full flex-1 flex flex-col justify-center"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
           const formData = new FormData(e.target as HTMLFormElement)
           const password = formData.get('password') as string
           if (!wallet) throw new Error('No wallet to recover')
 
-          setActiveWallet({
-            walletId: 'xyz.openfort',
-            recovery: {
+          try {
+            await setActive({
+              address: wallet.address,
               recoveryMethod: RecoveryMethod.PASSWORD,
-              password,
-            },
-            address: wallet.address,
-          })
+              recoveryPassword: password,
+            })
+            onClose()
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to recover wallet')
+          }
         }}
       >
         {wallet && (
@@ -132,7 +142,7 @@ export const WalletRecoverPasswordSheet = ({
           className="w-full mt-2 p-2 border border-gray-300 rounded"
         />
         {error && (
-          <span className="text-red-500 text-sm mt-2">{error?.message}</span>
+          <span className="text-red-500 text-sm mt-2">{error}</span>
         )}
         <button
           className="mt-4 w-full bg-zinc-700 text-white p-2 rounded cursor-pointer"

@@ -5,7 +5,7 @@ import {
   useEthereumReadContract,
   useEthereumWriteContract,
 } from '@openfort/react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { formatUnits, getAddress } from 'viem'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
@@ -14,8 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 
-const CONTRACT_ADDRESS = '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac' as const
-const BALANCE_ABI = [
+const _POLYGON_BALANCE_ABI = [
   {
     type: 'function',
     name: 'balanceOf',
@@ -25,17 +24,43 @@ const BALANCE_ABI = [
   },
 ] as const
 
+const BEAM_CLAIM_ABI = [
+  {
+    name: 'claim',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      {
+        name: 'amount',
+        type: 'uint256',
+        internalType: 'uint256',
+      },
+    ],
+    outputs: [],
+  },
+] as const
+
+const _CHAIN_NAMES: Record<number, string> = {
+  13337: 'Beam Testnet',
+  80002: 'Polygon Amoy',
+  84532: 'Base Sepolia',
+}
+
 export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address, chainId } = useEthereumAccount()
+  useEffect(() => {
+    if (chainId != null) {
+    }
+  }, [chainId])
 
   const {
     data: balance,
     refetch,
     error: balanceError,
   } = useEthereumReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: [...BALANCE_ABI],
-    functionName: 'balanceOf',
+    address: import.meta.env.VITE_BEAM_MINT_CONTRACT!,
+    abi: BEAM_CLAIM_ABI,
+    functionName: 'claim',
     args: address ? [address] : undefined,
     chainId: chainId,
   })
@@ -45,20 +70,10 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
   async function submit({ amount }: { amount: string }) {
     if (!address) return
     await writeContract({
-      address: getAddress(CONTRACT_ADDRESS),
-      abi: [
-        {
-          type: 'function',
-          name: 'mint',
-          inputs: [
-            { name: 'to', type: 'address' },
-            { name: 'amount', type: 'uint256' },
-          ],
-          outputs: [],
-        },
-      ],
-      functionName: 'mint',
-      args: [address, BigInt(amount) * BigInt(10 ** 18)],
+      address: getAddress(import.meta.env.VITE_BEAM_MINT_CONTRACT!),
+      abi: BEAM_CLAIM_ABI,
+      functionName: 'claim',
+      args: [BigInt(amount) * BigInt(10 ** 18)],
     })
     setTimeout(refetch, 100)
   }
@@ -69,7 +84,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
         <CardTitle>Write Contract</CardTitle>
         <CardDescription>Interact with smart contracts on the blockchain.</CardDescription>
         <CardDescription>
-          Contract Address: <TruncatedText text={CONTRACT_ADDRESS} />
+          Contract Address: <TruncatedText text={import.meta.env.VITE_BEAM_MINT_CONTRACT!} />
         </CardDescription>
         <CardDescription>
           Balance: {balanceError ? '-' : formatUnits((balance as bigint) ?? 0n, 18) || 0}

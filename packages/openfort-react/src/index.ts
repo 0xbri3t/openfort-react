@@ -64,7 +64,6 @@ export { useRevokePermissions } from './hooks/openfort/useRevokePermissions'
 export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
 export { useWalletAssets } from './hooks/openfort/useWalletAssets'
-export { useWallets } from './hooks/openfort/useWallets'
 export type {
   EthereumUserWallet,
   SolanaUserWallet,
@@ -80,7 +79,7 @@ export {
 } from './hooks/useConnectedWallet'
 export type { EmbeddedWalletState } from './hooks/useEmbeddedWallet'
 export { useEmbeddedWallet } from './hooks/useEmbeddedWallet'
-export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
+export { useOpenfortCore as useOpenfort, useWalletStatus } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
 export type { TransactionFlowStatus, UseTransactionFlowResult } from './shared/hooks/useTransactionFlow'
 export { useTransactionFlow } from './shared/hooks/useTransactionFlow'
@@ -139,6 +138,11 @@ export {
   useSolanaSignMessage,
   useSolanaWriteContract,
 } from './wallet-adapters'
+export {
+  type ExternalConnectorProps,
+  useExternalConnector,
+  useExternalConnectors,
+} from './wallets/useExternalConnectors'
 
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 export type { CountryData, CountryIso2, CountrySelectorProps }

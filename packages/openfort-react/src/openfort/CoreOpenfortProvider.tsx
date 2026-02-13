@@ -37,7 +37,7 @@ import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
 import type { UserAccount } from '../openfortCustomTypes'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
-import { mapBridgeConnectorsToWalletProps } from '../wallets/useEthereumConnectors'
+import { mapBridgeConnectorsToWalletProps } from '../wallets/useExternalConnectors'
 import type { ConnectCallbackProps } from './connectCallbackTypes'
 import { Context } from './context'
 import { createOpenfortClient, setDefaultClient } from './core'
@@ -253,14 +253,18 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         setLinkedAccounts(user.linkedAccounts)
         setUser(user)
         return user
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.log('Error getting user', err)
         if (!logoutOnError) return null
 
-        if (err?.response?.status === 404) {
+        const status =
+          err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { status?: number } }).response?.status
+            : undefined
+        if (status === 404) {
           logger.log('User not found, logging out')
           logout()
-        } else if (err?.response?.status === 401) {
+        } else if (status === 401) {
           logger.log('User not authenticated, logging out')
           logout()
         }
@@ -382,7 +386,9 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         const addr = active.address
         if (addr) setActiveEmbeddedAddress(addr)
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (!cancelled) logger.warn('Failed to get active embedded wallet', err)
+      })
     return () => {
       cancelled = true
     }
@@ -439,8 +445,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         fetchEmbeddedAccountsRef.current()
 
         break
-      case EmbeddedState.READY:
-        ;(async () => {
+      case EmbeddedState.READY: {
+        const pollUserUntilReady = async () => {
           for (let i = 0; i < 5; i++) {
             if (cancelled) return
             logger.log('Trying to update user...', i)
@@ -452,8 +458,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
             }
             await new Promise((resolve) => setTimeout(resolve, 250))
           }
-        })()
+        }
+        pollUserUntilReady()
         break
+      }
       default:
         throw new Error(`Unknown embedded state: ${embeddedState}`)
     }

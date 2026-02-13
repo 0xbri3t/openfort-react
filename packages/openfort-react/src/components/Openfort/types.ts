@@ -174,7 +174,7 @@ type CommonWalletConfig = {
   solana?: SolanaConfig
 }
 
-export type GetEncryptionSessionParams = {
+type GetEncryptionSessionParams = {
   accessToken: string
   otpCode?: string
   userId: string
@@ -218,6 +218,7 @@ export type DebugModeOptions = {
   openfortReactDebugMode?: boolean
   openfortCoreDebugMode?: boolean
   shieldDebugMode?: boolean
+  debugRoutes?: boolean
 }
 
 /**

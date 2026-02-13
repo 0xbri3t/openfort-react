@@ -23,7 +23,7 @@ type InternalState = {
   error: string | null
 }
 
-const DEFAULT_CHAIN_ID = 80002
+const DEFAULT_CHAIN_ID = 13337
 
 /**
  * Returns state for EVM embedded wallets: create, recover, list, active wallet, and provider.
@@ -41,8 +41,14 @@ const DEFAULT_CHAIN_ID = 80002
  * ```
  */
 export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOptions): EmbeddedEthereumWalletState {
-  const { client, embeddedAccounts, isLoadingAccounts, updateEmbeddedAccounts, setActiveEmbeddedAddress } =
-    useOpenfortCore()
+  const {
+    client,
+    embeddedAccounts,
+    isLoadingAccounts,
+    updateEmbeddedAccounts,
+    setActiveEmbeddedAddress,
+    setWalletStatus,
+  } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
 
   const chainId = options?.chainId ?? DEFAULT_CHAIN_ID
@@ -87,6 +93,16 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       getProvider: getEmbeddedEthereumProvider,
     }))
   }, [ethereumAccounts, getEmbeddedEthereumProvider])
+
+  useEffect(() => {
+    if (state.status === 'creating') {
+      setWalletStatus({ status: 'creating' })
+    } else if (state.status === 'connecting' && state.activeWallet) {
+      setWalletStatus({ status: 'connecting', address: state.activeWallet.address })
+    } else {
+      setWalletStatus({ status: 'idle' })
+    }
+  }, [state.status, state.activeWallet, setWalletStatus])
 
   const create = useCallback(
     async (createOptions?: CreateEthereumWalletOptions): Promise<EmbeddedAccount> => {
@@ -369,8 +385,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         })
         setActiveEmbeddedAddress(account.address)
       })
-      .catch(() => {
-        logger.warn('Failed to get active Ethereum wallet')
+      .catch((err) => {
+        logger.warn('Failed to get active Ethereum wallet', err)
       })
     return () => {
       cancelled = true

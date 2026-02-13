@@ -7,6 +7,7 @@ import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
+import { handleOtpRecoveryError } from '../../../shared/utils/otpError'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import FitText from '../../Common/FitText'
@@ -103,8 +104,8 @@ const SolanaCreateAutomatic = ({ onBack, logoutOnBack }: { onBack: SetOnBackFunc
         await embeddedWallet.create({ recoveryMethod: RecoveryMethod.AUTOMATIC })
         setRoute(routes.SOL_CONNECTED)
       } catch (err) {
-        const isOtpRequired = err instanceof Error && err.message === 'OTP_REQUIRED'
-        if (isOtpRequired && isWalletRecoveryOTPEnabled) {
+        const { error, isOTPRequired } = handleOtpRecoveryError(err, isWalletRecoveryOTPEnabled)
+        if (isOTPRequired && isWalletRecoveryOTPEnabled) {
           try {
             const response = await requestOTP()
             setNeedsOTP(true)
@@ -115,7 +116,7 @@ const SolanaCreateAutomatic = ({ onBack, logoutOnBack }: { onBack: SetOnBackFunc
           }
         } else {
           logger.log('Error creating Solana wallet', err)
-          setRecoveryError(new Error('Failed to create wallet'))
+          setRecoveryError(error)
         }
       }
       triggerResize()

@@ -23,6 +23,7 @@ import {
   useSwitchChain,
   useWalletClient,
 } from 'wagmi'
+import { shouldExcludeConnector } from './connectorFilter'
 
 function mapConnector(c: {
   id: string
@@ -61,16 +62,13 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
   }
   const stableConnectors = connectorsRef.current
 
-  // Dedup connectors so all bridge consumers get a clean list.
-  // Mirrors the dedup logic from mapBridgeConnectorsToWalletProps.
+  // Dedup connectors and exclude unwanted ones (Openfort, Phantom, MetaMask/Coinbase dupes).
+  // Uses shared shouldExcludeConnector so filtering stays in sync with mapBridgeConnectorsToWalletProps (useExternalConnectors).
   const bridgeConnectors: OpenfortEthereumBridgeConnector[] = useMemo(() => {
     const mapped = stableConnectors.map((c) => mapConnector(c))
-    const hasIoMetamask = mapped.some((w) => w.id === 'io.metamask' || w.id === 'io.metamask.mobile')
-    const hasCoinbaseWallet = mapped.some((w) => w.id === 'com.coinbase.wallet')
     return mapped
       .filter((w, i, self) => self.findIndex((x) => x.id === w.id) === i)
-      .filter((w) => !(hasIoMetamask && (w.id === 'metaMask' || w.id === 'metaMaskSDK')))
-      .filter((w) => !(hasCoinbaseWallet && w.id === 'coinbaseWalletSDK'))
+      .filter((w) => !shouldExcludeConnector(w, mapped))
   }, [stableConnectors])
 
   const connectBridge = useCallback(

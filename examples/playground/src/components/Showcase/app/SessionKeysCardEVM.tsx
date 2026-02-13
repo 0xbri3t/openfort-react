@@ -67,7 +67,7 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
                     {
                       type: 'contract-call',
                       data: {
-                        address: '0x2522f4fc9af2e1954a3d13f7a5b2683a00a4543a',
+                        address: import.meta.env.VITE_BEAM_MINT_CONTRACT!,
                         calls: [],
                       },
                       policies: [],

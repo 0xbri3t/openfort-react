@@ -5,10 +5,9 @@ import {
 } from '@heroicons/react/24/outline'
 import {
   RecoveryMethod,
-  type UserWallet,
-  useSignOut,
+  type ConnectedEmbeddedEthereumWallet,
+  useEthereumEmbeddedWallet,
   useUser,
-  useWallets,
 } from '@openfort/react'
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
@@ -16,7 +15,7 @@ import { CreateWallet, CreateWalletSheet } from './WalletCreation'
 import { WalletRecoverPasswordSheet } from './WalletPasswordSheets'
 import { supabase } from '../../../integrations/supabase'
 
-function WalletRecoveryBadge({ wallet }: { wallet: UserWallet }) {
+function WalletRecoveryBadge({ wallet }: { wallet: ConnectedEmbeddedEthereumWallet }) {
   let Icon = LockClosedIcon
   let label = 'Unknown'
 
@@ -46,24 +45,24 @@ function WalletRecoveryBadge({ wallet }: { wallet: UserWallet }) {
 export function WalletListCard() {
   const {
     wallets,
-    isLoadingWallets,
-    availableWallets,
-    setActiveWallet,
-    isConnecting,
-  } = useWallets()
+    status,
+    activeWallet,
+    setActive,
+  } = useEthereumEmbeddedWallet()
+  const isLoadingWallets = status === 'fetching-wallets'
+  const isConnecting = status === 'connecting'
   const { user, isAuthenticated } = useUser()
-  const { isConnected } = useAccount()                                                                                                                                                                          
+  const { isConnected } = useAccount()
 
   const [createWalletSheetOpen, setCreateWalletSheetOpen] = useState(false)
-  const [walletToRecover, setWalletToRecover] = useState<UserWallet | null>(
-    null,
-  )
+  const [walletToRecover, setWalletToRecover] =
+    useState<ConnectedEmbeddedEthereumWallet | null>(null)
 
   if (isLoadingWallets || (!user && isAuthenticated)) {
     return <div>Loading wallets...</div>
   }
 
-  if (availableWallets.length === 0) {
+  if (wallets.length === 0) {
     return (
       <div className="flex gap-2 flex-col w-full">
         <h1>Create a wallet</h1>
@@ -73,18 +72,17 @@ export function WalletListCard() {
     )
   }
 
-  const handleWalletClick = (wallet: UserWallet) => {
-    if (wallet.isActive || isConnecting) return
+  const handleWalletClick = (wallet: ConnectedEmbeddedEthereumWallet) => {
+    const isActive =
+      activeWallet?.address.toLowerCase() === wallet.address.toLowerCase()
+    if (isActive || isConnecting) return
 
     if (wallet.recoveryMethod === RecoveryMethod.PASSWORD) {
       setWalletToRecover(wallet)
       return
     }
 
-    setActiveWallet({
-      walletId: 'xyz.openfort',
-      address: wallet.address,
-    })
+    setActive({ address: wallet.address })
   }
 
   return (
@@ -97,15 +95,18 @@ export function WalletListCard() {
       <div className="space-y-4 pb-4">
         <h2>Your Wallets</h2>
         <div className="flex flex-col space-y-2">
-          {wallets.map((wallet) => (
+          {wallets.map((wallet) => {
+            const isActive =
+              activeWallet?.address.toLowerCase() === wallet.address.toLowerCase()
+            return (
             <button
               key={wallet.id + wallet.address}
               className="px-4 py-3 border data-[active=true]:border-zinc-300 border-zinc-700 rounded data-[active=false]:cursor-pointer data-[active=false]:hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1 text-sm"
               onClick={() => handleWalletClick(wallet)}
-              data-active={wallet.isActive}
-              disabled={wallet.isActive || isConnecting}
+              data-active={isActive}
+              disabled={isActive || isConnecting}
             >
-              {wallet.isConnecting ? (
+              {isConnecting && isActive ? (
                 <p>Connecting...</p>
               ) : (
                 <div className="flex justify-between items-center">
@@ -118,7 +119,8 @@ export function WalletListCard() {
                 </div>
               )}
             </button>
-          ))}
+            )
+          })}
 
           <button
             className="p-3 border border-zinc-700 rounded cursor-pointer hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1"

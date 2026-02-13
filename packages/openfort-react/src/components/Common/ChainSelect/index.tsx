@@ -139,7 +139,7 @@ const ChainSelector: React.FC = () => {
   const chain = chains.find((c) => c.id === chainId)
 
   const locales = useLocales({
-    CHAIN: chain?.name,
+    CHAIN: chain?.name ?? 'UNKNOWN',
   })
 
   const mobile = isMobile() || window?.innerWidth < defaultTheme.mobileWidth

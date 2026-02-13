@@ -52,6 +52,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     activeEmbeddedAddress,
     updateEmbeddedAccounts,
     setActiveEmbeddedAddress,
+    setWalletStatus,
   } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
 
@@ -120,6 +121,16 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       getProvider: async () => createProviderForAccount(acc),
     }))
   }, [solanaAccounts, createProviderForAccount])
+
+  useEffect(() => {
+    if (state.status === 'creating') {
+      setWalletStatus({ status: 'creating' })
+    } else if (state.status === 'connecting' && state.activeWallet) {
+      setWalletStatus({ status: 'connecting' })
+    } else {
+      setWalletStatus({ status: 'idle' })
+    }
+  }, [state.status, state.activeWallet, setWalletStatus])
 
   const create = useCallback(
     async (createOptions?: CreateSolanaWalletOptions): Promise<EmbeddedAccount> => {

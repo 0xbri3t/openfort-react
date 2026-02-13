@@ -18,7 +18,7 @@ const config = createConfig(
   getDefaultConfig({
     appName: 'Openfort demo',
     walletConnectProjectId,
-    chains: [polygonAmoy, beamTestnet, baseSepolia],
+    chains: [beamTestnet, polygonAmoy, baseSepolia],
     transports: {
       [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology'),
       [beamTestnet.id]: http('https://build.onbeam.com/rpc/testnet'),

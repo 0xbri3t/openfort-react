@@ -5,9 +5,12 @@ export type HandleOtpErrorResult = {
   isOTPRequired: boolean
 }
 
-export function handleOtpRecoveryError(error: OpenfortError, hasWalletRecoveryOTP: boolean): HandleOtpErrorResult {
-  if (error.message !== 'OTP_REQUIRED') {
-    return { error, isOTPRequired: false }
+/** Normalizes OTP_REQUIRED errors and returns user-friendly messages. */
+export function handleOtpRecoveryError(error: Error | unknown, hasWalletRecoveryOTP: boolean): HandleOtpErrorResult {
+  const msg = error instanceof Error ? error.message : String(error)
+  if (msg !== 'OTP_REQUIRED') {
+    const normalized = error instanceof OpenfortError ? error : new OpenfortError(msg, OpenfortErrorCode.UNKNOWN_ERROR)
+    return { error: normalized, isOTPRequired: false }
   }
 
   const newError = hasWalletRecoveryOTP

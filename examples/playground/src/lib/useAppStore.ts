@@ -72,7 +72,8 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
     recoverWalletAutomaticallyAfterAuth: undefined,
     accountType: undefined,
     assets: {
-      [polygonAmoy.id]: ['0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'],
+      [polygonAmoy.id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],
+      [beamTestnet.id]: [import.meta.env.VITE_BEAM_MINT_CONTRACT!],
     },
     requestWalletRecoverOTP: async ({ userId, email, phone }) => {
       await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {

@@ -13,7 +13,7 @@ test.describe('Dashboard integration - chain + signatures', () => {
       .first()
     await expect(currentChain).toBeVisible({ timeout: 30_000 })
 
-    const target = 'Beam Testnet'
+    const target = 'Base Sepolia'
 
     const btn = chainCard.getByRole('button', { name: new RegExp(`^switch to\\s+${escapeRegExp(target)}$`, 'i') })
     if (!(await btn.isDisabled().catch(() => false))) {
@@ -27,7 +27,7 @@ test.describe('Dashboard integration - chain + signatures', () => {
     const msg = `Chain-sign ${Date.now()}`
     await dashboardPage.signMessage(msg, m)
 
-    await expect(currentChain).toContainText(/beam testnet/i, { timeout: 30_000 })
+    await expect(currentChain).toContainText(/base sepolia/i, { timeout: 30_000 })
   })
 })
 
