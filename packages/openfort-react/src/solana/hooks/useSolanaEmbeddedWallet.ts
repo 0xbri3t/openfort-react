@@ -412,13 +412,29 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     setActiveEmbeddedAddress,
   ])
 
+  const derived = useMemo(
+    () => ({
+      isLoading:
+        state.status === 'fetching-wallets' ||
+        state.status === 'connecting' ||
+        state.status === 'creating' ||
+        state.status === 'reconnecting',
+      isError: state.status === 'error',
+      isSuccess: state.status === 'connected',
+    }),
+    [state.status]
+  )
+
   if (isLoadingAccounts) {
     return {
       ...actions,
       status: 'fetching-wallets',
       activeWallet: null,
+      isLoading: true,
+      isError: false,
+      isSuccess: false,
     } as EmbeddedSolanaWalletState
   }
 
-  return buildEmbeddedWalletStatusResult(state, actions) as EmbeddedSolanaWalletState
+  return { ...buildEmbeddedWalletStatusResult(state, actions), ...derived } as EmbeddedSolanaWalletState
 }

@@ -42,6 +42,10 @@ export interface UseSwitchChainLike {
   data?: WalletAdapterChain
   error: Error | null
   isPending: boolean
+  /** Alias for isPending. Use for consistent hook shape. */
+  isLoading?: boolean
+  isError?: boolean
+  isSuccess?: boolean
 }
 
 /** useSignMessage-like */
@@ -49,6 +53,10 @@ export interface UseSignMessageLike {
   data: `0x${string}` | undefined
   signMessage: (params: { message: string }) => void | Promise<void>
   isPending?: boolean
+  /** Alias for isPending. Use for consistent hook shape. */
+  isLoading?: boolean
+  isError?: boolean
+  isSuccess?: boolean
   error?: Error | null
 }
 
@@ -70,6 +78,10 @@ export interface UseWriteContractLike {
     args?: unknown[]
   }) => void | Promise<void> | Promise<`0x${string}`>
   isPending: boolean
+  /** Alias for isPending. Use for consistent hook shape. */
+  isLoading?: boolean
+  isError?: boolean
+  isSuccess?: boolean
   error: Error | null
 }
 
@@ -85,6 +97,10 @@ export interface UseSolanaSignMessageLike {
   data: string | undefined
   signMessage: (params: { message: string }) => Promise<void>
   isPending: boolean
+  /** Alias for isPending. Use for consistent hook shape. */
+  isLoading?: boolean
+  isError?: boolean
+  isSuccess?: boolean
   error: Error | null
 }
 
@@ -92,6 +108,10 @@ export interface UseSolanaSendSOLLike {
   sendSOL: (params: { to: string; lamports: bigint }) => Promise<void>
   data: string | undefined
   isPending: boolean
+  /** Alias for isPending. Use for consistent hook shape. */
+  isLoading?: boolean
+  isError?: boolean
+  isSuccess?: boolean
   error: Error | null
   reset: () => void
 }

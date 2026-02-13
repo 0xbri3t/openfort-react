@@ -24,6 +24,10 @@ export type SolanaSendTransactionStatus = 'idle' | 'signing' | 'sending' | 'conf
 export type UseSolanaSendTransactionResult = {
   sendTransaction: (params: { to: string; amount: bigint }) => Promise<string | undefined>
   status: SolanaSendTransactionStatus
+  /** True when status is 'signing' or 'sending'. Use for consistent hook shape. */
+  isLoading: boolean
+  isError: boolean
+  isSuccess: boolean
   error: OpenfortError | null
   reset: () => void
 }
@@ -128,5 +132,9 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
     [wallet, rpc, rpcUrl, queryClient]
   )
 
-  return { sendTransaction, status, error, reset }
+  const isLoading = status === 'signing' || status === 'sending'
+  const isError = status === 'error'
+  const isSuccess = status === 'confirmed'
+
+  return { sendTransaction, status, isLoading, isError, isSuccess, error, reset }
 }

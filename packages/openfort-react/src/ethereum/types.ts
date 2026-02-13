@@ -112,7 +112,7 @@ export interface EthereumWalletActions {
   exportPrivateKey(): Promise<string>
 }
 
-export type EmbeddedEthereumWalletState =
+export type EmbeddedEthereumWalletStateBase =
   | (EthereumWalletActions & { status: 'disconnected'; activeWallet: null })
   | (EthereumWalletActions & { status: 'fetching-wallets'; activeWallet: null })
   | (EthereumWalletActions & { status: 'connecting'; activeWallet: ConnectedEmbeddedEthereumWallet })
@@ -129,6 +129,18 @@ export type EmbeddedEthereumWalletState =
       activeWallet: ConnectedEmbeddedEthereumWallet | null
       error: string
     })
+
+/** Derived booleans for consistent hook shape. All variants include these. */
+export type EmbeddedEthereumWalletDerived = {
+  /** True when status is fetching-wallets, connecting, creating, or reconnecting. */
+  isLoading: boolean
+  /** True when status is 'error'. */
+  isError: boolean
+  /** True when status is 'connected'. */
+  isSuccess: boolean
+}
+
+export type EmbeddedEthereumWalletState = EmbeddedEthereumWalletStateBase & EmbeddedEthereumWalletDerived
 
 export type UseEmbeddedEthereumWalletOptions = {
   /** Chain ID for smart account operations */

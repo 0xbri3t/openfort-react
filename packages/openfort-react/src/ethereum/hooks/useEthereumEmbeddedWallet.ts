@@ -393,13 +393,29 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     }
   }, [isLoadingAccounts, state.status, ethereumAccounts, client, getEmbeddedEthereumProvider, setActiveEmbeddedAddress])
 
+  const derived = useMemo(
+    () => ({
+      isLoading:
+        state.status === 'fetching-wallets' ||
+        state.status === 'connecting' ||
+        state.status === 'creating' ||
+        state.status === 'reconnecting',
+      isError: state.status === 'error',
+      isSuccess: state.status === 'connected',
+    }),
+    [state.status]
+  )
+
   if (isLoadingAccounts) {
     return {
       ...actions,
       status: 'fetching-wallets',
       activeWallet: null,
+      isLoading: true,
+      isError: false,
+      isSuccess: false,
     } as EmbeddedEthereumWalletState
   }
 
-  return buildEmbeddedWalletStatusResult(state, actions) as EmbeddedEthereumWalletState
+  return { ...buildEmbeddedWalletStatusResult(state, actions), ...derived } as EmbeddedEthereumWalletState
 }

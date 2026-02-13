@@ -164,6 +164,9 @@ export function useEthereumSwitchChain(): UseSwitchChainLike {
     data,
     error,
     isPending,
+    isLoading: isPending,
+    isError: error != null,
+    isSuccess: !isPending && error == null,
   }
 }
 
@@ -204,6 +207,9 @@ export function useEthereumSignMessage(): UseSignMessageLike {
     data,
     signMessage,
     isPending,
+    isLoading: isPending,
+    isError: error != null,
+    isSuccess: !isPending && data != null,
     error,
   }
 }
@@ -263,7 +269,8 @@ export function useEthereumReadContract(params: {
  */
 export function useEthereumWriteContract(): UseWriteContractLike {
   const { address, chainId } = useEthereumAccount()
-  const { writeContractAsync, data, isPending, error } = useEthereumWriteContractInternal()
+  const { writeContractAsync, data, isPending, isLoading, isError, isSuccess, error } =
+    useEthereumWriteContractInternal()
 
   const writeContract = useCallback(
     (params: { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }) => {
@@ -283,6 +290,9 @@ export function useEthereumWriteContract(): UseWriteContractLike {
     data,
     writeContract,
     isPending,
+    isLoading,
+    isError,
+    isSuccess,
     error,
   }
 }

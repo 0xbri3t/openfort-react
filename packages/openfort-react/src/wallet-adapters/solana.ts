@@ -152,7 +152,15 @@ export function useSolanaSignMessage(): UseSolanaSignMessageLike {
     [core?.client, wallet.status, wallet.wallets?.length, setOpen, setRoute]
   )
 
-  return { data, signMessage, isPending, error }
+  return {
+    data,
+    signMessage,
+    isPending,
+    isLoading: isPending,
+    isError: error != null,
+    isSuccess: !isPending && data != null,
+    error,
+  }
 }
 
 /**
@@ -167,7 +175,7 @@ export function useSolanaSignMessage(): UseSolanaSignMessageLike {
  * ```
  */
 export function useSolanaWriteContract(): UseSolanaSendSOLLike {
-  const { sendTransaction, status, error, reset } = useSolanaSendTransaction()
+  const { sendTransaction, status, isLoading, isError, isSuccess, error, reset } = useSolanaSendTransaction()
   const [data, setData] = useState<string | undefined>(undefined)
 
   const sendSOL = useCallback(
@@ -190,6 +198,9 @@ export function useSolanaWriteContract(): UseSolanaSendSOLLike {
     sendSOL,
     data,
     isPending: status === 'signing' || status === 'sending',
+    isLoading,
+    isError,
+    isSuccess,
     error: error ?? null,
     reset: resetWithClear,
   }

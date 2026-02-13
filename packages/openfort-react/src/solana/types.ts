@@ -253,7 +253,7 @@ export interface SolanaWalletActions {
   exportPrivateKey(): Promise<string>
 }
 
-export type EmbeddedSolanaWalletState =
+export type EmbeddedSolanaWalletStateBase =
   | (SolanaWalletActions & { status: 'disconnected'; activeWallet: null })
   | (SolanaWalletActions & { status: 'fetching-wallets'; activeWallet: null })
   | (SolanaWalletActions & { status: 'connecting'; activeWallet: ConnectedEmbeddedSolanaWallet })
@@ -270,6 +270,18 @@ export type EmbeddedSolanaWalletState =
       activeWallet: ConnectedEmbeddedSolanaWallet | null
       error: string
     })
+
+/** Derived booleans for consistent hook shape. All variants include these. */
+export type EmbeddedSolanaWalletDerived = {
+  /** True when status is fetching-wallets, connecting, creating, or reconnecting. */
+  isLoading: boolean
+  /** True when status is 'error'. */
+  isError: boolean
+  /** True when status is 'connected'. */
+  isSuccess: boolean
+}
+
+export type EmbeddedSolanaWalletState = EmbeddedSolanaWalletStateBase & EmbeddedSolanaWalletDerived
 
 /**
  * Options for useSolanaEmbeddedWallet hook

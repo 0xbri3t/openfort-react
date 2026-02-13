@@ -29,6 +29,10 @@ export interface UseEthereumWriteContractReturn {
   ) => Promise<`0x${string}`>
   data: `0x${string}` | undefined
   isPending: boolean
+  /** Alias for isPending. Use for consistent hook shape across all async hooks. */
+  isLoading: boolean
+  isError: boolean
+  isSuccess: boolean
   error: Error | null
   reset: () => void
 }
@@ -110,6 +114,9 @@ export function useEthereumWriteContract(): UseEthereumWriteContractReturn {
     writeContractAsync,
     data,
     isPending,
+    isLoading: isPending,
+    isError: error != null,
+    isSuccess: !isPending && data != null,
     error,
     reset,
   }
