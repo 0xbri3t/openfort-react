@@ -1,9 +1,8 @@
 import { useCallback } from 'react'
 import { type AuthorizationRequest, type Hex, parseSignature, type SignedAuthorization } from 'viem'
 import { hashAuthorization } from 'viem/utils'
-
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { OpenfortError, OpenfortReactErrorType } from '../../types'
 
 export type SignAuthorizationParameters = AuthorizationRequest
 
@@ -52,7 +51,7 @@ export function use7702Authorization() {
       }
     ): Promise<SignAuthorizationReturnType> => {
       if (!client) {
-        throw new OpenfortError('Openfort client is not initialized.', OpenfortReactErrorType.CONFIGURATION_ERROR)
+        throw new OpenfortError('Openfort client is not initialized.', OpenfortErrorCode.INVALID_CONFIG)
       }
 
       const authorization = parameters
@@ -60,7 +59,7 @@ export function use7702Authorization() {
       if (!authorization.contractAddress) {
         throw new OpenfortError(
           'Authorization is missing the contract address to sign.',
-          OpenfortReactErrorType.VALIDATION_ERROR
+          OpenfortErrorCode.INVALID_CONFIG
         )
       }
 
@@ -84,7 +83,7 @@ export function use7702Authorization() {
           yParity,
         } as SignAuthorizationReturnType
       } catch (error) {
-        throw new OpenfortError('Failed to sign authorization.', OpenfortReactErrorType.WALLET_ERROR, { error })
+        throw new OpenfortError('Failed to sign authorization.', OpenfortErrorCode.SIGNING_FAILED, { cause: error })
       }
     },
     [client]

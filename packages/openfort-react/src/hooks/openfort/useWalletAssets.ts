@@ -6,7 +6,8 @@ import { erc7811Actions } from 'viem/experimental'
 import type { getAssets } from 'viem/experimental/erc7811'
 import type { Asset } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
-import { OpenfortError, OpenfortReactErrorType, type OpenfortWalletConfig } from '../../types'
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import type { OpenfortWalletConfig } from '../../types'
 import { useChains } from '../useChains'
 import { useConnectedWallet } from '../useConnectedWallet'
 import { useUser } from './useUser'
@@ -50,7 +51,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
       if (!accessToken) {
         throw new OpenfortError(
           'Failed to get access token from third party auth provider',
-          OpenfortReactErrorType.AUTHENTICATION_ERROR
+          OpenfortErrorCode.NOT_AUTHENTICATED
         )
       }
       const headers: Record<string, string> = {
@@ -110,8 +111,8 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
     queryKey: ['wallet-assets', chainId, customAssetsToFetch, address],
     queryFn: async () => {
       if (!address || !chainId || !chain) {
-        throw new OpenfortError('Wallet not connected', OpenfortReactErrorType.UNEXPECTED_ERROR, {
-          error: new Error('Address, chainId, or chain not available'),
+        throw new OpenfortError('Wallet not connected', OpenfortErrorCode.UNKNOWN_ERROR, {
+          cause: new Error('Address, chainId, or chain not available'),
         })
       }
 
@@ -176,7 +177,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
             raw: a,
           }
         } else {
-          throw new OpenfortError('Unsupported asset type', OpenfortReactErrorType.UNEXPECTED_ERROR, { asset: a })
+          throw new OpenfortError('Unsupported asset type', OpenfortErrorCode.UNKNOWN_ERROR, { cause: a })
         }
         return asset
       })
@@ -224,7 +225,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
       return error
     }
 
-    return new OpenfortError('Failed to fetch wallet assets', OpenfortReactErrorType.UNEXPECTED_ERROR, { error })
+    return new OpenfortError('Failed to fetch wallet assets', OpenfortErrorCode.UNKNOWN_ERROR, { cause: error })
   }, [error])
 
   return {

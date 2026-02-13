@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { type Abi, type ContractFunctionArgs, type ContractFunctionName, encodeFunctionData } from 'viem'
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { OpenfortError, OpenfortReactErrorType } from '../../types'
 import type { OpenfortEmbeddedEthereumWalletProvider } from '../types'
 import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
@@ -64,7 +64,7 @@ export function useEthereumWriteContract(): UseEthereumWriteContractReturn {
 
         const accounts = (await provider.request({ method: 'eth_accounts' })) as `0x${string}`[]
         if (!accounts || accounts.length === 0) {
-          throw new OpenfortError('No accounts available', OpenfortReactErrorType.WALLET_ERROR)
+          throw new OpenfortError('No accounts available', OpenfortErrorCode.WALLET_NOT_FOUND)
         }
 
         const from = accounts[0]
@@ -95,11 +95,9 @@ export function useEthereumWriteContract(): UseEthereumWriteContractReturn {
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError(
-                err instanceof Error ? err.message : 'Transaction failed',
-                OpenfortReactErrorType.WALLET_ERROR,
-                { error: err instanceof Error ? err : undefined }
-              )
+            : new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_UNKNOWN, {
+                cause: err,
+              })
         setError(error)
         setIsPending(false)
         throw error

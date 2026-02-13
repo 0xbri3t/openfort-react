@@ -1,10 +1,10 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import type { WalletStatus } from '../../shared/types'
+import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
-import { OpenfortError, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
 import type {
   ConnectedEmbeddedEthereumWallet,
@@ -12,7 +12,6 @@ import type {
   EmbeddedEthereumWalletState,
   OpenfortEmbeddedEthereumWalletProvider,
   SetActiveEthereumWalletOptions,
-  SetRecoveryOptions,
   UseEmbeddedEthereumWalletOptions,
 } from '../types'
 import { buildRecoveryParams } from './utils'
@@ -95,7 +94,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
 
       try {
         if (!walletConfig) {
-          throw new OpenfortError('Wallet config not found', OpenfortReactErrorType.CONFIGURATION_ERROR)
+          throw new OpenfortError('Wallet config not found', OpenfortErrorCode.INVALID_CONFIG)
         }
 
         const recoveryParams = await buildRecoveryParams(
@@ -156,8 +155,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Failed to create Ethereum wallet', OpenfortReactErrorType.WALLET_ERROR, {
-                error: err,
+            : new OpenfortError('Failed to create Ethereum wallet', OpenfortErrorCode.WALLET_CREATION_FAILED, {
+                cause: err,
               })
 
         setState((s) => ({
@@ -181,10 +180,9 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         )
 
         if (!account) {
-          throw new OpenfortError(
-            `Ethereum wallet not found: ${activeOptions.address}`,
-            OpenfortReactErrorType.WALLET_ERROR
-          )
+          throw new OpenfortError('Embedded wallet not found', OpenfortErrorCode.WALLET_NOT_FOUND, {
+            cause: { address: activeOptions.address },
+          })
         }
 
         const connectingStub: ConnectedEmbeddedEthereumWallet = {
@@ -196,7 +194,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           walletIndex: ethereumAccounts.indexOf(account),
           recoveryMethod: account.recoveryMethod,
           getProvider: async () => {
-            throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
+            throw new OpenfortError('Provider not ready yet', OpenfortErrorCode.WALLET_NOT_FOUND)
           },
         }
         setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
@@ -272,8 +270,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           const error =
             err instanceof OpenfortError
               ? err
-              : new OpenfortError('Failed to set active Ethereum wallet', OpenfortReactErrorType.WALLET_ERROR, {
-                  error: err,
+              : new OpenfortError('Failed to set active Ethereum wallet', OpenfortErrorCode.WALLET_NOT_FOUND, {
+                  cause: err,
                 })
 
           setState((s) => ({
@@ -308,8 +306,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Failed to set recovery method', OpenfortReactErrorType.WALLET_ERROR, {
-                error: err,
+            : new OpenfortError('Failed to set recovery method', OpenfortErrorCode.WALLET_RECOVERY_REQUIRED, {
+                cause: err,
               })
         throw error
       }

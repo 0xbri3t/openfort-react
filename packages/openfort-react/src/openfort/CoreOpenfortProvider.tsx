@@ -25,16 +25,16 @@ import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../constants/openfort'
 import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
+import { OpenfortError, OpenfortErrorCode } from '../core/errors'
 import { queryKeys } from '../core/queryKeys'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
 import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
 import type { WalletReadiness } from '../core/types'
 import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridgeContext'
-import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
+import type { WalletFlowStatus } from '../hooks/openfort/walletTypes'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
 import type { UserAccount } from '../openfortCustomTypes'
-import { OpenfortError, OpenfortReactErrorType } from '../types'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
 import { mapBridgeConnectorsToWalletProps } from '../wallets/useEthereumConnectors'
@@ -188,9 +188,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         setPollingError(
           error instanceof OpenfortError
             ? error
-            : new OpenfortError('Embedded state polling failed', OpenfortReactErrorType.UNEXPECTED_ERROR, {
-                error,
-              })
+            : new OpenfortError('Embedded state polling failed', OpenfortErrorCode.UNKNOWN_ERROR)
         )
         if (pollingRef.current) {
           clearInterval(pollingRef.current)

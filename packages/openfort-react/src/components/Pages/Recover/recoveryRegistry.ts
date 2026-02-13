@@ -53,17 +53,17 @@ async function automaticEntry(wallet: RecoverableWallet, ctx: RecoveryContext): 
     })
     ctx.setRoute(routes.CONNECTED_SUCCESS)
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    if (message === 'OTP_REQUIRED' && ctx.otp.isEnabled) {
+    const isOtpRequired = err instanceof Error && err.message === 'OTP_REQUIRED'
+    if (isOtpRequired && ctx.otp.isEnabled) {
       try {
         const res = await ctx.otp.request()
         ctx.setNeedsOTP(true)
         ctx.setOtpResponse(res)
-      } catch (otpErr) {
-        ctx.setError(otpErr instanceof Error ? otpErr.message : 'Failed to send recovery code')
+      } catch (_otpErr) {
+        ctx.setError('Failed to send recovery code')
       }
     } else {
-      ctx.setError(message || 'Failed to recover wallet')
+      ctx.setError('Failed to recover wallet')
     }
   }
 }

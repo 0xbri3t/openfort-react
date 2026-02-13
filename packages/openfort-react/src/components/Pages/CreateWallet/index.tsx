@@ -136,7 +136,7 @@ const CreateWalletAutomaticRecovery = ({
             setOtpResponse(res)
           } catch (otpErr) {
             logger.log('Error requesting OTP for wallet recovery', otpErr)
-            setRecoveryError(otpErr instanceof Error ? otpErr : new Error(String(otpErr)))
+            setRecoveryError(new Error('Failed to send recovery code'))
           }
         } else if (response.error) {
           logger.log('Error creating wallet', response.error)

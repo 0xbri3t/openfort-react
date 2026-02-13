@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { UIAuthProvider } from '../../../components/Openfort/types'
-import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
+import { OpenfortError, OpenfortErrorCode } from '../../../core/errors'
+import type { OpenfortHookOptions } from '../../../types'
 import { logger } from '../../../utils/logger'
 import { onError } from '../hookConsistency'
 import type { CreateWalletPostAuthOptions } from './useConnectToWalletPostAuth'
@@ -129,7 +130,7 @@ export const useAuthCallback = ({
           onError({
             hookOptions,
             options: {},
-            error: new OpenfortError('No state or email found in URL', OpenfortReactErrorType.AUTHENTICATION_ERROR),
+            error: new OpenfortError('No state or email found in URL', OpenfortErrorCode.NOT_AUTHENTICATED),
           })
           return
         }
@@ -181,7 +182,7 @@ export const useAuthCallback = ({
             options: {},
             error: new OpenfortError(
               'Missing player id or access token or refresh token',
-              OpenfortReactErrorType.AUTHENTICATION_ERROR
+              OpenfortErrorCode.NOT_AUTHENTICATED
             ),
           })
 

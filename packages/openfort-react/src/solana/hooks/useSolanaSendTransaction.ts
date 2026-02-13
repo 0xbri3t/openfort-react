@@ -12,7 +12,7 @@ import {
 } from '@solana/kit'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
-import { OpenfortTransactionError, TransactionErrorCode } from '../../core/errors'
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { queryKeys } from '../../core/queryKeys'
 import { useSolanaContext } from '../SolanaContext'
 import { toUint8Array, unwrapTransactionSignature } from '../utils/transactionHelpers'
@@ -24,7 +24,7 @@ export type SolanaSendTransactionStatus = 'idle' | 'signing' | 'sending' | 'conf
 export type UseSolanaSendTransactionResult = {
   sendTransaction: (params: { to: string; amount: bigint }) => Promise<string | undefined>
   status: SolanaSendTransactionStatus
-  error: OpenfortTransactionError | null
+  error: OpenfortError | null
   reset: () => void
 }
 
@@ -46,7 +46,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
   const wallet = useSolanaEmbeddedWallet()
 
   const [status, setStatus] = useState<SolanaSendTransactionStatus>('idle')
-  const [error, setError] = useState<OpenfortTransactionError | null>(null)
+  const [error, setError] = useState<OpenfortError | null>(null)
 
   const reset = useCallback(() => {
     setStatus('idle')
@@ -56,7 +56,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
   const sendTransaction = useCallback(
     async (params: { to: string; amount: bigint }) => {
       if (wallet.status !== 'connected' || !params.amount || params.amount <= BigInt(0)) {
-        setError(new OpenfortTransactionError('Wallet not connected or invalid amount', TransactionErrorCode.UNKNOWN))
+        setError(new OpenfortError('Wallet not connected or invalid amount', OpenfortErrorCode.TRANSACTION_UNKNOWN))
         setStatus('error')
         return
       }
@@ -88,10 +88,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
         const sigStr = typeof signed.signature === 'string' ? signed.signature : String(signed.signature)
         const signatureBytes = new Uint8Array(getBase58Encoder().encode(sigStr))
         if (signatureBytes.length !== 64) {
-          throw new OpenfortTransactionError(
-            `Invalid signature length: ${signatureBytes.length}, expected 64`,
-            TransactionErrorCode.SIGNING_FAILED
-          )
+          throw new OpenfortError('Invalid signature format', OpenfortErrorCode.TRANSACTION_SIGNING_FAILED)
         }
         const wire = new Uint8Array(1 + signatureBytes.length + messageBytes.length)
         wire[0] = 1
@@ -114,18 +111,16 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
           return signatureValue
         } else {
           setStatus('error')
-          setError(new OpenfortTransactionError('Transaction failed', TransactionErrorCode.RPC_ERROR))
+          setError(new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_RPC_ERROR))
         }
       } catch (err) {
         setStatus('error')
         const wrapped =
-          err instanceof OpenfortTransactionError
+          err instanceof OpenfortError
             ? err
-            : new OpenfortTransactionError(
-                err instanceof Error ? err.message : String(err),
-                TransactionErrorCode.SIGNING_FAILED,
-                { cause: err }
-              )
+            : new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_SIGNING_FAILED, {
+                cause: err,
+              })
         setError(wrapped)
         return
       }

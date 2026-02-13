@@ -102,11 +102,8 @@ const RemoveLinkedProvider: React.FC = () => {
           setIsSuccess(true)
         }
       } catch (e) {
-        if (e instanceof Error) setError(e.message)
-        else {
-          logger.error('Unexpected error removing linked provider:', e)
-          setError('Failed to remove linked provider. Please try again.')
-        }
+        logger.error('Unexpected error removing linked provider:', e)
+        setError('Failed to remove linked provider. Please try again.')
         return
       }
     else {
@@ -121,11 +118,8 @@ const RemoveLinkedProvider: React.FC = () => {
           setIsSuccess(true)
         }
       } catch (e) {
-        if (e instanceof Error) setError(e.message)
-        else {
-          logger.error('Unexpected error removing linked provider:', e)
-          setError('Failed to remove linked provider. Please try again.')
-        }
+        logger.error('Unexpected error removing linked provider:', e)
+        setError('Failed to remove linked provider. Please try again.')
         return
       }
     }

@@ -1,5 +1,5 @@
 import React from 'react'
-import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
+import type { WalletFlowStatus } from '../hooks/openfort/walletTypes'
 import { Context } from './context'
 
 /**

@@ -112,9 +112,6 @@ export interface EthereumWalletActions {
   exportPrivateKey(): Promise<string>
 }
 
-/** Re-export for backward compatibility */
-export type SetRecoveryOptions = SharedSetRecoveryOptions
-
 export type EmbeddedEthereumWalletState =
   | (EthereumWalletActions & { status: 'disconnected'; activeWallet: null })
   | (EthereumWalletActions & { status: 'fetching-wallets'; activeWallet: null })

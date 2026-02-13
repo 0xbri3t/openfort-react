@@ -12,7 +12,7 @@ import {
   embeddedAccountToSolanaUserWallet,
   embeddedAccountToUserWallet,
   type SolanaUserWallet,
-} from '../useWallets'
+} from '../walletTypes'
 import { useSignOut } from './useSignOut'
 
 /**

@@ -241,7 +241,12 @@ const ConnectWithInjector: React.FC<{
       handleConnectError(
         err && typeof err === 'object' && 'code' in err
           ? (err as { code?: number; message?: string })
-          : { message: err instanceof Error ? err.message : String(err) }
+          : {
+              message:
+                err instanceof Error && err.message === 'User rejected request'
+                  ? 'User rejected request'
+                  : 'Connection failed',
+            }
       )
     }
     setTimeout(triggerResize, 100)

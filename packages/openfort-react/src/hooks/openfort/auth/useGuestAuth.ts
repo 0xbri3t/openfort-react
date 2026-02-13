@@ -1,10 +1,11 @@
 import type { User } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
+import { OpenfortError, OpenfortErrorCode } from '../../../core/errors'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
+import type { OpenfortHookOptions } from '../../../types'
 import { logger } from '../../../utils/logger'
 import { onError, onSuccess } from '../hookConsistency'
-import type { EthereumUserWallet, SolanaUserWallet } from '../useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../walletTypes'
 import { type BaseFlowState, mapStatus } from './status'
 import { type CreateWalletPostAuthOptions, useConnectToWalletPostAuth } from './useConnectToWalletPostAuth'
 
@@ -133,8 +134,8 @@ export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {
         })
       } catch (error) {
         logger.error('Guest signup failed:', error)
-        const openfortError = new OpenfortError('Failed to signup guest', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
-          error,
+        const openfortError = new OpenfortError('Failed to signup guest', OpenfortErrorCode.AUTH_FAILED, {
+          cause: error,
         })
 
         setStatus({

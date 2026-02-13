@@ -1,9 +1,10 @@
 import type { User } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
+import { OpenfortError, OpenfortErrorCode } from '../../../core/errors'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
+import type { OpenfortHookOptions } from '../../../types'
 import { onError, onSuccess } from '../hookConsistency'
-import type { EthereumUserWallet, SolanaUserWallet } from '../useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../walletTypes'
 import { type BaseFlowState, mapStatus } from './status'
 import { type CreateWalletPostAuthOptions, useConnectToWalletPostAuth } from './useConnectToWalletPostAuth'
 
@@ -47,7 +48,7 @@ export const usePhoneOtpAuth = (hookOptions: UsePhoneHookOptions = {}) => {
         })
 
         if (!options.phoneNumber || !options.otp) {
-          const error = new OpenfortError('Phone and OTP are required', OpenfortReactErrorType.VALIDATION_ERROR)
+          const error = new OpenfortError('Phone and OTP are required', OpenfortErrorCode.INVALID_CONFIG)
           setStatus({
             status: 'error',
             error,
@@ -82,19 +83,19 @@ export const usePhoneOtpAuth = (hookOptions: UsePhoneHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to login with phone OTP', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
-          error: e,
+        const error = new OpenfortError('Failed to login with phone OTP', OpenfortErrorCode.AUTH_FAILED, {
+          cause: e,
         })
 
         setStatus({
           status: 'error',
-          error: error,
+          error,
         })
 
         return onError({
           hookOptions,
           options,
-          error: error,
+          error,
         })
       }
     },
@@ -109,7 +110,7 @@ export const usePhoneOtpAuth = (hookOptions: UsePhoneHookOptions = {}) => {
         })
 
         if (!options.phoneNumber) {
-          const error = new OpenfortError('Phone number is required', OpenfortReactErrorType.VALIDATION_ERROR)
+          const error = new OpenfortError('Phone number is required', OpenfortErrorCode.INVALID_CONFIG)
           setStatus({
             status: 'error',
             error,
@@ -134,19 +135,19 @@ export const usePhoneOtpAuth = (hookOptions: UsePhoneHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to request phone OTP', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
-          error: e,
+        const error = new OpenfortError('Failed to request phone OTP', OpenfortErrorCode.AUTH_FAILED, {
+          cause: e,
         })
 
         setStatus({
           status: 'error',
-          error: error,
+          error,
         })
 
         return onError({
           hookOptions,
           options,
-          error: error,
+          error,
         })
       }
     },
@@ -161,7 +162,7 @@ export const usePhoneOtpAuth = (hookOptions: UsePhoneHookOptions = {}) => {
         })
 
         if (!options.phoneNumber || !options.otp) {
-          const error = new OpenfortError('Phone and OTP are required', OpenfortReactErrorType.VALIDATION_ERROR)
+          const error = new OpenfortError('Phone and OTP are required', OpenfortErrorCode.INVALID_CONFIG)
           setStatus({
             status: 'error',
             error,
@@ -191,19 +192,19 @@ export const usePhoneOtpAuth = (hookOptions: UsePhoneHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to link phone OTP', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
-          error: e,
+        const error = new OpenfortError('Failed to link phone OTP', OpenfortErrorCode.AUTH_FAILED, {
+          cause: e,
         })
 
         setStatus({
           status: 'error',
-          error: error,
+          error,
         })
 
         return onError({
           hookOptions,
           options,
-          error: error,
+          error,
         })
       }
     },

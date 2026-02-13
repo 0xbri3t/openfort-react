@@ -8,7 +8,7 @@
 import { Openfort, type OpenfortSDKConfiguration } from '@openfort/openfort-js'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createContext, type PropsWithChildren, type ReactNode, useContext, useMemo } from 'react'
-import { ConfigurationError, ProviderNotFoundError } from './errors'
+import { OpenfortError, OpenfortErrorCode } from './errors'
 import type { CoreContextValue, CoreProviderConfig, OpenfortConfig } from './types'
 
 const CoreContext = createContext<CoreContextValue | null>(null)
@@ -33,7 +33,10 @@ function createQueryClient(): QueryClient {
  */
 function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   if (!config.publishableKey) {
-    throw new ConfigurationError('publishableKey is required. Get your key from https://dashboard.openfort.io')
+    throw new OpenfortError(
+      'publishableKey is required. Get your key from https://dashboard.openfort.io',
+      OpenfortErrorCode.INVALID_CONFIG
+    )
   }
 
   const shieldConfiguration = config.shieldPublishableKey
@@ -142,8 +145,9 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
 export function useCoreContext(): CoreContextValue {
   const context = useContext(CoreContext)
   if (!context) {
-    throw new ProviderNotFoundError(
-      'useCoreContext must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.'
+    throw new OpenfortError(
+      'useCoreContext must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.',
+      OpenfortErrorCode.MISSING_PROVIDER
     )
   }
   return context

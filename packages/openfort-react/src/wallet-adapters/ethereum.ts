@@ -11,6 +11,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { type Abi, createPublicClient, getAddress, http } from 'viem'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useCoreContext } from '../core/CoreContext'
+import { OpenfortError, OpenfortErrorCode } from '../core/errors'
 import { useEthereumWriteContract as useEthereumWriteContractInternal } from '../ethereum/hooks/useEthereumWriteContract'
 import { signMessage as signMessageOp } from '../ethereum/operations'
 import { useBalance as useBalanceHook } from '../hooks/useBalance'
@@ -191,7 +192,7 @@ export function useEthereumSignMessage(): UseSignMessageLike {
         const sig = await signMessageOp({ message: params.message, client })
         setData(sig)
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(String(err)))
+        setError(err instanceof OpenfortError ? err : OpenfortError.from(err, OpenfortErrorCode.SIGNING_FAILED))
       } finally {
         setIsPending(false)
       }

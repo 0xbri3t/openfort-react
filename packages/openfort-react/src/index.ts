@@ -31,6 +31,7 @@ export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
 export { PageLayout, type PageLayoutProps } from './components/PageLayout'
 export { embeddedWalletId } from './constants/openfort'
+export { OpenfortError, OpenfortErrorCode } from './core/errors'
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
 export {
@@ -63,12 +64,12 @@ export { useRevokePermissions } from './hooks/openfort/useRevokePermissions'
 export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
 export { useWalletAssets } from './hooks/openfort/useWalletAssets'
-export {
-  type EthereumUserWallet,
-  type SolanaUserWallet,
-  type UserWallet,
-  useWallets,
-} from './hooks/openfort/useWallets'
+export { useWallets } from './hooks/openfort/useWallets'
+export type {
+  EthereumUserWallet,
+  SolanaUserWallet,
+  UserWallet,
+} from './hooks/openfort/walletTypes'
 export { useChainIsSupported } from './hooks/useChainIsSupported'
 export { useChains } from './hooks/useChains'
 export {
@@ -108,8 +109,6 @@ export type {
 } from './types'
 export {
   OAuthProvider,
-  OpenfortError,
-  OpenfortReactErrorType as OpenfortErrorType,
   SDKOverrides,
   ThirdPartyOAuthProvider,
 } from './types'

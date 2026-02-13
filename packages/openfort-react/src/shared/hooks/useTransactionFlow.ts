@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
-import { OpenfortTransactionError, TransactionErrorCode } from '../../core/errors'
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 
 export type TransactionFlowStatus = 'idle' | 'preparing' | 'signing' | 'sending' | 'confirming' | 'confirmed' | 'error'
 
 export type UseTransactionFlowResult = {
   status: TransactionFlowStatus
-  error: OpenfortTransactionError | null
+  error: OpenfortError | null
   reset: () => void
   execute: (sendFn: () => Promise<void>) => Promise<void>
 }
@@ -24,7 +24,7 @@ export type UseTransactionFlowResult = {
  */
 export function useTransactionFlow(): UseTransactionFlowResult {
   const [status, setStatus] = useState<TransactionFlowStatus>('idle')
-  const [error, setError] = useState<OpenfortTransactionError | null>(null)
+  const [error, setError] = useState<OpenfortError | null>(null)
 
   const reset = useCallback(() => {
     setStatus('idle')
@@ -39,13 +39,11 @@ export function useTransactionFlow(): UseTransactionFlowResult {
       setStatus('confirmed')
     } catch (err) {
       const wrapped =
-        err instanceof OpenfortTransactionError
+        err instanceof OpenfortError
           ? err
-          : new OpenfortTransactionError(
-              err instanceof Error ? err.message : String(err),
-              TransactionErrorCode.UNKNOWN,
-              { cause: err }
-            )
+          : new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_UNKNOWN, {
+              cause: err,
+            })
       setError(wrapped)
       setStatus('error')
     }

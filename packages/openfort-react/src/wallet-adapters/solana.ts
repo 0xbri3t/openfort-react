@@ -2,6 +2,7 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { routes } from '../components/Openfort/types'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
+import { OpenfortError, OpenfortErrorCode } from '../core/errors'
 import { useConnectedWallet } from '../hooks/useConnectedWallet'
 import { useDisconnectAdapter } from '../hooks/useDisconnectAdapter'
 import { useOpenfortCore } from '../openfort/useOpenfort'
@@ -76,7 +77,7 @@ export function useSolanaSignMessage(): UseSolanaSignMessageLike {
           setData(sig)
         })
         .catch((err) => {
-          setError(err instanceof Error ? err : new Error(String(err)))
+          setError(err instanceof OpenfortError ? err : OpenfortError.from(err, OpenfortErrorCode.SIGNING_FAILED))
         })
         .finally(() => {
           setIsPending(false)
@@ -141,8 +142,8 @@ export function useSolanaSignMessage(): UseSolanaSignMessageLike {
         })
         setData(signature)
       } catch (err) {
-        const errorObj = err instanceof Error ? err : new Error(String(err))
-        logger.log('[Solana signMessage] error', { message: errorObj.message, error: errorObj })
+        const errorObj = err instanceof OpenfortError ? err : OpenfortError.from(err, OpenfortErrorCode.SIGNING_FAILED)
+        logger.log('[Solana signMessage] error', { message: errorObj.message, cause: err })
         setError(errorObj)
       } finally {
         setIsPending(false)

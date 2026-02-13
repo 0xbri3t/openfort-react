@@ -78,7 +78,7 @@ const PhoneOTP: React.FC = () => {
         if (error.message === 'Invalid OTP') {
           setErrorMessage('Invalid code. Please try again.')
         } else {
-          setErrorMessage(error.message)
+          setErrorMessage('Verification failed. Please try again.')
         }
       } else {
         setStatus('success')

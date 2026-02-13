@@ -1,4 +1,4 @@
-const OpenfortErrorCode = {
+export const OpenfortErrorCode = {
   // Configuration errors
   MISSING_PROVIDER: 'MISSING_PROVIDER',
   INVALID_CONFIG: 'INVALID_CONFIG',
@@ -17,6 +17,13 @@ const OpenfortErrorCode = {
   SIGNING_FAILED: 'SIGNING_FAILED',
   TRANSACTION_FAILED: 'TRANSACTION_FAILED',
 
+  // Transaction-specific errors (granular codes for transaction failures)
+  TRANSACTION_USER_REJECTED: 'TRANSACTION_USER_REJECTED',
+  TRANSACTION_INSUFFICIENT_FUNDS: 'TRANSACTION_INSUFFICIENT_FUNDS',
+  TRANSACTION_RPC_ERROR: 'TRANSACTION_RPC_ERROR',
+  TRANSACTION_SIGNING_FAILED: 'TRANSACTION_SIGNING_FAILED',
+  TRANSACTION_UNKNOWN: 'TRANSACTION_UNKNOWN',
+
   // Chain-specific errors
   UNSUPPORTED_CHAIN: 'UNSUPPORTED_CHAIN',
   RPC_ERROR: 'RPC_ERROR',
@@ -27,27 +34,17 @@ const OpenfortErrorCode = {
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 } as const
 
-export const TransactionErrorCode = {
-  USER_REJECTED: 'USER_REJECTED',
-  INSUFFICIENT_FUNDS: 'INSUFFICIENT_FUNDS',
-  RPC_ERROR: 'RPC_ERROR',
-  SIGNING_FAILED: 'SIGNING_FAILED',
-  UNKNOWN: 'UNKNOWN',
-} as const
-
-export type TransactionErrorCode = (typeof TransactionErrorCode)[keyof typeof TransactionErrorCode]
-
-type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCode]
+export type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCode]
 
 /**
- * Base error class for Openfort React SDK (new architecture)
+ * Base error class for Openfort React SDK (canonical v1)
  *
  * @example
  * ```ts
  * try {
  *   await wallet.signMessage('hello')
  * } catch (error) {
- *   if (error instanceof OpenfortReactError) {
+ *   if (error instanceof OpenfortError) {
  *     switch (error.code) {
  *       case OpenfortErrorCode.NOT_AUTHENTICATED:
  *         // Handle auth error
@@ -60,84 +57,29 @@ type OpenfortErrorCode = (typeof OpenfortErrorCode)[keyof typeof OpenfortErrorCo
  * }
  * ```
  */
-class OpenfortReactError extends Error {
+export class OpenfortError extends Error {
   readonly code: OpenfortErrorCode
+
+  /** Original error — available for SDK consumers who want to inspect, but NOT included in `.message` */
   readonly cause?: unknown
 
   constructor(message: string, code: OpenfortErrorCode, options?: { cause?: unknown }) {
     super(message)
-    this.name = 'OpenfortReactError'
+    this.name = 'OpenfortError'
     this.code = code
     this.cause = options?.cause
 
-    // Maintains proper stack trace for where error was thrown
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, OpenfortReactError)
+      Error.captureStackTrace(this, OpenfortError)
     }
   }
 
   /**
-   * Create error from unknown error type
+   * Create error from unknown error type.
+   * SECURITY: Original error goes into `cause` for debugging only — never exposed in `.message`.
    */
-  static from(error: unknown, fallbackCode: OpenfortErrorCode = OpenfortErrorCode.UNKNOWN_ERROR): OpenfortReactError {
-    if (error instanceof OpenfortReactError) {
-      return error
-    }
-
-    if (error instanceof Error) {
-      return new OpenfortReactError(error.message, fallbackCode, { cause: error })
-    }
-
-    return new OpenfortReactError(String(error), fallbackCode)
-  }
-}
-
-/**
- * Error thrown when a hook is used outside its required provider
- */
-export class ProviderNotFoundError extends OpenfortReactError {
-  constructor(message: string) {
-    super(message, OpenfortErrorCode.MISSING_PROVIDER)
-    this.name = 'ProviderNotFoundError'
-  }
-}
-
-/**
- * Error thrown for configuration issues
- */
-export class ConfigurationError extends OpenfortReactError {
-  constructor(message: string, cause?: unknown) {
-    super(message, OpenfortErrorCode.INVALID_CONFIG, { cause })
-    this.name = 'ConfigurationError'
-  }
-}
-
-/**
- * Error thrown for wallet operations
- */
-class _WalletError extends OpenfortReactError {
-  readonly address?: string
-
-  constructor(
-    message: string,
-    code: OpenfortErrorCode = OpenfortErrorCode.WALLET_NOT_FOUND,
-    options?: { cause?: unknown; address?: string }
-  ) {
-    super(message, code, { cause: options?.cause })
-    this.name = 'WalletError'
-    this.address = options?.address
-  }
-}
-
-/**
- * Transaction-specific error. Extends OpenfortReactError for single catch surface.
- */
-export class OpenfortTransactionError extends OpenfortReactError {
-  readonly txCode: TransactionErrorCode
-
-  constructor(message: string, txCode: TransactionErrorCode, options?: { cause?: unknown }) {
-    super(message, OpenfortErrorCode.TRANSACTION_FAILED, { cause: options?.cause })
-    this.name = 'OpenfortTransactionError'
-    this.txCode = txCode
+  static from(error: unknown, fallbackCode: OpenfortErrorCode = OpenfortErrorCode.UNKNOWN_ERROR): OpenfortError {
+    if (error instanceof OpenfortError) return error
+    return new OpenfortError('An unexpected error occurred', fallbackCode, { cause: error })
   }
 }
