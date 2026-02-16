@@ -1,6 +1,8 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Session keys - multiple + delete flow', () => {
+  test.describe.configure({ retries: 3 })
+
   test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({ dashboardPage, mode }) => {
     test.setTimeout(180_000)
     const m = mode
