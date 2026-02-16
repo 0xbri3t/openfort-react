@@ -1,4 +1,5 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
+import { Buffer } from 'buffer'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'

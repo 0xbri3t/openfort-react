@@ -11,6 +11,7 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/kit'
 import { useQueryClient } from '@tanstack/react-query'
+import { Buffer } from 'buffer'
 import { useCallback, useMemo, useState } from 'react'
 import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { queryKeys } from '../../core/queryKeys'
@@ -71,7 +72,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
       setError(null)
       setStatus('signing')
 
-      try {
+      const attempt = async (): Promise<string | undefined> => {
         const { value: blockhash } = await rpc.getLatestBlockhash().send()
         const fromAddr = address(fromAddress)
         const transferInstruction = createTransferSolInstruction(fromAddress, params.to, params.amount)
@@ -106,17 +107,30 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
             skipPreflight: true,
           })
           .send()
-        const signatureValue = unwrapTransactionSignature(result)
+        return unwrapTransactionSignature(result)
+      }
+
+      try {
+        let signatureValue: string | undefined
+        try {
+          signatureValue = await attempt()
+          if (!signatureValue) {
+            setStatus('signing')
+            signatureValue = await attempt()
+          }
+        } catch {
+          setStatus('signing')
+          signatureValue = await attempt()
+        }
         if (signatureValue) {
           setStatus('confirmed')
           queryClient.invalidateQueries({
             queryKey: queryKeys.solana.balance(fromAddress, rpcUrl),
           })
           return signatureValue
-        } else {
-          setStatus('error')
-          setError(new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_RPC_ERROR))
         }
+        setStatus('error')
+        setError(new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_RPC_ERROR))
       } catch (err) {
         setStatus('error')
         const wrapped =
@@ -128,7 +142,6 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
                 { cause: err }
               )
         setError(wrapped)
-        return
       }
     },
     [wallet, rpc, rpcUrl, queryClient]
