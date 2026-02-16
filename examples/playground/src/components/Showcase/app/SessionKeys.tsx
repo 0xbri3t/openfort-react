@@ -24,8 +24,7 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
   const { address } = useAccount()
   const mintContractAddress = getMintContractAddress(chainId ?? undefined)
   const grantDisabled = isLoading || !mintContractAddress
-  const key = useMemo(() => `${chainId}-${address}`, [chainId, address])
-
+  const key = `${chainId}-${address}`
   const updateSessionKeys = () => {
     const keys = getPrivateKeys(key)
 
