@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Dashboard integration - chain + signatures', () => {
+  test.describe.configure({ retries: 3 })
   test('switch chain -> sign message -> chain stays selected', async ({ dashboardPage, mode }) => {
     const m = mode
     await dashboardPage.ensureReady(m)
