@@ -1,7 +1,7 @@
 import { useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { getAddress } from 'viem/utils'
 import { useAccount, useChainId, useSignMessage } from 'wagmi'
