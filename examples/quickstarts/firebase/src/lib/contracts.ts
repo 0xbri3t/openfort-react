@@ -6,14 +6,14 @@ const BASE_SEPOLIA_CHAIN_ID = 84532
 const DEFAULT_POLYGON_MINT = '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'
 const DEFAULT_BEAM_MINT = '0x45238AB60ACA6862a70fe996D1A8baDb71Af5A8f'
 
-export type MintContractType = 'claim' | 'mint'
+type MintContractType = 'claim' | 'mint'
 
 export interface MintContractConfig {
   address: string
   type: MintContractType
 }
 
-export function getMintContractAddress(chainId: number | undefined): string | undefined {
+function getMintContractAddress(chainId: number | undefined): string | undefined {
   if (chainId == null) return undefined
   if (chainId === BEAM_CHAIN_ID) {
     return import.meta.env.VITE_BEAM_MINT_CONTRACT ?? DEFAULT_BEAM_MINT
