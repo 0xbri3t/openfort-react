@@ -23,7 +23,7 @@ test.describe('Dashboard integration - chain + signatures', () => {
     const successMsg = chainCard.getByText(new RegExp(`^switched to chain\\s+${escapeRegExp(target)}$`, 'i'))
     await expect(successMsg).toBeVisible({ timeout: 90_000 })
     await expect(currentChain).toContainText(new RegExp(target, 'i'), { timeout: 90_000 })
-
+    await new Promise((r) => setTimeout(r, 2000))
     const msg = `Chain-sign ${Date.now()}`
     await dashboardPage.signMessage(msg, m)
 

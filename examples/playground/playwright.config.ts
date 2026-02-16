@@ -45,7 +45,11 @@ export default defineConfig({
     {
       name: 'chromium-evm-only',
       dependencies: ['setup-evm-only'],
-      testIgnore: [/wallet-entry\.spec\.ts/, /auth\.spec\.ts/, /solana-mint\.spec\.ts/],
+      testIgnore: [
+        /auth\.spec\.ts/, // needs unauthenticated
+        /wallet-entry\.spec\.ts/, // needs unauthenticated
+        /solana-mint\.spec\.ts/, // Solana-only
+      ],
       testMatch: /.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
@@ -55,9 +59,9 @@ export default defineConfig({
     {
       name: 'chromium-evm-wagmi',
       testIgnore: [
-        /wallet-entry\.spec\.ts/,
-        /auth\.spec\.ts/,
-        /solana-mint\.spec\.ts/,
+        /auth\.spec\.ts/, // needs unauthenticated
+        /wallet-entry\.spec\.ts/, // needs unauthenticated
+        /solana-mint\.spec\.ts/, // Solana-only
         /refresh-persistence\.spec\.ts/, // wagmi state is in-memory; reload loses connection
       ],
       testMatch: /.*\.spec\.ts/,
@@ -68,16 +72,15 @@ export default defineConfig({
       name: 'chromium-solana',
       dependencies: ['setup-solana'],
       testIgnore: [
-        /wallet-entry\.spec\.ts/,
-        /auth\.spec\.ts/,
-        // EVM-only specs (switch chain, write contract, session keys, etc.)
-        /switch-chain\.spec\.ts/,
-        /switch-chain-and-sign\.spec\.ts/,
-        /write-contract\.spec\.ts/,
-        /mint-without-ammount\.spec\.ts/,
-        /session-keys-multi-delete\.spec\.ts/,
-        /refresh-persistence\.spec\.ts/,
-        /create-wallet-and-switch-chain\.spec\.ts/,
+        /auth\.spec\.ts/, // needs unauthenticated
+        /wallet-entry\.spec\.ts/, // needs unauthenticated
+        /switch-chain\.spec\.ts/, // EVM-only
+        /switch-chain-and-sign\.spec\.ts/, // EVM-only
+        /write-contract\.spec\.ts/, // EVM-only
+        /mint-without-ammount\.spec\.ts/, // EVM-only
+        /session-keys-multi-delete\.spec\.ts/, // EVM-only
+        /refresh-persistence\.spec\.ts/, // EVM-only
+        /create-wallet-and-switch-chain\.spec\.ts/, // EVM-only
       ],
       testMatch: /.*\.spec\.ts/,
       use: {
