@@ -10,6 +10,7 @@ test.describe('Write Contract - mint tokens', () => {
 
     await expect(writeCard).toBeVisible({ timeout: 60_000 })
     await expect(writeCard.getByText(/balance:\s*\d+/i)).toBeVisible({ timeout: 60_000 })
+    await page.waitForTimeout(1500)
 
     const amountInput = writeCard.getByPlaceholder(/enter amount to mint/i)
     await expect(amountInput).toBeVisible({ timeout: 30_000 })

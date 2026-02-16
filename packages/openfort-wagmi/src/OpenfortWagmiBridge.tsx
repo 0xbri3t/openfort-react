@@ -48,10 +48,14 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
     isPending: isSwitchChainPending,
     error: switchChainError,
   } = useSwitchChain()
-  const { data: ensName } = useEnsName({ address: address ?? undefined, chainId: 1 })
-  const { data: ensAvatar } = useEnsAvatar({ name: ensName ? normalize(ensName) : undefined, chainId: 1 })
   const { signMessageAsync } = useSignMessage()
   const { data: walletClient } = useWalletClient()
+
+  // Use wallet client address (actual signer) when available; avoids connector vs signer mismatch
+  const accountAddress = (walletClient?.account?.address ?? address) as `0x${string}`
+
+  const { data: ensName } = useEnsName({ address: accountAddress ?? undefined, chainId: 1 })
+  const { data: ensAvatar } = useEnsAvatar({ name: ensName ? normalize(ensName) : undefined, chainId: 1 })
 
   // Stabilize connectors — wagmi's useConnect() returns a new array reference every render,
   // which would cause infinite re-renders when used as a useMemo dependency.
@@ -144,7 +148,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
   const value: OpenfortEthereumBridgeValue = useMemo(
     () => ({
       account: {
-        address,
+        address: accountAddress,
         chain: chain ? { id: chain.id, name: chain.name } : undefined,
         // Stable: only true when fully connected (not mid-transition)
         isConnected: (isConnected ?? false) && !isConnecting && !isReconnecting,
@@ -192,7 +196,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
       getWalletClient,
     }),
     [
-      address,
+      accountAddress,
       chain,
       isConnected,
       isConnecting,

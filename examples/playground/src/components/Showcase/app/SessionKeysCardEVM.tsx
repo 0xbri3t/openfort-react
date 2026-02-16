@@ -3,11 +3,13 @@ import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
+import { getAddress } from 'viem/utils'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
+import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
 
 export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
@@ -18,8 +20,9 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
   const { addPrivateKey, getPrivateKeys, clearAll, removePrivateKey, updatePrivateKey } =
     useSessionKeysStorage_backendSimulation()
   const { address, chainId } = useEthereumAccount()
+  const mintContractAddress = getMintContractAddress(chainId ?? undefined)
   const key = useMemo(() => (chainId != null && address ? `${chainId}-${address}` : ''), [chainId, address])
-  const grantDisabled = isLoading || submitting
+  const grantDisabled = isLoading || submitting || !mintContractAddress
 
   const updateSessionKeys = () => {
     const keys = getPrivateKeys(key)
@@ -67,7 +70,7 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
                     {
                       type: 'contract-call',
                       data: {
-                        address: import.meta.env.VITE_BEAM_MINT_CONTRACT!,
+                        address: getAddress(mintContractAddress!),
                         calls: [],
                       },
                       policies: [],
