@@ -7,7 +7,8 @@
 
 import { createContext, useContext } from 'react'
 import type { BuyFormState, RouteOptions, SendFormState, SetRouteOptions } from '../components/Openfort/types'
-import { type Mode, OpenfortError, OpenfortReactErrorType, type Theme } from '../types'
+import { OpenfortError, OpenfortErrorCode } from '../core/errors'
+import type { Mode, Theme } from '../types'
 
 /**
  * Clean UI context value for modal control, navigation, and theme management.
@@ -80,7 +81,7 @@ export function useConnectUI(): ConnectUIValue {
   if (!context) {
     throw new OpenfortError(
       'useConnectUI must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.',
-      OpenfortReactErrorType.CONFIGURATION_ERROR
+      OpenfortErrorCode.INVALID_CONFIG
     )
   }
   return context

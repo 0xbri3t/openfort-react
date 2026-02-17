@@ -3,7 +3,7 @@ import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import { useWalletConnectModal } from '../../hooks/useWalletConnectModal'
 import { truncateEthAddress } from '../../utils'
-import { useWallet } from '../../wallets/useEthereumConnectors'
+import { useExternalConnector } from '../../wallets/useExternalConnectors'
 import { CopyText } from '../Common/CopyToClipboard/CopyText'
 import Loader from '../Common/Loading'
 import { ModalBody } from '../Common/Modal/styles'
@@ -17,7 +17,7 @@ const ConnectWithSiwe = () => {
   const address = bridge?.account?.address
   const ensName = bridge?.account?.ensName
   const { connector, setRoute } = useOpenfort()
-  const wallet = useWallet(connector.id)
+  const wallet = useExternalConnector(connector.id)
 
   const [error, setError] = useState<string | undefined>(undefined)
   const siwe = useConnectWithSiwe()
@@ -61,7 +61,7 @@ const ConnectWithSiwe = () => {
 
 const ConnectWithWalletConnect = () => {
   const { connector } = useOpenfort()
-  const wallet = useWallet(connector.id)
+  const wallet = useExternalConnector(connector.id)
 
   const [error, setError] = useState<string | undefined>(undefined)
   const { open: openWalletConnectModal } = useWalletConnectModal()
@@ -101,7 +101,7 @@ const ConnectWithQRCode = () => {
     triggerResize()
   }, [isConnected])
 
-  const wallet = useWallet(connector.id)
+  const wallet = useExternalConnector(connector.id)
 
   if (!wallet) return <Loader header={`Connector not found: ${connector.id}`} isError />
 

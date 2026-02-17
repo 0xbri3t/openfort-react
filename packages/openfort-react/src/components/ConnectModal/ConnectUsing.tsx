@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { logger } from '../../utils/logger'
-import { useWallet } from '../../wallets/useEthereumConnectors'
+import { useExternalConnector } from '../../wallets/useExternalConnectors'
 import Alert from '../Common/Alert'
 import { contentVariants } from '../Common/Modal'
 import { useOpenfort } from '../Openfort/useOpenfort'
@@ -16,7 +16,7 @@ const states = {
 
 const ConnectUsing = () => {
   const context = useOpenfort()
-  const wallet = useWallet(context.connector.id)
+  const wallet = useExternalConnector(context.connector.id)
 
   // If cannot be scanned, display injector flow, which if extension is not installed will show CTA to install it
   const isQrCode = !wallet?.isInstalled && wallet?.getWalletConnectDeeplink

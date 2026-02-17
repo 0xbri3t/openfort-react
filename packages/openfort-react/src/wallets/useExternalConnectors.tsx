@@ -7,7 +7,7 @@ import type {
 import { isCoinbaseWalletConnector, isInjectedConnector } from '../utils'
 import { type WalletConfigProps, walletConfigs } from './walletConfigs'
 
-export type WalletProps = {
+export type ExternalConnectorProps = {
   id: string
   connector: OpenfortEthereumBridgeConnector
   isInstalled?: boolean
@@ -15,13 +15,13 @@ export type WalletProps = {
 
 export type MapBridgeConnectorsOptions = { walletConnectName?: string }
 
-/** Maps bridge.connectors to WalletProps[]. Used by EthereumBridgeStrategy and useEthereumConnectors. */
+/** Maps bridge.connectors to ExternalConnectorProps[]. Used by EthereumBridgeStrategy and useExternalConnectors. */
 export function mapBridgeConnectorsToWalletProps(
   bridge: OpenfortEthereumBridgeValue,
   options: MapBridgeConnectorsOptions = {}
-): WalletProps[] {
+): ExternalConnectorProps[] {
   const { walletConnectName } = options
-  const wallets = bridge.connectors.map((connector): WalletProps => {
+  const wallets = bridge.connectors.map((connector): ExternalConnectorProps => {
     let walletId = Object.keys(walletConfigs).find(
       (id) =>
         id
@@ -38,7 +38,7 @@ export function mapBridgeConnectorsToWalletProps(
       }
     }
 
-    const c: WalletProps = {
+    const c: ExternalConnectorProps = {
       id: connector.id,
       name: connector.name ?? connector.id ?? connector.type ?? '',
       icon: connector.icon
@@ -83,16 +83,6 @@ export function mapBridgeConnectorsToWalletProps(
       }
       return wallet
     })
-    .filter(
-      (wallet, _index, self) => !(wallet.id === 'coinbaseWalletSDK' && self.find((w) => w.id === 'com.coinbase.wallet'))
-    )
-    .filter(
-      (wallet, _index, self) =>
-        !(
-          (wallet.id === 'metaMaskSDK' || wallet.id === 'metaMask') &&
-          self.find((w) => w.id === 'io.metamask' || w.id === 'io.metamask.mobile')
-        )
-    )
     .sort((a, b) => {
       const AisInstalled = a.isInstalled && isInjectedConnector(a.connector.type)
       const BisInstalled = b.isInstalled && isInjectedConnector(b.connector.type)
@@ -107,17 +97,17 @@ export function mapBridgeConnectorsToWalletProps(
     })
 }
 
-/** Returns the list of Ethereum connectors (MetaMask, WalletConnect, etc.) for the connect UI. Uses strategy when available; returns [] when embedded-only (no bridge). */
-export function useEthereumConnectors(): WalletProps[] {
+/** Returns the list of external connectors (MetaMask, WalletConnect, etc.) for the connect UI. Uses strategy when available; returns [] when embedded-only (no bridge). */
+export function useExternalConnectors(): ExternalConnectorProps[] {
   const strategy = useConnectionStrategy()
   if (!strategy) return []
   return strategy.getConnectors()
 }
 
 /** Single connector by id. */
-export const useWallet = (id: string): WalletProps | null => {
-  const connectors = useEthereumConnectors()
-  const wallet = connectors.find((c) => c.id === id)
-  if (!wallet) return null
-  return wallet
+export const useExternalConnector = (id: string): ExternalConnectorProps | null => {
+  const connectors = useExternalConnectors()
+  const connector = connectors.find((c) => c.id === id)
+  if (!connector) return null
+  return connector
 }

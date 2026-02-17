@@ -60,11 +60,7 @@ const LinkEmail: React.FC = () => {
       setRoute(routes.CONNECTED)
     } catch (e) {
       logger.log('Link error:', e)
-      if (e instanceof Error) {
-        setLoginError(e.message)
-      } else {
-        setLoginError('Could not link email.')
-      }
+      setLoginError('Could not link email. Please try again.')
       setLoginLoading(false)
       triggerResize()
     }

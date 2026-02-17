@@ -2,11 +2,11 @@ import { useMemo } from 'react'
 import { EmailIcon, PhoneIcon, WalletIcon } from '../../../assets/icons'
 import Logos, { providersLogos } from '../../../assets/logos'
 import type { UserAccount } from '../../../openfortCustomTypes'
-import { useEthereumConnectors } from '../../../wallets/useEthereumConnectors'
+import { useExternalConnectors } from '../../../wallets/useExternalConnectors'
 import FitText from '../../Common/FitText'
 
 const WalletIconWrapper: React.FC<{ provider: UserAccount }> = ({ provider }) => {
-  const wallets = useEthereumConnectors()
+  const wallets = useExternalConnectors()
   const wallet = useMemo(() => {
     return wallets.find((w) => w.id?.toLowerCase() === provider.walletClientType)
   }, [provider])

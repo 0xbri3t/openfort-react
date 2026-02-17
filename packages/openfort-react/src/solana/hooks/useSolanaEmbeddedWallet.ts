@@ -1,11 +1,12 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
+import { Buffer } from 'buffer'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
-import { OpenfortError, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
@@ -52,6 +53,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     activeEmbeddedAddress,
     updateEmbeddedAccounts,
     setActiveEmbeddedAddress,
+    setWalletStatus,
   } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
 
@@ -121,13 +123,23 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     }))
   }, [solanaAccounts, createProviderForAccount])
 
+  useEffect(() => {
+    if (state.status === 'creating') {
+      setWalletStatus({ status: 'creating' })
+    } else if (state.status === 'connecting' && state.activeWallet) {
+      setWalletStatus({ status: 'connecting' })
+    } else {
+      setWalletStatus({ status: 'idle' })
+    }
+  }, [state.status, state.activeWallet, setWalletStatus])
+
   const create = useCallback(
     async (createOptions?: CreateSolanaWalletOptions): Promise<EmbeddedAccount> => {
       setState((s) => ({ ...s, status: 'creating', error: null }))
 
       try {
         if (!walletConfig) {
-          throw new OpenfortError('Wallet config not found', OpenfortReactErrorType.CONFIGURATION_ERROR)
+          throw new OpenfortError('Wallet config not found', OpenfortErrorCode.INVALID_CONFIG)
         }
 
         const recoveryParams = await buildRecoveryParams(
@@ -176,9 +188,11 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Failed to create Solana wallet', OpenfortReactErrorType.WALLET_ERROR, {
-                error: err,
-              })
+            : new OpenfortError(
+                formatErrorWithReason('Failed to create Solana wallet', err),
+                OpenfortErrorCode.WALLET_CREATION_FAILED,
+                { cause: err }
+              )
 
         setState((s) => ({
           ...s,
@@ -199,10 +213,9 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         const account = solanaAccounts.find((acc) => acc.address === activeOptions.address)
 
         if (!account) {
-          throw new OpenfortError(
-            `Solana wallet not found: ${activeOptions.address}`,
-            OpenfortReactErrorType.WALLET_ERROR
-          )
+          throw new OpenfortError('Embedded wallet not found', OpenfortErrorCode.WALLET_NOT_FOUND, {
+            cause: { address: activeOptions.address },
+          })
         }
 
         const connectingStub: ConnectedEmbeddedSolanaWallet = {
@@ -212,7 +225,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           walletIndex: solanaAccounts.indexOf(account),
           recoveryMethod: account.recoveryMethod,
           getProvider: async () => {
-            throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
+            throw new OpenfortError('Provider not ready yet', OpenfortErrorCode.WALLET_NOT_FOUND)
           },
         }
         setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
@@ -258,9 +271,11 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           const error =
             err instanceof OpenfortError
               ? err
-              : new OpenfortError('Failed to set active Solana wallet', OpenfortReactErrorType.WALLET_ERROR, {
-                  error: err,
-                })
+              : new OpenfortError(
+                  formatErrorWithReason('Failed to set active Solana wallet', err),
+                  OpenfortErrorCode.WALLET_NOT_FOUND,
+                  { cause: err }
+                )
 
           setState((s) => ({
             ...s,
@@ -294,9 +309,11 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError('Failed to set recovery method', OpenfortReactErrorType.WALLET_ERROR, {
-                error: err,
-              })
+            : new OpenfortError(
+                formatErrorWithReason('Failed to set recovery method', err),
+                OpenfortErrorCode.WALLET_RECOVERY_REQUIRED,
+                { cause: err }
+              )
         throw error
       }
     },
@@ -402,13 +419,29 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     setActiveEmbeddedAddress,
   ])
 
+  const derived = useMemo(
+    () => ({
+      isLoading:
+        state.status === 'fetching-wallets' ||
+        state.status === 'connecting' ||
+        state.status === 'creating' ||
+        state.status === 'reconnecting',
+      isError: state.status === 'error',
+      isSuccess: state.status === 'connected',
+    }),
+    [state.status]
+  )
+
   if (isLoadingAccounts) {
     return {
       ...actions,
       status: 'fetching-wallets',
       activeWallet: null,
+      isLoading: true,
+      isError: false,
+      isSuccess: false,
     } as EmbeddedSolanaWalletState
   }
 
-  return buildEmbeddedWalletStatusResult(state, actions) as EmbeddedSolanaWalletState
+  return { ...buildEmbeddedWalletStatusResult(state, actions), ...derived } as EmbeddedSolanaWalletState
 }

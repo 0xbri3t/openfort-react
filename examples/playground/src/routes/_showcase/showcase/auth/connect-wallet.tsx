@@ -1,5 +1,6 @@
-import { useWalletAuth } from '@openfort/react'
+import { embeddedWalletId, useConnectWithSiwe, useEthereumBridge } from '@openfort/react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback, useState } from 'react'
 import { DialogLayout } from '@/components/Showcase/auth/DialogLayout'
 import { Button } from '@/components/Showcase/ui/Button'
 import { Header } from '@/components/Showcase/ui/Header'
@@ -11,34 +12,45 @@ export const Route = createFileRoute('/_showcase/showcase/auth/connect-wallet')(
 
 function RouteComponent() {
   const nav = useNavigate()
+  const bridge = useEthereumBridge()
+  const connectWithSiwe = useConnectWithSiwe()
+  const [connectingTo, setConnectingTo] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const { availableWallets, connectWallet, isLoading, walletConnectingTo, error, isError } = useWalletAuth({
-    onSuccess: () =>
-      nav({
-        to: '/',
-      }),
-  })
+  const externalConnectors = bridge?.connectors.filter((c) => c.id !== embeddedWalletId) ?? []
+
+  const handleConnect = useCallback(
+    async (connectorId: string) => {
+      setConnectingTo(connectorId)
+      setError(null)
+      try {
+        const connector = externalConnectors.find((c) => c.id === connectorId)
+        if (!connector) throw new Error('Connector not found')
+        bridge?.connect({ connector })
+        await connectWithSiwe({
+          onConnect: () => nav({ to: '/' }),
+          onError: (msg) => setError(msg),
+        })
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to connect')
+      } finally {
+        setConnectingTo(null)
+      }
+    },
+    [bridge, connectWithSiwe, externalConnectors, nav]
+  )
 
   return (
     <DialogLayout>
       <Header title="Connect Wallet" onBack={() => window.history.back()} />
-      {availableWallets.map((wallet) => (
-        <Button
-          key={wallet.id}
-          className="btn btn-accent"
-          onClick={() => {
-            connectWallet({
-              connector: wallet.id,
-            })
-          }}
-          // onClick={() => wallet.connect()}
-        >
-          {walletConnectingTo === wallet.id && isLoading ? <span>Loading...</span> : wallet.name}
+      {externalConnectors.map((c) => (
+        <Button key={c.id} className="btn btn-accent" onClick={() => handleConnect(c.id)}>
+          {connectingTo === c.id ? <span>Loading...</span> : (c.name ?? c.id)}
         </Button>
       ))}
       <InputMessage
-        message={error?.message || 'An error occurred while connecting to the wallet.'}
-        show={isError}
+        message={error || 'An error occurred while connecting to the wallet.'}
+        show={!!error}
         variant="error"
       />
     </DialogLayout>

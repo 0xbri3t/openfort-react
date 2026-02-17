@@ -183,18 +183,6 @@ export function parseTransactionError(error: unknown): {
   // ExecutionRevertedError - Contract execution reverted
   // https://v1.viem.sh/docs/glossary/errors.html#executionrevertederror
   if (errorName === 'ExecutionRevertedError' || errorString.includes('execution reverted')) {
-    // Try to extract revert reason if available
-    const reasonMatch = errorMessage.match(/execution reverted:?\s*([^(]+)/i)
-    const reason = reasonMatch?.[1]?.trim()
-
-    if (reason && reason.length > 0 && reason.length < 100) {
-      return {
-        title: 'Transaction failed',
-        message: reason,
-        action: 'Please check the transaction details and try again.',
-      }
-    }
-
     return {
       title: 'Transaction failed',
       message: 'The transaction was rejected by the contract.',
@@ -210,18 +198,6 @@ export function parseTransactionError(error: unknown): {
     errorName === 'CallExecutionError' ||
     errorName === 'RawContractError'
   ) {
-    // Try to extract custom error or reason
-    const reasonMatch = errorMessage.match(/reason:\s*([^,\n]+)/i) || errorMessage.match(/reverted with:\s*([^,\n]+)/i)
-    const reason = reasonMatch?.[1]?.trim()
-
-    if (reason && reason.length > 0 && reason.length < 100) {
-      return {
-        title: 'Contract error',
-        message: reason,
-        action: 'Please check the transaction details and try again.',
-      }
-    }
-
     return {
       title: 'Contract error',
       message: 'The contract rejected this transaction.',
@@ -406,16 +382,7 @@ export function parseTransactionError(error: unknown): {
     }
   }
 
-  // If error message is reasonably short and readable, show it
-  if (errorMessage.length < 150 && !errorMessage.includes('0x')) {
-    return {
-      title: 'Transaction failed',
-      message: errorMessage,
-      action: 'Please try again.',
-    }
-  }
-
-  // Generic fallback
+  // Generic fallback (never expose raw error messages to users)
   return {
     title: 'Transaction failed',
     message: 'An error occurred while processing your transaction.',

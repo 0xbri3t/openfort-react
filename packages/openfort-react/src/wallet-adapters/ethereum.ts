@@ -11,6 +11,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { type Abi, createPublicClient, getAddress, http } from 'viem'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useCoreContext } from '../core/CoreContext'
+import { OpenfortError, OpenfortErrorCode } from '../core/errors'
 import { useEthereumWriteContract as useEthereumWriteContractInternal } from '../ethereum/hooks/useEthereumWriteContract'
 import { signMessage as signMessageOp } from '../ethereum/operations'
 import { useBalance as useBalanceHook } from '../hooks/useBalance'
@@ -163,6 +164,9 @@ export function useEthereumSwitchChain(): UseSwitchChainLike {
     data,
     error,
     isPending,
+    isLoading: isPending,
+    isError: error != null,
+    isSuccess: !isPending && error == null,
   }
 }
 
@@ -191,7 +195,7 @@ export function useEthereumSignMessage(): UseSignMessageLike {
         const sig = await signMessageOp({ message: params.message, client })
         setData(sig)
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(String(err)))
+        setError(err instanceof OpenfortError ? err : OpenfortError.from(err, OpenfortErrorCode.SIGNING_FAILED))
       } finally {
         setIsPending(false)
       }
@@ -203,6 +207,9 @@ export function useEthereumSignMessage(): UseSignMessageLike {
     data,
     signMessage,
     isPending,
+    isLoading: isPending,
+    isError: error != null,
+    isSuccess: !isPending && data != null,
     error,
   }
 }
@@ -262,7 +269,8 @@ export function useEthereumReadContract(params: {
  */
 export function useEthereumWriteContract(): UseWriteContractLike {
   const { address, chainId } = useEthereumAccount()
-  const { writeContractAsync, data, isPending, error } = useEthereumWriteContractInternal()
+  const { writeContractAsync, data, isPending, isLoading, isError, isSuccess, error } =
+    useEthereumWriteContractInternal()
 
   const writeContract = useCallback(
     (params: { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }) => {
@@ -282,6 +290,9 @@ export function useEthereumWriteContract(): UseWriteContractLike {
     data,
     writeContract,
     isPending,
+    isLoading,
+    isError,
+    isSuccess,
     error,
   }
 }

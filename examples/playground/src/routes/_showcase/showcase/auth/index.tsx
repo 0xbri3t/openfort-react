@@ -39,7 +39,7 @@ function RouteComponent() {
       </SampleTooltipLink>
 
       {isWagmi && (
-        <SampleTooltipLink href="/auth/useWalletAuth" hook="useWalletAuth" fn="connectWallet">
+        <SampleTooltipLink href="/auth/useConnectWithSiwe" hook="useConnectWithSiwe" fn="connectWithSiwe">
           <Link className="btn btn-accent" to="/showcase/auth/connect-wallet">
             <WalletIcon className="w-4.5 h-4.5" />
             Continue with wallet

@@ -21,8 +21,8 @@ export const navRoutes: NavRoute[] = [
         label: 'useAuthCallback',
       },
       {
-        href: '/auth/useWalletAuth',
-        label: 'useWalletAuth',
+        href: '/auth/useConnectWithSiwe',
+        label: 'useConnectWithSiwe',
       },
       {
         href: '/auth/useSignOut',

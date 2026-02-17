@@ -66,7 +66,7 @@ const ConnectWithOAuth: React.FC = () => {
             return
           }
 
-          client.auth.storeCredentials({
+          await client.auth.storeCredentials({
             token,
             userId,
           })

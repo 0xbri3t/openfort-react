@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { OpenfortError, OpenfortReactErrorType } from '../../types'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
 export interface EthereumSendTransactionParams {
@@ -20,6 +20,10 @@ export interface UseEthereumSendTransactionReturn {
   sendTransactionAsync: (params: EthereumSendTransactionParams) => Promise<`0x${string}`>
   data: `0x${string}` | undefined
   isPending: boolean
+  /** Alias for isPending. Use for consistent hook shape across all async hooks. */
+  isLoading: boolean
+  isError: boolean
+  isSuccess: boolean
   error: Error | null
   reset: () => void
 }
@@ -44,14 +48,14 @@ export function useEthereumSendTransaction(): UseEthereumSendTransactionReturn {
 
       try {
         if (ethereum.status !== 'connected') {
-          throw new OpenfortError('Wallet not connected', OpenfortReactErrorType.WALLET_ERROR)
+          throw new OpenfortError('Wallet not connected', OpenfortErrorCode.WALLET_NOT_FOUND)
         }
 
         const provider = await ethereum.activeWallet.getProvider()
 
         const accounts = (await provider.request({ method: 'eth_accounts' })) as `0x${string}`[]
         if (!accounts || accounts.length === 0) {
-          throw new OpenfortError('No accounts available', OpenfortReactErrorType.WALLET_ERROR)
+          throw new OpenfortError('No accounts available', OpenfortErrorCode.WALLET_NOT_FOUND)
         }
 
         const from = accounts[0]
@@ -82,9 +86,11 @@ export function useEthereumSendTransaction(): UseEthereumSendTransactionReturn {
           err instanceof OpenfortError
             ? err
             : new OpenfortError(
-                err instanceof Error ? err.message : 'Transaction failed',
-                OpenfortReactErrorType.WALLET_ERROR,
-                { error: err instanceof Error ? err : undefined }
+                formatErrorWithReason('Transaction failed', err),
+                OpenfortErrorCode.TRANSACTION_UNKNOWN,
+                {
+                  cause: err,
+                }
               )
         setError(error)
         setIsPending(false)
@@ -98,6 +104,9 @@ export function useEthereumSendTransaction(): UseEthereumSendTransactionReturn {
     sendTransactionAsync,
     data,
     isPending,
+    isLoading: isPending,
+    isError: error != null,
+    isSuccess: !isPending && data != null,
     error,
     reset,
   }

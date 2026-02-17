@@ -229,6 +229,8 @@ function toConnectedState(chainType: ChainTypeEnum, wallet: WalletInternalState 
  * When a wallet transition is in progress (creating, switching, reconnecting),
  * `status` is `'loading'` and both `isEmbedded` and `isExternal` are `false`.
  *
+ * @remarks Client-only. Use in a Client Component (e.g. add `"use client"` in Next.js App Router).
+ *
  * @returns Connected wallet state with status, address, chain info, wallet type, and formatted displayAddress
  *
  * @example

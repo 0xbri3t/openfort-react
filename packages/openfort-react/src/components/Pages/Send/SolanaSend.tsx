@@ -9,6 +9,7 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/kit'
 import { useCallback, useState } from 'react'
+import { OpenfortError } from '../../../core/errors'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
 import { FEE_LAMPORTS, LAMPORTS_PER_SOL, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
 import { useSolanaBalance } from '../../../solana/hooks/useSolanaBalance'
@@ -119,7 +120,7 @@ export function SolanaSend() {
         }
       } catch (err) {
         setTxStatus('error')
-        setErrorMessage(err instanceof Error ? err.message : 'Transaction failed')
+        setErrorMessage(err instanceof OpenfortError ? err.message : 'Transaction failed')
       }
     },
     [canProceed, provider, walletAddress, amountLamports, recipient, rpcUrl, refetchBalance]

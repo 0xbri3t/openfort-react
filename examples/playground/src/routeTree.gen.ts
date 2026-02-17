@@ -28,12 +28,12 @@ import { Route as HooksUtilsUseUIRouteImport } from './routes/_hooks/utils/useUI
 import { Route as HooksSolanaUseSolanaBalanceRouteImport } from './routes/_hooks/solana/useSolanaBalance'
 import { Route as HooksSolanaUseSolanaAccountRouteImport } from './routes/_hooks/solana/useSolanaAccount'
 import { Route as HooksSolanaUseDisconnectRouteImport } from './routes/_hooks/solana/useDisconnect'
-import { Route as HooksAuthUseWalletAuthRouteImport } from './routes/_hooks/auth/useWalletAuth'
 import { Route as HooksAuthUseUserRouteImport } from './routes/_hooks/auth/useUser'
 import { Route as HooksAuthUseSignOutRouteImport } from './routes/_hooks/auth/useSignOut'
 import { Route as HooksAuthUseOauthRouteImport } from './routes/_hooks/auth/useOauth'
 import { Route as HooksAuthUseGuestAuthRouteImport } from './routes/_hooks/auth/useGuestAuth'
 import { Route as HooksAuthUseEmailAuthRouteImport } from './routes/_hooks/auth/useEmailAuth'
+import { Route as HooksAuthUseConnectWithSiweRouteImport } from './routes/_hooks/auth/useConnectWithSiwe'
 import { Route as HooksAuthUseAuthCallbackRouteImport } from './routes/_hooks/auth/useAuthCallback'
 import { Route as HooksAdapterUseSwitchChainRouteImport } from './routes/_hooks/adapter/useSwitchChain'
 import { Route as HooksAdapterUseDisconnectRouteImport } from './routes/_hooks/adapter/useDisconnect'
@@ -146,11 +146,6 @@ const HooksSolanaUseDisconnectRoute =
     path: '/useDisconnect',
     getParentRoute: () => HooksSolanaRoute,
   } as any)
-const HooksAuthUseWalletAuthRoute = HooksAuthUseWalletAuthRouteImport.update({
-  id: '/auth/useWalletAuth',
-  path: '/auth/useWalletAuth',
-  getParentRoute: () => HooksRoute,
-} as any)
 const HooksAuthUseUserRoute = HooksAuthUseUserRouteImport.update({
   id: '/auth/useUser',
   path: '/auth/useUser',
@@ -176,6 +171,12 @@ const HooksAuthUseEmailAuthRoute = HooksAuthUseEmailAuthRouteImport.update({
   path: '/auth/useEmailAuth',
   getParentRoute: () => HooksRoute,
 } as any)
+const HooksAuthUseConnectWithSiweRoute =
+  HooksAuthUseConnectWithSiweRouteImport.update({
+    id: '/auth/useConnectWithSiwe',
+    path: '/auth/useConnectWithSiwe',
+    getParentRoute: () => HooksRoute,
+  } as any)
 const HooksAuthUseAuthCallbackRoute =
   HooksAuthUseAuthCallbackRouteImport.update({
     id: '/auth/useAuthCallback',
@@ -258,12 +259,12 @@ export interface FileRoutesByFullPath {
   '/adapter/useDisconnect': typeof HooksAdapterUseDisconnectRoute
   '/adapter/useSwitchChain': typeof HooksAdapterUseSwitchChainRoute
   '/auth/useAuthCallback': typeof HooksAuthUseAuthCallbackRoute
+  '/auth/useConnectWithSiwe': typeof HooksAuthUseConnectWithSiweRoute
   '/auth/useEmailAuth': typeof HooksAuthUseEmailAuthRoute
   '/auth/useGuestAuth': typeof HooksAuthUseGuestAuthRoute
   '/auth/useOauth': typeof HooksAuthUseOauthRoute
   '/auth/useSignOut': typeof HooksAuthUseSignOutRoute
   '/auth/useUser': typeof HooksAuthUseUserRoute
-  '/auth/useWalletAuth': typeof HooksAuthUseWalletAuthRoute
   '/solana/useDisconnect': typeof HooksSolanaUseDisconnectRoute
   '/solana/useSolanaAccount': typeof HooksSolanaUseSolanaAccountRoute
   '/solana/useSolanaBalance': typeof HooksSolanaUseSolanaBalanceRoute
@@ -295,12 +296,12 @@ export interface FileRoutesByTo {
   '/adapter/useDisconnect': typeof HooksAdapterUseDisconnectRoute
   '/adapter/useSwitchChain': typeof HooksAdapterUseSwitchChainRoute
   '/auth/useAuthCallback': typeof HooksAuthUseAuthCallbackRoute
+  '/auth/useConnectWithSiwe': typeof HooksAuthUseConnectWithSiweRoute
   '/auth/useEmailAuth': typeof HooksAuthUseEmailAuthRoute
   '/auth/useGuestAuth': typeof HooksAuthUseGuestAuthRoute
   '/auth/useOauth': typeof HooksAuthUseOauthRoute
   '/auth/useSignOut': typeof HooksAuthUseSignOutRoute
   '/auth/useUser': typeof HooksAuthUseUserRoute
-  '/auth/useWalletAuth': typeof HooksAuthUseWalletAuthRoute
   '/solana/useDisconnect': typeof HooksSolanaUseDisconnectRoute
   '/solana/useSolanaAccount': typeof HooksSolanaUseSolanaAccountRoute
   '/solana/useSolanaBalance': typeof HooksSolanaUseSolanaBalanceRoute
@@ -334,12 +335,12 @@ export interface FileRoutesById {
   '/_hooks/adapter/useDisconnect': typeof HooksAdapterUseDisconnectRoute
   '/_hooks/adapter/useSwitchChain': typeof HooksAdapterUseSwitchChainRoute
   '/_hooks/auth/useAuthCallback': typeof HooksAuthUseAuthCallbackRoute
+  '/_hooks/auth/useConnectWithSiwe': typeof HooksAuthUseConnectWithSiweRoute
   '/_hooks/auth/useEmailAuth': typeof HooksAuthUseEmailAuthRoute
   '/_hooks/auth/useGuestAuth': typeof HooksAuthUseGuestAuthRoute
   '/_hooks/auth/useOauth': typeof HooksAuthUseOauthRoute
   '/_hooks/auth/useSignOut': typeof HooksAuthUseSignOutRoute
   '/_hooks/auth/useUser': typeof HooksAuthUseUserRoute
-  '/_hooks/auth/useWalletAuth': typeof HooksAuthUseWalletAuthRoute
   '/_hooks/solana/useDisconnect': typeof HooksSolanaUseDisconnectRoute
   '/_hooks/solana/useSolanaAccount': typeof HooksSolanaUseSolanaAccountRoute
   '/_hooks/solana/useSolanaBalance': typeof HooksSolanaUseSolanaBalanceRoute
@@ -373,12 +374,12 @@ export interface FileRouteTypes {
     | '/adapter/useDisconnect'
     | '/adapter/useSwitchChain'
     | '/auth/useAuthCallback'
+    | '/auth/useConnectWithSiwe'
     | '/auth/useEmailAuth'
     | '/auth/useGuestAuth'
     | '/auth/useOauth'
     | '/auth/useSignOut'
     | '/auth/useUser'
-    | '/auth/useWalletAuth'
     | '/solana/useDisconnect'
     | '/solana/useSolanaAccount'
     | '/solana/useSolanaBalance'
@@ -410,12 +411,12 @@ export interface FileRouteTypes {
     | '/adapter/useDisconnect'
     | '/adapter/useSwitchChain'
     | '/auth/useAuthCallback'
+    | '/auth/useConnectWithSiwe'
     | '/auth/useEmailAuth'
     | '/auth/useGuestAuth'
     | '/auth/useOauth'
     | '/auth/useSignOut'
     | '/auth/useUser'
-    | '/auth/useWalletAuth'
     | '/solana/useDisconnect'
     | '/solana/useSolanaAccount'
     | '/solana/useSolanaBalance'
@@ -448,12 +449,12 @@ export interface FileRouteTypes {
     | '/_hooks/adapter/useDisconnect'
     | '/_hooks/adapter/useSwitchChain'
     | '/_hooks/auth/useAuthCallback'
+    | '/_hooks/auth/useConnectWithSiwe'
     | '/_hooks/auth/useEmailAuth'
     | '/_hooks/auth/useGuestAuth'
     | '/_hooks/auth/useOauth'
     | '/_hooks/auth/useSignOut'
     | '/_hooks/auth/useUser'
-    | '/_hooks/auth/useWalletAuth'
     | '/_hooks/solana/useDisconnect'
     | '/_hooks/solana/useSolanaAccount'
     | '/_hooks/solana/useSolanaBalance'
@@ -615,13 +616,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HooksSolanaUseDisconnectRouteImport
       parentRoute: typeof HooksSolanaRoute
     }
-    '/_hooks/auth/useWalletAuth': {
-      id: '/_hooks/auth/useWalletAuth'
-      path: '/auth/useWalletAuth'
-      fullPath: '/auth/useWalletAuth'
-      preLoaderRoute: typeof HooksAuthUseWalletAuthRouteImport
-      parentRoute: typeof HooksRoute
-    }
     '/_hooks/auth/useUser': {
       id: '/_hooks/auth/useUser'
       path: '/auth/useUser'
@@ -655,6 +649,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/useEmailAuth'
       fullPath: '/auth/useEmailAuth'
       preLoaderRoute: typeof HooksAuthUseEmailAuthRouteImport
+      parentRoute: typeof HooksRoute
+    }
+    '/_hooks/auth/useConnectWithSiwe': {
+      id: '/_hooks/auth/useConnectWithSiwe'
+      path: '/auth/useConnectWithSiwe'
+      fullPath: '/auth/useConnectWithSiwe'
+      preLoaderRoute: typeof HooksAuthUseConnectWithSiweRouteImport
       parentRoute: typeof HooksRoute
     }
     '/_hooks/auth/useAuthCallback': {
@@ -802,12 +803,12 @@ interface HooksRouteChildren {
   HooksSolanaRoute: typeof HooksSolanaRouteWithChildren
   HooksWagmiRoute: typeof HooksWagmiRouteWithChildren
   HooksAuthUseAuthCallbackRoute: typeof HooksAuthUseAuthCallbackRoute
+  HooksAuthUseConnectWithSiweRoute: typeof HooksAuthUseConnectWithSiweRoute
   HooksAuthUseEmailAuthRoute: typeof HooksAuthUseEmailAuthRoute
   HooksAuthUseGuestAuthRoute: typeof HooksAuthUseGuestAuthRoute
   HooksAuthUseOauthRoute: typeof HooksAuthUseOauthRoute
   HooksAuthUseSignOutRoute: typeof HooksAuthUseSignOutRoute
   HooksAuthUseUserRoute: typeof HooksAuthUseUserRoute
-  HooksAuthUseWalletAuthRoute: typeof HooksAuthUseWalletAuthRoute
   HooksUtilsUseUIRoute: typeof HooksUtilsUseUIRoute
   HooksWalletUseSolanaEmbeddedWalletRoute: typeof HooksWalletUseSolanaEmbeddedWalletRoute
   HooksWalletUseWalletAssetsRoute: typeof HooksWalletUseWalletAssetsRoute
@@ -820,12 +821,12 @@ const HooksRouteChildren: HooksRouteChildren = {
   HooksSolanaRoute: HooksSolanaRouteWithChildren,
   HooksWagmiRoute: HooksWagmiRouteWithChildren,
   HooksAuthUseAuthCallbackRoute: HooksAuthUseAuthCallbackRoute,
+  HooksAuthUseConnectWithSiweRoute: HooksAuthUseConnectWithSiweRoute,
   HooksAuthUseEmailAuthRoute: HooksAuthUseEmailAuthRoute,
   HooksAuthUseGuestAuthRoute: HooksAuthUseGuestAuthRoute,
   HooksAuthUseOauthRoute: HooksAuthUseOauthRoute,
   HooksAuthUseSignOutRoute: HooksAuthUseSignOutRoute,
   HooksAuthUseUserRoute: HooksAuthUseUserRoute,
-  HooksAuthUseWalletAuthRoute: HooksAuthUseWalletAuthRoute,
   HooksUtilsUseUIRoute: HooksUtilsUseUIRoute,
   HooksWalletUseSolanaEmbeddedWalletRoute:
     HooksWalletUseSolanaEmbeddedWalletRoute,

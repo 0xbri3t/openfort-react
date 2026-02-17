@@ -6,6 +6,7 @@
  * @packageDocumentation
  */
 
+export type { SetRecoveryOptions } from '../shared/types'
 export {
   EthereumContext,
   EthereumContextProvider,
@@ -13,7 +14,6 @@ export {
   type EthereumContextValue,
   useEthereumContext,
 } from './EthereumContext'
-
 export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'
 export {
   type EthereumGasEstimate,
@@ -40,7 +40,6 @@ export {
   type UseEthereumWriteContractReturn,
   useEthereumWriteContract,
 } from './hooks/useEthereumWriteContract'
-
 export { type SignMessageParams, signMessage } from './operations'
 export type {
   ConnectedEmbeddedEthereumWallet,
@@ -53,6 +52,5 @@ export type {
   EthereumWalletActions,
   OpenfortEmbeddedEthereumWalletProvider,
   SetActiveEthereumWalletOptions,
-  SetRecoveryOptions,
   UseEmbeddedEthereumWalletOptions,
 } from './types'

@@ -5,7 +5,7 @@ import { useFamilyAccountsConnector, useFamilyConnector } from '../../../hooks/u
 import useIsMobile from '../../../hooks/useIsMobile'
 import { useLastConnector } from '../../../hooks/useLastConnector'
 import { isFamily } from '../../../utils/wallets'
-import { useEthereumConnectors, type WalletProps } from '../../../wallets/useEthereumConnectors'
+import { type ExternalConnectorProps, useExternalConnectors } from '../../../wallets/useExternalConnectors'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import Alert from '../Alert'
@@ -16,7 +16,7 @@ const ConnectorList = () => {
   const context = useOpenfort()
   const isMobile = useIsMobile()
 
-  const wallets = useEthereumConnectors()
+  const wallets = useExternalConnectors()
   const { lastConnectorId } = useLastConnector()
   const familyConnector = useFamilyConnector()
   const familyAccountsConnector = useFamilyAccountsConnector()
@@ -54,7 +54,7 @@ const ConnectorList = () => {
 
 export default ConnectorList
 
-const ConnectorItem = ({ wallet, isRecent }: { wallet: WalletProps; isRecent?: boolean }) => {
+const ConnectorItem = ({ wallet, isRecent }: { wallet: ExternalConnectorProps; isRecent?: boolean }) => {
   const isMobile = useIsMobile()
   const context = useOpenfort()
   const bridge = useEthereumBridge()

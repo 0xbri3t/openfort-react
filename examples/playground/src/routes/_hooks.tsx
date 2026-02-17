@@ -50,7 +50,7 @@ const SidebarInfo = () => {
           <SidebarLink href="/auth/useGuestAuth?focus=signUpGuest">Sign up as a guest</SidebarLink>
           <SidebarLink href="/auth/useEmailAuth?focus=signUpEmail">Sign up with email</SidebarLink>
           <SidebarLink href="/auth/useOauth?focus=initOAuth">Sign up with OAuth</SidebarLink>
-          <SidebarLink href="/auth/useWalletAuth?focus=connectWallet">Continue with your wallet</SidebarLink>
+          <SidebarLink href="/auth/useConnectWithSiwe?focus=connectWithSiwe">Continue with your wallet</SidebarLink>
         </div>
       )
     }

@@ -1,11 +1,17 @@
 import { useCallback, useState } from 'react'
-import { OpenfortTransactionError, TransactionErrorCode } from '../../core/errors'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 
 export type TransactionFlowStatus = 'idle' | 'preparing' | 'signing' | 'sending' | 'confirming' | 'confirmed' | 'error'
 
+const LOADING_STATUSES: TransactionFlowStatus[] = ['preparing', 'signing', 'sending', 'confirming']
+
 export type UseTransactionFlowResult = {
   status: TransactionFlowStatus
-  error: OpenfortTransactionError | null
+  /** True when status is preparing, signing, sending, or confirming. Use for consistent hook shape. */
+  isLoading: boolean
+  isError: boolean
+  isSuccess: boolean
+  error: OpenfortError | null
   reset: () => void
   execute: (sendFn: () => Promise<void>) => Promise<void>
 }
@@ -24,7 +30,7 @@ export type UseTransactionFlowResult = {
  */
 export function useTransactionFlow(): UseTransactionFlowResult {
   const [status, setStatus] = useState<TransactionFlowStatus>('idle')
-  const [error, setError] = useState<OpenfortTransactionError | null>(null)
+  const [error, setError] = useState<OpenfortError | null>(null)
 
   const reset = useCallback(() => {
     setStatus('idle')
@@ -39,17 +45,19 @@ export function useTransactionFlow(): UseTransactionFlowResult {
       setStatus('confirmed')
     } catch (err) {
       const wrapped =
-        err instanceof OpenfortTransactionError
+        err instanceof OpenfortError
           ? err
-          : new OpenfortTransactionError(
-              err instanceof Error ? err.message : String(err),
-              TransactionErrorCode.UNKNOWN,
-              { cause: err }
-            )
+          : new OpenfortError(formatErrorWithReason('Transaction failed', err), OpenfortErrorCode.TRANSACTION_UNKNOWN, {
+              cause: err,
+            })
       setError(wrapped)
       setStatus('error')
     }
   }, [])
 
-  return { status, error, reset, execute }
+  const isLoading = LOADING_STATUSES.includes(status)
+  const isError = status === 'error'
+  const isSuccess = status === 'confirmed'
+
+  return { status, isLoading, isError, isSuccess, error, reset, execute }
 }

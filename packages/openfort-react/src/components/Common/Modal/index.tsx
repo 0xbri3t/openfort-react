@@ -12,7 +12,7 @@ import usePrevious from '../../../hooks/usePrevious'
 import { ResetContainer } from '../../../styles'
 import type { CustomTheme } from '../../../types'
 import { flattenChildren, isMobile, isWalletConnectConnector } from '../../../utils'
-import { useWallet } from '../../../wallets/useEthereumConnectors'
+import { useExternalConnector } from '../../../wallets/useExternalConnectors'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -170,7 +170,7 @@ const Modal: React.FC<ModalProps> = ({
   const themeContext = useThemeContext()
   const mobile = isMobile()
 
-  const wallet = useWallet(context.connector?.id)
+  const wallet = useExternalConnector(context.connector?.id)
 
   const walletInfo = {
     name: wallet?.name,
@@ -181,7 +181,7 @@ const Modal: React.FC<ModalProps> = ({
   }
 
   const locales = useLocales({
-    CONNECTORNAME: walletInfo?.name,
+    CONNECTORNAME: walletInfo?.name ?? 'UNKNOWN CONNECTOR',
   })
 
   const [state, setOpen] = useTransition({

@@ -16,42 +16,13 @@ export type All = {
 export type { CustomAvatarProps } from './components/Common/Avatar'
 export type {
   ConnectUIOptions as OpenfortOptions,
-  CustomizableRoutes,
   OpenfortWalletConfig,
   PhoneConfig,
 } from './components/Openfort/types'
 
-export enum OpenfortReactErrorType {
-  AUTHENTICATION_ERROR = 'AUTHENTICATION_ERROR',
-  WALLET_ERROR = 'WALLET_ERROR',
-  CONFIGURATION_ERROR = 'CONFIGURATION_ERROR',
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
-  UNEXPECTED_ERROR = 'UNEXPECTED_ERROR',
-}
+import type { OpenfortError } from './core/errors'
 
-interface Data {
-  [key: string]: any
-}
-export class OpenfortError extends Error {
-  type: OpenfortReactErrorType
-  data: Data
-  constructor(message: string, type: OpenfortReactErrorType, data?: Data) {
-    if (data?.error instanceof OpenfortError) {
-      super(data.error.message)
-      this.data = data.error.data
-      this.type = data.error.type
-      this.name = data.error.name
-      return
-    } else if (data?.error instanceof Error) {
-      super(data.error.message)
-    } else {
-      super(message)
-    }
-    this.type = type
-    this.data = data || {}
-    this.name = 'OpenfortError'
-  }
-}
+export { OpenfortError } from './core/errors'
 
 export type OpenfortHookOptions<T = { error?: OpenfortError }> = {
   onSuccess?: (data: T) => void

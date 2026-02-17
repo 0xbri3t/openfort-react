@@ -21,17 +21,3 @@ export {
   useSolanaSignMessage,
   useSolanaWriteContract,
 } from './solana'
-export type {
-  SolanaCluster,
-  UseAccountLike,
-  UseBalanceLike,
-  UseDisconnectLike,
-  UseReadContractLike,
-  UseSignMessageLike,
-  UseSolanaAccountLike,
-  UseSolanaSendSOLLike,
-  UseSolanaSignMessageLike,
-  UseSwitchChainLike,
-  UseWriteContractLike,
-  WalletAdapterChain,
-} from './types'

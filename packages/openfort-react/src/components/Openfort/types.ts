@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 import type { Hex } from 'viem'
 import type { getAssets } from 'viem/experimental/erc7811'
-import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/walletTypes'
 import type { UserAccount } from '../../openfortCustomTypes'
 import type { SolanaConfig } from '../../solana/types'
 
@@ -166,8 +166,6 @@ type CommonWalletConfig = {
   /** Policy ID (pol_...) for the embedded signer. */
   ethereumProviderPolicyId?: PolicyConfig
   accountType?: AccountTypeEnum
-  /** @deprecated Use `debugMode` prop instead. */
-  debug?: boolean
   recoverWalletAutomaticallyAfterAuth?: boolean
   assets?: {
     [chainId: number]: Hex[]
@@ -176,7 +174,7 @@ type CommonWalletConfig = {
   solana?: SolanaConfig
 }
 
-export type GetEncryptionSessionParams = {
+type GetEncryptionSessionParams = {
   accessToken: string
   otpCode?: string
   userId: string
@@ -220,6 +218,7 @@ export type DebugModeOptions = {
   openfortReactDebugMode?: boolean
   openfortCoreDebugMode?: boolean
   shieldDebugMode?: boolean
+  debugRoutes?: boolean
 }
 
 /**

@@ -1,12 +1,13 @@
 import { EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon } from '../../../assets/icons'
+import { OpenfortError } from '../../../core/errors'
 import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
+import { handleOtpRecoveryError } from '../../../shared/utils/otpError'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import FitText from '../../Common/FitText'
@@ -87,7 +88,7 @@ const SolanaCreateAutomatic = ({ onBack, logoutOnBack }: { onBack: SetOnBackFunc
       setRoute(routes.SOL_CONNECTED)
     } catch (err) {
       setOtpStatus('error')
-      setError(err instanceof Error ? err.message : 'There was an error verifying the OTP')
+      setError(err instanceof OpenfortError ? err.message : 'There was an error verifying the OTP. Please try again.')
       setTimeout(() => {
         setOtpStatus('idle')
         setError(false)
@@ -103,19 +104,19 @@ const SolanaCreateAutomatic = ({ onBack, logoutOnBack }: { onBack: SetOnBackFunc
         await embeddedWallet.create({ recoveryMethod: RecoveryMethod.AUTOMATIC })
         setRoute(routes.SOL_CONNECTED)
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        if (message === 'OTP_REQUIRED' && isWalletRecoveryOTPEnabled) {
+        const { error, isOTPRequired } = handleOtpRecoveryError(err, isWalletRecoveryOTPEnabled)
+        if (isOTPRequired && isWalletRecoveryOTPEnabled) {
           try {
             const response = await requestOTP()
             setNeedsOTP(true)
             setOtpResponse(response)
           } catch (otpErr) {
             logger.log('Error requesting OTP for wallet creation', otpErr)
-            setRecoveryError(otpErr instanceof Error ? otpErr : new Error(String(otpErr)))
+            setRecoveryError(new Error('Failed to send recovery code'))
           }
         } else {
           logger.log('Error creating Solana wallet', err)
-          setRecoveryError(err instanceof Error ? err : new Error(message))
+          setRecoveryError(error)
         }
       }
       triggerResize()
@@ -229,7 +230,7 @@ const SolanaCreatePasskey = ({
         setRoute(routes.SOL_CONNECTED)
       } catch (err) {
         logger.log('Error creating Solana wallet with passkey', err)
-        setRecoveryError(err instanceof Error ? err : new Error(String(err)))
+        setRecoveryError(new Error('Failed to create wallet'))
         setShouldCreate(false)
       }
     })()
@@ -289,7 +290,7 @@ const SolanaCreatePassword = ({
       })
       setRoute(routes.SOL_CONNECTED)
     } catch (err) {
-      setRecoveryError(err instanceof Error ? err.message : 'There was an error creating your wallet')
+      setRecoveryError(err instanceof OpenfortError ? err.message : 'Failed to create wallet. Please try again.')
     }
     setLoading(false)
   }

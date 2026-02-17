@@ -1,17 +1,20 @@
 import { useMemo } from 'react'
 import { getAddress, parseAbi } from 'viem'
-import { useAccount, useChains, useReadContract, useWriteContract } from 'wagmi'
+import { useAccount, useChainId, useChains, useReadContract, useWriteContract } from 'wagmi'
+import { getMintContractConfig } from '../../lib/contracts'
 import { TruncateData } from '../ui/TruncateData'
 
 const MintContract = () => {
   const { address } = useAccount()
+  const chainId = useChainId()
+  const config = getMintContractConfig(chainId)
 
   const {
     data: balance,
     refetch,
     error: balanceError,
   } = useReadContract({
-    address: '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac',
+    address: (config?.address ?? undefined) as `0x${string}` | undefined,
     abi: [
       {
         type: 'function',
@@ -22,11 +25,11 @@ const MintContract = () => {
       },
     ],
     functionName: 'balanceOf',
-    args: [address!],
+    args: config && address ? [address] : undefined,
   })
 
   const { data: tokenSymbol } = useReadContract({
-    address: '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac',
+    address: (config?.address ?? undefined) as `0x${string}` | undefined,
     abi: [
       {
         type: 'function',
@@ -57,12 +60,23 @@ const MintContract = () => {
   })
 
   async function submit({ amount }: { amount: string }) {
-    writeContract({
-      address: getAddress('0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'),
-      abi: parseAbi(['function mint(address to, uint256 amount)']),
-      functionName: 'mint',
-      args: [address!, BigInt(amount)],
-    })
+    if (!config?.address) return
+    const amountWei = BigInt(amount) * BigInt(10 ** 18)
+    if (config.type === 'claim') {
+      writeContract({
+        address: getAddress(config.address),
+        abi: parseAbi(['function claim(uint256 amount)']),
+        functionName: 'claim',
+        args: [amountWei],
+      })
+    } else {
+      writeContract({
+        address: getAddress(config.address),
+        abi: parseAbi(['function mint(address to, uint256 amount)']),
+        functionName: 'mint',
+        args: [address!, amountWei],
+      })
+    }
   }
 
   return (
@@ -85,7 +99,7 @@ const MintContract = () => {
           className="grow peer"
           name="amount"
         />
-        <button className="btn" disabled={isPending || !address}>
+        <button className="btn" disabled={isPending || !address || !config}>
           {isPending ? 'Minting...' : 'Mint Tokens'}
         </button>
       </form>

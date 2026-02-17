@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Solana - mint devnet SOL', () => {
+  test.describe.configure({ retries: 3 })
   test('can mint devnet SOL (self-transfer) and shows tx signature', async ({ page, dashboardPage }) => {
     await dashboardPage.ensureReady('solana-only')
 

@@ -6,7 +6,7 @@
 import type { Chain, Hex } from 'viem'
 import { createWalletClient, custom } from 'viem'
 import { erc7715Actions } from 'viem/experimental'
-import { OpenfortError, OpenfortReactErrorType } from '../../types'
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import type { OpenfortEmbeddedEthereumWalletProvider } from '../types'
 
 /**
@@ -19,7 +19,7 @@ export async function getEmbeddedWalletClient(
   options?: { extendErc7715?: boolean }
 ): Promise<ReturnType<ReturnType<typeof createWalletClient>['extend']> | ReturnType<typeof createWalletClient>> {
   const accounts = (await provider.request({ method: 'eth_accounts' })) as Hex[]
-  if (!accounts?.length) throw new OpenfortError('No accounts available', OpenfortReactErrorType.WALLET_ERROR)
+  if (!accounts?.length) throw new OpenfortError('No accounts available', OpenfortErrorCode.WALLET_NOT_FOUND)
   const account = accounts[0]
   const transport = custom(provider)
   const baseClient = createWalletClient({ account, chain, transport })

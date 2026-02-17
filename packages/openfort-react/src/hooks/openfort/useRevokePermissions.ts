@@ -1,12 +1,13 @@
 import type { RevokePermissionsRequestParams, SessionResponse } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
 import type { Hex } from 'viem'
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { getEmbeddedWalletClient } from '../../ethereum/hooks/getEmbeddedWalletClient'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import type { OpenfortEmbeddedEthereumWalletProvider } from '../../ethereum/types'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
+import type { OpenfortHookOptions } from '../../types'
 import { logger } from '../../utils/logger'
 import { useChains } from '../useChains'
 import { useConnectedWallet } from '../useConnectedWallet'
@@ -81,7 +82,7 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
       try {
         const chain = chains.find((c) => c.id === chainId)
         if (!chain) {
-          throw new OpenfortError('No chain configured', OpenfortReactErrorType.CONFIGURATION_ERROR)
+          throw new OpenfortError('No chain configured', OpenfortErrorCode.INVALID_CONFIG)
         }
 
         logger.log('Revoking permissions for session key:', sessionKey)
@@ -99,7 +100,7 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
         if (bridge) {
           const walletClient = await bridge.getWalletClient?.()
           if (!walletClient) {
-            throw new OpenfortError('Wallet client not available', OpenfortReactErrorType.WALLET_ERROR)
+            throw new OpenfortError('Wallet client not available', OpenfortErrorCode.WALLET_NOT_FOUND)
           }
           revokePermissionsResult = await walletClient.request<{
             Method: 'wallet_revokePermissions'
@@ -142,8 +143,8 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
           data,
         })
       } catch (error) {
-        const openfortError = new OpenfortError('Failed to revoke permissions', OpenfortReactErrorType.WALLET_ERROR, {
-          error,
+        const openfortError = new OpenfortError('Failed to revoke permissions', OpenfortErrorCode.WALLET_NOT_FOUND, {
+          cause: error,
         })
 
         setStatus({

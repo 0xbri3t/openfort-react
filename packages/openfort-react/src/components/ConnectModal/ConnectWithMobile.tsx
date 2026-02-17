@@ -4,7 +4,7 @@ import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import styled from '../../styles/styled'
 import { isAndroid } from '../../utils'
 import { useOnUserReturn } from '../../utils/useOnUserReturn'
-import { useWallet } from '../../wallets/useEthereumConnectors'
+import { useExternalConnector } from '../../wallets/useExternalConnectors'
 import { walletConfigs } from '../../wallets/walletConfigs'
 import Button from '../Common/Button'
 import FitText from '../Common/FitText'
@@ -37,7 +37,7 @@ const ConnectWithMobile: React.FC = () => {
         .indexOf(connector.id) !== -1
   )
 
-  const wallet = useWallet(connector.id) || (walletId && walletConfigs[walletId]) || {}
+  const wallet = useExternalConnector(connector.id) || (walletId && walletConfigs[walletId]) || {}
   const bridge = useEthereumBridge()
   const isConnected = bridge?.account?.isConnected ?? false
 

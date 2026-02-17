@@ -52,7 +52,7 @@ export function Providers({ children }: { children?: React.ReactNode }) {
   const evmWalletConfig = {
     ...providerOptions.walletConfig,
     ethereum: {
-      chainId: polygonAmoy.id,
+      chainId: beamTestnet.id,
       rpcUrls: {
         [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
         [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',

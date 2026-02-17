@@ -44,8 +44,8 @@ test.describe('Switch chain', () => {
     }
 
     // Cambios de chain
-    await switchTo('Beam Testnet')
     await switchTo('Base Sepolia')
+    await switchTo('Beam Testnet')
     await switchTo('Polygon Amoy')
   })
 })

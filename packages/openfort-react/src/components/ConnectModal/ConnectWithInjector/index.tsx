@@ -9,7 +9,7 @@ import useLocales from '../../../hooks/useLocales'
 import { useRouteProps } from '../../../hooks/useRouteProps'
 import { detectBrowser, isWalletConnectConnector } from '../../../utils'
 import { logger } from '../../../utils/logger'
-import { useWallet } from '../../../wallets/useEthereumConnectors'
+import { useExternalConnector } from '../../../wallets/useExternalConnectors'
 import Alert from '../../Common/Alert'
 import BrowserIcon from '../../Common/BrowserIcon'
 import Button from '../../Common/Button'
@@ -73,7 +73,7 @@ const ConnectWithInjector: React.FC<{
   const { linkedAccounts, user } = useUser()
   const { triggerResize, connector: c } = useOpenfort()
   const id = c.id
-  const wallet = useWallet(id)
+  const wallet = useExternalConnector(id)
 
   const onConnect = useCallback(() => {
     setStatus(states.CONNECTED)
@@ -203,8 +203,8 @@ const ConnectWithInjector: React.FC<{
   )
 
   const locales = useLocales({
-    CONNECTORNAME: walletInfo.name,
-    CONNECTORSHORTNAME: walletInfo.shortName ?? walletInfo.name,
+    CONNECTORNAME: walletInfo.name ?? 'UNKNOWN CONNECTOR',
+    CONNECTORSHORTNAME: walletInfo.shortName ?? walletInfo.name ?? 'UNKNOWN CONNECTOR',
     SUGGESTEDEXTENSIONBROWSER: suggestedExtension?.label ?? 'your browser',
   })
 
@@ -241,7 +241,12 @@ const ConnectWithInjector: React.FC<{
       handleConnectError(
         err && typeof err === 'object' && 'code' in err
           ? (err as { code?: number; message?: string })
-          : { message: err instanceof Error ? err.message : String(err) }
+          : {
+              message:
+                err instanceof Error && err.message === 'User rejected request'
+                  ? 'User rejected request'
+                  : 'Connection failed',
+            }
       )
     }
     setTimeout(triggerResize, 100)

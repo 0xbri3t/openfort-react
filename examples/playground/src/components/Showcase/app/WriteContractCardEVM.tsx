@@ -5,16 +5,16 @@ import {
   useEthereumReadContract,
   useEthereumWriteContract,
 } from '@openfort/react'
-import type { ReactNode } from 'react'
-import { formatUnits, getAddress } from 'viem'
+import { type ReactNode, useEffect } from 'react'
+import { formatUnits, getAddress, parseAbi } from 'viem'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
+import { getMintContractConfig } from '@/lib/contracts'
 
-const CONTRACT_ADDRESS = '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac' as const
 const BALANCE_ABI = [
   {
     type: 'function',
@@ -27,39 +27,45 @@ const BALANCE_ABI = [
 
 export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address, chainId } = useEthereumAccount()
+  const config = getMintContractConfig(chainId ?? undefined)
+
+  useEffect(() => {
+    if (chainId != null) {
+    }
+  }, [chainId])
 
   const {
     data: balance,
     refetch,
     error: balanceError,
   } = useEthereumReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: [...BALANCE_ABI],
+    address: config?.address as `0x${string}`,
+    abi: BALANCE_ABI,
     functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    chainId: chainId,
+    args: config && address ? [address] : undefined,
+    chainId: chainId ?? undefined,
   })
 
   const { data: hash, writeContract, isPending, error } = useEthereumWriteContract()
 
   async function submit({ amount }: { amount: string }) {
-    if (!address) return
-    await writeContract({
-      address: getAddress(CONTRACT_ADDRESS),
-      abi: [
-        {
-          type: 'function',
-          name: 'mint',
-          inputs: [
-            { name: 'to', type: 'address' },
-            { name: 'amount', type: 'uint256' },
-          ],
-          outputs: [],
-        },
-      ],
-      functionName: 'mint',
-      args: [address, BigInt(amount) * BigInt(10 ** 18)],
-    })
+    if (!address || !config) return
+    const amountWei = BigInt(amount) * BigInt(10 ** 18)
+    if (config.type === 'claim') {
+      await writeContract({
+        address: getAddress(config.address),
+        abi: parseAbi(['function claim(uint256 amount)']),
+        functionName: 'claim',
+        args: [amountWei],
+      })
+    } else {
+      await writeContract({
+        address: getAddress(config.address),
+        abi: parseAbi(['function mint(address to, uint256 amount)']),
+        functionName: 'mint',
+        args: [address, amountWei],
+      })
+    }
     setTimeout(refetch, 100)
   }
 
@@ -69,7 +75,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
         <CardTitle>Write Contract</CardTitle>
         <CardDescription>Interact with smart contracts on the blockchain.</CardDescription>
         <CardDescription>
-          Contract Address: <TruncatedText text={CONTRACT_ADDRESS} />
+          Contract Address: <TruncatedText text={config?.address ?? ''} />
         </CardDescription>
         <CardDescription>
           Balance: {balanceError ? '-' : formatUnits((balance as bigint) ?? 0n, 18) || 0}
@@ -96,7 +102,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>
                 <div className="w-full">
-                  <Button className="btn btn-accent w-full" disabled={isPending || !address}>
+                  <Button className="btn btn-accent w-full" disabled={isPending || !address || !config}>
                     {isPending ? 'Minting...' : 'Mint Tokens'}
                   </Button>
                 </div>
@@ -107,7 +113,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
               </TooltipContent>
             </Tooltip>
           ) : (
-            <Button className="btn btn-accent w-full" disabled={isPending || !address}>
+            <Button className="btn btn-accent w-full" disabled={isPending || !address || !config}>
               {isPending ? 'Minting...' : 'Mint Tokens'}
             </Button>
           )}

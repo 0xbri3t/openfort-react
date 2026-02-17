@@ -1,5 +1,5 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
-import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/walletTypes'
 import { routes, type SetRouteOptions } from './types'
 
 const recoverRouteRegistry: Record<

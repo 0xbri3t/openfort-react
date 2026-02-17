@@ -2,9 +2,9 @@ import { ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort
 import { motion } from 'framer-motion'
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, ShieldIcon } from '../../../assets/icons'
-import type { EthereumUserWallet, SolanaUserWallet } from '../../../hooks/openfort/useWallets'
+import { OpenfortError } from '../../../core/errors'
+import type { EthereumUserWallet, SolanaUserWallet } from '../../../hooks/openfort/walletTypes'
 import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
@@ -70,7 +70,7 @@ const RecoverPasswordWallet = ({
         recoveryPassword: recoveryPhrase,
       })
     } catch (err) {
-      setRecoveryError(err instanceof Error ? err.message : 'There was an error recovering your account')
+      setRecoveryError(err instanceof OpenfortError ? err.message : 'Recovery failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -175,7 +175,7 @@ const RecoverPasskeyWallet = ({
     try {
       await recoveryRegistry[chainType].passkey(wallet as RecoverableWallet, ctx)
     } catch (err) {
-      setRecoveryError(err instanceof Error ? err.message : 'Invalid passkey.')
+      setRecoveryError(err instanceof OpenfortError ? err.message : 'Invalid passkey. Please try again.')
     }
   }, [chainType, wallet, ctx])
 
@@ -287,7 +287,7 @@ const RecoverAutomaticWallet = ({
         setTimeout(() => setRoute(routes.CONNECTED_SUCCESS), 1000)
       } catch (err) {
         setOtpStatus('error')
-        setError(err instanceof Error ? err.message : 'There was an error verifying the OTP')
+        setError(err instanceof OpenfortError ? err.message : 'There was an error verifying the OTP. Please try again.')
         logger.log('Error verifying OTP for wallet recovery', err)
         setTimeout(() => {
           setOtpStatus('idle')

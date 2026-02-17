@@ -1,14 +1,16 @@
 import { useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
+import { getAddress } from 'viem/utils'
 import { useAccount, useChainId, useSignMessage } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
+import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
 
 export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
@@ -20,8 +22,9 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
   const chainId = useChainId()
   const { data } = useSignMessage()
   const { address } = useAccount()
-  const key = useMemo(() => `${chainId}-${address}`, [chainId, address])
-
+  const mintContractAddress = getMintContractAddress(chainId ?? undefined)
+  const grantDisabled = isLoading || !mintContractAddress
+  const key = `${chainId}-${address}`
   const updateSessionKeys = () => {
     const keys = getPrivateKeys(key)
 
@@ -52,6 +55,7 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
           className="space-y-2"
           onSubmit={async (e) => {
             e.preventDefault()
+            if (grantDisabled) return
             const privateKey = generatePrivateKey()
             const accountSessionAddress = privateKeyToAccount(privateKey).address
             const { error, permissionsContext } = await grantPermissions({
@@ -68,7 +72,7 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
                   {
                     type: 'contract-call',
                     data: {
-                      address: '0x2522f4fc9af2e1954a3d13f7a5b2683a00a4543a',
+                      address: getAddress(mintContractAddress!),
                       calls: [],
                     },
                     policies: [],
@@ -93,7 +97,7 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>
                 <div className="w-full">
-                  <Button className="btn btn-accent w-full" disabled={isLoading}>
+                  <Button className="btn btn-accent w-full" disabled={grantDisabled}>
                     {isLoading ? 'Creating...' : 'Create session key'}
                   </Button>
                 </div>
@@ -104,7 +108,7 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
               </TooltipContent>
             </Tooltip>
           ) : (
-            <Button className="btn btn-accent w-full" disabled={isLoading}>
+            <Button className="btn btn-accent w-full" disabled={grantDisabled}>
               {isLoading ? 'Creating...' : 'Create session key'}
             </Button>
           )}

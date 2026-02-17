@@ -12,7 +12,7 @@ import {
   embeddedAccountToSolanaUserWallet,
   embeddedAccountToUserWallet,
   type SolanaUserWallet,
-} from '../useWallets'
+} from '../walletTypes'
 import { useSignOut } from './useSignOut'
 
 /**
@@ -55,7 +55,7 @@ export const useConnectToWalletPostAuth = () => {
   const { chainType } = useChain()
   const { client } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
-  const chainId = walletConfig?.ethereum?.chainId ?? 80002
+  const chainId = walletConfig?.ethereum?.chainId ?? 13337
   const embeddedWallet = useEmbeddedWallet()
   const { signOut } = useSignOut()
   const queryClient = useQueryClient()

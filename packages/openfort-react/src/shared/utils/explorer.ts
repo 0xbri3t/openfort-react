@@ -37,7 +37,7 @@ type ExplorerUrlBuilder = (options: ExplorerUrlOptions) => string
 
 const explorerRegistry: Record<ChainTypeEnum, ExplorerUrlBuilder> = {
   [ChainTypeEnum.EVM]: (options) => {
-    const chainId = options.chainId ?? 80002
+    const chainId = options.chainId ?? 13337
     const base = EVM_EXPLORER_BY_CHAIN_ID[chainId] ?? 'https://amoy.polygonscan.com'
     return appendPath(base, options)
   },

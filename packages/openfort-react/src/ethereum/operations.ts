@@ -7,7 +7,7 @@
 
 import type { Openfort } from '@openfort/openfort-js'
 
-import { OpenfortError, OpenfortReactErrorType } from '../types'
+import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../core/errors'
 
 export interface SignMessageParams {
   /** Message to sign */
@@ -41,6 +41,8 @@ export async function signMessage(params: SignMessageParams): Promise<`0x${strin
   } catch (error) {
     throw error instanceof OpenfortError
       ? error
-      : new OpenfortError('Signing failed', OpenfortReactErrorType.WALLET_ERROR, { error })
+      : new OpenfortError(formatErrorWithReason('Signing failed', error), OpenfortErrorCode.SIGNING_FAILED, {
+          cause: error,
+        })
   }
 }

@@ -3,7 +3,7 @@ import {
   KeyIcon,
   LockClosedIcon,
 } from '@heroicons/react/24/outline'
-import { RecoveryMethod, useWallets } from '@openfort/react'
+import { RecoveryMethod, useEthereumEmbeddedWallet } from '@openfort/react'
 import { useState } from 'react'
 
 import { Sheet } from '../../../components/ui/Sheet'
@@ -46,11 +46,9 @@ export function CreateWallet({
 }) {
   const [passwordSheetOpen, setPasswordSheetOpen] = useState(false)
 
-  const { isCreating, createWallet, error } = useWallets({
-    onSuccess: () => {
-      onWalletCreated?.()
-    },
-  })
+  const { create, status } = useEthereumEmbeddedWallet()
+  const [error, setError] = useState<string | null>(null)
+  const isCreating = status === 'creating'
 
   if (isCreating) {
     return <div>Creating wallet...</div>
@@ -61,13 +59,14 @@ export function CreateWallet({
       <div className="flex flex-col gap-4 wallet-option-group mb-4">
         <button
           className="wallet-option cursor-pointer"
-          onClick={() =>
-            createWallet({
-              recovery: {
-                recoveryMethod: RecoveryMethod.PASSKEY,
-              },
-            })
-          }
+          onClick={async () => {
+            try {
+              await create({ recoveryMethod: RecoveryMethod.PASSKEY })
+              onWalletCreated?.()
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Failed to create wallet')
+            }
+          }}
         >
           <FingerPrintIcon />
           <div className="flex flex-col text-start">
@@ -79,13 +78,14 @@ export function CreateWallet({
         </button>
         <button
           className="wallet-option cursor-pointer"
-          onClick={() =>
-            createWallet({
-              recovery: {
-                recoveryMethod: RecoveryMethod.AUTOMATIC,
-              },
-            })
-          }
+          onClick={async () => {
+            try {
+              await create({ recoveryMethod: RecoveryMethod.AUTOMATIC })
+              onWalletCreated?.()
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Failed to create wallet')
+            }
+          }}
         >
           <LockClosedIcon />
           <div className="flex flex-col text-start">
@@ -109,7 +109,7 @@ export function CreateWallet({
         </button>
       </div>
       {error && (
-        <p className="text-red-500 text-sm mb-2">Error: {error.message}</p>
+        <p className="text-red-500 text-sm mb-2">Error: {error}</p>
       )}
       <p className="mb-4 text-xs text-zinc-400">
         Disclaimer: This is a demo of Openfort recovery methods. In production,

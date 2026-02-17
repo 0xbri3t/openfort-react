@@ -2,7 +2,7 @@ import { ChainTypeEnum, type Openfort } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import type { OpenfortEthereumBridgeValue } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { logger } from '../../utils/logger'
-import type { WalletProps } from '../../wallets/useEthereumConnectors'
+import type { ExternalConnectorProps } from '../../wallets/useExternalConnectors'
 import type { ConnectionStrategy } from '../ConnectionStrategy'
 import { resolveEthereumPolicy } from '../strategyUtils'
 
@@ -15,7 +15,7 @@ import { resolveEthereumPolicy } from '../strategyUtils'
  */
 export function createEthereumBridgeStrategy(
   bridge: OpenfortEthereumBridgeValue,
-  connectors: WalletProps[]
+  connectors: ExternalConnectorProps[]
 ): ConnectionStrategy {
   return {
     kind: 'bridge',

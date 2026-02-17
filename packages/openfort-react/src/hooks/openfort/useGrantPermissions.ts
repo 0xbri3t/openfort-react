@@ -2,11 +2,12 @@ import { useCallback, useState } from 'react'
 import type { Chain, Hex } from 'viem'
 import { createWalletClient, custom } from 'viem'
 import { erc7715Actions, type GrantPermissionsParameters, type GrantPermissionsReturnType } from 'viem/experimental'
+import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import type { OpenfortEmbeddedEthereumWalletProvider } from '../../ethereum/types'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
+import type { OpenfortHookOptions } from '../../types'
 import { logger } from '../../utils/logger'
 import { useChains } from '../useChains'
 import { useConnectedWallet } from '../useConnectedWallet'
@@ -112,7 +113,7 @@ type GrantPermissionsHookOptions = OpenfortHookOptions<GrantPermissionsHookResul
  */
 async function getEmbeddedWalletClientWithErc7715(provider: OpenfortEmbeddedEthereumWalletProvider, chain: Chain) {
   const accounts = (await provider.request({ method: 'eth_accounts' })) as `0x${string}`[]
-  if (!accounts?.length) throw new OpenfortError('No accounts available', OpenfortReactErrorType.WALLET_ERROR)
+  if (!accounts?.length) throw new OpenfortError('No accounts available', OpenfortErrorCode.WALLET_NOT_FOUND)
   const account = accounts[0]
   const transport = custom(provider)
   const baseClient = createWalletClient({ account, chain, transport })
@@ -152,7 +153,7 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
 
         const chain = chains.find((c) => c.id === chainId)
         if (!chain) {
-          throw new OpenfortError('No chain configured', OpenfortReactErrorType.CONFIGURATION_ERROR)
+          throw new OpenfortError('No chain configured', OpenfortErrorCode.INVALID_CONFIG)
         }
 
         setStatus({
@@ -165,10 +166,10 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
         if (bridge) {
           const walletClient = (await bridge.getWalletClient?.())?.extend(erc7715Actions())
           if (!walletClient) {
-            throw new OpenfortError('Wallet client not available', OpenfortReactErrorType.WALLET_ERROR)
+            throw new OpenfortError('Wallet client not available', OpenfortErrorCode.WALLET_NOT_FOUND)
           }
           const [addr] = await walletClient.getAddresses()
-          if (!addr) throw new OpenfortError('No account on wallet client', OpenfortReactErrorType.WALLET_ERROR)
+          if (!addr) throw new OpenfortError('No account on wallet client', OpenfortErrorCode.WALLET_NOT_FOUND)
           account = addr
           grantPermissionsResult = await walletClient.grantPermissions(request)
         } else {
@@ -180,7 +181,7 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
           }
           const walletClient = await getEmbeddedWalletClientWithErc7715(provider, chain)
           const [addr] = await walletClient.getAddresses()
-          if (!addr) throw new OpenfortError('No account on wallet client', OpenfortReactErrorType.WALLET_ERROR)
+          if (!addr) throw new OpenfortError('No account on wallet client', OpenfortErrorCode.WALLET_NOT_FOUND)
           account = addr
           grantPermissionsResult = await walletClient.grantPermissions(request)
         }
@@ -211,8 +212,8 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
           : undefined
         const openfortError = new OpenfortError(
           message ?? 'Failed to grant permissions',
-          OpenfortReactErrorType.WALLET_ERROR,
-          { error }
+          OpenfortErrorCode.WALLET_NOT_FOUND,
+          { cause: error }
         )
 
         setStatus({

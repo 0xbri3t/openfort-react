@@ -1,6 +1,7 @@
 import { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
 import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import type { RecoverableWallet } from '../../../shared/types'
+import { handleOtpRecoveryError } from '../../../shared/utils/otpError'
 import { routes, type SetRouteOptions } from '../../Openfort/types'
 
 type RecoveryContext = {
@@ -53,17 +54,17 @@ async function automaticEntry(wallet: RecoverableWallet, ctx: RecoveryContext): 
     })
     ctx.setRoute(routes.CONNECTED_SUCCESS)
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    if (message === 'OTP_REQUIRED' && ctx.otp.isEnabled) {
+    const { error, isOTPRequired } = handleOtpRecoveryError(err, ctx.otp.isEnabled)
+    if (isOTPRequired && ctx.otp.isEnabled) {
       try {
         const res = await ctx.otp.request()
         ctx.setNeedsOTP(true)
         ctx.setOtpResponse(res)
-      } catch (otpErr) {
-        ctx.setError(otpErr instanceof Error ? otpErr.message : 'Failed to send recovery code')
+      } catch (_otpErr) {
+        ctx.setError('Failed to send recovery code')
       }
     } else {
-      ctx.setError(message || 'Failed to recover wallet')
+      ctx.setError(error.message)
     }
   }
 }
