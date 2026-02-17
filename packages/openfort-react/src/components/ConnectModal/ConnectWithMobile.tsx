@@ -46,7 +46,7 @@ const ConnectWithMobile: React.FC = () => {
 
   const [hasReturned, setHasReturned] = useState(false)
 
-  const siwe = useConnectWithSiwe()
+  const { connectWithSiwe } = useConnectWithSiwe()
 
   const openApp = () => {
     const uri = wallet?.getWalletConnectDeeplink?.('')
@@ -82,14 +82,12 @@ const ConnectWithMobile: React.FC = () => {
         break
       case states.CONNECTING:
         setDescription('Requesting signature to verify wallet...')
-        siwe({
+        connectWithSiwe({
           walletClientType: walletId,
-          onConnect: () => {
-            setRoute(routes.CONNECTED)
-          },
-          onError: (error) => {
+          onConnect: () => setRoute(routes.CONNECTED),
+          onError: (err) => {
             setStatus(states.ERROR)
-            setDescription(error || 'Connection failed')
+            setDescription(err || 'Connection failed')
           },
         })
         break

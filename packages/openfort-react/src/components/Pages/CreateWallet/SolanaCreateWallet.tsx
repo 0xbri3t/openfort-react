@@ -3,11 +3,11 @@ import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon } from '../../../assets/icons'
 import { OpenfortError } from '../../../core/errors'
-import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
 import { handleOtpRecoveryError } from '../../../shared/utils/otpError'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import FitText from '../../Common/FitText'
@@ -65,7 +65,7 @@ const OtherMethod = ({
 const SolanaCreateAutomatic = ({ onBack, logoutOnBack }: { onBack: SetOnBackFunction; logoutOnBack: boolean }) => {
   const { embeddedState } = useOpenfortCore()
   const { setRoute, triggerResize } = useOpenfort()
-  const embeddedWallet = useEmbeddedWallet()
+  const embeddedWallet = useSolanaEmbeddedWallet()
   const { isEnabled: isWalletRecoveryOTPEnabled, requestOTP } = useRecoveryOTP()
 
   const [recoveryError, setRecoveryError] = useState<Error | null>(null)
@@ -216,7 +216,7 @@ const SolanaCreatePasskey = ({
   logoutOnBack: boolean
 }) => {
   const { triggerResize, setRoute } = useOpenfort()
-  const embeddedWallet = useEmbeddedWallet()
+  const embeddedWallet = useSolanaEmbeddedWallet()
   const { embeddedState } = useOpenfortCore()
   const [shouldCreate, setShouldCreate] = useState(false)
   const [recoveryError, setRecoveryError] = useState<Error | null>(null)
@@ -274,7 +274,7 @@ const SolanaCreatePassword = ({
   const { triggerResize, setRoute } = useOpenfort()
   const [showPasswordIsTooWeakError, setShowPasswordIsTooWeakError] = useState(false)
   const [loading, setLoading] = useState(false)
-  const embeddedWallet = useEmbeddedWallet()
+  const embeddedWallet = useSolanaEmbeddedWallet()
 
   const handleSubmit = async () => {
     if (getPasswordStrength(recoveryPhrase) < MEDIUM_SCORE_THRESHOLD) {

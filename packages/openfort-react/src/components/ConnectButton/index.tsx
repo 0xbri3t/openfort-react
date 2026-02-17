@@ -1,14 +1,15 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import type React from 'react'
+import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useUI } from '../../hooks/openfort/useUI'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
-import { useConnectedWallet } from '../../hooks/useConnectedWallet'
 import useIsMounted from '../../hooks/useIsMounted'
 import useLocales from '../../hooks/useLocales'
 import { useResolvedIdentity } from '../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { useChain } from '../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { ResetContainer } from '../../styles'
 import type { CustomTheme, Mode, Theme } from '../../types'
 import { Balance } from '../BalanceButton'
@@ -115,16 +116,19 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
   const { open, close, isOpen } = useUI()
 
   const { chainType } = useChain()
-  const wallet = useConnectedWallet()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? (wallet.address as Hash) : undefined
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
   const isChainSupported = useChainIsSupported(chainId)
 
   const identity = useResolvedIdentity({
     address: address ?? '',
-    chainType: isConnected ? wallet.chainType : chainType,
+    chainType: chainType,
     ensChainId: chainId ?? 0,
     enabled: isConnected && !!address,
   })
@@ -163,10 +167,15 @@ ConnectButtonRenderer.displayName = 'OpenfortButton.Custom'
 
 const ConnectedLabel = ({ separator }: { separator?: string }) => {
   const { user } = useOpenfortCore()
-  const wallet = useConnectedWallet()
+  const { chainType } = useChain()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
 
   switch (wallet.status) {
-    case 'loading':
+    case 'fetching-wallets':
+    case 'creating':
+    case 'connecting':
       return 'Loading...'
     case 'disconnected':
       if (!user) return 'Loading user...'
@@ -194,17 +203,20 @@ function OpenfortButtonInner({
   const { user } = useOpenfortCore()
 
   const { chainType } = useChain()
-  const wallet = useConnectedWallet()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
   const isChainSupported = useChainIsSupported(chainId)
   const showUnsupportedWarning = chainType === ChainTypeEnum.EVM && !isChainSupported
 
   const identity = useResolvedIdentity({
     address: address ?? '',
-    chainType: isConnected ? wallet.chainType : chainType,
+    chainType: chainType,
     ensChainId: chainId ?? 0,
     enabled: isConnected && !!address,
   })
@@ -327,11 +339,15 @@ export function OpenfortButton({
   const isMounted = useIsMounted()
   const context = useOpenfort()
   const { open } = useUI()
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
   const chainIsSupported = useChainIsSupported(chainId)
 

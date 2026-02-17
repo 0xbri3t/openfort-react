@@ -2,18 +2,20 @@
  * Solana Connected Page
  *
  * Displays the connected Solana wallet with balance and actions.
- * Uses the internal useSolanaBalance hook for balance display.
+ * Uses viem direct JSON-RPC calls for balance fetching.
  */
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
+import { useQuery } from '@tanstack/react-query'
 import type React from 'react'
 import { useEffect } from 'react'
 import { ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useSolanaBalance } from '../../../solana/hooks/useSolanaBalance'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
+import { useSolanaContext } from '../../../solana/SolanaContext'
 import { nFormatter, truncateSolanaAddress } from '../../../utils'
+import { logger } from '../../../utils/logger'
 import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
 import { TextLinkButton } from '../../Common/Button/styles'
@@ -25,19 +27,52 @@ import { PageContent } from '../../PageContent'
 import { ConnectedPageLayout } from './ConnectedPageLayout'
 import { ActionButton, Balance, LinkedProvidersToggle } from './styles'
 
+// Helper function to fetch Solana balance
+async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<number> {
+  const response = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'getBalance',
+      params: [address],
+    }),
+  })
+  const data = await response.json()
+  return data.result ?? 0
+}
+
 const SolanaConnected: React.FC = () => {
   const context = useOpenfort()
   const { setHeaderLeftSlot, setRoute } = context
   const locales = useLocales()
 
-  const wallet = useConnectedWallet()
+  const wallet = useSolanaEmbeddedWallet()
   const { embeddedAccounts } = useOpenfortCore()
+  const { rpcUrl } = useSolanaContext()
   const hasSolanaWallets = (embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.SVM) ?? []).length > 0
   const address = wallet.status === 'connected' ? wallet.address : undefined
 
-  const balanceResult = useSolanaBalance(address ? { address } : undefined)
+  const balanceResult = useQuery({
+    queryKey: ['solana-balance', address, rpcUrl],
+    enabled: Boolean(address && rpcUrl),
+    retry: true,
+    retryDelay: 1000,
+    queryFn: async () => {
+      if (!address || !rpcUrl) return null
+      try {
+        const balanceLamports = await fetchSolanaBalance(rpcUrl, address)
+        return balanceLamports / 1e9 // Convert lamports to SOL
+      } catch (error) {
+        logger.error('Failed to fetch Solana balance:', error)
+        return null
+      }
+    },
+  })
+
   const balance = balanceResult.data
-  const isBalanceLoading = balanceResult.isLoading
+  const isBalanceLoading = balanceResult.status === 'pending'
 
   useEffect(() => {
     if (!address) {
@@ -80,7 +115,7 @@ const SolanaConnected: React.FC = () => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {nFormatter(parseFloat(balance.formatted))} SOL
+          {nFormatter(balance)} SOL
         </Balance>
       </TextLinkButton>
     ) : null

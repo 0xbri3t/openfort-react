@@ -42,8 +42,8 @@ export const navRoutes: NavRoute[] = [
         label: 'useEmbeddedWallet',
       },
       {
-        href: '/wallet/useWalletAssets',
-        label: 'useWalletAssets',
+        href: '/wallet/useEthereumWalletAssets',
+        label: 'useEthereumWalletAssets',
       },
     ],
   },
@@ -53,10 +53,6 @@ export const navRoutes: NavRoute[] = [
       {
         href: '/utils/useUI',
         label: 'useUI',
-      },
-      {
-        href: '/adapter',
-        label: 'EVM adapter (viem)',
       },
       {
         href: '/wagmi',

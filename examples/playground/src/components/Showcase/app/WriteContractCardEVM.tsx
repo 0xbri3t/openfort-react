@@ -1,19 +1,20 @@
-import {
-  ChainTypeEnum,
-  getExplorerUrl,
-  useEthereumAccount,
-  useEthereumReadContract,
-  useEthereumWriteContract,
-} from '@openfort/react'
+import { ChainTypeEnum, getExplorerUrl } from '@openfort/react'
 import { type ReactNode, useEffect } from 'react'
 import { formatUnits, getAddress, parseAbi } from 'viem'
+import { useAccount, useReadContract, useWriteContract } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  useEthereumAccountLocal,
+  useEthereumReadContractLocal,
+  useEthereumWriteContractLocal,
+} from '@/hooks/useEthereumAdapterHooks'
 import { cn } from '@/lib/cn'
 import { getMintContractConfig } from '@/lib/contracts'
+import { usePlaygroundMode } from '@/providers'
 
 const BALANCE_ABI = [
   {
@@ -26,7 +27,14 @@ const BALANCE_ABI = [
 ] as const
 
 export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { address, chainId } = useEthereumAccount()
+  const { mode } = usePlaygroundMode()
+
+  // Use wagmi hooks in evm-wagmi mode, local adapter hooks in evm-only mode
+  const useAccountHook = mode === 'evm-wagmi' ? useAccount : useEthereumAccountLocal
+  const useReadContractHook = mode === 'evm-wagmi' ? useReadContract : useEthereumReadContractLocal
+  const useWriteContractHook = mode === 'evm-wagmi' ? useWriteContract : useEthereumWriteContractLocal
+
+  const { address, chainId } = useAccountHook()
   const config = getMintContractConfig(chainId ?? undefined)
 
   useEffect(() => {
@@ -38,7 +46,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
     data: balance,
     refetch,
     error: balanceError,
-  } = useEthereumReadContract({
+  } = useReadContractHook({
     address: config?.address as `0x${string}`,
     abi: BALANCE_ABI,
     functionName: 'balanceOf',
@@ -46,7 +54,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
     chainId: chainId ?? undefined,
   })
 
-  const { data: hash, writeContract, isPending, error } = useEthereumWriteContract()
+  const { data: hash, writeContract, isPending, error } = useWriteContractHook()
 
   async function submit({ amount }: { amount: string }) {
     if (!address || !config) return

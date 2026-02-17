@@ -5,10 +5,12 @@ import { useEffect, useState } from 'react'
 import { keyframes } from 'styled-components'
 
 import { chainConfigs } from '../../constants/chainConfigs'
+import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useBalance } from '../../hooks/useBalance'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
-import { useConnectedWallet } from '../../hooks/useConnectedWallet'
 import useIsMounted from '../../hooks/useIsMounted'
+import { useChain } from '../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import styled from '../../styles/styled'
 import { nFormatter } from '../../utils'
 import Chain from '../Common/Chain'
@@ -48,20 +50,24 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
   const isMounted = useIsMounted()
   const [isInitial, setIsInitial] = useState(true)
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const { chainType } = useChain()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
   // Chain type is EVM or SVM only (ChainTypeEnum)
-  const chainType = isConnected ? wallet.chainType : ChainTypeEnum.EVM
+  const derivedChainType = chainType
 
   const isChainSupported = useChainIsSupported(chainId)
 
   // Use new useBalance hook (always call, use enabled option - React rules compliant)
   const balance = useBalance({
     address: address ?? '',
-    chainType,
+    chainType: derivedChainType,
     chainId: chainId ?? 13337,
     enabled: isConnected && !!address,
     refetchInterval: 30_000, // Replaces blockNumber-based invalidation

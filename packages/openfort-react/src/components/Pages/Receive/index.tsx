@@ -1,7 +1,9 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import Logos from '../../../assets/logos'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useChains } from '../../../hooks/useChains'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
+import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { CopyIconButton } from '../../Common/CopyToClipboard/CopyIconButton'
 import CustomQRCode from '../../Common/CustomQRCode'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
@@ -19,19 +21,23 @@ const Receive = () => {
   const context = useOpenfort()
   const currentRoute = context.route?.route ?? ''
   const isSolanaRoute = currentRoute.startsWith('sol:')
-  const wallet = useConnectedWallet()
+  const { chainType } = useChain()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const chains = useChains()
 
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
   const chain = chains.find((c) => c.id === chainId)
 
   const qrValue = address || ''
 
   const networkLabel =
-    isConnected && wallet.chainType === ChainTypeEnum.SVM && wallet.cluster
-      ? formatSolanaCluster(wallet.cluster)
+    isConnected && chainType === ChainTypeEnum.SVM && solanaWallet.cluster
+      ? formatSolanaCluster(solanaWallet.cluster)
       : chain?.name
         ? `${chain.name}${chainId ? ` · Chain ID: ${chainId}` : ''}`
         : chainId

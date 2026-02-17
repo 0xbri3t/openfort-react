@@ -113,21 +113,63 @@ export interface EthereumWalletActions {
 }
 
 export type EmbeddedEthereumWalletStateBase =
-  | (EthereumWalletActions & { status: 'disconnected'; activeWallet: null })
-  | (EthereumWalletActions & { status: 'fetching-wallets'; activeWallet: null })
-  | (EthereumWalletActions & { status: 'connecting'; activeWallet: ConnectedEmbeddedEthereumWallet })
-  | (EthereumWalletActions & { status: 'reconnecting'; activeWallet: ConnectedEmbeddedEthereumWallet })
-  | (EthereumWalletActions & { status: 'creating'; activeWallet: null })
-  | (EthereumWalletActions & { status: 'needs-recovery'; activeWallet: ConnectedEmbeddedEthereumWallet })
+  | (EthereumWalletActions & {
+      status: 'disconnected'
+      activeWallet: null
+      address?: never
+      chainId?: never
+      displayAddress?: never
+    })
+  | (EthereumWalletActions & {
+      status: 'fetching-wallets'
+      activeWallet: null
+      address?: never
+      chainId?: never
+      displayAddress?: never
+    })
+  | (EthereumWalletActions & {
+      status: 'connecting'
+      activeWallet: ConnectedEmbeddedEthereumWallet
+      address: `0x${string}`
+      chainId?: number
+      displayAddress: string
+    })
+  | (EthereumWalletActions & {
+      status: 'reconnecting'
+      activeWallet: ConnectedEmbeddedEthereumWallet
+      address: `0x${string}`
+      chainId?: number
+      displayAddress: string
+    })
+  | (EthereumWalletActions & {
+      status: 'creating'
+      activeWallet: null
+      address?: never
+      chainId?: never
+      displayAddress?: never
+    })
+  | (EthereumWalletActions & {
+      status: 'needs-recovery'
+      activeWallet: ConnectedEmbeddedEthereumWallet
+      address?: `0x${string}`
+      chainId?: number
+      displayAddress?: string
+    })
   | (EthereumWalletActions & {
       status: 'connected'
       activeWallet: ConnectedEmbeddedEthereumWallet
       provider: OpenfortEmbeddedEthereumWalletProvider
+      address: `0x${string}`
+      chainId: number
+      displayAddress: string
     })
   | (EthereumWalletActions & {
       status: 'error'
       activeWallet: ConnectedEmbeddedEthereumWallet | null
       error: string
+      address?: `0x${string}`
+      chainId?: number
+      displayAddress?: string
     })
 
 /** Derived booleans for consistent hook shape. All variants include these. */
@@ -140,7 +182,33 @@ export type EmbeddedEthereumWalletDerived = {
   isSuccess: boolean
 }
 
-export type EmbeddedEthereumWalletState = EmbeddedEthereumWalletStateBase & EmbeddedEthereumWalletDerived
+/** Connected wallet state properties (merged from useConnectedWallet) */
+export type EthereumConnectedWalletState = {
+  /** Normalized status (wagmi-compatible): 'connected', 'connecting', 'disconnected', 'reconnecting'. */
+  normalizedStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
+  /** Which wallet type is currently active: 'embedded' (Openfort) or 'external' (MetaMask, WalletConnect, etc.). */
+  walletType: 'embedded' | 'external' | null
+  /** Connector ID when connected (embeddedWalletId for embedded, external connector id otherwise). */
+  connectorId?: string
+  /** Connector name when connected (e.g. 'Openfort', 'MetaMask'). */
+  connectorName?: string
+  /** True when currently connected. */
+  isConnected: boolean
+  /** True when actively connecting or transitioning. */
+  isConnecting: boolean
+  /** True when disconnected. */
+  isDisconnected: boolean
+  /** True when reconnecting after loss of connection. */
+  isReconnecting: boolean
+  /** True when the connected wallet is an Openfort embedded wallet. */
+  isEmbedded: boolean
+  /** True when the connected wallet is an external wallet. */
+  isExternal: boolean
+}
+
+export type EmbeddedEthereumWalletState = EmbeddedEthereumWalletStateBase &
+  EmbeddedEthereumWalletDerived &
+  EthereumConnectedWalletState
 
 export type UseEmbeddedEthereumWalletOptions = {
   /** Chain ID for smart account operations */

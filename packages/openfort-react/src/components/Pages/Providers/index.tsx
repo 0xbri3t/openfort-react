@@ -1,4 +1,4 @@
-import { OAuthProvider } from '@openfort/openfort-js'
+import { ChainTypeEnum, OAuthProvider } from '@openfort/openfort-js'
 import { AnimatePresence, motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useMemo } from 'react'
@@ -6,9 +6,11 @@ import { PhoneInput } from 'react-international-phone'
 
 import { EmailIcon, GuestIcon, PhoneIcon } from '../../../assets/icons'
 import Logos, { OtherSocials, providersLogos } from '../../../assets/logos'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useProviders } from '../../../hooks/openfort/useProviders'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { logger } from '../../../utils/logger'
 import { isValidEmail as isValidEmailFn } from '../../../utils/validation'
 import Button from '../../Common/Button'
@@ -344,9 +346,13 @@ const Providers: React.FC = () => {
   const { user } = useOpenfortCore()
   const { previousRoute } = useOpenfort()
   const { mainProviders, hasExcessProviders } = useProviders()
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
 

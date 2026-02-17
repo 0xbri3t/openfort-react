@@ -1,4 +1,4 @@
-import { RecoveryMethod, useConnectedWallet, useEthereumEmbeddedWallet } from '@openfort/react'
+import { RecoveryMethod, useEthereumEmbeddedWallet } from '@openfort/react'
 
 /** Inferred from useEthereumEmbeddedWallet().wallets */
 type EmbeddedWalletItem = ReturnType<typeof useEthereumEmbeddedWallet>['wallets'][number]
@@ -25,10 +25,7 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 
-const CreateWalletButton = () => {
-  const wallet = useConnectedWallet()
-  const chainId = wallet.status === 'connected' && wallet.chainId != null ? wallet.chainId : undefined
-  const ethereum = useEthereumEmbeddedWallet({ chainId })
+const CreateWalletButton = ({ ethereum }: { ethereum: ReturnType<typeof useEthereumEmbeddedWallet> }) => {
   const isCreating = ethereum.status === 'creating'
   const create = ethereum.create
   const error = ethereum.status === 'error' ? ethereum.error : null
@@ -269,11 +266,9 @@ const WalletButton = ({
 }
 
 export const SetActiveWalletsCard = () => {
-  const wallet = useConnectedWallet()
-  const chainId = wallet.status === 'connected' && wallet.chainId != null ? wallet.chainId : undefined
-  const ethereum = useEthereumEmbeddedWallet({ chainId })
+  const ethereum = useEthereumEmbeddedWallet()
   const wallets = ethereum.wallets
-  const connectedAddress = wallet.status === 'connected' ? wallet.address : undefined
+  const connectedAddress = ethereum.status === 'connected' ? ethereum.address : undefined
   // Prefer ethereum.activeWallet so the list updates immediately when user clicks "Set active".
   // Fall back to connectedAddress (top-right) only when the hook hasn't set an active wallet yet (e.g. initial load).
   const activeWalletFromHook =
@@ -338,7 +333,7 @@ export const SetActiveWalletsCard = () => {
             </Tooltip>
           ))}
 
-          <CreateWalletButton />
+          <CreateWalletButton ethereum={ethereum} />
         </div>
       </CardContent>
     </Card>

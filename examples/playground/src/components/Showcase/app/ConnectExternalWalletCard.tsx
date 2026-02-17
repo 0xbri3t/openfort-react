@@ -2,7 +2,6 @@ import {
   type ConnectedEmbeddedEthereumWallet,
   embeddedWalletId,
   RecoveryMethod,
-  useConnectedWallet,
   useEthereumBridge,
   useEthereumEmbeddedWallet,
 } from '@openfort/react'
@@ -299,7 +298,6 @@ const EmbeddedWalletButton = ({
  * - Embedded: list of wallets with password/passkey recovery, create button.
  */
 export const ConnectExternalWalletCard = () => {
-  const wallet = useConnectedWallet()
   const bridge = useEthereumBridge()
   const embeddedHook = useEthereumEmbeddedWallet()
   const allConnectors = useExternalConnectors()
@@ -307,11 +305,11 @@ export const ConnectExternalWalletCard = () => {
   const embeddedWallets = embeddedHook.wallets
   const externalConnectors = allConnectors.filter((c) => c.id !== embeddedWalletId)
 
-  const isOpenfortActive = wallet.isConnected && wallet.isEmbedded
-  const isExternalActive = wallet.isConnected && wallet.isExternal
-  const isBusy = wallet.isConnecting || embeddedHook.status === 'connecting' || embeddedHook.status === 'creating'
+  const isOpenfortActive = embeddedHook.status === 'connected'
+  const isExternalActive = embeddedHook.isExternal
+  const isBusy = embeddedHook.isConnecting || embeddedHook.status === 'connecting' || embeddedHook.status === 'creating'
 
-  const connectedAddress = wallet.status === 'connected' ? wallet.address : undefined
+  const connectedAddress = embeddedHook.status === 'connected' ? embeddedHook.address : undefined
   const activeWalletFromHook = embeddedHook.activeWallet ?? null
   const activeWallet =
     activeWalletFromHook != null
@@ -356,7 +354,8 @@ export const ConnectExternalWalletCard = () => {
             <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">External</p>
             <div className="flex flex-col gap-0.5">
               {externalConnectors.map((c) => {
-                const isActive = isExternalActive && wallet.status === 'connected' && wallet.connectorId === c.id
+                const isActive =
+                  isExternalActive && embeddedHook.status === 'connected' && embeddedHook.connectorId === c.id
                 const iconNode = c.icon
 
                 return (

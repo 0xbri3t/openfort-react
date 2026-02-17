@@ -1,12 +1,15 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { css } from 'styled-components'
 
 import defaultTheme from '../../../constants/defaultTheme'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useChains } from '../../../hooks/useChains'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
+import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import styled from '../../../styles/styled'
 import { flattenChildren, isMobile } from '../../../utils'
 import { routes } from '../../Openfort/types'
@@ -128,14 +131,18 @@ const ChevronDown = ({ ...props }) => (
 const ChainSelector: React.FC = () => {
   const context = useOpenfort()
   const [isOpen, setIsOpen] = useState(false)
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const chains = useChains()
 
   // Find current chain from connected wallet
   const isConnected = wallet.status === 'connected'
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
   const chain = chains.find((c) => c.id === chainId)
 
   const locales = useLocales({

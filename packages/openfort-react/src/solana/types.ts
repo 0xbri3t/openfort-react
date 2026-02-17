@@ -254,22 +254,88 @@ export interface SolanaWalletActions {
 }
 
 export type EmbeddedSolanaWalletStateBase =
-  | (SolanaWalletActions & { status: 'disconnected'; activeWallet: null })
-  | (SolanaWalletActions & { status: 'fetching-wallets'; activeWallet: null })
-  | (SolanaWalletActions & { status: 'connecting'; activeWallet: ConnectedEmbeddedSolanaWallet })
-  | (SolanaWalletActions & { status: 'reconnecting'; activeWallet: ConnectedEmbeddedSolanaWallet })
-  | (SolanaWalletActions & { status: 'creating'; activeWallet: null })
-  | (SolanaWalletActions & { status: 'needs-recovery'; activeWallet: ConnectedEmbeddedSolanaWallet })
+  | (SolanaWalletActions & {
+      status: 'disconnected'
+      activeWallet: null
+      address?: never
+      cluster?: never
+      displayAddress?: never
+    })
+  | (SolanaWalletActions & {
+      status: 'fetching-wallets'
+      activeWallet: null
+      address?: never
+      cluster?: never
+      displayAddress?: never
+    })
+  | (SolanaWalletActions & {
+      status: 'connecting'
+      activeWallet: ConnectedEmbeddedSolanaWallet
+      address: string
+      cluster: SolanaCluster
+      displayAddress: string
+    })
+  | (SolanaWalletActions & {
+      status: 'reconnecting'
+      activeWallet: ConnectedEmbeddedSolanaWallet
+      address: string
+      cluster: SolanaCluster
+      displayAddress: string
+    })
+  | (SolanaWalletActions & {
+      status: 'creating'
+      activeWallet: null
+      address?: never
+      cluster?: never
+      displayAddress?: never
+    })
+  | (SolanaWalletActions & {
+      status: 'needs-recovery'
+      activeWallet: ConnectedEmbeddedSolanaWallet
+      address?: string
+      cluster?: SolanaCluster
+      displayAddress?: string
+    })
   | (SolanaWalletActions & {
       status: 'connected'
       activeWallet: ConnectedEmbeddedSolanaWallet
       provider: OpenfortEmbeddedSolanaWalletProvider
+      address: string
+      cluster: SolanaCluster
+      displayAddress: string
     })
   | (SolanaWalletActions & {
       status: 'error'
       activeWallet: ConnectedEmbeddedSolanaWallet | null
       error: string
+      address?: string
+      cluster?: SolanaCluster
+      displayAddress?: string
     })
+
+/** Connected wallet state properties (merged from useConnectedWallet) */
+export type SolanaConnectedWalletState = {
+  /** Normalized status (wagmi-compatible): 'connected', 'connecting', 'disconnected', 'reconnecting'. */
+  normalizedStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
+  /** Which wallet type is currently active: always 'embedded' for Solana (Openfort). */
+  walletType: 'embedded' | null
+  /** Connector ID (always embeddedWalletId for Solana). */
+  connectorId?: string
+  /** Connector name (always 'Openfort' for Solana). */
+  connectorName?: string
+  /** True when currently connected. */
+  isConnected: boolean
+  /** True when actively connecting or transitioning. */
+  isConnecting: boolean
+  /** True when disconnected. */
+  isDisconnected: boolean
+  /** True when reconnecting after loss of connection. */
+  isReconnecting: boolean
+  /** True when the connected wallet is an Openfort embedded wallet (always true for Solana). */
+  isEmbedded: boolean
+  /** True when the connected wallet is an external wallet (always false for Solana). */
+  isExternal: boolean
+}
 
 /** Derived booleans for consistent hook shape. All variants include these. */
 export type EmbeddedSolanaWalletDerived = {
@@ -281,7 +347,9 @@ export type EmbeddedSolanaWalletDerived = {
   isSuccess: boolean
 }
 
-export type EmbeddedSolanaWalletState = EmbeddedSolanaWalletStateBase & EmbeddedSolanaWalletDerived
+export type EmbeddedSolanaWalletState = EmbeddedSolanaWalletStateBase &
+  EmbeddedSolanaWalletDerived &
+  SolanaConnectedWalletState
 
 /**
  * Options for useSolanaEmbeddedWallet hook

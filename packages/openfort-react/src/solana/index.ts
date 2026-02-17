@@ -8,7 +8,6 @@
  */
 
 export type { SetRecoveryOptions } from '../shared/types'
-export { useSolanaBalance } from './hooks/useSolanaBalance'
 export { useSolanaEmbeddedWallet } from './hooks/useSolanaEmbeddedWallet'
 export type { SolanaSendTransactionStatus, UseSolanaSendTransactionResult } from './hooks/useSolanaSendTransaction'
 export { useSolanaSendTransaction } from './hooks/useSolanaSendTransaction'

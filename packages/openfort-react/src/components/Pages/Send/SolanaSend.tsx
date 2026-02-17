@@ -8,15 +8,16 @@ import {
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/kit'
+import { useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { OpenfortError } from '../../../core/errors'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
 import { FEE_LAMPORTS, LAMPORTS_PER_SOL, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
-import { useSolanaBalance } from '../../../solana/hooks/useSolanaBalance'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { solToLamports } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
 import { createTransferSolInstruction } from '../../../solana/utils/transfer'
+import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import Input from '../../Common/Input'
 import { ModalHeading } from '../../Common/Modal/styles'
@@ -24,6 +25,22 @@ import { routes } from '../../Openfort/types'
 import { PageContent } from '../../PageContent'
 import { AmountInputWrapper, ErrorText, Field, FieldLabel, Form, HelperText, MaxButton } from './styles'
 import { sanitizeAmountInput } from './utils'
+
+// Helper function to fetch Solana balance (shared with SolanaConnected)
+async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<number> {
+  const response = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'getBalance',
+      params: [address],
+    }),
+  })
+  const data = await response.json()
+  return data.result ?? 0
+}
 
 function formatSol(lamports: bigint, decimals = 4): string {
   return (Number(lamports) / Number(LAMPORTS_PER_SOL)).toFixed(decimals)
@@ -40,9 +57,25 @@ export function SolanaSend() {
   const walletAddress = wallet.status === 'connected' ? wallet.activeWallet.address : undefined
   const provider = wallet.status === 'connected' ? wallet.provider : null
 
-  const balanceResult = useSolanaBalance(walletAddress ? { address: walletAddress } : undefined)
+  const balanceResult = useQuery({
+    queryKey: ['solana-balance', walletAddress, rpcUrl],
+    enabled: Boolean(walletAddress && rpcUrl),
+    retry: true,
+    retryDelay: 1000,
+    queryFn: async () => {
+      if (!walletAddress || !rpcUrl) return null
+      try {
+        const balanceLamports = await fetchSolanaBalance(rpcUrl, walletAddress)
+        return { value: BigInt(balanceLamports) }
+      } catch (error) {
+        logger.error('Failed to fetch Solana balance:', error)
+        return null
+      }
+    },
+  })
+
   const balanceData = balanceResult.data
-  const refetchBalance = balanceResult.refetch
+  const refetchBalance = () => balanceResult.refetch()
 
   const balanceLamports = balanceData?.value ?? BigInt(0)
   const recipientValid = recipient.length > 0 && isValidSolanaAddress(recipient)

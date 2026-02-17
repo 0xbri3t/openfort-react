@@ -1,7 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
 import type { Address } from 'viem'
-import { formatUnits } from 'viem'
-import { useEthereumGasEstimate } from '../../../ethereum/hooks/useEthereumGasEstimate'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { createPublicClient, formatUnits, http } from 'viem'
+import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
+import { logger } from '../../../utils/logger'
+import { getDefaultEthereumRpcUrl } from '../../../utils/rpc'
 import Tooltip from '../../Common/Tooltip'
 import { formatBalance } from '../Send/utils'
 import { InfoIconWrapper } from './styles'
@@ -41,25 +43,44 @@ export const EstimatedFees = ({
   enabled = true,
   hideInfoIcon = false,
 }: EstimatedFeesProps) => {
-  const { data: assets } = useWalletAssets()
+  const { data: assets } = useEthereumWalletAssets()
   const pricePerToken = assets?.find((a) => a.type === 'native')?.metadata?.fiat?.value as number | undefined
 
-  const gas = useEthereumGasEstimate({
-    from: account,
-    to: to ?? ('0x0000000000000000000000000000000000000000' as `0x${string}`),
-    value: value ?? BigInt(0),
-    data: data ?? '0x',
-    chainId: chainId ?? 13337,
-    enabled: enabled && !!account && !!to,
+  const gas = useQuery({
+    queryKey: ['gas-estimate', account, to, value, data, chainId],
+    enabled: enabled && !!account && !!to && !!chainId,
+    retry: true,
+    retryDelay: 1000,
+    queryFn: async () => {
+      if (!account || !to || !chainId) return null
+      try {
+        const rpcUrl = getDefaultEthereumRpcUrl(chainId)
+        const publicClient = createPublicClient({ transport: http(rpcUrl) })
+        const [gasEstimate, feesPerGas] = await Promise.all([
+          publicClient.estimateGas({
+            account,
+            to,
+            value: value ?? BigInt(0),
+            data: data ?? '0x',
+          }),
+          publicClient.estimateFeesPerGas(),
+        ])
+        const estimatedCost = gasEstimate * (feesPerGas.maxFeePerGas ?? BigInt(0))
+        return { estimatedCost, gasLimit: gasEstimate }
+      } catch (error) {
+        logger.error('Failed to estimate gas:', error)
+        return null
+      }
+    },
   })
 
-  // Handle discriminated union states
-  if (gas.status === 'idle' || gas.status === 'loading' || gas.status === 'error') {
+  // Handle query states
+  if (gas.status !== 'success' || !gas.data) {
     return <>--</>
   }
 
-  const gasCost = gas.estimatedCost
-  const gasUnits = gas.gasLimit
+  const gasCost = gas.data.estimatedCost
+  const gasUnits = gas.data.gasLimit
 
   if (pricePerToken !== undefined) {
     const gasCostInEth = Number.parseFloat(formatUnits(gasCost, 18))

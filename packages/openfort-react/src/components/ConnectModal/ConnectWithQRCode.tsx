@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import { useWalletConnectModal } from '../../hooks/useWalletConnectModal'
@@ -18,30 +18,26 @@ const ConnectWithSiwe = () => {
   const ensName = bridge?.account?.ensName
   const { connector, setRoute } = useOpenfort()
   const wallet = useExternalConnector(connector.id)
+  const { connectWithSiwe } = useConnectWithSiwe()
 
   const [error, setError] = useState<string | undefined>(undefined)
-  const siwe = useConnectWithSiwe()
   const [description, setDescription] = useState<string | undefined>(undefined)
 
-  const connectWithSiwe = () => {
+  const runSiwe = useCallback(() => {
     setDescription('Requesting signature to verify wallet...')
-    siwe({
+    connectWithSiwe({
       walletClientType: connector.id,
-      onConnect: () => {
-        setRoute(routes.CONNECTED)
-      },
-      onError: (error) => {
-        setError(error || 'Connection failed')
+      onConnect: () => setRoute(routes.CONNECTED),
+      onError: (err) => {
+        setError(err || 'Connection failed')
         setDescription(undefined)
       },
     })
-  }
+  }, [connectWithSiwe, connector.id, setRoute])
 
   useEffect(() => {
-    if (isConnected) {
-      connectWithSiwe()
-    }
-  }, [isConnected])
+    if (isConnected) runSiwe()
+  }, [isConnected, runSiwe])
 
   return (
     <PageContent>
@@ -53,7 +49,7 @@ const ConnectWithSiwe = () => {
         icon={wallet?.icon}
         isError={!!error}
         description={error ?? description}
-        onRetry={() => connectWithSiwe()}
+        onRetry={runSiwe}
       />
     </PageContent>
   )
@@ -62,22 +58,18 @@ const ConnectWithSiwe = () => {
 const ConnectWithWalletConnect = () => {
   const { connector } = useOpenfort()
   const wallet = useExternalConnector(connector.id)
-
-  const [error, setError] = useState<string | undefined>(undefined)
   const { open: openWalletConnectModal } = useWalletConnectModal()
+  const [error, setError] = useState<string | undefined>(undefined)
+
+  const openModal = useCallback(async () => {
+    setError(undefined)
+    const { error } = await openWalletConnectModal()
+    if (error) setError(error)
+  }, [openWalletConnectModal])
 
   useEffect(() => {
-    openWCModal()
-  }, [])
-
-  const openWCModal = async () => {
-    setError(undefined)
-
-    const { error } = await openWalletConnectModal()
-    if (error) {
-      setError(error)
-    }
-  }
+    openModal()
+  }, [openModal])
 
   return (
     <PageContent>
@@ -86,7 +78,7 @@ const ConnectWithWalletConnect = () => {
         icon={wallet?.icon}
         isError={!!error}
         description={error}
-        onRetry={() => openWCModal()}
+        onRetry={openModal}
       />
     </PageContent>
   )

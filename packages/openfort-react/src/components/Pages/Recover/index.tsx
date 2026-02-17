@@ -4,13 +4,14 @@ import type React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, ShieldIcon } from '../../../assets/icons'
 import { OpenfortError } from '../../../core/errors'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import type { EthereumUserWallet, SolanaUserWallet } from '../../../hooks/openfort/walletTypes'
-import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
 import type { RecoverableWallet } from '../../../shared/types'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { truncateEthAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
@@ -41,7 +42,10 @@ const RecoverPasswordWallet = ({
   const { triggerResize, setRoute } = useOpenfort()
   const [loading, setLoading] = useState(false)
   const { chainType } = useChain()
-  const embeddedWallet = useEmbeddedWallet()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const { isEnabled: otpEnabled, requestOTP } = useRecoveryOTP()
 
   const ctx = useMemo(
@@ -150,7 +154,10 @@ const RecoverPasskeyWallet = ({
   const { triggerResize, setRoute } = useOpenfort()
   const [recoveryError, setRecoveryError] = useState<false | string>(false)
   const { chainType } = useChain()
-  const embeddedWallet = useEmbeddedWallet()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const { isEnabled: otpEnabled, requestOTP } = useRecoveryOTP()
 
   const ctx = useMemo(
@@ -223,7 +230,9 @@ const RecoverAutomaticWallet = ({
   const { embeddedState } = useOpenfortCore()
   const { setRoute } = useOpenfort()
   const { chainType } = useChain()
-  const embeddedWallet = useEmbeddedWallet()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
   const { isEnabled: isWalletRecoveryOTPEnabled, requestOTP } = useRecoveryOTP()
   const [error, setError] = useState<false | string>(false)
   const [needsOTP, setNeedsOTP] = useState(false)

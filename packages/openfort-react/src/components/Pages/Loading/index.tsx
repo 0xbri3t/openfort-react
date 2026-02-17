@@ -1,6 +1,9 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import React, { useEffect } from 'react'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Loader from '../../Common/Loading'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -9,9 +12,13 @@ import { PageContent } from '../../PageContent'
 const Loading: React.FC = () => {
   const { setRoute, walletConfig } = useOpenfort()
   const { user, isLoadingAccounts, needsRecovery } = useOpenfortCore()
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
 

@@ -1,4 +1,11 @@
-import { useConnectedWallet, useEthereumEmbeddedWallet, useEthereumSwitchChain, useUser } from '@openfort/react'
+import {
+  ChainTypeEnum,
+  useChain,
+  useEthereumEmbeddedWallet,
+  useEthereumSwitchChain,
+  useSolanaEmbeddedWallet,
+  useUser,
+} from '@openfort/react'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { type PropsWithChildren, useMemo } from 'react'
@@ -30,14 +37,17 @@ const SidebarLink = ({ children, href, cta = 'View in hook' }: PropsWithChildren
 const SidebarInfo = () => {
   const { mode } = usePlaygroundMode()
   const { user, linkedAccounts } = useUser()
-  const wallet = useConnectedWallet()
-  const ethereum = useEthereumEmbeddedWallet(
-    wallet.status === 'connected' && wallet.chainId != null ? { chainId: wallet.chainId } : undefined
-  )
-  const activeWallet = mode !== 'solana-only' && ethereum.activeWallet ? ethereum.activeWallet : null
+  const { chainType } = useChain()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+  const activeWallet = mode !== 'solana-only' && 'activeWallet' in wallet ? wallet.activeWallet : null
   const isConnected = wallet.status === 'connected'
-  const address = isConnected ? wallet.address : undefined
-  const chainId = isConnected ? wallet.chainId : undefined
+  const address = isConnected && 'address' in wallet ? wallet.address : undefined
+  const chainId =
+    isConnected && chainType === ChainTypeEnum.EVM && 'chainId' in wallet
+      ? (wallet as typeof ethereumWallet).chainId
+      : undefined
   const { chains } = useEthereumSwitchChain()
 
   const connectedChain = useMemo(() => chains.find((c) => c.id === chainId), [chains, chainId])

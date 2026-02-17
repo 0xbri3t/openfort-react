@@ -1,5 +1,5 @@
 import { formatUnits } from 'viem'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
 import { ModalHeading } from '../../Common/Modal/styles'
 import { EmptyState } from '../BuyProviderSelect/styles'
 import {
@@ -22,7 +22,7 @@ const usdFormatter = new Intl.NumberFormat('en-US', {
 })
 
 export const AssetInventory = () => {
-  const { data: walletAssets, isLoading: isBalancesLoading } = useWalletAssets()
+  const { data: walletAssets, isLoading: isBalancesLoading } = useEthereumWalletAssets()
 
   // Show all tokens for both buy and send flows
   const selectableTokens = walletAssets || []

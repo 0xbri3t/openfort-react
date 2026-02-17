@@ -24,8 +24,8 @@ const MODE_LABELS: Record<OpenfortPlaygroundMode, string> = {
 /** Hooks used in each mode – shown as helper text on mode buttons */
 const MODE_HOOKS: Record<OpenfortPlaygroundMode, string> = {
   'evm-only': 'useEthereumEmbeddedWallet, useAdapter (viem)',
-  'solana-only': 'useSolanaEmbeddedWallet, useEmbeddedWallet',
-  'evm-wagmi': 'useEmbeddedWallet, wagmi hooks',
+  'solana-only': 'useSolanaEmbeddedWallet',
+  'evm-wagmi': 'useEthereumEmbeddedWallet, wagmi hooks',
 }
 
 export type NavRoute = {

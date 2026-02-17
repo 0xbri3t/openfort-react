@@ -1,4 +1,4 @@
-import { RecoveryMethod, useConnectedWallet, useSolanaEmbeddedWallet } from '@openfort/react'
+import { RecoveryMethod, useSolanaEmbeddedWallet } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
 import { EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon } from 'lucide-react'
@@ -23,8 +23,7 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 
-const CreateWalletButton = () => {
-  const solana = useSolanaEmbeddedWallet()
+const CreateWalletButton = ({ solana }: { solana: ReturnType<typeof useSolanaEmbeddedWallet> }) => {
   const isCreating = solana.status === 'creating'
   const create = solana.create
   const error = solana.status === 'error' ? solana.error : null
@@ -258,10 +257,9 @@ const WalletButton = ({
 }
 
 export const SetActiveWalletsCardSolana = () => {
-  const wallet = useConnectedWallet()
   const solana = useSolanaEmbeddedWallet()
   const wallets = solana.wallets
-  const connectedAddress = wallet.status === 'connected' ? wallet.address : undefined
+  const connectedAddress = solana.status === 'connected' ? solana.address : undefined
   const activeWalletFromHook =
     solana.status === 'connected' ||
     solana.status === 'connecting' ||
@@ -322,7 +320,7 @@ export const SetActiveWalletsCardSolana = () => {
             </Tooltip>
           ))}
 
-          <CreateWalletButton />
+          <CreateWalletButton solana={solana} />
         </div>
       </CardContent>
     </Card>

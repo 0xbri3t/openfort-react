@@ -1,10 +1,11 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { embeddedWalletId } from '../../../constants/openfort'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import type { ConnectedEmbeddedEthereumWallet } from '../../../ethereum/types'
 import { toEthereumUserWallet, toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
-import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import { truncateEthAddress } from '../../../utils'
 import { walletConfigs } from '../../../wallets/walletConfigs'
@@ -80,7 +81,10 @@ function WalletRow({
 
 export default function SelectWalletToRecover() {
   const { chainType } = useChain()
-  const embeddedWallet = useEmbeddedWallet()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const wallets = embeddedWallet.wallets
 
   const list = wallets.map((wallet) => <WalletRow key={wallet.id} chainType={chainType} wallet={wallet} />)

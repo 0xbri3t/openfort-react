@@ -1,16 +1,10 @@
-import { ChainTypeEnum } from '@openfort/openfort-js'
+import { useAccount } from 'wagmi'
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
-import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { logger } from '../../utils/logger'
 
 type ModalRoutes = RoutesWithoutOptions['route'] | RouteOptions
-
-const connectedRouteByChain: Record<ChainTypeEnum, ModalRoutes> = {
-  [ChainTypeEnum.EVM]: routes.ETH_CONNECTED,
-  [ChainTypeEnum.SVM]: routes.SOL_CONNECTED,
-}
 
 const safeRoutes: {
   connected: ModalRoutes[]
@@ -23,8 +17,6 @@ const safeRoutes: {
   ],
   connected: [
     routes.CONNECTED,
-    routes.ETH_CONNECTED,
-    routes.SOL_CONNECTED,
     { route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' },
     routes.SWITCHNETWORKS,
     routes.PROVIDERS,
@@ -33,39 +25,34 @@ const safeRoutes: {
 
 const allRoutes: ModalRoutes[] = [...safeRoutes.connected, ...safeRoutes.disconnected]
 
-function routeEquals(a: ModalRoutes, b: ModalRoutes): boolean {
-  if (typeof a === 'string' && typeof b === 'string') return a === b
-  if (typeof a === 'object' && typeof b === 'object' && a && b) {
-    if (a.route !== b.route) return false
-    const aOpts = a as RouteOptions & { connectType?: string }
-    const bOpts = b as RouteOptions & { connectType?: string }
-    return aOpts.connectType === bOpts.connectType
-  }
-  return false
-}
-
-function routeInList(route: ModalRoutes, list: ModalRoutes[]): boolean {
-  return list.some((r) => routeEquals(route, r))
-}
+type ValidRoutes = ModalRoutes
 
 /**
- * Returns modal control and navigation helpers for the connect modal.
+ * Hook for controlling Openfort UI modal and navigation
  *
- * @returns isOpen, open, close, openProfile, openSwitchNetworks, openProviders, openWallets
+ * This hook provides programmatic control over the Openfort UI modal, including opening,
+ * closing, and navigating between different screens. It handles route validation and
+ * automatically selects appropriate screens based on user connection and authentication state.
+ *
+ * @returns UI control functions and modal state
  *
  * @example
  * ```tsx
- * const { open, openProfile } = useUI()
- * <button onClick={open}>Connect</button>
- * <button onClick={openProfile}>Profile</button>
+ * const ui = useUI();
+ *
+ * if (ui.isOpen) {
+ *   console.log('Openfort modal is open');
+ * }
+ *
+ * ui.open(); // Opens modal with default route
+ * ui.close(); // Closes modal
+ * ui.openProfile(); // Opens user profile screen
  * ```
  */
 export function useUI() {
-  const { open, setOpen, setRoute, chainType } = useOpenfort()
-  const { isLoading, user, needsRecovery, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
-  const strategy = useConnectionStrategy()
-  const state = { user, embeddedAccounts, chainType, activeEmbeddedAddress, embeddedState }
-  const isConnected = strategy?.isConnected(state) ?? false
+  const { open, setOpen, setRoute } = useOpenfort()
+  const { isLoading, user, needsRecovery } = useOpenfortCore()
+  const { isConnected } = useAccount()
 
   function defaultOpen() {
     setOpen(true)
@@ -74,31 +61,25 @@ export function useUI() {
     else if (!user) setRoute(routes.PROVIDERS)
     else if (!isConnected) setRoute(routes.LOAD_WALLETS)
     else if (needsRecovery) setRoute(routes.LOAD_WALLETS)
-    else setRoute(connectedRouteByChain[chainType])
+    else setRoute(routes.CONNECTED)
   }
 
-  const gotoAndOpen = (route: ModalRoutes) => {
-    let validRoute: ModalRoutes = route
+  const gotoAndOpen = (route: ValidRoutes) => {
+    let validRoute: ValidRoutes = route
 
-    if (!routeInList(route, allRoutes)) {
+    if (!allRoutes.includes(route)) {
       validRoute = isConnected ? routes.CONNECTED : routes.PROVIDERS
-      logger.log(
-        `Route ${typeof route === 'object' ? route.route : route} is not a valid route, navigating to ${validRoute} instead.`
-      )
+      logger.log(`Route ${route} is not a valid route, navigating to ${validRoute} instead.`)
     } else {
       if (isConnected) {
-        if (!routeInList(route, safeRoutes.connected)) {
+        if (!safeRoutes.connected.includes(route)) {
           validRoute = routes.CONNECTED
-          logger.log(
-            `Route ${typeof route === 'object' ? route.route : route} is not a valid route when connected, navigating to ${validRoute} instead.`
-          )
+          logger.log(`Route ${route} is not a valid route when connected, navigating to ${validRoute} instead.`)
         }
       } else {
-        if (!routeInList(route, safeRoutes.disconnected)) {
+        if (!safeRoutes.disconnected.includes(route)) {
           validRoute = routes.PROVIDERS
-          logger.log(
-            `Route ${typeof route === 'object' ? route.route : route} is not a valid route when disconnected, navigating to ${validRoute} instead.`
-          )
+          logger.log(`Route ${route} is not a valid route when disconnected, navigating to ${validRoute} instead.`)
         }
       }
     }
@@ -113,7 +94,7 @@ export function useUI() {
     close: () => setOpen(false),
     setIsOpen: setOpen,
 
-    openProfile: () => gotoAndOpen(connectedRouteByChain[chainType]),
+    openProfile: () => gotoAndOpen(routes.CONNECTED),
     openSwitchNetworks: () => gotoAndOpen(routes.SWITCHNETWORKS),
     openProviders: () => gotoAndOpen(routes.PROVIDERS),
     openWallets: () => gotoAndOpen({ route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' }),

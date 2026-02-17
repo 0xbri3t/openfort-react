@@ -107,8 +107,8 @@ function RouteComponent() {
   return (
     <Layout>
       <p className="text-sm text-muted-foreground">
-        For app code that works with either chain, use <code>useEmbeddedWallet()</code> from{' '}
-        <code>@openfort/react</code>; this page shows the underlying chain-specific hooks for inspection.
+        Use <code>useEthereumEmbeddedWallet()</code> or <code>useSolanaEmbeddedWallet()</code> directly based on your
+        chain. This page shows both chain-specific hooks for inspection.
       </p>
       {isSolana ? <SolanaContent /> : <EvmContent />}
     </Layout>

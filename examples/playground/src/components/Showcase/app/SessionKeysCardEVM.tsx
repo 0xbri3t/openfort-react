@@ -1,25 +1,31 @@
-import { useEthereumAccount, useGrantPermissions, useRevokePermissions } from '@openfort/react'
+import { useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { getAddress } from 'viem/utils'
+import { useAccount } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useEthereumAccountLocal } from '@/hooks/useEthereumAdapterHooks'
 import { cn } from '@/lib/cn'
 import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
+import { usePlaygroundMode } from '@/providers'
 
 export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
+  const { mode } = usePlaygroundMode()
+  const useAccountHook = mode === 'evm-wagmi' ? useAccount : useEthereumAccountLocal
+
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
   const [sessionKeys, setSessionKeys] = useState<StoredData[]>([])
   const [submitting, setSubmitting] = useState(false)
   const { addPrivateKey, getPrivateKeys, clearAll, removePrivateKey, updatePrivateKey } =
     useSessionKeysStorage_backendSimulation()
-  const { address, chainId } = useEthereumAccount()
+  const { address, chainId } = useAccountHook()
   const mintContractAddress = getMintContractAddress(chainId ?? undefined)
   const key = useMemo(() => (chainId != null && address ? `${chainId}-${address}` : ''), [chainId, address])
   const grantDisabled = isLoading || submitting || !mintContractAddress

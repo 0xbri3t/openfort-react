@@ -11,9 +11,9 @@ import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { formatUnits } from 'viem'
 import { BuyIcon, ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
+import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
 import { useChains } from '../../../hooks/useChains'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
@@ -35,7 +35,7 @@ import { ConnectedPageLayout } from './ConnectedPageLayout'
 import { ActionButton, Balance, ChainSelectorContainer, LinkedProvidersToggle, Unsupported } from './styles'
 
 function getFirstBalanceAsset(
-  assets: Awaited<ReturnType<typeof useWalletAssets>>['data']
+  assets: Awaited<ReturnType<typeof useEthereumWalletAssets>>['data']
 ): (NonNullable<typeof assets>[number] & { balance: bigint }) | undefined {
   return assets?.find((a) => a.balance && a.balance > BigInt(0)) as
     | (NonNullable<typeof assets>[number] & { balance: bigint })
@@ -47,7 +47,7 @@ const EthereumConnected: React.FC = () => {
   const themeContext = useThemeContext()
   const { setHeaderLeftSlot, setRoute } = context
 
-  const wallet = useConnectedWallet()
+  const wallet = useEthereumEmbeddedWallet()
   const { embeddedAccounts } = useOpenfortCore()
   const hasEthereumWallets = (embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.EVM) ?? []).length > 0
   const isConnected = wallet.status === 'connected'
@@ -73,7 +73,7 @@ const EthereumConnected: React.FC = () => {
   })
   const ensName = identity.status === 'success' ? identity.name : undefined
 
-  const { data: assets, isLoading, refetch } = useWalletAssets()
+  const { data: assets, isLoading, refetch } = useEthereumWalletAssets()
   const totalBalanceUsd = useMemo(() => {
     if (!assets) return 0
     return assets.reduce((acc, asset) => {

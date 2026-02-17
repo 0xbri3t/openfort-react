@@ -1,4 +1,11 @@
-import { useConnectedWallet, useSignOut, useUser } from '@openfort/react'
+import {
+  ChainTypeEnum,
+  useChain,
+  useEthereumEmbeddedWallet,
+  useSignOut,
+  useSolanaEmbeddedWallet,
+  useUser,
+} from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { ConnectExternalWalletCard } from '@/components/Showcase/app/ConnectExternalWalletCard'
 import { CreateSessionKeyCardSolana } from '@/components/Showcase/app/CreateSessionKeyCardSolana'
@@ -20,8 +27,12 @@ import { usePlaygroundMode } from '@/providers'
 
 export const App = () => {
   const { user } = useUser()
-  const wallet = useConnectedWallet()
-  const address = wallet.status === 'connected' ? wallet.address : undefined
+  const { chainType } = useChain()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
+  const address = wallet.status === 'connected' && 'address' in wallet ? wallet.address : undefined
   const { signOut } = useSignOut()
   const { mode } = usePlaygroundMode()
   const isSolana = mode === 'solana-only'
@@ -53,13 +64,13 @@ export const App = () => {
             <SignaturesCardSolana
               tooltip={{
                 hook: 'useSolanaSignMessage',
-                body: <>Uses useSolanaSignMessage for signing messages.</>,
+                body: <>Uses useSolanaMessageSigner via @solana/kit (deleted from SDK).</>,
               }}
             />
             <MintTokensCard
               tooltip={{
-                hook: 'useSolanaWriteContract',
-                body: <>Uses useSolanaWriteContract for minting devnet SOL.</>,
+                hook: 'useSolanaSendTransaction',
+                body: <>Uses local implementation (deleted from SDK).</>,
               }}
             />
             <CreateSessionKeyCardSolana />
@@ -109,28 +120,20 @@ export const App = () => {
           <>
             <SignaturesCardEVM
               tooltip={{
-                hook: 'useEthereumSignMessage',
-                body: <>Uses useEthereumSignMessage (EVM adapter) for signing messages.</>,
+                hook: 'useSignMessage',
+                body: <>Uses local adapter hooks from playground (deleted from SDK).</>,
               }}
             />
             <WriteContractCardEVM
               tooltip={{
-                hook: 'useEthereumWriteContract',
-                body: <>Uses useEthereumWriteContract for minting tokens.</>,
+                hook: 'useReadContract/useWriteContract',
+                body: <>Uses local adapter hooks from playground (deleted from SDK).</>,
               }}
             />
             <SwitchChainCardEVM
               tooltip={{
                 hook: 'useEthereumSwitchChain',
-                body: (
-                  <>
-                    Uses{' '}
-                    <Link to="/adapter/useSwitchChain" className="px-1 group">
-                      useEthereumSwitchChain
-                    </Link>
-                    .
-                  </>
-                ),
+                body: <>Uses setActiveChainId directly (deleted from SDK, inlined logic).</>,
               }}
             />
             <SessionKeysCardEVM

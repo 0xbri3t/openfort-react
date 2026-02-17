@@ -14,11 +14,10 @@ import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
 import type { useConnectCallbackProps } from '../../openfort/connectCallbackTypes'
 import { SolanaContextProvider, type SolanaContextProviderProps } from '../../solana/SolanaContext'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
-import { ConnectUIContext, type ConnectUIValue } from '../../ui/ConnectUIContext'
 import { logger } from '../../utils/logger'
 import { isFamily } from '../../utils/wallets'
 import ConnectKitModal from '../ConnectModal'
-import { type ContextValue, OpenfortContext } from './context'
+import { type ContextValue, OpenfortContext, UIContext, type UIContextValue } from './context'
 import {
   type BuyFormState,
   type ConnectUIOptions,
@@ -366,7 +365,7 @@ export const OpenfortProvider = ({
     ]
   )
 
-  const connectUIValue: ConnectUIValue = useMemo(
+  const connectUIValue: UIContextValue = useMemo(
     () => ({
       isOpen: open,
       openModal: () => setOpen(true),
@@ -467,7 +466,7 @@ export const OpenfortProvider = ({
     : innerChildren
 
   return createElement(
-    ConnectUIContext.Provider,
+    UIContext.Provider,
     { value: connectUIValue },
     createElement(
       OpenfortContext.Provider,

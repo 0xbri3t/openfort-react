@@ -1,11 +1,15 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
+import { embeddedWalletId } from '../../constants/openfort'
+import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
+import { formatAddress } from '../../utils/format'
 import { logger } from '../../utils/logger'
+import { OpenfortEthereumBridgeContext } from '../OpenfortEthereumBridgeContext'
 import type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
@@ -21,6 +25,78 @@ type InternalState = {
   activeWallet: ConnectedEmbeddedEthereumWallet | null
   provider: OpenfortEmbeddedEthereumWalletProvider | null
   error: string | null
+}
+
+function toConnectedStateProperties(
+  status: WalletStatus,
+  internalState: {
+    address?: string
+    walletType?: 'embedded' | 'external'
+    connectorId?: string
+    connectorName?: string
+  },
+  activeWallet: ConnectedEmbeddedEthereumWallet | null,
+  _chainId: number | undefined
+) {
+  const { address, walletType = 'embedded', connectorId, connectorName } = internalState
+
+  if (status === 'creating' || status === 'fetching-wallets') {
+    return {
+      normalizedStatus: 'connecting',
+      walletType: null,
+      connectorId: undefined,
+      connectorName: undefined,
+      isConnected: false,
+      isConnecting: true,
+      isDisconnected: false,
+      isReconnecting: false,
+      isEmbedded: false,
+      isExternal: false,
+    }
+  }
+
+  if (status === 'connecting' || status === 'reconnecting') {
+    return {
+      normalizedStatus: status === 'reconnecting' ? 'connecting' : 'connecting',
+      walletType: walletType ?? null,
+      connectorId,
+      connectorName,
+      isConnected: false,
+      isConnecting: true,
+      isDisconnected: false,
+      isReconnecting: status === 'reconnecting',
+      isEmbedded: walletType === 'embedded',
+      isExternal: walletType === 'external',
+    }
+  }
+
+  if ((status === 'connected' || status === 'needs-recovery') && address && activeWallet) {
+    return {
+      normalizedStatus: 'connected',
+      walletType: walletType ?? 'embedded',
+      connectorId: connectorId ?? embeddedWalletId,
+      connectorName: connectorName ?? 'Openfort',
+      isConnected: status === 'connected',
+      isConnecting: false,
+      isDisconnected: false,
+      isReconnecting: false,
+      isEmbedded: walletType === 'embedded',
+      isExternal: walletType === 'external',
+    }
+  }
+
+  return {
+    normalizedStatus: 'disconnected',
+    walletType: null,
+    connectorId: undefined,
+    connectorName: undefined,
+    isConnected: false,
+    isConnecting: false,
+    isDisconnected: true,
+    isReconnecting: false,
+    isEmbedded: false,
+    isExternal: false,
+  }
 }
 
 const DEFAULT_CHAIN_ID = 13337
@@ -48,8 +124,11 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     updateEmbeddedAccounts,
     setActiveEmbeddedAddress,
     setWalletStatus,
+    activeEmbeddedAddress,
   } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
+  const strategy = useConnectionStrategy()
+  const bridge = useContext(OpenfortEthereumBridgeContext)
 
   const chainId = options?.chainId ?? DEFAULT_CHAIN_ID
 
@@ -412,6 +491,53 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     [state.status]
   )
 
+  // Compute wallet type and connector info based on strategy and bridge
+  const walletTypeInfo = useMemo(() => {
+    if (strategy?.kind !== 'bridge' || !bridge || !state.activeWallet) {
+      return { walletType: 'embedded' as const, connectorId: embeddedWalletId, connectorName: 'Openfort' }
+    }
+
+    const bridgeConnector = bridge.account.connector
+    const isEmbedded =
+      bridgeConnector?.id === embeddedWalletId ||
+      (activeEmbeddedAddress != null &&
+        activeEmbeddedAddress.toLowerCase() === state.activeWallet.address.toLowerCase())
+
+    if (isEmbedded) {
+      return { walletType: 'embedded' as const, connectorId: embeddedWalletId, connectorName: 'Openfort' }
+    }
+    return {
+      walletType: 'external' as const,
+      connectorId: bridgeConnector?.id,
+      connectorName: bridgeConnector?.name,
+    }
+  }, [strategy, bridge, state.activeWallet, activeEmbeddedAddress])
+
+  const connectedStateProps = useMemo(
+    () =>
+      toConnectedStateProperties(
+        state.status,
+        {
+          address: state.activeWallet?.address,
+          walletType: walletTypeInfo.walletType,
+          connectorId: walletTypeInfo.connectorId,
+          connectorName: walletTypeInfo.connectorName,
+        },
+        state.activeWallet,
+        state.activeWallet?.address ? chainId : undefined
+      ),
+    [state.status, state.activeWallet, walletTypeInfo, chainId]
+  )
+
+  // Compute displayAddress when connected
+  const displayAddress = useMemo(
+    () =>
+      state.activeWallet?.address && (state.status === 'connected' || state.status === 'connecting')
+        ? formatAddress(state.activeWallet.address, ChainTypeEnum.EVM)
+        : undefined,
+    [state.activeWallet?.address, state.status]
+  )
+
   if (isLoadingAccounts) {
     return {
       ...actions,
@@ -420,8 +546,23 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       isLoading: true,
       isError: false,
       isSuccess: false,
+      normalizedStatus: 'connecting',
+      walletType: null,
+      isConnected: false,
+      isConnecting: true,
+      isDisconnected: false,
+      isReconnecting: false,
+      isEmbedded: false,
+      isExternal: false,
     } as EmbeddedEthereumWalletState
   }
 
-  return { ...buildEmbeddedWalletStatusResult(state, actions), ...derived } as EmbeddedEthereumWalletState
+  return {
+    ...buildEmbeddedWalletStatusResult(state, actions),
+    ...derived,
+    ...connectedStateProps,
+    ...(displayAddress && { displayAddress }),
+    ...(state.activeWallet?.address && { address: state.activeWallet.address }),
+    ...(chainId && { chainId }),
+  } as EmbeddedEthereumWalletState
 }

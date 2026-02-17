@@ -1,15 +1,18 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
 import { Buffer } from 'buffer'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
+import { embeddedWalletId } from '../../constants/openfort'
 import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
+import { formatAddress } from '../../utils/format'
 import { logger } from '../../utils/logger'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
+import { SolanaContext } from '../SolanaContext'
 import type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
@@ -17,6 +20,7 @@ import type {
   OpenfortEmbeddedSolanaWalletProvider,
   SetActiveSolanaWalletOptions,
   SignedSolanaTransaction,
+  SolanaCluster,
   SolanaTransaction,
   UseEmbeddedSolanaWalletOptions,
 } from '../types'
@@ -27,6 +31,81 @@ type InternalState = {
   activeWallet: ConnectedEmbeddedSolanaWallet | null
   provider: OpenfortEmbeddedSolanaWalletProvider | null
   error: string | null
+}
+
+function toConnectedStateProperties(status: WalletStatus, activeWallet: ConnectedEmbeddedSolanaWallet | null) {
+  if (status === 'creating' || status === 'fetching-wallets') {
+    return {
+      normalizedStatus: 'connecting',
+      walletType: null,
+      connectorId: undefined,
+      connectorName: undefined,
+      isConnected: false,
+      isConnecting: true,
+      isDisconnected: false,
+      isReconnecting: false,
+      isEmbedded: false,
+      isExternal: false,
+    }
+  }
+
+  if (status === 'connecting') {
+    return {
+      normalizedStatus: 'connecting',
+      walletType: 'embedded' as const,
+      connectorId: embeddedWalletId,
+      connectorName: 'Openfort',
+      isConnected: false,
+      isConnecting: true,
+      isDisconnected: false,
+      isReconnecting: false,
+      isEmbedded: true,
+      isExternal: false,
+    }
+  }
+
+  if (status === 'reconnecting') {
+    return {
+      normalizedStatus: 'connecting',
+      walletType: 'embedded' as const,
+      connectorId: embeddedWalletId,
+      connectorName: 'Openfort',
+      isConnected: false,
+      isConnecting: true,
+      isDisconnected: false,
+      isReconnecting: true,
+      isEmbedded: true,
+      isExternal: false,
+    }
+  }
+
+  if ((status === 'connected' || status === 'needs-recovery') && activeWallet) {
+    return {
+      normalizedStatus: 'connected',
+      walletType: 'embedded' as const,
+      connectorId: embeddedWalletId,
+      connectorName: 'Openfort',
+      isConnected: status === 'connected',
+      isConnecting: false,
+      isDisconnected: false,
+      isReconnecting: false,
+      isEmbedded: true,
+      isExternal: false,
+    }
+  }
+
+  return {
+    normalizedStatus: 'disconnected',
+    walletType: null,
+    connectorId: undefined,
+    connectorName: undefined,
+    isConnected: false,
+    isConnecting: false,
+    isDisconnected: true,
+    isReconnecting: false,
+    isEmbedded: false,
+    isExternal: false,
+  }
 }
 
 /**
@@ -432,6 +511,24 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     [state.status]
   )
 
+  // Get cluster from Solana context
+  const solanaContext = useContext(SolanaContext)
+  const cluster = solanaContext?.cluster as SolanaCluster | undefined
+
+  const connectedStateProps = useMemo(
+    () => toConnectedStateProperties(state.status, state.activeWallet),
+    [state.status, state.activeWallet]
+  )
+
+  // Compute displayAddress when connected
+  const displayAddress = useMemo(
+    () =>
+      state.activeWallet?.address && (state.status === 'connected' || state.status === 'connecting')
+        ? formatAddress(state.activeWallet.address, ChainTypeEnum.SVM)
+        : undefined,
+    [state.activeWallet?.address, state.status]
+  )
+
   if (isLoadingAccounts) {
     return {
       ...actions,
@@ -440,8 +537,23 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       isLoading: true,
       isError: false,
       isSuccess: false,
+      normalizedStatus: 'connecting',
+      walletType: null,
+      isConnected: false,
+      isConnecting: true,
+      isDisconnected: false,
+      isReconnecting: false,
+      isEmbedded: false,
+      isExternal: false,
     } as EmbeddedSolanaWalletState
   }
 
-  return { ...buildEmbeddedWalletStatusResult(state, actions), ...derived } as EmbeddedSolanaWalletState
+  return {
+    ...buildEmbeddedWalletStatusResult(state, actions),
+    ...derived,
+    ...connectedStateProps,
+    ...(displayAddress && { displayAddress }),
+    ...(state.activeWallet?.address && { address: state.activeWallet.address }),
+    ...(cluster && { cluster }),
+  } as EmbeddedSolanaWalletState
 }

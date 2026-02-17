@@ -4,16 +4,12 @@ export const Route = createFileRoute('/_hooks/solana')({
   component: RouteComponent,
   beforeLoad: async ({ location }) => {
     if (location.pathname === '/solana') {
-      throw redirect({ to: '/solana/useSolanaAccount' })
+      throw redirect({ to: '/solana/useSolanaEmbeddedWallet' })
     }
   },
 })
 
-const nav = [
-  { href: '/solana/useSolanaAccount', label: 'useSolanaAccount' },
-  { href: '/solana/useSolanaBalance', label: 'useSolanaBalance' },
-  { href: '/solana/useDisconnect', label: 'useSolanaDisconnect' },
-]
+const nav = [{ href: '/solana/useSolanaEmbeddedWallet', label: 'useSolanaEmbeddedWallet' }]
 
 function RouteComponent() {
   const { pathname } = useLocation()
@@ -22,7 +18,7 @@ function RouteComponent() {
       <Outlet />
       <div className="w-full max-w-sm m-4 p-4 border-l ">
         <h1 className="text-2xl mb-2">Solana Hooks</h1>
-        <p className="text-muted-foreground mb-1">These are hooks to interact with your Solana wallet.</p>
+        <p className="text-muted-foreground mb-1">Core Solana embedded wallet hook for managing Solana connections.</p>
         <div className="flex flex-col gap-1 p-4">
           {nav.map((item) => (
             <Link

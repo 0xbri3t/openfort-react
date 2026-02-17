@@ -7,33 +7,33 @@ import type { getAssets } from 'viem/experimental/erc7811'
 import type { Asset } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { useUser } from '../../hooks/openfort/useUser'
+import { useChains } from '../../hooks/useChains'
 import type { OpenfortWalletConfig } from '../../types'
-import { useChains } from '../useChains'
-import { useConnectedWallet } from '../useConnectedWallet'
-import { useUser } from './useUser'
+import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
-type WalletAssetsHookOptions = {
+type UseEthereumWalletAssetsOptions = {
   assets?: OpenfortWalletConfig['assets']
   staleTime?: number
 }
 
-/** Returns wallet assets (tokens, NFTs) for the connected address. Supports custom asset config. */
 /**
- * Returns wallet assets (tokens) for the connected account. Supports ERC-7811.
+ * Returns wallet assets (tokens, NFTs) for the connected Ethereum address.
+ * Uses ERC-7811 via Openfort's authenticated RPC proxy.
  *
  * @param options - Optional custom assets config and staleTime
  * @returns assets, isLoading, error, refetch
  *
  * @example
  * ```tsx
- * const { assets, isLoading } = useWalletAssets()
+ * const { data: assets, isLoading } = useEthereumWalletAssets()
  * ```
  */
-export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }: WalletAssetsHookOptions = {}) => {
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
-  const chains = useChains()
-
+export const useEthereumWalletAssets = ({
+  assets: hookCustomAssets,
+  staleTime = 30000,
+}: UseEthereumWalletAssetsOptions = {}) => {
+  const wallet = useEthereumEmbeddedWallet()
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
   const chainId = isConnected ? wallet.chainId : undefined
@@ -41,7 +41,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
   const { walletConfig, publishableKey, overrides, thirdPartyAuth } = useOpenfort()
   const { getAccessToken } = useUser()
 
-  // Find current chain config
+  const chains = useChains()
   const chain = chains.find((c) => c.id === chainId)
 
   const buildHeaders = useCallback(async () => {
@@ -124,12 +124,10 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
 
       const extendedClient = customClient.extend(erc7811Actions())
 
-      // Fetch default assets
       const defaultAssetsPromise = extendedClient.getAssets({
         chainIds: [chainId],
       })
 
-      // Fetch custom ERC20 assets
       const hexChainId = numberToHex(chainId)
       const customAssetsPromise =
         customAssetsToFetch.length > 0
@@ -146,7 +144,6 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
 
       const [defaultAssetsRaw, customAssets] = await Promise.all([defaultAssetsPromise, customAssetsPromise])
 
-      // Merge assets, avoiding duplicates
       const defaultAssets = defaultAssetsRaw[chainId].map<Asset>((a) => {
         let asset: Asset
         if (a.type === 'erc20') {
@@ -182,7 +179,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
         return asset
       })
 
-      const mergedAssets = defaultAssets
+      const mergedAssets = [...defaultAssets]
       const customAssetsForChain: Asset[] = customAssets[chainId].map((asset: getAssets.Asset<false>) => {
         if (asset.type !== 'erc20') return { ...asset, raw: asset } as unknown as Asset
         if (!walletConfig?.assets) return { ...asset, raw: asset }
@@ -200,24 +197,21 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
         return safeAsset
       })
 
-      if (customAssetsForChain) {
-        customAssetsForChain.forEach((asset) => {
-          if (!mergedAssets.find((a) => a.address === asset.address)) {
-            mergedAssets.push(asset)
-          }
-        })
-      }
+      customAssetsForChain.forEach((asset) => {
+        if (!mergedAssets.find((a) => a.address === asset.address)) {
+          mergedAssets.push(asset)
+        }
+      })
 
       return mergedAssets as readonly Asset[]
     },
     enabled: isConnected && !!chainId && !!chain && !!address,
     retry: 2,
-    staleTime, // Data fresh for 30 seconds
+    staleTime,
     gcTime: 5 * 60 * 1000,
     throwOnError: false,
   })
 
-  // Map TanStack Query error to OpenfortError
   const mappedError = useMemo(() => {
     if (!error) return undefined
 

@@ -13,21 +13,13 @@ function accountsForChain(accounts: EmbeddedAccount[] | undefined, chainType: Ch
   return accounts?.filter((a) => a.chainType === chainType) ?? []
 }
 
-/**
- * Which wallet type is currently active.
- * - `'embedded'` — Openfort embedded wallet
- * - `'external'` — External wallet (e.g. MetaMask, WalletConnect) via wagmi bridge
- * - `null` — Not connected or in transition
- */
 export type WalletType = 'embedded' | 'external'
 
-/** Normalized status (wagmi-compatible). 'loading' is exposed as 'connecting'. */
 export type ConnectedWalletStatus = 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
 
 export type ConnectedWalletState =
   | {
       status: 'disconnected'
-      /** @see ConnectedWalletStatus */
       normalizedStatus: 'disconnected'
       walletType: null
       isConnected: false
@@ -56,7 +48,6 @@ export type ConnectedWalletState =
       chainId?: number
       cluster?: SolanaCluster
       displayAddress: string
-      /** Discriminator: `'embedded'` for Openfort wallets, `'external'` for wagmi connectors. */
       walletType: WalletType
       connectorId?: string
       connectorName?: string
@@ -64,9 +55,7 @@ export type ConnectedWalletState =
       isConnecting: false
       isDisconnected: false
       isReconnecting: false
-      /** `true` when the connected wallet is an Openfort embedded wallet. */
       isEmbedded: boolean
-      /** `true` when the connected wallet is an external wallet (MetaMask, WC, etc.). */
       isExternal: boolean
     }
 
@@ -96,8 +85,6 @@ function useEthereumWalletFromStrategy(): WalletInternalState | null {
   }
 
   if (core.isLoadingAccounts) return { status: 'loading' }
-  // When switching or creating embedded wallets, treat as loading
-  // so we don't show wrong "connected" or "disconnected" state during the transition
   if (
     strategy.kind === 'bridge' &&
     core.walletStatus &&
@@ -105,7 +92,6 @@ function useEthereumWalletFromStrategy(): WalletInternalState | null {
   ) {
     return { status: 'loading' }
   }
-  // Bridge-level wagmi transitions (connecting/reconnecting) — show loading
   if (strategy.kind === 'bridge' && bridge && (bridge.account.isConnecting || bridge.account.isReconnecting)) {
     return { status: 'loading' }
   }
@@ -115,7 +101,6 @@ function useEthereumWalletFromStrategy(): WalletInternalState | null {
   const chainId = core?.activeChainId ?? strategy.getChainId()
   if (!address) return { status: 'not-created' }
 
-  // Determine wallet type: embedded (Openfort) vs external (MetaMask, WC, etc.)
   let walletType: WalletType = 'embedded'
   let connectorId: string | undefined = embeddedWalletId
   let connectorName: string | undefined = 'Openfort'
@@ -148,19 +133,13 @@ function useSolanaWalletInternal(): WalletInternalState | null {
 
   const solAccounts = accountsForChain(embeddedAccounts, ChainTypeEnum.SVM)
 
-  if (isLoadingAccounts) {
-    return { status: 'loading' }
-  }
-
-  if (solAccounts.length === 0) {
-    return { status: 'not-created' }
-  }
+  if (isLoadingAccounts) return { status: 'loading' }
+  if (solAccounts.length === 0) return { status: 'not-created' }
 
   const activeAccount = activeEmbeddedAddress
     ? solAccounts.find((a) => a.address.toLowerCase() === activeEmbeddedAddress.toLowerCase())
     : undefined
   if (!activeAccount) return { status: 'not-created' }
-
   if (embeddedState !== EmbeddedState.READY) return { status: 'not-created' }
 
   return {
@@ -221,34 +200,7 @@ function toConnectedState(chainType: ChainTypeEnum, wallet: WalletInternalState 
   }
 }
 
-/**
- * Returns the connected wallet state for the current chain type (EVM or Solana).
- * Provides address, chainId/cluster, status, displayAddress, and wallet-type
- * discrimination (`isEmbedded` / `isExternal`) in a wagmi-compatible shape.
- *
- * When a wallet transition is in progress (creating, switching, reconnecting),
- * `status` is `'loading'` and both `isEmbedded` and `isExternal` are `false`.
- *
- * @remarks Client-only. Use in a Client Component (e.g. add `"use client"` in Next.js App Router).
- *
- * @returns Connected wallet state with status, address, chain info, wallet type, and formatted displayAddress
- *
- * @example
- * ```tsx
- * const wallet = useConnectedWallet()
- *
- * if (wallet.isConnecting) return <Spinner />
- *
- * if (wallet.isEmbedded) {
- *   console.log('Openfort embedded wallet:', wallet.address)
- * }
- *
- * if (wallet.isExternal) {
- *   console.log('External wallet via', wallet.connectorName, wallet.address)
- * }
- * ```
- */
-export function useConnectedWallet(): ConnectedWalletState {
+export function useConnectedWalletState(): ConnectedWalletState {
   const { chainType } = useChain()
   const ethWallet = useEthereumWalletFromStrategy()
   const solWallet = useSolanaWalletInternal()

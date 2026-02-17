@@ -6,12 +6,12 @@ import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, PlusIcon, Shi
 import Logos from '../../../assets/logos'
 import { OpenfortError } from '../../../core/errors'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
 import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
 import { handleOtpRecoveryError } from '../../../shared/utils/otpError'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import FitText from '../../Common/FitText'
@@ -507,9 +507,13 @@ const CreateOrConnectWallet = () => {
 const EthereumCreateWallet: React.FC = () => {
   const { uiConfig, walletConfig, setRoute } = useOpenfort()
   const { user } = useOpenfortCore()
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
 
   useEffect(() => {

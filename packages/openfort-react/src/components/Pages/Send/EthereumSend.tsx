@@ -6,7 +6,7 @@
 
 import { useMemo } from 'react'
 import { formatUnits, isAddress, parseUnits } from 'viem'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
 import Button from '../../Common/Button'
 import { Arrow, ArrowChevron } from '../../Common/Button/styles'
 import Input from '../../Common/Input'
@@ -32,7 +32,7 @@ import { formatBalance, isSameToken, sanitizeAmountInput, sanitizeForParsing } f
 export const EthereumSend = () => {
   const { sendForm, setSendForm, setRoute } = useOpenfort()
 
-  const { data: assets } = useWalletAssets()
+  const { data: assets } = useEthereumWalletAssets()
 
   const matchedToken = useMemo(
     () => assets?.find((asset) => isSameToken(asset, sendForm.asset)),

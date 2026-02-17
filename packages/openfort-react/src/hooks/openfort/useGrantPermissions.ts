@@ -2,17 +2,17 @@ import { useCallback, useState } from 'react'
 import type { Chain, Hex } from 'viem'
 import { createWalletClient, custom } from 'viem'
 import { erc7715Actions, type GrantPermissionsParameters, type GrantPermissionsReturnType } from 'viem/experimental'
+import { DEFAULT_TESTNET_CHAIN_ID } from '../../core/ConnectionStrategy'
 import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import type { OpenfortEmbeddedEthereumWalletProvider } from '../../ethereum/types'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { OpenfortHookOptions } from '../../types'
 import { logger } from '../../utils/logger'
 import { useChains } from '../useChains'
-import { useConnectedWallet } from '../useConnectedWallet'
 import { type BaseFlowState, mapStatus } from './auth/status'
 import { onError, onSuccess } from './hookConsistency'
+import { useConnectWithSiwe } from './useConnectWithSiwe'
 
 type GrantPermissionsRequest = {
   request: GrantPermissionsParameters
@@ -133,12 +133,12 @@ async function getEmbeddedWalletClientWithErc7715(provider: OpenfortEmbeddedEthe
  * ```
  */
 export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {}) => {
-  const bridge = useEthereumBridge()
+  const { ethereumBridge: bridge } = useConnectWithSiwe()
   const chains = useChains()
-  const wallet = useConnectedWallet()
   const { client } = useOpenfortCore()
   const ethereum = useEthereumEmbeddedWallet()
-  const chainId = bridge?.chainId ?? (wallet.status === 'connected' ? wallet.chainId : undefined) ?? 0
+  const chainId =
+    bridge?.chainId ?? (ethereum.status === 'connected' ? ethereum.chainId : undefined) ?? DEFAULT_TESTNET_CHAIN_ID
   const [status, setStatus] = useState<BaseFlowState>({
     status: 'idle',
   })
