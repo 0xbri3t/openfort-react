@@ -63,14 +63,14 @@ export const App = () => {
           <>
             <SignaturesCardSolana
               tooltip={{
-                hook: 'useSolanaSignMessage',
-                body: <>Uses useSolanaMessageSigner via @solana/kit (deleted from SDK).</>,
+                hook: 'useSolanaMessageSigner',
+                body: <>Signs messages using @solana/kit MessagePartialSigner from @openfort/react/solana.</>,
               }}
             />
             <MintTokensCard
               tooltip={{
                 hook: 'useSolanaSendTransaction',
-                body: <>Uses local implementation (deleted from SDK).</>,
+                body: <>Sends SOL using useSolanaSendTransaction from @openfort/react/solana.</>,
               }}
             />
             <CreateSessionKeyCardSolana />
@@ -120,20 +120,20 @@ export const App = () => {
           <>
             <SignaturesCardEVM
               tooltip={{
-                hook: 'useSignMessage',
-                body: <>Uses local adapter hooks from playground (deleted from SDK).</>,
+                hook: 'viem signMessage',
+                body: <>Signs messages using viem WalletClient with the embedded provider.</>,
               }}
             />
             <WriteContractCardEVM
               tooltip={{
-                hook: 'useReadContract/useWriteContract',
-                body: <>Uses local adapter hooks from playground (deleted from SDK).</>,
+                hook: 'viem readContract / writeContract',
+                body: <>Reads and writes contracts using viem with the embedded provider.</>,
               }}
             />
             <SwitchChainCardEVM
               tooltip={{
-                hook: 'useEthereumSwitchChain',
-                body: <>Uses setActiveChainId directly (deleted from SDK, inlined logic).</>,
+                hook: 'wallet_switchEthereumChain',
+                body: <>Switches EVM chain using the embedded wallet provider RPC call.</>,
               }}
             />
             <SessionKeysCardEVM

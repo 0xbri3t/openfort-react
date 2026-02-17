@@ -2,7 +2,7 @@ import {
   type ConnectedEmbeddedEthereumWallet,
   embeddedWalletId,
   RecoveryMethod,
-  useEthereumBridge,
+  useConnectWithSiwe,
   useEthereumEmbeddedWallet,
 } from '@openfort/react'
 import { useExternalConnectors } from '@openfort/wagmi'
@@ -298,7 +298,7 @@ const EmbeddedWalletButton = ({
  * - Embedded: list of wallets with password/passkey recovery, create button.
  */
 export const ConnectExternalWalletCard = () => {
-  const bridge = useEthereumBridge()
+  const { ethereumBridge: bridge } = useConnectWithSiwe()
   const embeddedHook = useEthereumEmbeddedWallet()
   const allConnectors = useExternalConnectors()
 

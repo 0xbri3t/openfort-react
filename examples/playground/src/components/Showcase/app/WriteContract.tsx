@@ -1,4 +1,4 @@
-import { ChainTypeEnum, getExplorerUrl, useEthereumBridge } from '@openfort/react'
+import { ChainTypeEnum, useConnectWithSiwe } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { formatUnits, getAddress, parseAbi } from 'viem'
 import { useChainId, useReadContract, useWriteContract } from 'wagmi'
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 import { getMintContractConfig } from '@/lib/contracts'
+import { getExplorerUrl } from '@/lib/explorer'
 
 const BALANCE_ABI = [
   {
@@ -21,7 +22,7 @@ const BALANCE_ABI = [
 ] as const
 
 export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const bridge = useEthereumBridge()
+  const { ethereumBridge: bridge } = useConnectWithSiwe()
   const address = bridge?.account.address
   const chainId = useChainId()
   const config = getMintContractConfig(chainId)

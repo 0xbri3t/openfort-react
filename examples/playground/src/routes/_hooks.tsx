@@ -1,11 +1,4 @@
-import {
-  ChainTypeEnum,
-  useChain,
-  useEthereumEmbeddedWallet,
-  useEthereumSwitchChain,
-  useSolanaEmbeddedWallet,
-  useUser,
-} from '@openfort/react'
+import { ChainTypeEnum, useChain, useEthereumEmbeddedWallet, useSolanaEmbeddedWallet, useUser } from '@openfort/react'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { type PropsWithChildren, useMemo } from 'react'
@@ -48,7 +41,11 @@ const SidebarInfo = () => {
     isConnected && chainType === ChainTypeEnum.EVM && 'chainId' in wallet
       ? (wallet as typeof ethereumWallet).chainId
       : undefined
-  const { chains } = useEthereumSwitchChain()
+  const chains = [
+    { id: 80002, name: 'Polygon Amoy' },
+    { id: 84532, name: 'Base Sepolia' },
+    { id: 13337, name: 'Beam Testnet' },
+  ]
 
   const connectedChain = useMemo(() => chains.find((c) => c.id === chainId), [chains, chainId])
 

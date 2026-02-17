@@ -7,7 +7,23 @@
 import { ChainTypeEnum, useChain, useEthereumEmbeddedWallet } from '@openfort/react'
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
-import { type Abi, createPublicClient, http } from 'viem'
+import { type Abi, createPublicClient, encodeFunctionData, http } from 'viem'
+
+/**
+ * Maps chainId to RPC URL for playground chains
+ */
+export function getPlaygroundRpcUrl(chainId?: number): string {
+  switch (chainId) {
+    case 80002: // Polygon Amoy
+      return 'https://rpc-amoy.polygon.technology'
+    case 84532: // Base Sepolia
+      return 'https://sepolia.base.org'
+    case 13337: // Beam Testnet
+      return 'https://build.onbeam.com/rpc/testnet'
+    default:
+      return 'https://sepolia.base.org' // Default to Base Sepolia
+  }
+}
 
 export interface UseAccountLike {
   address?: `0x${string}`
@@ -52,7 +68,7 @@ export interface UseWriteContractLike {
 /**
  * Returns the connected EVM account.
  */
-export function useEthereumAccountLocal(): UseAccountLike {
+export function useEthereumAccount(): UseAccountLike {
   const { chainType } = useChain()
   const wallet = useEthereumEmbeddedWallet()
   const isConnected = wallet.status === 'connected' && chainType === ChainTypeEnum.EVM && !!wallet.address
@@ -73,14 +89,14 @@ export function useEthereumReadContractLocal(params: {
   args?: unknown[]
   chainId?: number
 }): UseReadContractLike {
-  const { chainId: connectedChainId } = useEthereumAccountLocal()
-  const chainId = params.chainId ?? connectedChainId ?? 11155111 // Sepolia default
+  const { chainId: connectedChainId } = useEthereumAccount()
+  const chainId = params.chainId ?? connectedChainId
 
   const query = useQuery({
     queryKey: ['readContract', params.address, params.functionName, params.args, chainId],
-    enabled: !!params.address && !!params.functionName,
+    enabled: !!params.address && !!params.functionName && !!chainId,
     queryFn: async () => {
-      const rpcUrl = 'https://sepolia.base.org'
+      const rpcUrl = getPlaygroundRpcUrl(chainId)
       const client = createPublicClient({ transport: http(rpcUrl) })
       return client.readContract({
         address: params.address,
@@ -103,7 +119,8 @@ export function useEthereumReadContractLocal(params: {
  * Writes to a contract.
  */
 export function useEthereumWriteContractLocal(): UseWriteContractLike {
-  const { address, chainId } = useEthereumAccountLocal()
+  const { address, chainId } = useEthereumAccount()
+  const wallet = useEthereumEmbeddedWallet()
   const [data, setData] = useState<`0x${string}` | undefined>(undefined)
   const [isPending, setIsPending] = useState(false)
   const [isError, setIsError] = useState(false)
@@ -111,8 +128,13 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
   const [error, setError] = useState<Error | null>(null)
 
   const writeContract = useCallback(
-    async (_params: { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }) => {
-      if (!address) return Promise.reject(new Error('Wallet not connected'))
+    async (params: { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }) => {
+      if (!address || wallet.status !== 'connected' || !wallet.activeWallet) {
+        const err = new Error('Wallet not connected')
+        setError(err)
+        setIsError(true)
+        return Promise.reject(err)
+      }
 
       setIsPending(true)
       setIsError(false)
@@ -120,12 +142,31 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
       setError(null)
 
       try {
-        // Mock: return a dummy tx hash
-        // In production, use wagmi or viem to actually write to contract
-        const mockHash = `0x${Math.random().toString(16).slice(2)}` as `0x${string}`
-        setData(mockHash)
+        const activeWallet = wallet.activeWallet
+        const provider = await activeWallet.getProvider()
+
+        // Encode contract call using viem
+        const data = encodeFunctionData({
+          abi: params.abi as Abi,
+          functionName: params.functionName,
+          args: params.args,
+        })
+
+        // Send transaction via embedded provider
+        const txHash = (await provider.request({
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: address,
+              to: params.address,
+              data,
+            },
+          ],
+        })) as `0x${string}`
+
+        setData(txHash)
         setIsSuccess(true)
-        return mockHash
+        return txHash
       } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err))
         setError(e)
@@ -135,7 +176,7 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
         setIsPending(false)
       }
     },
-    [address, chainId]
+    [address, chainId, wallet.status, wallet.activeWallet]
   )
 
   return {

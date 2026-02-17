@@ -1,4 +1,4 @@
-import { ChainTypeEnum, getExplorerUrl } from '@openfort/react'
+import { ChainTypeEnum } from '@openfort/react'
 import { type ReactNode, useEffect } from 'react'
 import { formatUnits, getAddress, parseAbi } from 'viem'
 import { useAccount, useReadContract, useWriteContract } from 'wagmi'
@@ -8,12 +8,13 @@ import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
-  useEthereumAccountLocal,
+  useEthereumAccount,
   useEthereumReadContractLocal,
   useEthereumWriteContractLocal,
 } from '@/hooks/useEthereumAdapterHooks'
 import { cn } from '@/lib/cn'
 import { getMintContractConfig } from '@/lib/contracts'
+import { getExplorerUrl } from '@/lib/explorer'
 import { usePlaygroundMode } from '@/providers'
 
 const BALANCE_ABI = [
@@ -30,7 +31,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
   const { mode } = usePlaygroundMode()
 
   // Use wagmi hooks in evm-wagmi mode, local adapter hooks in evm-only mode
-  const useAccountHook = mode === 'evm-wagmi' ? useAccount : useEthereumAccountLocal
+  const useAccountHook = mode === 'evm-wagmi' ? useAccount : useEthereumAccount
   const useReadContractHook = mode === 'evm-wagmi' ? useReadContract : useEthereumReadContractLocal
   const useWriteContractHook = mode === 'evm-wagmi' ? useWriteContract : useEthereumWriteContractLocal
 
