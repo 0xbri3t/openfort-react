@@ -1,7 +1,6 @@
-import { RecoveryMethod, useEthereumEmbeddedWallet } from '@openfort/react'
+import { type EmbeddedEthereumWalletState, RecoveryMethod } from '@openfort/react'
 
-/** Inferred from useEthereumEmbeddedWallet().wallets */
-type EmbeddedWalletItem = ReturnType<typeof useEthereumEmbeddedWallet>['wallets'][number]
+type EmbeddedWalletItem = EmbeddedEthereumWalletState['wallets'][number]
 
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
@@ -26,7 +25,7 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 
-const CreateWalletButton = ({ ethereum }: { ethereum: ReturnType<typeof useEthereumEmbeddedWallet> }) => {
+const CreateWalletButton = ({ ethereum }: { ethereum: EmbeddedEthereumWalletState }) => {
   const isCreating = ethereum.status === 'creating'
   const create = ethereum.create
   const error = ethereum.status === 'error' ? ethereum.error : null
@@ -268,8 +267,7 @@ const WalletButton = ({
 }
 
 export const SetActiveWalletsCard = () => {
-  const ethereum = useEthereumEmbeddedWallet()
-  const { activeWallet, connectingAddress } = useActiveEmbeddedWallet()
+  const { ethereum, activeWallet, connectingAddress } = useActiveEmbeddedWallet()
   const wallets = ethereum.wallets
 
   return (

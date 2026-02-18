@@ -1,8 +1,8 @@
 import {
   type ConnectedEmbeddedEthereumWallet,
+  type EmbeddedEthereumWalletState,
   RecoveryMethod,
   useEthereumBridge,
-  useEthereumEmbeddedWallet,
 } from '@openfort/react'
 import { useWalletAuth } from '@openfort/wagmi'
 import { Link } from '@tanstack/react-router'
@@ -53,8 +53,8 @@ const SimpleWalletButton = ({
   </button>
 )
 
-const CreateWalletButton = () => {
-  const { create, status } = useEthereumEmbeddedWallet()
+const CreateWalletButton = ({ ethereum }: { ethereum: EmbeddedEthereumWalletState }) => {
+  const { create, status } = ethereum
   const [error, setError] = useState<string | null>(null)
   const isCreating = status === 'creating'
   const [chooseCreateMethodOpen, setChooseCreateMethodOpen] = useState(false)
@@ -299,21 +299,20 @@ const EmbeddedWalletButton = ({
  */
 export const ConnectExternalWalletCard = () => {
   const bridge = useEthereumBridge()
-  const embeddedHook = useEthereumEmbeddedWallet()
-  const { activeWallet, connectingAddress } = useActiveEmbeddedWallet()
+  const { ethereum, activeWallet, connectingAddress } = useActiveEmbeddedWallet()
   const { availableWallets: externalConnectors } = useWalletAuth()
 
-  const embeddedWallets = embeddedHook.wallets
-  const isOpenfortActive = embeddedHook.status === 'connected'
-  const isExternalActive = embeddedHook.isExternal
-  const isBusy = embeddedHook.isConnecting || embeddedHook.status === 'connecting' || embeddedHook.status === 'creating'
+  const embeddedWallets = ethereum.wallets
+  const isOpenfortActive = ethereum.status === 'connected'
+  const isExternalActive = ethereum.isExternal
+  const isBusy = ethereum.isLoading
 
   const setActive = async (opts: {
     address: `0x${string}`
     recoveryMethod?: RecoveryMethod
     recoveryPassword?: string
   }) => {
-    await embeddedHook.setActive(opts)
+    await ethereum.setActive(opts)
   }
 
   const handleSelectExternal = (connectorId: string) => {
@@ -340,8 +339,7 @@ export const ConnectExternalWalletCard = () => {
             <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">External</p>
             <div className="flex flex-col gap-0.5">
               {externalConnectors.map((c) => {
-                const isActive =
-                  isExternalActive && embeddedHook.status === 'connected' && embeddedHook.connectorId === c.id
+                const isActive = isExternalActive && ethereum.status === 'connected' && ethereum.connectorId === c.id
                 const iconSrc = typeof c.icon === 'string' ? c.icon : undefined
                 const iconNode = typeof c.icon !== 'string' && c.icon != null ? c.icon : null
 
@@ -382,10 +380,10 @@ export const ConnectExternalWalletCard = () => {
           >
             <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Embedded</p>
             <div className="flex flex-col gap-0.5">
-              {embeddedHook.status === 'fetching-wallets' && (
+              {ethereum.status === 'fetching-wallets' && (
                 <p className="text-xs text-muted-foreground py-2 px-3">Loading wallets...</p>
               )}
-              {embeddedWallets.length === 0 && embeddedHook.status !== 'fetching-wallets' && (
+              {embeddedWallets.length === 0 && ethereum.status !== 'fetching-wallets' && (
                 <p className="text-xs text-muted-foreground py-2 px-3">No embedded wallets yet.</p>
               )}
               {embeddedWallets.map((w) => (
@@ -422,15 +420,15 @@ export const ConnectExternalWalletCard = () => {
                 </Tooltip>
               ))}
 
-              <CreateWalletButton />
+              <CreateWalletButton ethereum={ethereum} />
             </div>
           </div>
         </div>
 
         {/* Status feedback */}
         {isBusy && <p className="text-xs text-muted-foreground text-center mt-3 animate-pulse">Switching wallet...</p>}
-        {embeddedHook.status === 'error' && embeddedHook.error && (
-          <p className="text-xs text-red-500 text-center mt-3">{embeddedHook.error}</p>
+        {ethereum.status === 'error' && ethereum.error && (
+          <p className="text-xs text-red-500 text-center mt-3">{ethereum.error}</p>
         )}
       </CardContent>
     </Card>

@@ -6,13 +6,13 @@ import {
 } from '@openfort/openfort-js'
 import { Buffer } from 'buffer'
 import type React from 'react'
-import { createElement, Fragment, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { CoreProvider } from '../../core/CoreContext'
 import { OpenfortEthereumBridgeContext } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useThemeFont } from '../../hooks/useGoogleFont'
 import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
 import type { useConnectCallbackProps } from '../../openfort/connectCallbackTypes'
-import { SolanaContextProvider, type SolanaContextProviderProps } from '../../solana/SolanaContext'
+import { SolanaContextProvider } from '../../solana/SolanaContext'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import { isFamily } from '../../utils/wallets'
@@ -418,14 +418,11 @@ export const OpenfortProvider = ({
     ]
   )
 
-  const innerChildren = createElement(
-    Fragment,
-    null,
-    debugModeOptions.debugRoutes &&
-      createElement(
-        'pre',
-        {
-          style: {
+  const innerChildren = (
+    <>
+      {debugModeOptions.debugRoutes && (
+        <pre
+          style={{
             position: 'absolute',
             top: 0,
             left: 0,
@@ -433,70 +430,58 @@ export const OpenfortProvider = ({
             color: 'gray',
             background: 'white',
             zIndex: 9999,
-          },
-        },
-        JSON.stringify(
-          routeHistory.map((item) =>
-            Object.fromEntries(
-              Object.entries(item).map(([key, value]) => [
-                key,
-                typeof value === 'object' && value !== null ? '[object]' : value,
-              ])
-            )
-          ),
-          null,
-          2
-        )
-      ),
-    children,
-    createElement(ConnectKitModal, {
-      lang: ckLang,
-      theme: ckTheme,
-      mode: safeUiConfig.mode ?? ckMode,
-      customTheme: ckCustomTheme,
-    })
+          }}
+        >
+          {JSON.stringify(
+            routeHistory.map((item) =>
+              Object.fromEntries(
+                Object.entries(item).map(([key, value]) => [
+                  key,
+                  typeof value === 'object' && value !== null ? '[object]' : value,
+                ])
+              )
+            ),
+            null,
+            2
+          )}
+        </pre>
+      )}
+      {children}
+      <ConnectKitModal lang={ckLang} theme={ckTheme} mode={safeUiConfig.mode ?? ckMode} customTheme={ckCustomTheme} />
+    </>
   )
 
-  const coreOpenfortChildren = hasSolana
-    ? createElement(
-        SolanaContextProvider,
-        { config: walletConfig!.solana! } as SolanaContextProviderProps,
-        innerChildren
-      )
-    : innerChildren
-
-  return createElement(
-    UIContext.Provider,
-    { value: connectUIValue },
-    createElement(
-      OpenfortContext.Provider,
-      { value },
-      createElement(
-        CoreProvider,
-        coreProviderConfig,
-        createElement(
-          CoreOpenfortProvider,
-          {
-            openfortConfig: {
-              baseConfiguration: {
-                publishableKey,
-              },
+  return (
+    <UIContext.Provider value={connectUIValue}>
+      <OpenfortContext.Provider value={value}>
+        <CoreProvider {...coreProviderConfig}>
+          <CoreOpenfortProvider
+            openfortConfig={{
+              baseConfiguration: { publishableKey },
               shieldConfiguration: walletConfig
                 ? {
                     shieldPublishableKey: walletConfig.shieldPublishableKey,
                     debug: debugModeOptions.shieldDebugMode,
+                    ...(walletConfig.passkeyDisplayName && {
+                      passkeyRpName: walletConfig.passkeyDisplayName,
+                    }),
                   }
                 : undefined,
               debug: debugModeOptions.openfortCoreDebugMode,
               overrides,
               thirdPartyAuth,
-            },
-            onConnect,
-            onDisconnect,
-          },
-          coreOpenfortChildren
-        )
-      )
-    )
+            }}
+            onConnect={onConnect}
+            onDisconnect={onDisconnect}
+          >
+            {hasSolana ? (
+              <SolanaContextProvider config={walletConfig!.solana!}>{innerChildren}</SolanaContextProvider>
+            ) : (
+              innerChildren
+            )}
+          </CoreOpenfortProvider>
+        </CoreProvider>
+      </OpenfortContext.Provider>
+    </UIContext.Provider>
   )
 }
