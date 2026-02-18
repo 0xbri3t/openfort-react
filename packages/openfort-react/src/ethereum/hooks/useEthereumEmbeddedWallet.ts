@@ -1,4 +1,10 @@
-import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  type EmbeddedAccount,
+  EmbeddedState,
+  RecoveryMethod,
+} from '@openfort/openfort-js'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
@@ -120,17 +126,20 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   const {
     client,
     embeddedAccounts,
+    embeddedState,
     isLoadingAccounts,
     updateEmbeddedAccounts,
     setActiveEmbeddedAddress,
     setWalletStatus,
     activeEmbeddedAddress,
+    activeChainId,
   } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
   const strategy = useConnectionStrategy()
   const bridge = useContext(OpenfortEthereumBridgeContext)
 
-  const chainId = options?.chainId ?? DEFAULT_CHAIN_ID
+  const creationChainId = options?.chainId ?? DEFAULT_CHAIN_ID
+  const activeReturnChainId = activeChainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
   const autoReconnectAttemptedRef = useRef(false)
@@ -218,7 +227,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         const account = await client.embeddedWallet.create({
           chainType: ChainTypeEnum.EVM,
           accountType,
-          ...(accountType !== AccountTypeEnum.EOA && { chainId: createOptions?.chainId ?? chainId }),
+          ...(accountType !== AccountTypeEnum.EOA && { chainId: createOptions?.chainId ?? creationChainId }),
           recoveryParams,
         })
 
@@ -266,7 +275,14 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         throw error
       }
     },
-    [client, walletConfig, chainId, getEmbeddedEthereumProvider, updateEmbeddedAccounts, setActiveEmbeddedAddress]
+    [
+      client,
+      walletConfig,
+      creationChainId,
+      getEmbeddedEthereumProvider,
+      updateEmbeddedAccounts,
+      setActiveEmbeddedAddress,
+    ]
   )
 
   const setActive = useCallback(
@@ -432,16 +448,47 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   )
 
   useEffect(() => {
+    let cancelled = false
     if (
       isLoadingAccounts ||
-      state.status !== 'disconnected' ||
       ethereumAccounts.length === 0 ||
-      autoReconnectAttemptedRef.current
+      embeddedState !== EmbeddedState.READY ||
+      state.status === 'connecting' ||
+      state.status === 'reconnecting' ||
+      state.status === 'creating'
     ) {
       return
     }
+    const accountByAddress = activeEmbeddedAddress
+      ? ethereumAccounts.find((acc) => acc.address.toLowerCase() === activeEmbeddedAddress.toLowerCase())
+      : undefined
+    const currentMatches =
+      state.status === 'connected' && state.activeWallet?.address.toLowerCase() === activeEmbeddedAddress?.toLowerCase()
+
+    if (accountByAddress && !currentMatches) {
+      getEmbeddedEthereumProvider().then((provider) => {
+        if (cancelled) return
+        const connectedWallet: ConnectedEmbeddedEthereumWallet = {
+          id: accountByAddress.id,
+          address: accountByAddress.address as `0x${string}`,
+          ownerAddress: accountByAddress.ownerAddress,
+          implementationType: accountByAddress.implementationType,
+          chainType: ChainTypeEnum.EVM,
+          walletIndex: ethereumAccounts.indexOf(accountByAddress),
+          recoveryMethod: accountByAddress.recoveryMethod,
+          getProvider: async () => provider,
+        }
+        setState({ status: 'connected', activeWallet: connectedWallet, provider, error: null })
+        setActiveEmbeddedAddress(accountByAddress.address)
+      })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    if (state.status !== 'disconnected') return
+    if (autoReconnectAttemptedRef.current) return
     autoReconnectAttemptedRef.current = true
-    let cancelled = false
     client.embeddedWallet
       .get()
       .then(async (active: EmbeddedAccount | null | undefined) => {
@@ -476,7 +523,17 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     return () => {
       cancelled = true
     }
-  }, [isLoadingAccounts, state.status, ethereumAccounts, client, getEmbeddedEthereumProvider, setActiveEmbeddedAddress])
+  }, [
+    isLoadingAccounts,
+    state.status,
+    state.activeWallet?.address,
+    ethereumAccounts,
+    embeddedState,
+    activeEmbeddedAddress,
+    client,
+    getEmbeddedEthereumProvider,
+    setActiveEmbeddedAddress,
+  ])
 
   const derived = useMemo(
     () => ({
@@ -524,9 +581,9 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           connectorName: walletTypeInfo.connectorName,
         },
         state.activeWallet,
-        state.activeWallet?.address ? chainId : undefined
+        state.activeWallet?.address ? activeReturnChainId : undefined
       ),
-    [state.status, state.activeWallet, walletTypeInfo, chainId]
+    [state.status, state.activeWallet, walletTypeInfo, activeReturnChainId]
   )
 
   // Compute displayAddress when connected
@@ -563,6 +620,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     ...connectedStateProps,
     ...(displayAddress && { displayAddress }),
     ...(state.activeWallet?.address && { address: state.activeWallet.address }),
-    ...(chainId && { chainId }),
+    chainId: activeReturnChainId,
   } as EmbeddedEthereumWalletState
 }

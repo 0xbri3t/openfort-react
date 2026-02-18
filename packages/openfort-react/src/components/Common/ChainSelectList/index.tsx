@@ -60,7 +60,7 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-  const { setActiveChainId } = useOpenfortCore()
+  const { setActiveChainId, activeChainId } = useOpenfortCore()
   const embeddedChains = useChains()
 
   // Inline switchChain logic for embedded EVM mode (was useEthereumSwitchChain)
@@ -101,11 +101,7 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
 
   const bridgeChain = bridge?.account?.chain
   const chain = isEmbeddedEVMNoBridge
-    ? currentChainIdFromWallet != null
-      ? { id: currentChainIdFromWallet }
-      : currentChainIdFromStrategy != null
-        ? { id: currentChainIdFromStrategy }
-        : bridgeChain
+    ? { id: activeChainId ?? currentChainIdFromStrategy ?? currentChainIdFromWallet }
     : bridgeChain
 
   const chains =
