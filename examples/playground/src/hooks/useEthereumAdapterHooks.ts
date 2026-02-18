@@ -4,10 +4,13 @@
  * In production, use wagmi hooks or viem directly.
  */
 
-import { ChainTypeEnum, useChain, useEthereumEmbeddedWallet } from '@openfort/react'
+import { ChainTypeEnum, useChain, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { type Abi, createPublicClient, encodeFunctionData, http } from 'viem'
+
+/** Default chain when no activeChainId (Beam Testnet). */
+const DEFAULT_CHAIN_ID = 13337
 
 /**
  * Maps chainId to RPC URL for playground chains
@@ -21,7 +24,7 @@ export function getPlaygroundRpcUrl(chainId?: number): string {
     case 13337: // Beam Testnet
       return 'https://build.onbeam.com/rpc/testnet'
     default:
-      return 'https://sepolia.base.org' // Default to Base Sepolia
+      return 'https://build.onbeam.com/rpc/testnet' // Default to Beam Testnet
   }
 }
 
@@ -67,15 +70,37 @@ export interface UseWriteContractLike {
 
 /**
  * Returns the connected EVM account.
+ * When the embedded hook has not yet reached "connected", falls back to core.activeEmbeddedAddress
+ * so sign/mint can work as soon as the user has an active embedded account.
  */
 export function useEthereumAccount(): UseAccountLike {
   const { chainType } = useChain()
+  const core = useOpenfort()
   const wallet = useEthereumEmbeddedWallet()
-  const isConnected = wallet.status === 'connected' && chainType === ChainTypeEnum.EVM && !!wallet.address
+
+  const hookConnected = wallet.status === 'connected' && chainType === ChainTypeEnum.EVM && !!wallet.address
+  if (hookConnected) {
+    return {
+      address: wallet.address as `0x${string}`,
+      chainId: wallet.chainId,
+      isConnected: true,
+    }
+  }
+
+  const fallbackAddress = core.activeEmbeddedAddress
+  const evmAccount =
+    chainType === ChainTypeEnum.EVM &&
+    fallbackAddress &&
+    core.embeddedAccounts?.find(
+      (a) => a.chainType === ChainTypeEnum.EVM && a.address.toLowerCase() === fallbackAddress.toLowerCase()
+    )
+  const useFallback = !!evmAccount
+  const chainId = core.activeChainId ?? DEFAULT_CHAIN_ID
+
   return {
-    address: isConnected ? (wallet.address as `0x${string}`) : undefined,
-    chainId: isConnected ? wallet.chainId : undefined,
-    isConnected,
+    address: useFallback ? (evmAccount.address as `0x${string}`) : undefined,
+    chainId: useFallback ? chainId : undefined,
+    isConnected: useFallback,
   }
 }
 
@@ -117,9 +142,11 @@ export function useEthereumReadContractLocal(params: {
 
 /**
  * Writes to a contract.
+ * Uses embedded wallet provider (from hook when connected, or from core.client when fallback account).
  */
 export function useEthereumWriteContractLocal(): UseWriteContractLike {
   const { address, chainId } = useEthereumAccount()
+  const core = useOpenfort()
   const wallet = useEthereumEmbeddedWallet()
   const [data, setData] = useState<`0x${string}` | undefined>(undefined)
   const [isPending, setIsPending] = useState(false)
@@ -129,7 +156,7 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
 
   const writeContract = useCallback(
     async (params: { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }) => {
-      if (!address || wallet.status !== 'connected' || !wallet.activeWallet) {
+      if (!address) {
         const err = new Error('Wallet not connected')
         setError(err)
         setIsError(true)
@@ -142,24 +169,24 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
       setError(null)
 
       try {
-        const activeWallet = wallet.activeWallet
-        const provider = await activeWallet.getProvider()
+        const provider =
+          wallet.status === 'connected' && wallet.activeWallet
+            ? await wallet.activeWallet.getProvider()
+            : await core.client.embeddedWallet.getEthereumProvider()
 
-        // Encode contract call using viem
-        const data = encodeFunctionData({
+        const dataEncoded = encodeFunctionData({
           abi: params.abi as Abi,
           functionName: params.functionName,
           args: params.args,
         })
 
-        // Send transaction via embedded provider
         const txHash = (await provider.request({
           method: 'eth_sendTransaction',
           params: [
             {
               from: address,
               to: params.address,
-              data,
+              data: dataEncoded,
             },
           ],
         })) as `0x${string}`
@@ -176,7 +203,7 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
         setIsPending(false)
       }
     },
-    [address, chainId, wallet.status, wallet.activeWallet]
+    [address, chainId, wallet.status, wallet.activeWallet, core.client]
   )
 
   return {

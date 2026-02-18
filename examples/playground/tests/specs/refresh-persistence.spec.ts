@@ -14,8 +14,8 @@ test.describe('Dashboard regression - refresh persistence', () => {
       .first()
     await expect(currentChain).toBeVisible({ timeout: 30_000 })
 
-    // Switch to Beam Testnet (if not already)
-    const target = 'Beam Testnet'
+    // Switch to Base Sepolia (if not already)
+    const target = 'Base Sepolia'
     const btn = chainCard.getByRole('button', { name: new RegExp(`^switch to\\s+${escapeRegExp(target)}$`, 'i') })
     if (!(await btn.isDisabled().catch(() => false))) {
       await btn.click()
@@ -24,14 +24,14 @@ test.describe('Dashboard regression - refresh persistence', () => {
     await expect(chainCard.getByText(new RegExp(`^switched to chain\\s+${escapeRegExp(target)}$`, 'i'))).toBeVisible({
       timeout: 90_000,
     })
-    await expect(currentChain).toContainText(/beam testnet/i, { timeout: 90_000 })
+    await expect(currentChain).toContainText(/base sepolia/i, { timeout: 90_000 })
 
     // Reload
     await page.reload({ waitUntil: 'domcontentloaded' })
 
     // Still logged in + chain remains
     await dashboardPage.expectLoaded(m)
-    await expect(currentChain).toContainText(/beam testnet/i, { timeout: 90_000 })
+    await expect(currentChain).toContainText(/base sepolia/i, { timeout: 90_000 })
 
     // Sanity: signatures input still exists (dashboard not broken)
     await expect(page.getByPlaceholder(/enter a message to sign/i)).toBeVisible({ timeout: 60_000 })

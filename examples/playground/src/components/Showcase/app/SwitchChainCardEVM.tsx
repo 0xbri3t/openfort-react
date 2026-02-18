@@ -1,4 +1,4 @@
-import { useEthereumEmbeddedWallet } from '@openfort/react'
+import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { numberToHex } from 'viem'
@@ -6,6 +6,7 @@ import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useEthereumAccount } from '@/hooks/useEthereumAdapterHooks'
 
 const PLAYGROUND_CHAINS = [
   { id: 80002, name: 'Polygon Amoy' },
@@ -14,13 +15,19 @@ const PLAYGROUND_CHAINS = [
 ]
 
 export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { chainId: currentChainId, status, activeWallet } = useEthereumEmbeddedWallet()
+  const embedded = useEthereumEmbeddedWallet()
+  const { chainId: accountChainId, isConnected: hasAccount } = useEthereumAccount()
+  const { setActiveChainId, ...core } = useOpenfort()
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const [data, setData] = useState<{ id: number; name: string } | null>(null)
 
+  const currentChainId =
+    embedded.status === 'connected' ? embedded.chainId : (accountChainId ?? core.activeChainId ?? undefined)
+  const canSwitch = hasAccount || embedded.status === 'connected' || !!core.activeEmbeddedAddress
+
   const switchChain = async (targetChainId: number) => {
-    if (status !== 'connected' || !activeWallet) {
+    if (!canSwitch) {
       setError(new Error('Wallet not connected'))
       return
     }
@@ -30,12 +37,16 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
     setData(null)
 
     try {
-      const provider = await activeWallet.getProvider()
+      const provider =
+        embedded.status === 'connected' && embedded.activeWallet
+          ? await embedded.activeWallet.getProvider()
+          : await core.client.embeddedWallet.getEthereumProvider()
       await provider.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: numberToHex(targetChainId) }],
       })
 
+      setActiveChainId(targetChainId)
       const chain = PLAYGROUND_CHAINS.find((c) => c.id === targetChainId)
       setData(chain || { id: targetChainId, name: `Chain ${targetChainId}` })
     } catch (err) {
@@ -46,7 +57,9 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
     }
   }
 
-  const chainName = PLAYGROUND_CHAINS.find((chain) => chain.id === currentChainId)?.name || 'Unknown'
+  const chainName =
+    PLAYGROUND_CHAINS.find((chain) => chain.id === currentChainId)?.name ||
+    (currentChainId != null ? `Chain ${currentChainId}` : 'Unknown')
 
   return (
     <Card>
@@ -54,7 +67,8 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
         <CardTitle>Switch chain</CardTitle>
         <CardDescription>Switch between different chains to interact with various blockchain networks.</CardDescription>
         <p className="text-sm text-muted-foreground">
-          Current chain: {chainName} ({currentChainId})
+          Current chain: {chainName}
+          {currentChainId != null && ` (${currentChainId})`}
         </p>
       </CardHeader>
       <CardContent>
@@ -68,7 +82,7 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
                       <Button
                         className="btn btn-accent"
                         onClick={() => switchChain(chain.id)}
-                        disabled={currentChainId === chain.id || isPending || status !== 'connected'}
+                        disabled={currentChainId === chain.id || isPending || !canSwitch}
                       >
                         Switch to {chain.name}
                       </Button>
@@ -83,7 +97,7 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
                 <Button
                   className="btn btn-accent"
                   onClick={() => switchChain(chain.id)}
-                  disabled={currentChainId === chain.id || isPending || status !== 'connected'}
+                  disabled={currentChainId === chain.id || isPending || !canSwitch}
                 >
                   Switch to {chain.name}
                 </Button>

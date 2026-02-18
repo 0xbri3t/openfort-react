@@ -27,7 +27,7 @@ test.describe('Dashboard smoke - key cards are present', () => {
         await expect(page.getByText(/^external$/i).first()).toBeVisible({ timeout: 30_000 })
         await expect(page.getByText(/MetaMask/i).first()).toBeVisible({ timeout: 30_000 })
         await expect(page.getByText(/Coinbase Wallet/i).first()).toBeVisible({ timeout: 30_000 })
-        await expect(page.getByText(/Other Wallets/i).first()).toBeVisible({ timeout: 30_000 })
+        await expect(page.getByText(/Other Wallets|WalletConnect/i).first()).toBeVisible({ timeout: 30_000 })
       }
     }
   })

@@ -24,6 +24,7 @@ import { WriteContractCardEVM } from '@/components/Showcase/app/WriteContractCar
 import { SampleTooltipLink } from '@/components/Showcase/auth/SampleTooltipLink'
 import { Button } from '@/components/Showcase/ui/Button'
 import { TruncatedText } from '@/components/TruncatedText'
+import { useDisplayEthereumAddress } from '@/hooks/useConnectedEthereumAccount'
 import { usePlaygroundMode } from '@/providers'
 
 export const App = () => {
@@ -32,8 +33,14 @@ export const App = () => {
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+  const displayEthereumAddress = useDisplayEthereumAddress()
 
-  const address = wallet.status === 'connected' && 'address' in wallet ? wallet.address : undefined
+  const address =
+    chainType === ChainTypeEnum.EVM
+      ? displayEthereumAddress
+      : wallet.status === 'connected' && 'address' in wallet
+        ? wallet.address
+        : undefined
   const { signOut } = useSignOut()
   const { mode } = usePlaygroundMode()
   const isSolana = mode === 'solana-only'

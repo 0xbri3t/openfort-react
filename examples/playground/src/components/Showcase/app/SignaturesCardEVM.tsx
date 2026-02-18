@@ -1,4 +1,4 @@
-import { useEthereumEmbeddedWallet } from '@openfort/react'
+import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { createWalletClient, custom } from 'viem'
@@ -6,16 +6,21 @@ import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useDisplayEthereumAddress } from '@/hooks/useConnectedEthereumAccount'
 import { cn } from '@/lib/cn'
 
 export const SignaturesCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { address, status, activeWallet } = useEthereumEmbeddedWallet()
+  const core = useOpenfort()
+  const address = useDisplayEthereumAddress()
+  const { status, activeWallet } = useEthereumEmbeddedWallet()
   const [data, setData] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
+  const canSign = !!address
+
   const signMessage = async (params: { message: string }) => {
-    if (status !== 'connected' || !address || !activeWallet) {
+    if (!address) {
       setError(new Error('Wallet not connected'))
       return
     }
@@ -25,13 +30,18 @@ export const SignaturesCardEVM = ({ tooltip }: { tooltip?: { hook: string; body:
     setData(null)
 
     try {
-      const provider = await activeWallet.getProvider()
+      const provider =
+        status === 'connected' && activeWallet
+          ? await activeWallet.getProvider()
+          : await core.client.embeddedWallet.getEthereumProvider()
+
       const walletClient = createWalletClient({
         account: address,
         transport: custom(provider),
       })
 
       const signature = await walletClient.signMessage({
+        account: address,
         message: params.message,
       })
 
@@ -68,14 +78,14 @@ export const SignaturesCardEVM = ({ tooltip }: { tooltip?: { hook: string; body:
               placeholder="Enter a message to sign"
               className="grow peer"
               defaultValue="Hello from Openfort!"
-              disabled={isPending || status !== 'connected'}
+              disabled={isPending || !canSign}
             />
           </label>
           {tooltip ? (
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>
                 <div className="w-full">
-                  <Button className="btn btn-accent w-full" disabled={isPending || status !== 'connected'}>
+                  <Button className="btn btn-accent w-full" disabled={isPending || !canSign}>
                     {isPending ? 'Signing...' : 'Sign a message'}
                   </Button>
                 </div>
@@ -86,7 +96,7 @@ export const SignaturesCardEVM = ({ tooltip }: { tooltip?: { hook: string; body:
               </TooltipContent>
             </Tooltip>
           ) : (
-            <Button className="btn btn-accent w-full" disabled={isPending || status !== 'connected'}>
+            <Button className="btn btn-accent w-full" disabled={isPending || !canSign}>
               {isPending ? 'Signing...' : 'Sign a message'}
             </Button>
           )}

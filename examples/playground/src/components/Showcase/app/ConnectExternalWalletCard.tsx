@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useActiveEmbeddedWallet } from '@/hooks/useActiveEmbeddedWallet'
 import { cn } from '@/lib/cn'
 
 const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
@@ -299,26 +300,13 @@ const EmbeddedWalletButton = ({
 export const ConnectExternalWalletCard = () => {
   const bridge = useEthereumBridge()
   const embeddedHook = useEthereumEmbeddedWallet()
+  const { activeWallet, connectingAddress } = useActiveEmbeddedWallet()
   const { availableWallets: externalConnectors } = useWalletAuth()
 
   const embeddedWallets = embeddedHook.wallets
-
   const isOpenfortActive = embeddedHook.status === 'connected'
   const isExternalActive = embeddedHook.isExternal
   const isBusy = embeddedHook.isConnecting || embeddedHook.status === 'connecting' || embeddedHook.status === 'creating'
-
-  const connectedAddress = embeddedHook.status === 'connected' ? embeddedHook.address : undefined
-  const activeWalletFromHook = embeddedHook.activeWallet ?? null
-  const activeWallet =
-    activeWalletFromHook != null
-      ? activeWalletFromHook
-      : connectedAddress != null
-        ? (embeddedWallets.find((w) => w.address.toLowerCase() === connectedAddress.toLowerCase()) ?? null)
-        : null
-  const connectingAddress =
-    embeddedHook.status === 'connecting'
-      ? (embeddedHook.activeWallet?.address ?? activeWalletFromHook?.address)
-      : undefined
 
   const setActive = async (opts: {
     address: `0x${string}`

@@ -1,6 +1,7 @@
+import React from 'react'
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
-import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
+import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { logger } from '../../utils/logger'
 
@@ -27,6 +28,11 @@ const allRoutes: ModalRoutes[] = [...safeRoutes.connected, ...safeRoutes.disconn
 
 type ValidRoutes = ModalRoutes
 
+/** Connector id must be a connector (e.g. injected, walletConnect), not an Openfort account id. */
+function isAccountId(id: string): boolean {
+  return id.startsWith('acc_')
+}
+
 /**
  * Hook for controlling Openfort UI modal and navigation
  *
@@ -50,13 +56,27 @@ type ValidRoutes = ModalRoutes
  * ```
  */
 export function useUI() {
-  const { open, setOpen, setRoute } = useOpenfort()
-  const { isLoading, user, needsRecovery } = useOpenfortCore()
-  const ethereumBridge = useEthereumBridge()
-  const isConnected = ethereumBridge?.account.isConnected ?? false
+  const { open, setOpen, setRoute, setConnector, connector, chainType } = useOpenfort()
+  const { isLoading, user, needsRecovery, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
+  const strategy = useConnectionStrategy()
+
+  const state = React.useMemo(
+    () => ({
+      user,
+      embeddedAccounts,
+      activeEmbeddedAddress,
+      chainType,
+      embeddedState,
+    }),
+    [user, embeddedAccounts, activeEmbeddedAddress, chainType, embeddedState]
+  )
+  const isConnected = strategy?.isConnected(state) ?? false
 
   function defaultOpen() {
     setOpen(true)
+    if (isAccountId(connector.id)) {
+      setConnector({ id: '' })
+    }
 
     if (isLoading) setRoute(routes.LOADING)
     else if (!user) setRoute(routes.PROVIDERS)

@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useActiveEmbeddedWallet } from '@/hooks/useActiveEmbeddedWallet'
 import { cn } from '@/lib/cn'
 
 const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
@@ -236,8 +237,9 @@ const WalletButton = ({
     <button
       type="button"
       onClick={() => !isActive && handleClickWallet()}
-      className={cn('btn btn-accent w-full flex justify-between password-input', {
-        'text-primary': isActive,
+      className={cn('btn w-full flex justify-between password-input', {
+        'btn-accent': true,
+        'text-primary font-medium': isActive,
         'animate-pulse': isConnecting,
       })}
     >
@@ -267,25 +269,8 @@ const WalletButton = ({
 
 export const SetActiveWalletsCard = () => {
   const ethereum = useEthereumEmbeddedWallet()
+  const { activeWallet, connectingAddress } = useActiveEmbeddedWallet()
   const wallets = ethereum.wallets
-  const connectedAddress = ethereum.status === 'connected' ? ethereum.address : undefined
-  // Prefer ethereum.activeWallet so the list updates immediately when user clicks "Set active".
-  // Fall back to connectedAddress (top-right) only when the hook hasn't set an active wallet yet (e.g. initial load).
-  const activeWalletFromHook =
-    ethereum.status === 'connected' ||
-    ethereum.status === 'connecting' ||
-    ethereum.status === 'reconnecting' ||
-    ethereum.status === 'needs-recovery'
-      ? ethereum.activeWallet
-      : null
-  const activeWallet =
-    activeWalletFromHook != null
-      ? activeWalletFromHook
-      : connectedAddress != null
-        ? (wallets.find((w) => w.address.toLowerCase() === connectedAddress.toLowerCase()) ?? null)
-        : null
-  const connectingAddress =
-    ethereum.status === 'connecting' || ethereum.status === 'reconnecting' ? ethereum.activeWallet?.address : undefined
 
   return (
     <Card>

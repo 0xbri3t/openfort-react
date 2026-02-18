@@ -1,12 +1,14 @@
-import { ChainTypeEnum, useEthereumBridge } from '@openfort/react'
+import { ChainTypeEnum, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import type { ReactNode } from 'react'
-import { formatUnits, getAddress, parseAbi } from 'viem'
-import { useChainId, useReadContract, useWriteContract } from 'wagmi'
+import { useState } from 'react'
+import { encodeFunctionData, formatUnits, getAddress, parseAbi } from 'viem'
+import { useAccount, useReadContract, useWriteContract } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useConnectedEthereumAccount } from '@/hooks/useConnectedEthereumAccount'
 import { cn } from '@/lib/cn'
 import { getMintContractConfig } from '@/lib/contracts'
 import { getExplorerUrl } from '@/lib/explorer'
@@ -22,10 +24,15 @@ const BALANCE_ABI = [
 ] as const
 
 export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const bridge = useEthereumBridge()
-  const address = bridge?.account.address
-  const chainId = useChainId()
+  const { address, chainId } = useConnectedEthereumAccount()
+  const { isConnected } = useAccount()
   const config = getMintContractConfig(chainId)
+  const core = useOpenfort()
+  const embedded = useEthereumEmbeddedWallet()
+
+  const [localHash, setLocalHash] = useState<`0x${string}` | null>(null)
+  const [localError, setLocalError] = useState<Error | null>(null)
+  const [localPending, setLocalPending] = useState(false)
 
   const {
     data: balance,
@@ -39,10 +46,10 @@ export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body:
   })
 
   const {
-    data: hash,
-    isPending,
+    data: wagmiHash,
+    isPending: wagmiPending,
     writeContract,
-    error,
+    error: wagmiError,
   } = useWriteContract({
     mutation: {
       onSuccess: () => {
@@ -53,23 +60,64 @@ export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body:
     },
   })
 
+  const useWagmiWrite = isConnected
+  const hash = useWagmiWrite ? wagmiHash : (localHash ?? undefined)
+  const isPending = useWagmiWrite ? wagmiPending : localPending
+  const error = useWagmiWrite ? wagmiError : localError
+
   async function submit({ amount }: { amount: string }) {
-    if (!config?.address) return
+    if (!config?.address || !address) return
     const amountWei = BigInt(amount) * BigInt(10 ** 18)
-    if (config.type === 'claim') {
-      writeContract({
-        address: getAddress(config.address),
-        abi: parseAbi(['function claim(uint256 amount)']),
-        functionName: 'claim',
-        args: [amountWei],
-      })
-    } else {
-      writeContract({
-        address: getAddress(config.address),
-        abi: parseAbi(['function mint(address to, uint256 amount)']),
-        functionName: 'mint',
-        args: [address!, amountWei],
-      })
+    const contractAddress = getAddress(config.address) as `0x${string}`
+
+    if (useWagmiWrite) {
+      if (config.type === 'claim') {
+        writeContract({
+          address: contractAddress,
+          abi: parseAbi(['function claim(uint256 amount)']),
+          functionName: 'claim',
+          args: [amountWei],
+        })
+      } else {
+        writeContract({
+          address: contractAddress,
+          abi: parseAbi(['function mint(address to, uint256 amount)']),
+          functionName: 'mint',
+          args: [address, amountWei],
+        })
+      }
+      return
+    }
+
+    setLocalPending(true)
+    setLocalError(null)
+    setLocalHash(null)
+    try {
+      const provider =
+        embedded.status === 'connected' && embedded.activeWallet
+          ? await embedded.activeWallet.getProvider()
+          : await core.client.embeddedWallet.getEthereumProvider()
+
+      const abi =
+        config.type === 'claim'
+          ? parseAbi(['function claim(uint256 amount)'])
+          : parseAbi(['function mint(address to, uint256 amount)'])
+      const functionName = config.type === 'claim' ? 'claim' : 'mint'
+      const args =
+        config.type === 'claim' ? ([amountWei] as const) : ([address, amountWei] as [typeof address, typeof amountWei])
+
+      const dataEncoded = encodeFunctionData({ abi, functionName, args })
+      const txHash = (await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: address, to: contractAddress, data: dataEncoded }],
+      })) as `0x${string}`
+
+      setLocalHash(txHash)
+      setTimeout(() => refetch(), 100)
+    } catch (err) {
+      setLocalError(err instanceof Error ? err : new Error(String(err)))
+    } finally {
+      setLocalPending(false)
     }
   }
 

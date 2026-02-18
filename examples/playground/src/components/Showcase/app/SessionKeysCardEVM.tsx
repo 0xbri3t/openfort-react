@@ -1,4 +1,4 @@
-import { useEthereumEmbeddedWallet, useGrantPermissions, useRevokePermissions } from '@openfort/react'
+import { useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
@@ -9,22 +9,15 @@ import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useEthereumAccount } from '@/hooks/useEthereumAdapterHooks'
 import { cn } from '@/lib/cn'
 import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
 import { usePlaygroundMode } from '@/providers'
 
-/** Returns { address, chainId } from Openfort EVM wallet for evm-only mode (no wagmi). */
-function useEthereumAccountLocal(): { address: `0x${string}` | undefined; chainId: number | undefined } {
-  const evm = useEthereumEmbeddedWallet()
-  const address = evm.status === 'connected' ? evm.address : undefined
-  const chainId = evm.status === 'connected' ? evm.chainId : undefined
-  return { address, chainId }
-}
-
 export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { mode } = usePlaygroundMode()
-  const useAccountHook = mode === 'evm-wagmi' ? useAccount : useEthereumAccountLocal
+  const useAccountHook = mode === 'evm-wagmi' ? useAccount : useEthereumAccount
 
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()

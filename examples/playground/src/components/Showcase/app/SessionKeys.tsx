@@ -4,27 +4,27 @@ import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { getAddress } from 'viem/utils'
-import { useAccount, useChainId, useSignMessage } from 'wagmi'
+import { useSignMessage } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useConnectedEthereumAccount } from '@/hooks/useConnectedEthereumAccount'
 import { cn } from '@/lib/cn'
 import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
 
 export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
+  const { address, chainId } = useConnectedEthereumAccount()
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
   const [sessionKeys, setSessionKeys] = useState<StoredData[]>([])
   const { addPrivateKey, getPrivateKeys, clearAll, removePrivateKey, updatePrivateKey } =
     useSessionKeysStorage_backendSimulation()
-  const chainId = useChainId()
   const { data } = useSignMessage()
-  const { address } = useAccount()
   const mintContractAddress = getMintContractAddress(chainId ?? undefined)
-  const grantDisabled = isLoading || !mintContractAddress
-  const key = `${chainId}-${address}`
+  const grantDisabled = isLoading || !mintContractAddress || !address
+  const key = `${chainId}-${address ?? ''}`
   const updateSessionKeys = () => {
     const keys = getPrivateKeys(key)
 

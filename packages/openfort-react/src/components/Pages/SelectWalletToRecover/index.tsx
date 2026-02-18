@@ -12,7 +12,7 @@ import { walletConfigs } from '../../../wallets/walletConfigs'
 import Button from '../../Common/Button'
 import { ModalHeading } from '../../Common/Modal/styles'
 import { WalletRecoveryIcon } from '../../Common/WalletRecoveryIcon'
-import { externalWalletRecoverRoute, recoverRoute } from '../../Openfort/routeHelpers'
+import { recoverRoute } from '../../Openfort/routeHelpers'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
@@ -25,7 +25,7 @@ function WalletRow({
   chainType: ChainTypeEnum
   wallet: ConnectedEmbeddedEthereumWallet | ConnectedEmbeddedSolanaWallet
 }) {
-  const { setRoute, setConnector } = useOpenfort()
+  const { setRoute } = useOpenfort()
   const identity = useResolvedIdentity({
     address: wallet.address,
     chainType,
@@ -58,15 +58,8 @@ function WalletRow({
       return
     }
     const walletForRoute = toEthereumUserWallet(wallet as ConnectedEmbeddedEthereumWallet)
-    if (wallet.id === embeddedWalletId) {
-      setRoute(recoverRoute(chainType, walletForRoute))
-    } else {
-      const externalRoute = externalWalletRecoverRoute(chainType, walletForRoute)
-      if (externalRoute) {
-        setRoute(externalRoute)
-        setConnector({ id: wallet.id })
-      }
-    }
+    // wallet.id is Openfort account id (acc_...) for embedded; never set connector to it
+    setRoute(recoverRoute(chainType, walletForRoute))
   }
 
   return (
