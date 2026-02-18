@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { formatUnits } from 'viem'
 import { useAccount, useChainId, useEnsName } from 'wagmi'
 import { BuyIcon, ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useMultiChainWalletAssets } from '../../../hooks/openfort/useMultiChainWalletAssets'
+// import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets' // Old hook
 import { useChains } from '../../../hooks/useChains'
 import { useEnsFallbackConfig } from '../../../hooks/useEnsFallbackConfig'
 import useLocales from '../../../hooks/useLocales'
@@ -50,7 +51,7 @@ const Connected = () => {
     config: ensFallbackConfig,
   })
 
-  const { data: assets, isLoading, refetch } = useWalletAssets()
+  const { data: assets, isLoading, refetch } = useMultiChainWalletAssets()
   const totalBalanceUsd = useMemo(() => {
     if (!assets) return 0
     return assets.reduce((acc, asset) => {

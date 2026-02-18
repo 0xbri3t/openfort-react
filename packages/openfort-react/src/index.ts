@@ -15,7 +15,11 @@ export { default as Avatar } from './components/Common/Avatar'
 export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
-export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
+export {
+  LinkWalletOnSignUpOption,
+  type MultiChainAsset,
+  UIAuthProvider as AuthProvider,
+} from './components/Openfort/types'
 export { PageLayout, type PageLayoutProps } from './components/PageLayout'
 export { embeddedWalletId } from './constants/openfort'
 export { default as getDefaultConfig } from './defaultConfig'
@@ -35,6 +39,7 @@ export {
 } from './hooks/openfort/use7702Authorization'
 export { useConnectWithSiwe } from './hooks/openfort/useConnectWithSiwe'
 export { useGrantPermissions } from './hooks/openfort/useGrantPermissions'
+export { useMultiChainWalletAssets } from './hooks/openfort/useMultiChainWalletAssets'
 export { useRevokePermissions } from './hooks/openfort/useRevokePermissions'
 export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
