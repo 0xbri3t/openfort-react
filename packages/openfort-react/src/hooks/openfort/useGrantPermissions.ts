@@ -133,12 +133,14 @@ async function getEmbeddedWalletClientWithErc7715(provider: OpenfortEmbeddedEthe
  * ```
  */
 export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {}) => {
-  const { ethereumBridge: bridge } = useConnectWithSiwe()
+  const { ethereumBridge } = useConnectWithSiwe()
   const chains = useChains()
   const { client } = useOpenfortCore()
   const ethereum = useEthereumEmbeddedWallet()
   const chainId =
-    bridge?.chainId ?? (ethereum.status === 'connected' ? ethereum.chainId : undefined) ?? DEFAULT_TESTNET_CHAIN_ID
+    ethereumBridge?.chainId ??
+    (ethereum.status === 'connected' ? ethereum.chainId : undefined) ??
+    DEFAULT_TESTNET_CHAIN_ID
   const [status, setStatus] = useState<BaseFlowState>({
     status: 'idle',
   })
@@ -163,8 +165,8 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
         let account: `0x${string}`
         let grantPermissionsResult: GrantPermissionsReturnType
 
-        if (bridge) {
-          const walletClient = (await bridge.getWalletClient?.())?.extend(erc7715Actions())
+        if (ethereumBridge) {
+          const walletClient = (await ethereumBridge.getWalletClient?.())?.extend(erc7715Actions())
           if (!walletClient) {
             throw new OpenfortError('Wallet client not available', OpenfortErrorCode.WALLET_NOT_FOUND)
           }
@@ -228,7 +230,7 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
         })
       }
     },
-    [bridge, chains, chainId, client, ethereum, hookOptions]
+    [ethereumBridge, chains, chainId, client, ethereum, hookOptions]
   )
 
   return {

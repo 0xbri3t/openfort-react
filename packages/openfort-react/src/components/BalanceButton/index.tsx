@@ -59,15 +59,12 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
-  // Chain type is EVM or SVM only (ChainTypeEnum)
-  const derivedChainType = chainType
 
   const isChainSupported = useChainIsSupported(chainId)
 
-  // Use new useBalance hook (always call, use enabled option - React rules compliant)
   const balance = useBalance({
     address: address ?? '',
-    chainType: derivedChainType,
+    chainType: chainType,
     chainId: chainId ?? 13337,
     enabled: isConnected && !!address,
     refetchInterval: 30_000, // Replaces blockNumber-based invalidation

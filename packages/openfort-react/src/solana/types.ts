@@ -135,12 +135,10 @@ export type SolanaProviderRequest =
  * }
  * ```
  *
- * @example With Kit Signer
+ * @example With Kit Signer (from @openfort/react/solana)
  * ```tsx
- * const signer = useSolanaSigner();
- * if (signer) {
- *   // Use with @solana/kit
- * }
+ * const signer = createTransactionSigner(provider);
+ * // Use with @solana/kit
  * ```
  */
 export interface OpenfortEmbeddedSolanaWalletProvider {

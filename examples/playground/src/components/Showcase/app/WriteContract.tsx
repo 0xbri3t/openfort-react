@@ -1,4 +1,4 @@
-import { ChainTypeEnum, useConnectWithSiwe } from '@openfort/react'
+import { ChainTypeEnum, useEthereumBridge } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { formatUnits, getAddress, parseAbi } from 'viem'
 import { useChainId, useReadContract, useWriteContract } from 'wagmi'
@@ -22,7 +22,7 @@ const BALANCE_ABI = [
 ] as const
 
 export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { ethereumBridge: bridge } = useConnectWithSiwe()
+  const bridge = useEthereumBridge()
   const address = bridge?.account.address
   const chainId = useChainId()
   const config = getMintContractConfig(chainId)

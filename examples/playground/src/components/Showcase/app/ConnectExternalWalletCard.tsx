@@ -1,11 +1,10 @@
 import {
   type ConnectedEmbeddedEthereumWallet,
-  embeddedWalletId,
   RecoveryMethod,
-  useConnectWithSiwe,
+  useEthereumBridge,
   useEthereumEmbeddedWallet,
 } from '@openfort/react'
-import { useExternalConnectors } from '@openfort/wagmi'
+import { useWalletAuth } from '@openfort/wagmi'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
 import { EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon } from 'lucide-react'
@@ -298,12 +297,11 @@ const EmbeddedWalletButton = ({
  * - Embedded: list of wallets with password/passkey recovery, create button.
  */
 export const ConnectExternalWalletCard = () => {
-  const { ethereumBridge: bridge } = useConnectWithSiwe()
+  const bridge = useEthereumBridge()
   const embeddedHook = useEthereumEmbeddedWallet()
-  const allConnectors = useExternalConnectors()
+  const { availableWallets: externalConnectors } = useWalletAuth()
 
   const embeddedWallets = embeddedHook.wallets
-  const externalConnectors = allConnectors.filter((c) => c.id !== embeddedWalletId)
 
   const isOpenfortActive = embeddedHook.status === 'connected'
   const isExternalActive = embeddedHook.isExternal
@@ -356,7 +354,8 @@ export const ConnectExternalWalletCard = () => {
               {externalConnectors.map((c) => {
                 const isActive =
                   isExternalActive && embeddedHook.status === 'connected' && embeddedHook.connectorId === c.id
-                const iconNode = c.icon
+                const iconSrc = typeof c.icon === 'string' ? c.icon : undefined
+                const iconNode = typeof c.icon !== 'string' && c.icon != null ? c.icon : null
 
                 return (
                   <SimpleWalletButton
@@ -365,13 +364,17 @@ export const ConnectExternalWalletCard = () => {
                     disabled={!!isActive || isBusy}
                     onClick={() => handleSelectExternal(c.id)}
                   >
-                    {iconNode ? (
+                    {iconSrc ? (
+                      <span className="h-5 w-5 flex shrink-0">
+                        <img src={iconSrc} alt="" className="h-full w-full object-contain" />
+                      </span>
+                    ) : iconNode ? (
                       <span className="h-5 w-5 flex shrink-0 [&>svg]:h-full [&>svg]:w-full [&>img]:h-full [&>img]:w-full [&>img]:object-contain">
                         {iconNode}
                       </span>
                     ) : (
                       <span className="h-5 w-5 rounded bg-base-300 flex items-center justify-center text-[10px] font-medium">
-                        {c.name?.[0] ?? '?'}
+                        {c.name?.[0] ?? c.id?.[0] ?? '?'}
                       </span>
                     )}
                     <span>{c.name ?? c.id}</span>

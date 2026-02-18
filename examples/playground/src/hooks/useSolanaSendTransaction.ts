@@ -1,3 +1,9 @@
+/**
+ * Playground-only: send SOL via Openfort Solana embedded wallet.
+ * Not part of SDK — use @solana/kit with embedded wallet provider in your app.
+ */
+
+import { OpenfortError, OpenfortErrorCode, useSolanaContext, useSolanaEmbeddedWallet } from '@openfort/react'
 import type { Base64EncodedWireTransaction } from '@solana/kit'
 import {
   address,
@@ -10,51 +16,38 @@ import {
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/kit'
-import { useQueryClient } from '@tanstack/react-query'
 import { Buffer } from 'buffer'
 import { useCallback, useMemo, useState } from 'react'
-import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
-import { queryKeys } from '../../core/queryKeys'
-import { useSolanaContext } from '../SolanaContext'
-import { toUint8Array, unwrapTransactionSignature } from '../utils/transactionHelpers'
-import { createTransferSolInstruction } from '../utils/transfer'
-import { useSolanaEmbeddedWallet } from './useSolanaEmbeddedWallet'
+import { createTransferSolInstruction, toUint8Array, unwrapTransactionSignature } from './solanaTransfer'
 
 export type SolanaSendTransactionStatus = 'idle' | 'signing' | 'sending' | 'confirmed' | 'error'
 
 export type UseSolanaSendTransactionResult = {
   sendTransaction: (params: { to: string; amount: bigint }) => Promise<string | undefined>
+  /** Alias for sendTransaction for component compatibility */
+  sendSOL: (params: { to: string; lamports: bigint }) => Promise<string | undefined>
+  data: string | undefined
   status: SolanaSendTransactionStatus
-  /** True when status is 'signing' or 'sending'. Use for consistent hook shape. */
   isLoading: boolean
+  isPending: boolean
   isError: boolean
   isSuccess: boolean
   error: OpenfortError | null
   reset: () => void
 }
 
-/**
- * Returns a sendTransaction helper for Solana. Handles signing and sending via Openfort.
- *
- * @returns sendTransaction({ to, amount }), status, error, and reset
- *
- * @example
- * ```tsx
- * const { sendTransaction, status } = useSolanaSendTransaction()
- * const sig = await sendTransaction({ to: address, amount: lamports })
- * ```
- */
 export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
-  const queryClient = useQueryClient()
   const { rpcUrl } = useSolanaContext()
   const rpc = useMemo(() => createSolanaRpc(rpcUrl), [rpcUrl])
   const wallet = useSolanaEmbeddedWallet()
 
   const [status, setStatus] = useState<SolanaSendTransactionStatus>('idle')
+  const [lastSignature, setLastSignature] = useState<string | undefined>(undefined)
   const [error, setError] = useState<OpenfortError | null>(null)
 
   const reset = useCallback(() => {
     setStatus('idle')
+    setLastSignature(undefined)
     setError(null)
   }, [])
 
@@ -63,7 +56,7 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
       if (wallet.status !== 'connected' || !params.amount || params.amount <= BigInt(0)) {
         setError(new OpenfortError('Wallet not connected or invalid amount', OpenfortErrorCode.TRANSACTION_UNKNOWN))
         setStatus('error')
-        return
+        return undefined
       }
 
       const { provider, activeWallet } = wallet
@@ -124,32 +117,51 @@ export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
         }
         if (signatureValue) {
           setStatus('confirmed')
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.solana.balance(fromAddress, rpcUrl),
-          })
+          setLastSignature(signatureValue)
           return signatureValue
         }
         setStatus('error')
         setError(new OpenfortError('Transaction failed', OpenfortErrorCode.TRANSACTION_RPC_ERROR))
+        return undefined
       } catch (err) {
         setStatus('error')
         const wrapped =
           err instanceof OpenfortError
             ? err
             : new OpenfortError(
-                formatErrorWithReason('Transaction failed', err),
+                String(err instanceof Error ? err.message : err),
                 OpenfortErrorCode.TRANSACTION_SIGNING_FAILED,
-                { cause: err }
+                {
+                  cause: err,
+                }
               )
         setError(wrapped)
+        return undefined
       }
     },
-    [wallet, rpc, rpcUrl, queryClient]
+    [wallet, rpc]
+  )
+
+  const sendSOL = useCallback(
+    (params: { to: string; lamports: bigint }) => sendTransaction({ to: params.to, amount: params.lamports }),
+    [sendTransaction]
   )
 
   const isLoading = status === 'signing' || status === 'sending'
+  const isPending = isLoading
   const isError = status === 'error'
   const isSuccess = status === 'confirmed'
 
-  return { sendTransaction, status, isLoading, isError, isSuccess, error, reset }
+  return {
+    sendTransaction,
+    sendSOL,
+    data: lastSignature,
+    status,
+    isLoading,
+    isPending,
+    isError,
+    isSuccess,
+    error,
+    reset,
+  }
 }

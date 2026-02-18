@@ -33,12 +33,9 @@
  * | EVM wallet (address, chainId, status, create, export) | `useEthereumEmbeddedWallet()` |
  * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` |
  * | Chain-aware wallet delegator | `useEmbeddedWallet()` |
- * | Send SOL | `useSolanaSendTransaction()` |
- * | Solana kit signer | `useSolanaSigner()` / `useSolanaMessageSigner()` |
- * | EVM assets (ERC-7811) | `useEthereumWalletAssets()` (from `@openfort/react/ethereum`) |
  * | Send ETH / write contract / get balance (EVM) | Use `wagmi` or `viem` directly |
- * | Get SOL balance / sign message (Solana) | Use `@solana/kit` directly |
- * | Connect with SIWE + get bridge | `useConnectWithSiwe()` |
+ * | Get SOL balance / sign message / send SOL (Solana) | Use `@solana/kit` with embedded wallet provider |
+ * | Connect/link wallet (SIWE) + list wallets | `useWalletAuth()` (from `@openfort/wagmi`) |
  * | Grant session key permissions | `useGrantPermissions()` |
  * | Revoke session key permissions | `useRevokePermissions()` |
  */
@@ -76,6 +73,7 @@ export {
   OpenfortEthereumBridgeContext,
   type OpenfortEthereumBridgeSwitchChain,
   type OpenfortEthereumBridgeValue,
+  useEthereumBridge,
 } from './ethereum/OpenfortEthereumBridgeContext'
 export type {
   ConnectedEmbeddedEthereumWallet,
@@ -105,6 +103,7 @@ export { useGrantPermissions } from './hooks/openfort/useGrantPermissions'
 export { useRevokePermissions } from './hooks/openfort/useRevokePermissions'
 export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
+
 export type {
   EthereumUserWallet,
   SolanaUserWallet,
@@ -116,9 +115,9 @@ export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
 export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validation'
 export { createSIWEMessage } from './siwe/create-siwe-message'
-// Solana
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
-export { useSolanaSigner } from './solana/hooks/useSolanaSigner'
+// Solana
+export { useSolanaContext } from './solana/SolanaContext'
 export type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
@@ -154,11 +153,6 @@ export {
   truncateSolanaAddress,
 } from './utils/format'
 export { OPENFORT_VERSION } from './version'
-export {
-  type ExternalConnectorProps,
-  useExternalConnector,
-  useExternalConnectors,
-} from './wallets/useExternalConnectors'
 
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 export type { CountryData, CountryIso2, CountrySelectorProps }

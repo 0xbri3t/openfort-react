@@ -49,8 +49,10 @@ export function Providers({ children }: { children?: React.ReactNode }) {
   const { providerOptions } = useAppStore()
   const [queryClient] = useState(() => new QueryClient())
 
+  const baseConfig = providerOptions.walletConfig ?? {}
+
   const evmWalletConfig = {
-    ...providerOptions.walletConfig,
+    ...baseConfig,
     ethereum: {
       chainId: beamTestnet.id,
       rpcUrls: {
@@ -61,41 +63,17 @@ export function Providers({ children }: { children?: React.ReactNode }) {
     },
   }
 
-  const openfortProps =
-    mode === 'evm-only'
-      ? {
-          ...providerOptions,
-          chainType: ChainTypeEnum.EVM,
-          walletConfig: evmWalletConfig,
-        }
-      : mode === 'solana-only'
-        ? {
-            ...providerOptions,
-            chainType: ChainTypeEnum.SVM,
-            walletConfig: {
-              ...providerOptions.walletConfig,
-              solana: { cluster: 'devnet' },
-            },
-          }
-        : {
-            ...providerOptions,
-            chainType: ChainTypeEnum.EVM,
-            walletConfig: evmWalletConfig,
-          }
+  const solanaWalletConfig = {
+    ...baseConfig,
+    solana: { cluster: 'devnet' as const },
+  }
+
+  const walletConfig = (mode === 'solana-only' ? solanaWalletConfig : evmWalletConfig) as OpenfortWalletConfig
+
+  const chainType = mode === 'solana-only' ? ChainTypeEnum.SVM : ChainTypeEnum.EVM
 
   const openfortContent = (
-    <OpenfortProvider
-      key={mode}
-      {...openfortProps}
-      walletConfig={
-        (providerOptions.walletConfig && openfortProps.walletConfig
-          ? { ...providerOptions.walletConfig, ...openfortProps.walletConfig }
-          : providerOptions.walletConfig) as OpenfortWalletConfig | undefined
-      }
-      uiConfig={{
-        ...openfortProps.uiConfig,
-      }}
-    >
+    <OpenfortProvider key={mode} {...providerOptions} chainType={chainType} walletConfig={walletConfig}>
       {children}
     </OpenfortProvider>
   )

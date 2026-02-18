@@ -23,6 +23,7 @@ import { WriteContractCard } from '@/components/Showcase/app/WriteContract'
 import { WriteContractCardEVM } from '@/components/Showcase/app/WriteContractCardEVM'
 import { SampleTooltipLink } from '@/components/Showcase/auth/SampleTooltipLink'
 import { Button } from '@/components/Showcase/ui/Button'
+import { TruncatedText } from '@/components/TruncatedText'
 import { usePlaygroundMode } from '@/providers'
 
 export const App = () => {
@@ -43,7 +44,7 @@ export const App = () => {
       <div className="flex justify-between items-start mb-6">
         <div className="space-y-1">
           <h1 className="text-xl">Welcome, {user?.id}</h1>
-          <p className="text-muted-foreground">Connected with {address}</p>
+          <p className="text-muted-foreground">Connected with {address ? <TruncatedText text={address} /> : '...'}</p>
         </div>
 
         <SampleTooltipLink href="/auth/useSignOut" hook="useSignOut" fn="signOut">

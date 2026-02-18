@@ -1,9 +1,9 @@
-import { useSolanaMessageSigner } from '@openfort/react/solana'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useSolanaMessageSigner } from '@/hooks/useSolanaMessageSigner'
 import { cn } from '@/lib/cn'
 
 export const SignaturesCardSolana = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {

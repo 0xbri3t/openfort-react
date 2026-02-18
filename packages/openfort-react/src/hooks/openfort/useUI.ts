@@ -1,6 +1,6 @@
-import { useAccount } from 'wagmi'
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
+import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { logger } from '../../utils/logger'
 
@@ -52,7 +52,8 @@ type ValidRoutes = ModalRoutes
 export function useUI() {
   const { open, setOpen, setRoute } = useOpenfort()
   const { isLoading, user, needsRecovery } = useOpenfortCore()
-  const { isConnected } = useAccount()
+  const ethereumBridge = useEthereumBridge()
+  const isConnected = ethereumBridge?.account.isConnected ?? false
 
   function defaultOpen() {
     setOpen(true)

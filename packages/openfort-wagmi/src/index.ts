@@ -1,9 +1,7 @@
-export {
-  type ExternalConnectorProps,
-  useExternalConnector,
-  useExternalConnectors,
-} from '@openfort/react'
+export { useChainIsSupported, useChains } from '@openfort/react'
 export { default as getDefaultConfig, getAppName } from './defaultConfig'
 export { default as getDefaultConnectors } from './defaultConnectors'
 export { OpenfortWagmiBridge } from './OpenfortWagmiBridge'
 export { useConnect } from './useConnect'
+export type { AvailableWallet } from './useWalletAuth'
+export { useWalletAuth } from './useWalletAuth'
