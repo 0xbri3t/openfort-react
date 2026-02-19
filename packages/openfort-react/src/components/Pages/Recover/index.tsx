@@ -71,7 +71,7 @@ const RecoverPasswordWallet = ({
     try {
       await recoveryRegistry[chainType].password(wallet as RecoverableWallet, {
         ...ctx,
-        recoveryPassword: recoveryPhrase,
+        password: recoveryPhrase,
       })
     } catch (err) {
       setRecoveryError(err instanceof OpenfortError ? err.message : 'Recovery failed. Please try again.')

@@ -6,7 +6,7 @@ import { onSettledOptions } from '@/components/Variable/commonVariables'
 import { HookVariable } from '@/components/Variable/HookVariable'
 import { usePlaygroundMode } from '@/providers'
 
-export const Route = createFileRoute('/_hooks/wallet/useWallets')({
+export const Route = createFileRoute('/_hooks/wallet/useEthereumEmbeddedWallet')({
   component: RouteComponent,
 })
 

@@ -10,7 +10,7 @@ export async function resolveRecoveryForSetActive(
   activeOptions: SetActiveSolanaWalletOptions,
   config: BuildRecoveryParamsConfig
 ): Promise<ResolveRecoveryResult> {
-  const password = activeOptions.password ?? activeOptions.recoveryPassword
+  const password = activeOptions.password
   const hasExplicitRecovery =
     activeOptions.recoveryParams != null || password != null || activeOptions.recoveryMethod !== undefined
 

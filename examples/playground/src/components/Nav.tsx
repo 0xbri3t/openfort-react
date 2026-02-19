@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { MODE_ICONS } from '@/assets/chain-icons'
 import { ModeToggle } from '@/components/mode-toggle'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -49,21 +49,6 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
     [mode, queryClient, setMode]
   )
 
-  const effectiveNavRoutes = useMemo(() => {
-    const hasWagmi = mode === 'evm-wagmi'
-    return navRoutes.map((route) => {
-      if (route.label === 'Utils' && route.children) {
-        const children = route.children.filter((child) => {
-          if (child.label === 'wagmi') return hasWagmi
-          if (child.label === 'EVM adapter (viem)') return !hasWagmi
-          return true
-        })
-        return { ...route, children }
-      }
-      return route
-    })
-  }, [mode])
-
   const isActive = (item: NavRoute) => {
     if (item.exact) {
       return path === item.href
@@ -83,7 +68,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
         )}
         <div className="flex items-center gap-4 ml-auto overflow-x-auto overflow-y-hidden">
           <div className="sm:flex hidden flex gap-4 mr-4 items-center">
-            {effectiveNavRoutes.map((route, i) =>
+            {navRoutes.map((route, i) =>
               route.children ? (
                 <DropdownMenu key={route.label}>
                   <DropdownMenuTrigger
@@ -136,7 +121,13 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
                   </DropdownMenuTrigger>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
-                  <p className="text-xs">{MODE_HOOKS[mode]}</p>
+                  <div className="text-xs space-y-2">
+                    {(['evm-only', 'solana-only', 'evm-wagmi'] as const).map((m) => (
+                      <p key={m}>
+                        <span className="font-medium">{MODE_LABELS[m]}:</span> {MODE_HOOKS[m]}
+                      </p>
+                    ))}
+                  </div>
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end">
@@ -178,7 +169,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  {effectiveNavRoutes.map((route, i) =>
+                  {navRoutes.map((route, i) =>
                     route.children ? (
                       route.children.map((child) => (
                         <DropdownMenuItem key={child.href} asChild>

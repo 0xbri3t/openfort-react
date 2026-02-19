@@ -2,7 +2,7 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { embeddedWalletId } from '../../../constants/openfort'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import type { ConnectedEmbeddedEthereumWallet } from '../../../ethereum/types'
-import { toEthereumUserWallet, toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
+import { toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
@@ -57,9 +57,7 @@ function WalletRow({
       setRoute(recoverRoute(chainType, walletForRoute))
       return
     }
-    const walletForRoute = toEthereumUserWallet(wallet as ConnectedEmbeddedEthereumWallet)
-    // wallet.id is Openfort account id (acc_...) for embedded; never set connector to it
-    setRoute(recoverRoute(chainType, walletForRoute))
+    setRoute(recoverRoute(chainType, wallet as ConnectedEmbeddedEthereumWallet))
   }
 
   return (

@@ -225,7 +225,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           {
             recoveryMethod: createOptions?.recoveryMethod,
             passkeyId: createOptions?.passkeyId,
-            password: createOptions?.recoveryPassword,
+            password: createOptions?.password,
             otpCode: createOptions?.otpCode,
           },
           {
@@ -555,5 +555,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     ...(displayAddress && { displayAddress }),
     ...(state.activeWallet?.address && { address: state.activeWallet.address }),
     ...(cluster && { cluster }),
+    ...(solanaContext?.rpcUrl && { rpcUrl: solanaContext.rpcUrl }),
   } as EmbeddedSolanaWalletState
 }

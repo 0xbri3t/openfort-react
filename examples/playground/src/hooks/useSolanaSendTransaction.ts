@@ -3,7 +3,7 @@
  * Not part of SDK — use @solana/kit with embedded wallet provider in your app.
  */
 
-import { OpenfortError, OpenfortErrorCode, useSolanaContext, useSolanaEmbeddedWallet } from '@openfort/react'
+import { OpenfortError, OpenfortErrorCode, useSolanaEmbeddedWallet } from '@openfort/react'
 import type { Base64EncodedWireTransaction } from '@solana/kit'
 import {
   address,
@@ -37,8 +37,8 @@ export type UseSolanaSendTransactionResult = {
 }
 
 export function useSolanaSendTransaction(): UseSolanaSendTransactionResult {
-  const { rpcUrl } = useSolanaContext()
-  const rpc = useMemo(() => createSolanaRpc(rpcUrl), [rpcUrl])
+  const { rpcUrl } = useSolanaEmbeddedWallet()
+  const rpc = useMemo(() => createSolanaRpc(rpcUrl ?? 'https://api.devnet.solana.com'), [rpcUrl])
   const wallet = useSolanaEmbeddedWallet()
 
   const [status, setStatus] = useState<SolanaSendTransactionStatus>('idle')

@@ -4,7 +4,13 @@
  * These types define the Ethereum wallet state machine and related interfaces.
  */
 
-import type { ChainTypeEnum, EmbeddedAccount, RecoveryMethod, RecoveryParams } from '@openfort/openfort-js'
+import type {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  EmbeddedAccount,
+  RecoveryMethod,
+  RecoveryParams,
+} from '@openfort/openfort-js'
 import type { SetRecoveryOptions as SharedSetRecoveryOptions } from '../shared/types'
 import type { OpenfortHookOptions } from '../types'
 
@@ -26,26 +32,30 @@ export type EIP1193EventName = 'accountsChanged' | 'chainChanged' | 'connect' | 
 
 export type EIP1193EventHandler = (...args: unknown[]) => void
 
-/**
- * Connected Ethereum embedded wallet
- */
-export type ConnectedEmbeddedEthereumWallet = {
-  /** Embedded account id (from Openfort) */
+type SimpleAccount = {
   id: string
-  /** Ethereum address in hex format */
+  chainId?: number
+}
+
+export type ConnectedEmbeddedEthereumWallet = {
+  id: string
   address: `0x${string}`
-  /** Owner address for Smart Accounts */
   ownerAddress?: string
-  /** Smart Account implementation type */
   implementationType?: string
-  /** Chain type discriminator */
   chainType: typeof ChainTypeEnum.EVM
-  /** Wallet index (for multiple wallets) */
   walletIndex: number
-  /** Recovery method for this wallet */
   recoveryMethod?: RecoveryMethod
-  /** Get the EIP-1193 provider */
   getProvider(): Promise<OpenfortEmbeddedEthereumWalletProvider>
+  isAvailable: boolean
+  isActive: boolean
+  isConnecting: boolean
+  accounts: SimpleAccount[]
+  connectorType?: string
+  walletClientType?: string
+  accountId?: string
+  accountType?: AccountTypeEnum
+  createdAt?: number
+  salt?: string
 }
 
 /**

@@ -22,7 +22,7 @@ export {
 export type { OpenfortSolanaProviderConfig } from './provider'
 export { createSolanaProvider, OpenfortSolanaProvider } from './provider'
 export type { SolanaContextProviderProps, SolanaContextValue } from './SolanaContext'
-export { SolanaContextProvider, useSolanaContext } from './SolanaContext'
+export { SolanaContextProvider } from './SolanaContext'
 export type {
   Address,
   MessagePartialSigner,

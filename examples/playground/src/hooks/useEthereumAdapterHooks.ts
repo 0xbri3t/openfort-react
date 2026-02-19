@@ -11,7 +11,7 @@ const DEFAULT_CHAIN_ID = 13337
 /**
  * Maps chainId to RPC URL for playground chains
  */
-export function getPlaygroundRpcUrl(chainId?: number): string {
+function getPlaygroundRpcUrl(chainId?: number): string {
   switch (chainId) {
     case 80002: // Polygon Amoy
       return 'https://rpc-amoy.polygon.technology'
@@ -28,18 +28,6 @@ export interface UseAccountLike {
   address?: `0x${string}`
   chainId?: number
   isConnected: boolean
-}
-
-export interface UseBalanceLike {
-  data?: {
-    value: bigint
-    formatted: string
-    symbol: string
-    decimals: number
-  }
-  refetch: () => void
-  isLoading: boolean
-  error?: Error | null
 }
 
 export interface UseReadContractLike {

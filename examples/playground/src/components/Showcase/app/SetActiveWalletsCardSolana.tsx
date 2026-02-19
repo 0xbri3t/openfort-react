@@ -70,7 +70,7 @@ const CreateWalletButton = ({ solana }: { solana: ReturnType<typeof useSolanaEmb
                     setCreatingMethod(RecoveryMethod.PASSWORD)
                     create({
                       recoveryMethod: RecoveryMethod.PASSWORD,
-                      recoveryPassword: 'example-password',
+                      password: 'example-password',
                     })
                   }}
                   disabled={isCreating}
@@ -148,7 +148,7 @@ const WalletButton = ({
   wallet: EmbeddedWalletItem
   activeWallet: EmbeddedWalletItem | null
   connectingAddress: string | undefined
-  setActive: (opts: { address: string; recoveryPassword?: string; recoveryMethod?: RecoveryMethod }) => Promise<void>
+  setActive: (opts: { address: string; password?: string; recoveryMethod?: RecoveryMethod }) => Promise<void>
 }) => {
   const isConnecting = connectingAddress != null && connectingAddress.toLowerCase() === wallet.address.toLowerCase()
   const [password, setPassword] = useState('example-password')
@@ -173,7 +173,7 @@ const WalletButton = ({
 
   const handleSetActive = () => {
     if (wallet.recoveryMethod === RecoveryMethod.PASSWORD) {
-      setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSWORD, recoveryPassword: password })
+      setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSWORD, password })
     } else if (wallet.recoveryMethod === RecoveryMethod.PASSKEY) {
       setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSKEY })
     } else {

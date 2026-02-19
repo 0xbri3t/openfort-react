@@ -113,7 +113,7 @@ const CreateWalletButton = ({ ethereum }: { ethereum: EmbeddedEthereumWalletStat
         <TooltipContent>
           <h3 className="text-base mb-1">useEthereumEmbeddedWallet</h3>
           Create a new wallet using the
-          <Link to="/wallet/useWallets" search={{ focus: 'create' }} className="px-1 group">
+          <Link to="/wallet/useEthereumEmbeddedWallet" search={{ focus: 'create' }} className="px-1 group">
             create
           </Link>
           function.
@@ -305,7 +305,7 @@ export const SetActiveWalletsCard = () => {
                   ) : (
                     <p className="text-xs opacity-70">
                       Click to set this wallet as active. (
-                      <Link to="/wallet/useWallets" search={{ focus: 'setActive' }}>
+                      <Link to="/wallet/useEthereumEmbeddedWallet" search={{ focus: 'setActive' }}>
                         setActive
                       </Link>
                       )

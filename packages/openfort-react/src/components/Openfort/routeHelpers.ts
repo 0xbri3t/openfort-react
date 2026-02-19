@@ -22,18 +22,3 @@ const createRouteRegistry: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, () => S
 export function createRoute(chainType: ChainTypeEnum): SetRouteOptions {
   return createRouteRegistry[chainType]()
 }
-
-const externalWalletRecoverRouteRegistry: Record<
-  ChainTypeEnum.EVM | ChainTypeEnum.SVM,
-  (wallet: EthereumUserWallet) => SetRouteOptions | null
-> = {
-  [ChainTypeEnum.EVM]: (wallet) => ({ route: routes.CONNECT, connectType: 'recover', wallet }),
-  [ChainTypeEnum.SVM]: () => null,
-}
-
-export function externalWalletRecoverRoute(
-  chainType: ChainTypeEnum,
-  wallet: EthereumUserWallet
-): SetRouteOptions | null {
-  return externalWalletRecoverRouteRegistry[chainType](wallet)
-}

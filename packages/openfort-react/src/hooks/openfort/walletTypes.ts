@@ -1,33 +1,9 @@
 import { type AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, type RecoveryMethod } from '@openfort/openfort-js'
 import type { Hex } from 'viem'
-import type { OpenfortEthereumBridgeConnector } from '../../ethereum/OpenfortEthereumBridgeContext'
+import type { ConnectedEmbeddedEthereumWallet } from '../../ethereum/types'
 import type { BaseFlowState } from './auth/status'
 
-export type SimpleAccount = {
-  chainId?: number
-  id: string
-}
-
-export type EthereumUserWallet = {
-  address: Hex
-  connectorType?: string
-  walletClientType?: string
-  connector?: OpenfortEthereumBridgeConnector
-  id: string
-  isAvailable: boolean
-  isActive?: boolean
-  isConnecting?: boolean
-
-  // From openfort embedded wallet
-  accounts: SimpleAccount[]
-  recoveryMethod?: RecoveryMethod
-  accountId?: string
-  accountType?: AccountTypeEnum
-  ownerAddress?: Hex
-  implementationType?: string
-  createdAt?: number
-  salt?: string
-}
+export type EthereumUserWallet = ConnectedEmbeddedEthereumWallet
 
 /** Solana embedded wallet shape (mirrors UserWallet for SVM). address is Base58. Discriminate with chainType. */
 export type SolanaUserWallet = {
@@ -53,20 +29,26 @@ export type WalletFlowStatus =
       error?: never
     }
 
-/** Build UserWallet from a single EVM embedded account (e.g. for post-auth return). */
 export function embeddedAccountToUserWallet(account: EmbeddedAccount): EthereumUserWallet {
   return {
+    id: account.id,
+    address: account.address as `0x${string}`,
+    ownerAddress: account.ownerAddress,
+    implementationType: account.implementationType,
+    chainType: ChainTypeEnum.EVM,
+    walletIndex: 0,
+    recoveryMethod: account.recoveryMethod,
+    getProvider: async () => {
+      throw new Error('Wallet not yet loaded; use useEthereumEmbeddedWallet to access provider')
+    },
+    isAvailable: true,
+    isActive: false,
+    isConnecting: false,
+    accounts: [{ id: account.id, chainId: account.chainId }],
     connectorType: 'embedded',
     walletClientType: 'openfort',
-    address: account.address as Hex,
-    id: account.id,
-    isAvailable: true,
-    accounts: [{ id: account.id, chainId: account.chainId }],
-    recoveryMethod: account.recoveryMethod,
     accountId: account.id,
     accountType: account.accountType,
-    ownerAddress: account.ownerAddress as Hex | undefined,
-    implementationType: account.implementationType,
     createdAt: account.createdAt,
     salt: account.salt,
   }

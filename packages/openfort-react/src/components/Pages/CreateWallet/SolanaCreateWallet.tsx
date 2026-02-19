@@ -286,7 +286,7 @@ const SolanaCreatePassword = ({
     try {
       await embeddedWallet.create({
         recoveryMethod: RecoveryMethod.PASSWORD,
-        recoveryPassword: recoveryPhrase,
+        password: recoveryPhrase,
       })
       setRoute(routes.SOL_CONNECTED)
     } catch (err) {

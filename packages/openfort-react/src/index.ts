@@ -32,7 +32,6 @@
  * | Am I connected? (auth + wallet ready) | `useUser().isReady` |
  * | EVM wallet (address, chainId, status, create, export) | `useEthereumEmbeddedWallet()` |
  * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` |
- * | Chain-aware wallet delegator | `useEmbeddedWallet()` |
  * | Send ETH / write contract / get balance (EVM) | Use `wagmi` or `viem` directly |
  * | Get SOL balance / sign message / send SOL (Solana) | Use `@solana/kit` with embedded wallet provider |
  * | Connect/link wallet (SIWE) + list wallets | `useWalletAuth()` (from `@openfort/wagmi`) |
@@ -58,13 +57,13 @@ export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
-export { PageLayout, type PageLayoutProps } from './components/PageLayout'
 export type { CreateWalletConfigOptions } from './config/createWalletConfig'
 export { createWalletConfig } from './config/createWalletConfig'
 export { embeddedWalletId } from './constants/openfort'
 export { formatErrorWithReason, getErrorReason, OpenfortError, OpenfortErrorCode } from './core/errors'
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
+export { useEthereumWalletAssets } from './ethereum/hooks/useEthereumWalletAssets'
 export {
   type OpenfortEthereumBridgeAccount,
   type OpenfortEthereumBridgeChain,
@@ -117,7 +116,6 @@ export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validati
 export { createSIWEMessage } from './siwe/create-siwe-message'
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 // Solana
-export { useSolanaContext } from './solana/SolanaContext'
 export type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
@@ -152,7 +150,3 @@ export {
   truncateEthAddress,
   truncateSolanaAddress,
 } from './utils/format'
-export { OPENFORT_VERSION } from './version'
-
-import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
-export type { CountryData, CountryIso2, CountrySelectorProps }

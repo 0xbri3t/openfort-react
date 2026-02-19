@@ -209,8 +209,8 @@ export type CreateSolanaWalletOptions = {
   recoveryMethod?: RecoveryMethod
   /** Passkey ID for PASSKEY recovery */
   passkeyId?: string
-  /** Recovery password for PASSWORD method */
-  recoveryPassword?: string
+  /** Password for PASSWORD method */
+  password?: string
   /** OTP code for AUTOMATIC method */
   otpCode?: string
 } & OpenfortHookOptions<CreateSolanaWalletResult>
@@ -229,8 +229,6 @@ export type SetActiveSolanaWalletOptions = {
   passkeyId?: string
   /** Password for PASSWORD recovery */
   password?: string
-  /** Alias for password (react-native parity) */
-  recoveryPassword?: string
   /** OTP code for AUTOMATIC recovery */
   otpCode?: string
 }
@@ -335,7 +333,7 @@ export type SolanaConnectedWalletState = {
   isExternal: boolean
 }
 
-/** Derived booleans for consistent hook shape. All variants include these. */
+/** Derived booleans and config for consistent hook shape. All variants include these. */
 export type EmbeddedSolanaWalletDerived = {
   /** True when status is fetching-wallets, connecting, creating, or reconnecting. */
   isLoading: boolean
@@ -343,6 +341,8 @@ export type EmbeddedSolanaWalletDerived = {
   isError: boolean
   /** True when status is 'connected'. */
   isSuccess: boolean
+  /** RPC URL from Solana config (when SolanaContextProvider is mounted). */
+  rpcUrl?: string
 }
 
 export type EmbeddedSolanaWalletState = EmbeddedSolanaWalletStateBase &

@@ -15,6 +15,7 @@ export {
 } from './EthereumContext'
 export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './hooks/useEthereumWalletAssets'
+export { OpenfortEthereumBridgeContext } from './OpenfortEthereumBridgeContext'
 export { type SignMessageParams, signMessage } from './operations'
 export type {
   ConnectedEmbeddedEthereumWallet,
