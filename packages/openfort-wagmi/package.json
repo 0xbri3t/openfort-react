@@ -21,9 +21,6 @@
   "files": [
     "src"
   ],
-  "dependencies": {
-    "@openfort/openfort-js": "workspace:*"
-  },
   "peerDependencies": {
     "@openfort/react": "workspace:*",
     "react": "17.x || 18.x || 19.x",
