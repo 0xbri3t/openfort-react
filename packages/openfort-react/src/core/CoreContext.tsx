@@ -1,11 +1,11 @@
 /**
  * Core Context Provider
  *
- * Provides the Openfort SDK client and configuration to all child components.
- * This is the foundation layer - no wagmi, no auth state, just the client.
+ * Provides configuration and QueryClient to child components.
+ * The Openfort SDK client is created by CoreOpenfortProvider (single instance).
  */
 
-import { Openfort, type OpenfortSDKConfiguration } from '@openfort/openfort-js'
+import type { OpenfortSDKConfiguration } from '@openfort/openfort-js'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createContext, type PropsWithChildren, type ReactNode, useContext, useMemo } from 'react'
 import { OpenfortError, OpenfortErrorCode } from './errors'
@@ -29,7 +29,7 @@ function createQueryClient(): QueryClient {
 }
 
 /**
- * Transform user config into full SDK configuration
+ * Build SDK config shape for _sdkConfig (used by hooks). Does not create Openfort instance.
  */
 function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   if (!config.publishableKey) {
@@ -42,7 +42,6 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   const shieldConfiguration = config.shieldPublishableKey
     ? {
         shieldPublishableKey: config.shieldPublishableKey,
-        // Default passkey config for browser environment
         ...(typeof window !== 'undefined' && window.location
           ? {
               passkeyRpId: window.location.hostname,
@@ -53,9 +52,7 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
     : undefined
 
   return {
-    baseConfiguration: {
-      publishableKey: config.publishableKey,
-    },
+    baseConfiguration: { publishableKey: config.publishableKey },
     shieldConfiguration,
     debug: config.debug,
   }
@@ -98,14 +95,9 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
 
   const sdkConfig = useMemo(
     () => buildSdkConfig(config),
-    // Only rebuild if these specific config values change
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [config.publishableKey, config.shieldPublishableKey, config.debug]
   )
-
-  const client = useMemo(() => {
-    return new Openfort(sdkConfig)
-  }, [sdkConfig])
 
   const fullConfig: OpenfortConfig = useMemo(
     () => ({
@@ -125,11 +117,10 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
 
   const value: CoreContextValue = useMemo(
     () => ({
-      client,
       config: fullConfig,
       debug: config.debug ?? false,
     }),
-    [client, fullConfig, config.debug]
+    [fullConfig, config.debug]
   )
 
   return (

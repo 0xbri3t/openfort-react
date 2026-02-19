@@ -6,10 +6,17 @@ import {
   useSolanaEmbeddedWallet,
 } from '@openfort/react'
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import z from 'zod'
 import { Nav } from '@/components/Nav'
 import { useAppStore } from '@/lib/useAppStore'
+import { usePlaygroundMode } from '@/providers'
+
+const MODE_TO_CHAIN: Record<'evm-only' | 'solana-only' | 'evm-wagmi', ChainTypeEnum> = {
+  'evm-only': ChainTypeEnum.EVM,
+  'solana-only': ChainTypeEnum.SVM,
+  'evm-wagmi': ChainTypeEnum.EVM,
+}
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -23,7 +30,18 @@ const themes: Theme[] = ['auto', 'midnight', 'nouns', 'retro', 'rounded', 'soft'
 let themeIndex = 0
 
 function RootComponent() {
-  const { chainType } = useChain()
+  const { mode } = usePlaygroundMode()
+  const { chainType, setChainType } = useChain()
+
+  // Sync chainType from stored playground mode on load and when mode changes.
+  // OpenfortProvider defaults to SVM when hasSolana; we override to match the mode switch.
+  useLayoutEffect(() => {
+    const targetChain = MODE_TO_CHAIN[mode]
+    if (chainType !== targetChain) {
+      setChainType(targetChain)
+    }
+  }, [mode, chainType, setChainType])
+
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet

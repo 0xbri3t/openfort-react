@@ -1,4 +1,4 @@
-import { OpenfortButton } from '@openfort/react'
+import { ChainTypeEnum, OpenfortButton, useChain, useEthereumBridge } from '@openfort/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
@@ -9,6 +9,7 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Logo } from '@/components/ui/logo'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useAutoConnectOnModeSwitch } from '@/hooks/useAutoConnectOnModeSwitch'
 import { navRoutes } from '@/lib/navRoute'
 import type { OpenfortPlaygroundMode } from '@/providers'
 import { usePlaygroundMode } from '@/providers'
@@ -34,20 +35,34 @@ export type NavRoute = {
   children?: NavRoute[]
 }
 
+const MODE_TO_CHAIN: Record<OpenfortPlaygroundMode, ChainTypeEnum> = {
+  'evm-only': ChainTypeEnum.EVM,
+  'solana-only': ChainTypeEnum.SVM,
+  'evm-wagmi': ChainTypeEnum.EVM,
+}
+
 export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const location = useLocation()
   const path = location.pathname.includes('showcase') ? '/' : location.pathname
   const { mode, setMode } = usePlaygroundMode()
+  const { setChainType } = useChain()
   const queryClient = useQueryClient()
+  const bridge = useEthereumBridge()
 
   const handleModeSwitch = useCallback(
-    (next: OpenfortPlaygroundMode) => {
+    async (next: OpenfortPlaygroundMode) => {
       if (next === mode) return
+      if (next === 'solana-only' && bridge) {
+        await bridge.disconnect()
+      }
       queryClient.clear()
+      setChainType(MODE_TO_CHAIN[next])
       setMode(next)
     },
-    [mode, queryClient, setMode]
+    [mode, queryClient, setChainType, setMode, bridge]
   )
+
+  useAutoConnectOnModeSwitch(mode)
 
   const isActive = (item: NavRoute) => {
     if (item.exact) {

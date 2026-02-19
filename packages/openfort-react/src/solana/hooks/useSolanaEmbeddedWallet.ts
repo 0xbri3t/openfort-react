@@ -9,7 +9,6 @@ import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
 import { formatAddress } from '../../utils/format'
-import { logger } from '../../utils/logger'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import { SolanaContext } from '../SolanaContext'
@@ -120,7 +119,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     embeddedState,
     isLoadingAccounts,
     activeEmbeddedAddress,
-    chainType,
     updateEmbeddedAccounts,
     setActiveEmbeddedAddress,
     setWalletStatus,
@@ -128,7 +126,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
   const { walletConfig } = useOpenfort()
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
-  const autoReconnectAttemptedRef = useRef(false)
 
   const [state, setState] = useState<InternalState>({
     status: 'disconnected',
@@ -405,6 +402,9 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     [create, wallets, setActive, setRecovery, exportPrivateKey]
   )
 
+  // Sync local state from core's activeEmbeddedAddress (single source of truth).
+  // CoreOpenfortProvider syncs from SDK on load; we only react to context here.
+  // Do NOT call setActiveEmbeddedAddress - that would create a circular update.
   useEffect(() => {
     if (
       isLoadingAccounts ||
@@ -420,10 +420,12 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       ? solanaAccounts.find((acc) => acc.address === activeEmbeddedAddress)
       : undefined
     const currentMatches = state.status === 'connected' && state.activeWallet?.address === activeEmbeddedAddress
+
     if (!activeEmbeddedAddress && state.status === 'connected') {
       setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
       return
     }
+
     if (accountByAddress && !currentMatches) {
       const provider = createProviderForAccount(accountByAddress)
       const connectedWallet: ConnectedEmbeddedSolanaWallet = {
@@ -440,54 +442,15 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         provider,
         error: null,
       })
-      return
-    }
-    if (state.status !== 'disconnected') return
-    if (autoReconnectAttemptedRef.current) return
-    autoReconnectAttemptedRef.current = true
-    let cancelled = false
-    client.embeddedWallet
-      .get()
-      .then((active: EmbeddedAccount | null | undefined) => {
-        if (cancelled || !active || active.chainType !== ChainTypeEnum.SVM) return
-        const account = solanaAccounts.find((acc) => acc.address === active.address)
-        if (!account) return
-        const provider = createProviderForAccount(account)
-        const connectedWallet: ConnectedEmbeddedSolanaWallet = {
-          id: account.id,
-          address: account.address,
-          chainType: ChainTypeEnum.SVM,
-          walletIndex: solanaAccounts.indexOf(account),
-          recoveryMethod: account.recoveryMethod,
-          getProvider: async () => provider,
-        }
-        if (!cancelled) {
-          setState({
-            status: 'connected',
-            activeWallet: connectedWallet,
-            provider,
-            error: null,
-          })
-          setActiveEmbeddedAddress(account.address)
-        }
-      })
-      .catch(() => {
-        logger.warn('Failed to get active Solana wallet')
-      })
-    return () => {
-      cancelled = true
     }
   }, [
-    chainType,
     isLoadingAccounts,
     state.status,
     state.activeWallet?.address,
     solanaAccounts,
     embeddedState,
     activeEmbeddedAddress,
-    client,
     createProviderForAccount,
-    setActiveEmbeddedAddress,
   ])
 
   const derived = useMemo(

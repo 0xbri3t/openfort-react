@@ -43,8 +43,6 @@ import { Context } from './context'
 import { createOpenfortClient, setDefaultClient } from './core'
 
 export type OpenfortCoreContextValue = {
-  chainType: ChainTypeEnum
-  setChainType: (chainType: ChainTypeEnum) => void
   signUpGuest: () => Promise<void>
   embeddedState: EmbeddedState
   isAuthenticated: boolean
@@ -102,7 +100,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   openfortConfig,
 }) => {
   const bridge = useContext(OpenfortEthereumBridgeContext)
-  const { walletConfig, chainType, setChainType, uiConfig, open, route, connector } = useOpenfort()
+  const { walletConfig, chainType, uiConfig, open, route, connector } = useOpenfort()
 
   const bridgeConnectors = useMemo(() => {
     if (!bridge) return []
@@ -367,7 +365,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [strategy, walletConfig?.ethereum, activeChainId, setActiveChainId])
 
-  // Sync active embedded address from SDK on load (only when wallet is actually recovered)
+  // Sync active embedded address from SDK on load only. Do NOT overwrite when user has
+  // explicitly switched via setActive - the async get() could resolve late and overwrite.
   useEffect(() => {
     if (!openfort || !embeddedAccounts?.length) {
       if (!embeddedAccounts?.length) setActiveEmbeddedAddress(undefined)
@@ -383,7 +382,9 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       .then((active) => {
         if (cancelled || !active) return
         const addr = active.address
-        if (addr) setActiveEmbeddedAddress(addr)
+        if (!addr) return
+        // Only set when uninitialized - avoid overwriting user's setActive with stale get() result
+        setActiveEmbeddedAddress((prev) => (prev === undefined ? addr : prev))
       })
       .catch((err) => {
         if (!cancelled) logger.warn('Failed to get active embedded wallet', err)
@@ -472,6 +473,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   useEffect(() => {
     if (!bridge || address || !user) return
+    if (chainType !== ChainTypeEnum.EVM) return
     if (isConnectedWithEmbeddedSigner) return
     if (connectingRef.current) return
     if (embeddedState !== EmbeddedState.READY) return
@@ -489,7 +491,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     connectingRef.current = true
     setIsConnectedWithEmbeddedSigner(true)
     bridge.connect({ connector: openfortConnector })
-  }, [bridge, address, user, embeddedState, isConnectedWithEmbeddedSigner, open, route, connector])
+  }, [bridge, address, user, chainType, embeddedState, isConnectedWithEmbeddedSigner, open, route, connector])
 
   // ---- Auth functions ----
 
@@ -563,8 +565,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
 
   const value: OpenfortCoreContextValue = {
-    chainType,
-    setChainType,
     signUpGuest,
     embeddedState,
     isAuthenticated,

@@ -6,7 +6,7 @@ import {
 } from '@openfort/openfort-js'
 import { Buffer } from 'buffer'
 import type React from 'react'
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { CoreProvider } from '../../core/CoreContext'
 import { OpenfortEthereumBridgeContext } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useThemeFont } from '../../hooks/useGoogleFont'
@@ -152,39 +152,36 @@ export const OpenfortProvider = ({
     [allowAutomaticRecovery, hasWagmi]
   )
 
-  const safeUiConfig: OpenfortUIOptionsExtended = Object.assign({}, defaultUIOptions, uiConfig)
-
-  if (!hasWagmi && safeUiConfig.authProviders?.includes(UIAuthProvider.WALLET)) {
-    safeUiConfig.authProviders = safeUiConfig.authProviders.filter((p) => p !== UIAuthProvider.WALLET)
-    if (process.env.NODE_ENV === 'development' && !openfortProviderWarnedNoWagmi) {
-      openfortProviderWarnedNoWagmi = true
+  const safeUiConfig = useMemo<OpenfortUIOptionsExtended>(() => {
+    const merged = { ...defaultUIOptions, ...uiConfig } as OpenfortUIOptionsExtended
+    let authProviders = merged.authProviders ?? defaultUIOptions.authProviders
+    if (!hasWagmi && authProviders.includes(UIAuthProvider.WALLET)) {
+      authProviders = authProviders.filter((p) => p !== UIAuthProvider.WALLET)
+      if (process.env.NODE_ENV === 'development' && !openfortProviderWarnedNoWagmi) {
+        openfortProviderWarnedNoWagmi = true
+        logger.warn(
+          '[@openfort/react] UIAuthProvider.WALLET was removed from authProviders because no Wagmi bridge is present. Add OpenfortWagmiBridge to enable external wallet sign-in.'
+        )
+      }
+    }
+    const walletRecovery = {
+      allowedMethods: merged.walletRecovery?.allowedMethods ?? defaultUIOptions.walletRecovery.allowedMethods,
+      defaultMethod: merged.walletRecovery?.defaultMethod ?? defaultUIOptions.walletRecovery.defaultMethod,
+    }
+    if (walletRecovery.allowedMethods.includes(RecoveryMethod.AUTOMATIC) && !allowAutomaticRecovery) {
+      walletRecovery.allowedMethods = walletRecovery.allowedMethods.filter((m) => m !== RecoveryMethod.AUTOMATIC)
       logger.warn(
-        '[@openfort/react] UIAuthProvider.WALLET was removed from authProviders because no Wagmi bridge is present. Add OpenfortWagmiBridge to enable external wallet sign-in.'
+        'Automatic recovery method was removed from allowedMethods because no recovery options are configured in the walletConfig. Please provide either createEncryptedSessionEndpoint or getEncryptionSession to enable automatic recovery.'
       )
     }
-  }
+    return { ...merged, authProviders, walletRecovery }
+  }, [defaultUIOptions, uiConfig, hasWagmi, allowAutomaticRecovery])
 
-  if (!safeUiConfig.walletRecovery.allowedMethods) {
-    safeUiConfig.walletRecovery.allowedMethods = defaultUIOptions.walletRecovery.allowedMethods
-  }
-  if (!safeUiConfig.walletRecovery.defaultMethod) {
-    safeUiConfig.walletRecovery.defaultMethod = defaultUIOptions.walletRecovery.defaultMethod
-  }
-
-  if (safeUiConfig.walletRecovery.allowedMethods.includes(RecoveryMethod.AUTOMATIC) && !allowAutomaticRecovery) {
-    safeUiConfig.walletRecovery.allowedMethods = safeUiConfig.walletRecovery.allowedMethods.filter(
-      (m) => m !== RecoveryMethod.AUTOMATIC
-    )
-    logger.warn(
-      'Automatic recovery method was removed from allowedMethods because no recovery options are configured in the walletConfig. Please provide either createEncryptedSessionEndpoint or getEncryptionSession to enable automatic recovery.'
-    )
-  }
-
-  if (typeof window !== 'undefined') {
-    if (safeUiConfig.bufferPolyfill && !window.Buffer) {
+  useEffect(() => {
+    if (typeof window !== 'undefined' && safeUiConfig.bufferPolyfill && !window.Buffer) {
       window.Buffer = Buffer
     }
-  }
+  }, [safeUiConfig.bufferPolyfill])
 
   const [ckTheme, setTheme] = useState<Theme>(safeUiConfig.theme ?? 'auto')
   const [ckMode, setMode] = useState<Mode>(safeUiConfig.mode ?? 'auto')
@@ -214,11 +211,11 @@ export const OpenfortProvider = ({
   // Include Google Font that is needed for a themes
   useThemeFont(safeUiConfig.embedGoogleFonts ? ckTheme : ('' as Theme))
 
-  // Other Configuration
-  useEffect(() => setTheme(safeUiConfig.theme ?? 'auto'), [safeUiConfig.theme])
-  useEffect(() => setMode(safeUiConfig.mode ?? 'auto'), [safeUiConfig.mode])
-  useEffect(() => setCustomTheme(safeUiConfig.customTheme ?? {}), [safeUiConfig.customTheme])
-  useEffect(() => setLang(safeUiConfig.language || 'en-US'), [safeUiConfig.language])
+  // Sync theme/mode/lang from config before paint to avoid one-render lag
+  useLayoutEffect(() => setTheme(safeUiConfig.theme ?? 'auto'), [safeUiConfig.theme])
+  useLayoutEffect(() => setMode(safeUiConfig.mode ?? 'auto'), [safeUiConfig.mode])
+  useLayoutEffect(() => setCustomTheme(safeUiConfig.customTheme ?? {}), [safeUiConfig.customTheme])
+  useLayoutEffect(() => setLang(safeUiConfig.language || 'en-US'), [safeUiConfig.language])
 
   const chain = bridge?.account.chain
   const isConnected = bridge?.account.isConnected ?? false
@@ -236,10 +233,6 @@ export const OpenfortProvider = ({
       bridge.connect({ connector: injectedConnector })
     }
   }, [hasWagmi, injectedConnector, bridge])
-
-  useEffect(() => {
-    logger.log('ROUTE', route)
-  }, [route])
 
   const typedSetRoute = useCallback(
     (options: SetRouteOptions) => {
