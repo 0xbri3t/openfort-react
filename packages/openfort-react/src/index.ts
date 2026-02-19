@@ -44,6 +44,7 @@ export {
   AuthResponse,
   ChainTypeEnum,
   EmbeddedAccount,
+  EmbeddedState,
   OpenfortEventMap,
   OpenfortEvents,
   openfortEvents,
