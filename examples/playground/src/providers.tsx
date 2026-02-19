@@ -41,6 +41,17 @@ export function usePlaygroundMode(): PlaygroundModeContextValue {
   return ctx
 }
 
+const ETHEREUM_CONFIG = {
+  ethereum: {
+    chainId: beamTestnet.id,
+    rpcUrls: {
+      [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
+      [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',
+      [baseSepolia.id]: 'https://sepolia.base.org',
+    },
+  },
+} as const
+
 // TODO: EVM + Wagmi mode errors until cookies cleared + refresh; fix after Solana and evm-only (viem) work well
 const WagmiWrapper = lazy(() => import('./providersWagmi').then((m) => ({ default: m.WagmiWrapper })))
 
@@ -50,44 +61,27 @@ export function Providers({ children }: { children?: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
 
   const baseConfig = providerOptions.walletConfig ?? {}
-
-  const evmWalletConfig = {
+  const walletConfig = {
     ...baseConfig,
-    ethereum: {
-      chainId: beamTestnet.id,
-      rpcUrls: {
-        [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
-        [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',
-        [baseSepolia.id]: 'https://sepolia.base.org',
-      },
-    },
-  }
-
-  const solanaWalletConfig = {
-    ...baseConfig,
+    ...ETHEREUM_CONFIG,
     solana: { cluster: 'devnet' as const },
-  }
-
-  const walletConfig = (mode === 'solana-only' ? solanaWalletConfig : evmWalletConfig) as OpenfortWalletConfig
+  } as unknown as OpenfortWalletConfig
 
   const chainType = mode === 'solana-only' ? ChainTypeEnum.SVM : ChainTypeEnum.EVM
 
   const openfortContent = (
-    <OpenfortProvider key={mode} {...providerOptions} chainType={chainType} walletConfig={walletConfig}>
+    <OpenfortProvider {...providerOptions} chainType={chainType} walletConfig={walletConfig}>
       {children}
     </OpenfortProvider>
   )
 
-  const content =
-    mode === 'evm-wagmi' ? (
-      <QueryClientProvider client={queryClient}>
-        <Suspense fallback={null}>
-          <WagmiWrapper>{openfortContent}</WagmiWrapper>
-        </Suspense>
-      </QueryClientProvider>
-    ) : (
-      <QueryClientProvider client={queryClient}>{openfortContent}</QueryClientProvider>
-    )
+  const content = (
+    <QueryClientProvider client={queryClient}>
+      <Suspense fallback={null}>
+        <WagmiWrapper>{openfortContent}</WagmiWrapper>
+      </Suspense>
+    </QueryClientProvider>
+  )
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">

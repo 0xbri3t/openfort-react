@@ -1,4 +1,4 @@
-import { OpenfortButton, useOpenfort } from '@openfort/react'
+import { OpenfortButton } from '@openfort/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
@@ -9,7 +9,6 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Logo } from '@/components/ui/logo'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { clearModeSwitchStorage } from '@/lib/clearModeSwitchStorage'
 import { navRoutes } from '@/lib/navRoute'
 import type { OpenfortPlaygroundMode } from '@/providers'
 import { usePlaygroundMode } from '@/providers'
@@ -40,22 +39,14 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const path = location.pathname.includes('showcase') ? '/' : location.pathname
   const { mode, setMode } = usePlaygroundMode()
   const queryClient = useQueryClient()
-  const { logout } = useOpenfort()
-  const disconnectAsync = () => logout()
 
   const handleModeSwitch = useCallback(
-    async (next: OpenfortPlaygroundMode) => {
+    (next: OpenfortPlaygroundMode) => {
       if (next === mode) return
-      try {
-        await disconnectAsync()
-      } catch {
-        /* no-op */
-      }
-      clearModeSwitchStorage()
       queryClient.clear()
       setMode(next)
     },
-    [mode, disconnectAsync, queryClient, setMode]
+    [mode, queryClient, setMode]
   )
 
   const effectiveNavRoutes = useMemo(() => {
