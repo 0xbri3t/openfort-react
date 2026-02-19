@@ -4,7 +4,6 @@ import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { getAddress } from 'viem/utils'
-import { useAccount } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,19 +12,14 @@ import { useEthereumAccount } from '@/hooks/useEthereumAdapterHooks'
 import { cn } from '@/lib/cn'
 import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
-import { usePlaygroundMode } from '@/providers'
-
 export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { mode } = usePlaygroundMode()
-  const useAccountHook = mode === 'evm-wagmi' ? useAccount : useEthereumAccount
-
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
   const [sessionKeys, setSessionKeys] = useState<StoredData[]>([])
   const [submitting, setSubmitting] = useState(false)
   const { addPrivateKey, getPrivateKeys, clearAll, removePrivateKey, updatePrivateKey } =
     useSessionKeysStorage_backendSimulation()
-  const { address, chainId } = useAccountHook()
+  const { address, chainId } = useEthereumAccount()
   const mintContractAddress = getMintContractAddress(chainId ?? undefined)
   const key = useMemo(() => (chainId != null && address ? `${chainId}-${address}` : ''), [chainId, address])
   const grantDisabled = isLoading || submitting || !mintContractAddress

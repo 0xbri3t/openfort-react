@@ -1,13 +1,9 @@
-/**
- * Local EVM adapter hooks for playground (evm-only mode)
- * These are examples of how to implement wallet adapter hooks without the SDK.
- * In production, use wagmi hooks or viem directly.
- */
-
 import { ChainTypeEnum, useChain, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { type Abi, createPublicClient, encodeFunctionData, http } from 'viem'
+import { useAccount as useWagmiAccount, useWriteContract as useWagmiWriteContract } from 'wagmi'
+import { usePlaygroundMode } from '@/providers'
 
 /** Default chain when no activeChainId (Beam Testnet). */
 const DEFAULT_CHAIN_ID = 13337
@@ -68,15 +64,20 @@ export interface UseWriteContractLike {
   error?: Error | null
 }
 
-/**
- * Returns the connected EVM account.
- * When the embedded hook has not yet reached "connected", falls back to core.activeEmbeddedAddress
- * so sign/mint can work as soon as the user has an active embedded account.
- */
 export function useEthereumAccount(): UseAccountLike {
+  const { mode } = usePlaygroundMode()
   const { chainType } = useChain()
   const core = useOpenfort()
   const wallet = useEthereumEmbeddedWallet()
+  const wagmiAccount = useWagmiAccount()
+
+  if (mode === 'evm-wagmi') {
+    return {
+      address: wagmiAccount.address,
+      chainId: wagmiAccount.chainId,
+      isConnected: wagmiAccount.isConnected,
+    }
+  }
 
   const hookConnected = wallet.status === 'connected' && chainType === ChainTypeEnum.EVM && !!wallet.address
   if (hookConnected) {
@@ -140,22 +141,31 @@ export function useEthereumReadContractLocal(params: {
   }
 }
 
-/**
- * Writes to a contract.
- * Uses embedded wallet provider (from hook when connected, or from core.client when fallback account).
- */
+type WriteParams = { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }
+
 export function useEthereumWriteContractLocal(): UseWriteContractLike {
-  const { address, chainId } = useEthereumAccount()
+  const { mode } = usePlaygroundMode()
+  const { address } = useEthereumAccount()
   const core = useOpenfort()
   const wallet = useEthereumEmbeddedWallet()
+
+  const {
+    writeContractAsync,
+    data: wagmiData,
+    isPending: wagmiPending,
+    isError: wagmiIsError,
+    isSuccess: wagmiIsSuccess,
+    error: wagmiError,
+  } = useWagmiWriteContract()
+
   const [data, setData] = useState<`0x${string}` | undefined>(undefined)
   const [isPending, setIsPending] = useState(false)
   const [isError, setIsError] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const writeContract = useCallback(
-    async (params: { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }) => {
+  const writeContractEmbedded = useCallback(
+    async (params: WriteParams) => {
       if (!address) {
         const err = new Error('Wallet not connected')
         setError(err)
@@ -182,13 +192,7 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
 
         const txHash = (await provider.request({
           method: 'eth_sendTransaction',
-          params: [
-            {
-              from: address,
-              to: params.address,
-              data: dataEncoded,
-            },
-          ],
+          params: [{ from: address, to: params.address, data: dataEncoded }],
         })) as `0x${string}`
 
         setData(txHash)
@@ -203,12 +207,35 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
         setIsPending(false)
       }
     },
-    [address, chainId, wallet.status, wallet.activeWallet, core.client]
+    [address, wallet.status, wallet.activeWallet, core.client]
   )
+
+  const writeContractWagmi = useCallback(
+    (params: WriteParams) =>
+      writeContractAsync({
+        address: params.address,
+        abi: params.abi as Abi,
+        functionName: params.functionName,
+        args: params.args as readonly unknown[],
+      }),
+    [writeContractAsync]
+  )
+
+  if (mode === 'evm-wagmi') {
+    return {
+      data: wagmiData,
+      writeContract: writeContractWagmi,
+      isPending: wagmiPending,
+      isLoading: wagmiPending,
+      isError: wagmiIsError,
+      isSuccess: wagmiIsSuccess,
+      error: wagmiError as Error | null,
+    }
+  }
 
   return {
     data,
-    writeContract,
+    writeContract: writeContractEmbedded,
     isPending,
     isLoading: isPending,
     isError,

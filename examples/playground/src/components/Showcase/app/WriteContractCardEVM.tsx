@@ -1,7 +1,7 @@
 import { ChainTypeEnum } from '@openfort/react'
-import { type ReactNode, useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { formatUnits, getAddress, parseAbi } from 'viem'
-import { useAccount, useReadContract, useWriteContract } from 'wagmi'
+import { useReadContract } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
@@ -29,19 +29,10 @@ const BALANCE_ABI = [
 
 export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { mode } = usePlaygroundMode()
-
-  // Use wagmi hooks in evm-wagmi mode, local adapter hooks in evm-only mode
-  const useAccountHook = mode === 'evm-wagmi' ? useAccount : useEthereumAccount
+  const { address, chainId } = useEthereumAccount()
   const useReadContractHook = mode === 'evm-wagmi' ? useReadContract : useEthereumReadContractLocal
-  const useWriteContractHook = mode === 'evm-wagmi' ? useWriteContract : useEthereumWriteContractLocal
-
-  const { address, chainId } = useAccountHook()
+  const { data: hash, writeContract, isPending, error } = useEthereumWriteContractLocal()
   const config = getMintContractConfig(chainId ?? undefined)
-
-  useEffect(() => {
-    if (chainId != null) {
-    }
-  }, [chainId])
 
   const {
     data: balance,
@@ -54,8 +45,6 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
     args: config && address ? [address] : undefined,
     chainId: chainId ?? undefined,
   })
-
-  const { data: hash, writeContract, isPending, error } = useWriteContractHook()
 
   async function submit({ amount }: { amount: string }) {
     if (!address || !config) return
