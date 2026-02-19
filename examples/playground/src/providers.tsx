@@ -1,9 +1,7 @@
-import type { OpenfortWalletConfig } from '@openfort/react'
 import { ChainTypeEnum, OpenfortProvider } from '@openfort/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type React from 'react'
 import { createContext, lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
-import { baseSepolia, beamTestnet, polygonAmoy } from 'viem/chains'
 import { ThemeProvider } from '@/components/theme-provider'
 import { useAppStore } from './lib/useAppStore'
 
@@ -41,75 +39,27 @@ export function usePlaygroundMode(): PlaygroundModeContextValue {
   return ctx
 }
 
-// TODO: EVM + Wagmi mode errors until cookies cleared + refresh; fix after Solana and evm-only (viem) work well
 const WagmiWrapper = lazy(() => import('./providersWagmi').then((m) => ({ default: m.WagmiWrapper })))
 
 export function Providers({ children }: { children?: React.ReactNode }) {
   const { mode } = usePlaygroundMode()
   const { providerOptions } = useAppStore()
   const [queryClient] = useState(() => new QueryClient())
-
-  const evmWalletConfig = {
-    ...providerOptions.walletConfig,
-    ethereum: {
-      chainId: beamTestnet.id,
-      rpcUrls: {
-        [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
-        [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',
-        [baseSepolia.id]: 'https://sepolia.base.org',
-      },
-    },
-  }
-
-  const openfortProps =
-    mode === 'evm-only'
-      ? {
-          ...providerOptions,
-          chainType: ChainTypeEnum.EVM,
-          walletConfig: evmWalletConfig,
-        }
-      : mode === 'solana-only'
-        ? {
-            ...providerOptions,
-            chainType: ChainTypeEnum.SVM,
-            walletConfig: {
-              ...providerOptions.walletConfig,
-              solana: { cluster: 'devnet' },
-            },
-          }
-        : {
-            ...providerOptions,
-            chainType: ChainTypeEnum.EVM,
-            walletConfig: evmWalletConfig,
-          }
+  const chainType = mode === 'solana-only' ? ChainTypeEnum.SVM : ChainTypeEnum.EVM
 
   const openfortContent = (
-    <OpenfortProvider
-      key={mode}
-      {...openfortProps}
-      walletConfig={
-        (providerOptions.walletConfig && openfortProps.walletConfig
-          ? { ...providerOptions.walletConfig, ...openfortProps.walletConfig }
-          : providerOptions.walletConfig) as OpenfortWalletConfig | undefined
-      }
-      uiConfig={{
-        ...openfortProps.uiConfig,
-      }}
-    >
+    <OpenfortProvider {...providerOptions} chainType={chainType}>
       {children}
     </OpenfortProvider>
   )
 
-  const content =
-    mode === 'evm-wagmi' ? (
-      <QueryClientProvider client={queryClient}>
-        <Suspense fallback={null}>
-          <WagmiWrapper>{openfortContent}</WagmiWrapper>
-        </Suspense>
-      </QueryClientProvider>
-    ) : (
-      <QueryClientProvider client={queryClient}>{openfortContent}</QueryClientProvider>
-    )
+  const content = (
+    <QueryClientProvider client={queryClient}>
+      <Suspense fallback={null}>
+        <WagmiWrapper>{openfortContent}</WagmiWrapper>
+      </Suspense>
+    </QueryClientProvider>
+  )
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">

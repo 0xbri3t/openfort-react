@@ -68,7 +68,7 @@ const ConnectWithInjector: React.FC<{
 }> = ({ forceState }) => {
   const { setOpen } = useOpenfort()
   const bridge = useEthereumBridge()
-  const connectWithSiwe = useConnectWithSiwe()
+  const { connectWithSiwe } = useConnectWithSiwe()
   const props = useRouteProps(routes.CONNECT)
   const { linkedAccounts, user } = useUser()
   const { triggerResize, connector: c } = useOpenfort()

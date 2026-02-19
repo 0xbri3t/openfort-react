@@ -1,19 +1,21 @@
-import {
-  ChainTypeEnum,
-  getExplorerUrl,
-  useEthereumAccount,
-  useEthereumReadContract,
-  useEthereumWriteContract,
-} from '@openfort/react'
-import { type ReactNode, useEffect } from 'react'
+import { ChainTypeEnum } from '@openfort/react'
+import type { ReactNode } from 'react'
 import { formatUnits, getAddress, parseAbi } from 'viem'
+import { useReadContract } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  useEthereumAccount,
+  useEthereumReadContractLocal,
+  useEthereumWriteContractLocal,
+} from '@/hooks/useEthereumAdapterHooks'
 import { cn } from '@/lib/cn'
 import { getMintContractConfig } from '@/lib/contracts'
+import { getExplorerUrl } from '@/lib/explorer'
+import { usePlaygroundMode } from '@/providers'
 
 const BALANCE_ABI = [
   {
@@ -26,27 +28,23 @@ const BALANCE_ABI = [
 ] as const
 
 export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
+  const { mode } = usePlaygroundMode()
   const { address, chainId } = useEthereumAccount()
+  const useReadContractHook = mode === 'evm-wagmi' ? useReadContract : useEthereumReadContractLocal
+  const { data: hash, writeContract, isPending, error } = useEthereumWriteContractLocal()
   const config = getMintContractConfig(chainId ?? undefined)
-
-  useEffect(() => {
-    if (chainId != null) {
-    }
-  }, [chainId])
 
   const {
     data: balance,
     refetch,
     error: balanceError,
-  } = useEthereumReadContract({
+  } = useReadContractHook({
     address: config?.address as `0x${string}`,
     abi: BALANCE_ABI,
     functionName: 'balanceOf',
     args: config && address ? [address] : undefined,
     chainId: chainId ?? undefined,
   })
-
-  const { data: hash, writeContract, isPending, error } = useEthereumWriteContract()
 
   async function submit({ amount }: { amount: string }) {
     if (!address || !config) return

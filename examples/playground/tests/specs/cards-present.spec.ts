@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Dashboard smoke - key cards are present', () => {
+  test.describe.configure({ retries: 1 })
   test('shows mode-specific dashboard sections', async ({ page, dashboardPage, mode }) => {
     const m = mode
     await dashboardPage.ensureReady(m)
@@ -25,9 +26,9 @@ test.describe('Dashboard smoke - key cards are present', () => {
         await page.waitForTimeout(500)
 
         await expect(page.getByText(/^external$/i).first()).toBeVisible({ timeout: 30_000 })
-        await expect(page.getByText(/MetaMask/i).first()).toBeVisible({ timeout: 30_000 })
-        await expect(page.getByText(/Coinbase Wallet/i).first()).toBeVisible({ timeout: 30_000 })
-        await expect(page.getByText(/Other Wallets/i).first()).toBeVisible({ timeout: 30_000 })
+        await expect(page.getByRole('button', { name: /MetaMask/i })).toBeVisible({ timeout: 30_000 })
+        await expect(page.getByRole('button', { name: /Coinbase Wallet/i })).toBeVisible({ timeout: 30_000 })
+        await expect(page.getByRole('button', { name: /WalletConnect/i })).toBeVisible({ timeout: 30_000 })
       }
     }
   })

@@ -1,15 +1,15 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useEffect, useState } from 'react'
-import { embeddedWalletId } from '../../../constants/openfort'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import type { ConnectedEmbeddedEthereumWallet } from '../../../ethereum/types'
-import { toEthereumUserWallet, toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
-import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
+import { toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import { logger } from '../../../utils/logger'
 import Loader from '../../Common/Loading'
-import { createRoute, externalWalletRecoverRoute, recoverRoute } from '../../Openfort/routeHelpers'
+import { createRoute, recoverRoute } from '../../Openfort/routeHelpers'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
@@ -26,17 +26,8 @@ const handleSingleWalletRegistry: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, 
     const walletForRoute = toSolanaUserWallet(w as ConnectedEmbeddedSolanaWallet)
     setRoute(recoverRoute(chainType, walletForRoute))
   },
-  [ChainTypeEnum.EVM]: (w, chainType, setRoute, setConnector) => {
-    const walletForRoute = toEthereumUserWallet(w as ConnectedEmbeddedEthereumWallet)
-    if (w.id === embeddedWalletId) {
-      setRoute(recoverRoute(chainType, walletForRoute))
-    } else {
-      const externalRoute = externalWalletRecoverRoute(chainType, walletForRoute)
-      if (externalRoute) {
-        setRoute(externalRoute)
-        setConnector({ id: w.id })
-      }
-    }
+  [ChainTypeEnum.EVM]: (w, chainType, setRoute) => {
+    setRoute(recoverRoute(chainType, w as ConnectedEmbeddedEthereumWallet))
   },
 }
 
@@ -55,7 +46,10 @@ const LoadWallets: React.FC = () => {
   const { chainType } = useChain()
   const { user } = useOpenfortCore()
   const { triggerResize, setRoute, setConnector } = useOpenfort()
-  const embeddedWallet = useEmbeddedWallet()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const [loadingUX, setLoadingUX] = useState(true)
 
   const wallets = embeddedWallet.wallets

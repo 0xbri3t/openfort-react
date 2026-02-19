@@ -137,13 +137,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       !openfortConfig.shieldConfiguration?.passkeyRpId &&
       typeof window !== 'undefined'
     ) {
-      const loc = window.location
-      if (loc) {
-        openfortConfig.shieldConfiguration = {
-          passkeyRpId: loc.hostname,
-          passkeyRpName: typeof document !== 'undefined' ? document.title || 'Openfort DApp' : 'Openfort DApp',
-          ...openfortConfig.shieldConfiguration,
-        }
+      openfortConfig.shieldConfiguration = {
+        passkeyRpId: window.location.hostname,
+        passkeyRpName: document.title || 'Openfort app',
+        ...openfortConfig.shieldConfiguration,
       }
     }
 

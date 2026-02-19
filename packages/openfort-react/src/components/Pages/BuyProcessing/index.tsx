@@ -1,8 +1,11 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useEffect, useMemo, useState } from 'react'
 
 import Logos from '../../../assets/logos'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
+import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
+import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalHeading } from '../../Common/Modal/styles'
 import SquircleSpinner from '../../Common/SquircleSpinner'
@@ -16,19 +19,23 @@ import { isSameToken } from '../Send/utils'
 
 const BuyProcessing = () => {
   const { buyForm, setRoute, triggerResize, publishableKey } = useOpenfort()
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
   const [popupWindow, setPopupWindow] = useState<Window | null>(null)
   const [showContinueButton, setShowContinueButton] = useState(false)
   const [isCreatingSession, setIsCreatingSession] = useState(true)
   const [sessionError, setSessionError] = useState(false)
 
-  const { data: assets } = useWalletAssets()
+  const { data: assets } = useEthereumWalletAssets()
 
   const matchedToken = useMemo(
     () => assets?.find((asset) => isSameToken(asset, buyForm.asset)),

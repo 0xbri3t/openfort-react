@@ -2,8 +2,10 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useEffect } from 'react'
 
 import { ExternalLinkIcon } from '../../../assets/icons'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
+import { useChain } from '../../../shared/hooks/useChain'
 import { getExplorerUrl } from '../../../shared/utils/explorer'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalH1 } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
@@ -13,12 +15,16 @@ import { ContinueButtonWrapper, Section } from '../Buy/styles'
 
 const BuyComplete = () => {
   const { setRoute, triggerResize } = useOpenfort()
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
   // Trigger resize on mount
   useEffect(() => {

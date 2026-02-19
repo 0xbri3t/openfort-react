@@ -1,8 +1,8 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { PlusIcon } from '../../../assets/icons'
 import { toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
-import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
 import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import Button from '../../Common/Button'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
@@ -38,7 +38,7 @@ function WalletRow({ wallet }: { wallet: ConnectedEmbeddedSolanaWallet }) {
 
 export default function SolanaWallets() {
   const { setRoute } = useOpenfort()
-  const embeddedWallet = useEmbeddedWallet()
+  const embeddedWallet = useSolanaEmbeddedWallet()
   const wallets = embeddedWallet.wallets ?? []
   const solanaWallets = wallets.filter((w) => w.chainType === ChainTypeEnum.SVM)
 

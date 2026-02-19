@@ -1,10 +1,12 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import type React from 'react'
-
 import { DisconnectIcon } from '../../../assets/icons'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useChainIsSupported } from '../../../hooks/useChainIsSupported'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
 import ChainSelectList from '../../Common/ChainSelectList'
 import { OrDivider } from '../../Common/Modal'
@@ -13,12 +15,15 @@ import { PageContent } from '../../PageContent'
 
 const SwitchNetworks: React.FC = () => {
   const { logout } = useOpenfortCore()
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
 
   const isConnected = wallet.status === 'connected'
-  const chainId = isConnected ? wallet.chainId : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
   const isChainSupported = useChainIsSupported(chainId)
 
   const locales = useLocales({})

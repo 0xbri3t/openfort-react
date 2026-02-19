@@ -1,4 +1,4 @@
-import { RecoveryMethod, useConnectedWallet, useSolanaEmbeddedWallet } from '@openfort/react'
+import { RecoveryMethod, useSolanaEmbeddedWallet } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
 import { EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon } from 'lucide-react'
@@ -23,8 +23,7 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 
-const CreateWalletButton = () => {
-  const solana = useSolanaEmbeddedWallet()
+const CreateWalletButton = ({ solana }: { solana: ReturnType<typeof useSolanaEmbeddedWallet> }) => {
   const isCreating = solana.status === 'creating'
   const create = solana.create
   const error = solana.status === 'error' ? solana.error : null
@@ -71,7 +70,7 @@ const CreateWalletButton = () => {
                     setCreatingMethod(RecoveryMethod.PASSWORD)
                     create({
                       recoveryMethod: RecoveryMethod.PASSWORD,
-                      recoveryPassword: 'example-password',
+                      password: 'example-password',
                     })
                   }}
                   disabled={isCreating}
@@ -149,7 +148,7 @@ const WalletButton = ({
   wallet: EmbeddedWalletItem
   activeWallet: EmbeddedWalletItem | null
   connectingAddress: string | undefined
-  setActive: (opts: { address: string; recoveryPassword?: string; recoveryMethod?: RecoveryMethod }) => Promise<void>
+  setActive: (opts: { address: string; password?: string; recoveryMethod?: RecoveryMethod }) => Promise<void>
 }) => {
   const isConnecting = connectingAddress != null && connectingAddress.toLowerCase() === wallet.address.toLowerCase()
   const [password, setPassword] = useState('example-password')
@@ -174,7 +173,7 @@ const WalletButton = ({
 
   const handleSetActive = () => {
     if (wallet.recoveryMethod === RecoveryMethod.PASSWORD) {
-      setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSWORD, recoveryPassword: password })
+      setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSWORD, password })
     } else if (wallet.recoveryMethod === RecoveryMethod.PASSKEY) {
       setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSKEY })
     } else {
@@ -258,10 +257,9 @@ const WalletButton = ({
 }
 
 export const SetActiveWalletsCardSolana = () => {
-  const wallet = useConnectedWallet()
   const solana = useSolanaEmbeddedWallet()
   const wallets = solana.wallets
-  const connectedAddress = wallet.status === 'connected' ? wallet.address : undefined
+  const connectedAddress = solana.status === 'connected' ? solana.address : undefined
   const activeWalletFromHook =
     solana.status === 'connected' ||
     solana.status === 'connecting' ||
@@ -322,7 +320,7 @@ export const SetActiveWalletsCardSolana = () => {
             </Tooltip>
           ))}
 
-          <CreateWalletButton />
+          <CreateWalletButton solana={solana} />
         </div>
       </CardContent>
     </Card>

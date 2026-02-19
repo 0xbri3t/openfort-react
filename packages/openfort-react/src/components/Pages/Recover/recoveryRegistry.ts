@@ -7,6 +7,7 @@ import { routes, type SetRouteOptions } from '../../Openfort/types'
 type RecoveryContext = {
   setActive: (opts: {
     address: string
+    password?: string
     recoveryPassword?: string
     recoveryMethod?: RecoveryMethod
     otpCode?: string
@@ -17,7 +18,7 @@ type RecoveryContext = {
   otp: { isEnabled: boolean; request: () => Promise<OTPResponse> }
   setNeedsOTP: (n: boolean) => void
   setOtpResponse: (r: OTPResponse | null) => void
-  recoveryPassword?: string
+  password?: string
   otpCode?: string
   passkeyId?: string
 }
@@ -29,7 +30,8 @@ async function passwordEntry(wallet: RecoverableWallet, ctx: RecoveryContext): P
   await ctx.setActive({
     address: wallet.address,
     recoveryMethod: RecoveryMethod.PASSWORD,
-    recoveryPassword: ctx.recoveryPassword,
+    password: ctx.password,
+    recoveryPassword: ctx.password,
   })
   ctx.setRoute(routes.CONNECTED_SUCCESS)
 }

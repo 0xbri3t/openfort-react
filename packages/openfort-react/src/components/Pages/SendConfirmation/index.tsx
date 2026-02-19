@@ -2,29 +2,26 @@
  * SendConfirmation Page
  *
  * Wagmi-free transaction confirmation page.
- * Uses viem-based hooks for balance, transactions, and receipts.
+ * Uses viem direct calls + useQuery for balance, transactions, and receipts.
  */
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
+import { useQuery } from '@tanstack/react-query'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
-import type { Address } from 'viem'
-import { encodeFunctionData, isAddress, parseUnits } from 'viem'
+import type { Abi, Address } from 'viem'
+import { createPublicClient, encodeFunctionData, http, isAddress, parseUnits } from 'viem'
 import { TickIcon } from '../../../assets/icons'
 import { erc20Abi } from '../../../constants/erc20'
 import { EthereumContext } from '../../../ethereum/EthereumContext'
-import { useEthereumSendTransaction } from '../../../ethereum/hooks/useEthereumSendTransaction'
-import { useEthereumTokenBalance } from '../../../ethereum/hooks/useEthereumTokenBalance'
-import { useEthereumWaitForTransactionReceipt } from '../../../ethereum/hooks/useEthereumWaitForTransactionReceipt'
-import { useEthereumWriteContract } from '../../../ethereum/hooks/useEthereumWriteContract'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
+import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
 import { useBalance } from '../../../hooks/useBalance'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
 import { useChain } from '../../../shared/hooks/useChain'
 import { getExplorerUrl } from '../../../shared/utils/explorer'
 import { truncateEthAddress } from '../../../utils'
 import { parseTransactionError } from '../../../utils/errorHandling'
 import { logger } from '../../../utils/logger'
-import { getChainName } from '../../../utils/rpc'
+import { getChainName, getDefaultEthereumRpcUrl } from '../../../utils/rpc'
 import Button from '../../Common/Button'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
@@ -56,7 +53,7 @@ function isTestnetChain(chainId: number): boolean {
 }
 
 const SendConfirmation = () => {
-  const wallet = useConnectedWallet()
+  const wallet = useEthereumEmbeddedWallet()
   const { chainType } = useChain()
   const ethereumContext = useContext(EthereumContext)
   const { sendForm, setRoute, triggerResize, walletConfig } = useOpenfort()
@@ -81,7 +78,7 @@ const SendConfirmation = () => {
   const recipientAddress = isAddress(sendForm.recipient) ? (sendForm.recipient as Address) : undefined
   const normalisedAmount = sanitizeForParsing(sendForm.amount)
 
-  const { data: assets } = useWalletAssets()
+  const { data: assets } = useEthereumWalletAssets()
   const matchedToken = useMemo(
     () => assets?.find((asset) => isSameToken(asset, sendForm.asset)),
     [assets, sendForm.asset]
@@ -94,20 +91,37 @@ const SendConfirmation = () => {
 
   const nativeBalance = useBalance({
     address: address ?? '',
-    chainType: wallet.status === 'connected' ? wallet.chainType : chainType,
+    chainType: chainType,
     chainId: chainId ?? 13337,
-    cluster: wallet.status === 'connected' && wallet.chainType === ChainTypeEnum.SVM ? wallet.cluster : 'devnet',
+    cluster: chainType === ChainTypeEnum.SVM ? 'devnet' : undefined,
     enabled: !!address && !isErc20,
   })
 
   const refetchNativeBalance = nativeBalance.refetch
 
-  // ERC20 balance using wagmi-free hook (skipped when native send; no placeholder address)
-  const erc20Balance = useEthereumTokenBalance({
-    tokenAddress: isErc20 ? (token.address as `0x${string}`) : undefined,
-    ownerAddress: address,
-    chainId: chainId ?? 13337,
-    enabled: Boolean(isErc20 && address),
+  // ERC20 balance using viem publicClient directly (skipped when native send; no placeholder address)
+  const erc20Balance = useQuery({
+    queryKey: ['erc20-balance', address, token.type === 'erc20' ? token.address : null, chainId],
+    enabled: Boolean(isErc20 && address && chainId),
+    retry: true,
+    retryDelay: 1000,
+    queryFn: async () => {
+      if (!isErc20 || !address || !chainId) return { value: BigInt(0), decimals: 18, symbol: 'ERC20' }
+      try {
+        const rpcUrl = getDefaultEthereumRpcUrl(chainId)
+        const publicClient = createPublicClient({ transport: http(rpcUrl) })
+        const balance = await publicClient.readContract({
+          address: token.address as `0x${string}`,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [address],
+        })
+        return { value: balance as bigint, decimals: 18, symbol: getAssetSymbol(token) }
+      } catch (error) {
+        logger.error('Failed to fetch ERC20 balance:', error)
+        return { value: BigInt(0), decimals: 18, symbol: getAssetSymbol(token) }
+      }
+    },
   })
 
   const refetchErc20Balance = erc20Balance.refetch
@@ -132,7 +146,7 @@ const SendConfirmation = () => {
 
   // Get current balance value from discriminated unions
   const nativeBalanceValue = nativeBalance.status === 'success' ? nativeBalance.value : undefined
-  const erc20BalanceValue = erc20Balance.status === 'success' ? erc20Balance.value : undefined
+  const erc20BalanceValue = erc20Balance.status === 'success' ? erc20Balance.data?.value : undefined
   const currentBalance = isErc20 ? erc20BalanceValue : nativeBalanceValue
   const nativeSymbol = nativeBalance.status === 'success' ? nativeBalance.symbol : 'ETH'
 
@@ -144,20 +158,75 @@ const SendConfirmation = () => {
   const originalBalanceRef = useRef<bigint | undefined>(undefined)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const {
-    sendTransactionAsync,
-    data: nativeTxHash,
-    isPending: isNativePending,
-    error: nativeError,
-  } = useEthereumSendTransaction()
-  const {
-    writeContractAsync,
-    data: erc20TxHash,
-    isPending: isTokenPending,
-    error: erc20Error,
-  } = useEthereumWriteContract()
+  // Inline transaction state management (replaces useEthereumSendTransaction + useEthereumWriteContract)
+  const [nativeTxHash, setNativeTxHash] = useState<`0x${string}` | undefined>(undefined)
+  const [isNativePending, setIsNativePending] = useState(false)
+  const [nativeError, setNativeError] = useState<Error | null>(null)
+
+  const [erc20TxHash, setErc20TxHash] = useState<`0x${string}` | undefined>(undefined)
+  const [isTokenPending, setIsTokenPending] = useState(false)
+  const [erc20Error, setErc20Error] = useState<Error | null>(null)
 
   const transactionHash = nativeTxHash ?? erc20TxHash
+
+  const sendTransactionAsync = async (params: { to: `0x${string}`; value: bigint; chainId?: number }) => {
+    setIsNativePending(true)
+    setNativeError(null)
+    try {
+      if (!wallet.activeWallet) throw new Error('Wallet not available')
+      const provider = await wallet.activeWallet.getProvider()
+      const hash = (await provider.request({
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            from: address,
+            to: params.to,
+            value: `0x${params.value.toString(16)}`,
+          },
+        ],
+      })) as `0x${string}`
+      setNativeTxHash(hash)
+      return hash
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      setNativeError(err)
+      throw err
+    } finally {
+      setIsNativePending(false)
+    }
+  }
+
+  const writeContractAsync = async (params: {
+    abi: Abi | readonly unknown[]
+    address: `0x${string}`
+    functionName: string
+    args: unknown[]
+    chainId?: number
+  }) => {
+    setIsTokenPending(true)
+    setErc20Error(null)
+    try {
+      if (!wallet.activeWallet) throw new Error('Wallet not available')
+      const provider = await wallet.activeWallet.getProvider()
+      const data = encodeFunctionData({
+        abi: params.abi as Abi,
+        functionName: params.functionName,
+        args: params.args,
+      })
+      const hash = (await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: address, to: params.address, data }],
+      })) as `0x${string}`
+      setErc20TxHash(hash)
+      return hash
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      setErc20Error(err)
+      throw err
+    } finally {
+      setIsTokenPending(false)
+    }
+  }
 
   const transferData =
     recipientAddress && parsedAmount !== null && parsedAmount > BigInt(0)
@@ -170,17 +239,30 @@ const SendConfirmation = () => {
         : undefined
       : undefined
 
-  // Wait for transaction receipt using wagmi-free hook
-  const receiptState = useEthereumWaitForTransactionReceipt({
-    hash: transactionHash,
-    chainId,
-    enabled: Boolean(transactionHash),
+  // Wait for transaction receipt using viem publicClient directly
+  const receiptState = useQuery({
+    queryKey: ['tx-receipt', transactionHash, chainId],
+    enabled: Boolean(transactionHash && chainId),
+    retry: true,
+    retryDelay: 1000,
+    queryFn: async () => {
+      if (!transactionHash || !chainId) return null
+      try {
+        const rpcUrl = getDefaultEthereumRpcUrl(chainId)
+        const publicClient = createPublicClient({ transport: http(rpcUrl) })
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: transactionHash })
+        return receipt
+      } catch (error) {
+        logger.error('Failed to get transaction receipt:', error)
+        throw error
+      }
+    },
   })
 
-  const receipt = receiptState.status === 'success' ? receiptState.data : undefined
-  const isWaitingForReceipt = receiptState.status === 'loading'
-  const isSuccess = receiptState.status === 'success' && receiptState.isSuccess
-  const waitError = receiptState.status === 'error' ? receiptState.error : null
+  const receipt = receiptState.data
+  const isWaitingForReceipt = receiptState.status === 'pending'
+  const isSuccess = receiptState.status === 'success' && receiptState.data?.status === 'success'
+  const waitError = receiptState.status === 'error' ? (receiptState.error as Error | null) : null
 
   const isSubmitting = isNativePending || isTokenPending
   const isLoading = isSubmitting || isWaitingForReceipt

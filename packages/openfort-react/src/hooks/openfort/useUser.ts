@@ -1,8 +1,10 @@
-import { EmbeddedState } from '@openfort/openfort-js'
+import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { useCallback } from 'react'
+import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
+import { useChain } from '../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
-import { useConnectedWallet } from '../useConnectedWallet'
 
 /**
  * Returns the current user, linked accounts, auth state, wallet readiness, and token helpers.
@@ -25,7 +27,11 @@ import { useConnectedWallet } from '../useConnectedWallet'
  */
 export function useUser() {
   const { user, client, embeddedState, linkedAccounts } = useOpenfortCore()
-  const wallet = useConnectedWallet()
+  const { chainType } = useChain()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
 
   const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
   const isWalletReady = wallet.isConnected

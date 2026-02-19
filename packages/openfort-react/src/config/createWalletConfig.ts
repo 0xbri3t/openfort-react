@@ -9,33 +9,31 @@ type PolicyConfig = string | Record<number, string>
 /**
  * Options for creating an Openfort wallet config.
  * Use this instead of manually building the nested walletConfig object.
+ * Supports single-chain (ethereum or solana) and dual-chain (both).
  *
- * @example
+ * @example Single-chain EVM
  * ```ts
  * const walletConfig = createWalletConfig({
  *   shieldPublishableKey: 'shield_pk_...',
- *   chain: 'ethereum',
- *   chainId: 1,
+ *   ethereum: { chainId: 1, rpcUrls: { 1: 'https://eth.llamarpc.com' } },
  *   createEncryptedSessionEndpoint: '/api/create-session',
- *   requestWalletRecoverOTPEndpoint: '/api/recover-otp',
  * })
  * ```
  *
- * @example With getEncryptionSession (mutually exclusive with createEncryptedSessionEndpoint)
+ * @example Single-chain Solana
  * ```ts
  * const walletConfig = createWalletConfig({
  *   shieldPublishableKey: 'shield_pk_...',
- *   chain: 'ethereum',
- *   chainId: 1,
- *   getEncryptionSession: async ({ accessToken, userId, otpCode }) => {
- *     const res = await fetch('/api/session', {
- *       method: 'POST',
- *       body: JSON.stringify({ user_id: userId, otp_code: otpCode }),
- *       headers: { Authorization: `Bearer ${accessToken}` },
- *     })
- *     const { session } = await res.json()
- *     return session
- *   },
+ *   solana: { cluster: 'mainnet-beta' },
+ * })
+ * ```
+ *
+ * @example Dual-chain (EVM + Solana)
+ * ```ts
+ * const walletConfig = createWalletConfig({
+ *   shieldPublishableKey: 'shield_pk_...',
+ *   ethereum: { chainId: 1, rpcUrls: { 1: 'https://eth.llamarpc.com' } },
+ *   solana: { cluster: 'devnet' },
  * })
  * ```
  */
@@ -43,17 +41,9 @@ export type CreateWalletConfigOptions = {
   /** Required. Publishable key for the Shield API. */
   shieldPublishableKey: string
 
-  /** Chain type. Use 'ethereum' for EVM or 'solana' for SVM. */
-  chain: 'ethereum' | 'solana'
-
-  // --- Ethereum (required when chain === 'ethereum') ---
-  /** Ethereum chain ID (e.g. 1 for mainnet, 137 for Polygon). Required when chain is 'ethereum'. */
-  chainId?: number
-  /** Optional RPC URLs per chain ID. */
-  rpcUrls?: Record<number, string>
-
-  // --- Solana (required when chain === 'solana') ---
-  /** Solana config. Required when chain is 'solana'. */
+  /** Ethereum config. Provide with solana for dual-chain. */
+  ethereum?: { chainId: number; rpcUrls?: Record<number, string> }
+  /** Solana config. Provide with ethereum for dual-chain. */
   solana?: SolanaConfig
 
   // --- Encryption session (choose ONE; required for automatic recovery) ---
@@ -87,6 +77,8 @@ export type CreateWalletConfigOptions = {
   }) => Promise<void>
 
   // --- Optional ---
+  /** Display name shown in the passkey creation dialog. */
+  passkeyDisplayName?: string
   /** Policy ID for the embedded signer. */
   ethereumProviderPolicyId?: PolicyConfig
   /** Account type. */
@@ -108,10 +100,7 @@ export type CreateWalletConfigOptions = {
 export function createWalletConfig(options: CreateWalletConfigOptions): OpenfortWalletConfig {
   const {
     shieldPublishableKey,
-    chain,
-    chainId,
-    rpcUrls,
-    solana,
+    passkeyDisplayName,
     createEncryptedSessionEndpoint,
     getEncryptionSession,
     requestWalletRecoverOTPEndpoint,
@@ -126,20 +115,14 @@ export function createWalletConfig(options: CreateWalletConfigOptions): Openfort
     throw new OpenfortError('shieldPublishableKey is required', OpenfortErrorCode.INVALID_CONFIG)
   }
 
-  if (chain === 'ethereum') {
-    if (chainId == null) {
-      throw new OpenfortError(
-        'chainId is required when chain is "ethereum". Example: chainId: 1 for mainnet.',
-        OpenfortErrorCode.INVALID_CONFIG
-      )
-    }
-  } else if (chain === 'solana') {
-    if (!solana) {
-      throw new OpenfortError(
-        'solana config is required when chain is "solana". Example: solana: { cluster: "mainnet-beta" }.',
-        OpenfortErrorCode.INVALID_CONFIG
-      )
-    }
+  const resolvedEthereum = options.ethereum
+  const resolvedSolana = options.solana
+
+  if (!resolvedEthereum && !resolvedSolana) {
+    throw new OpenfortError(
+      'Provide ethereum and/or solana config. Example: ethereum: { chainId: 1 }, solana: { cluster: "devnet" }.',
+      OpenfortErrorCode.INVALID_CONFIG
+    )
   }
 
   const hasEndpoint = !!createEncryptedSessionEndpoint
@@ -160,8 +143,9 @@ export function createWalletConfig(options: CreateWalletConfigOptions): Openfort
     )
   }
 
-  const base: OpenfortWalletConfig = {
+  const base = {
     shieldPublishableKey: shieldPublishableKey.trim(),
+    ...(passkeyDisplayName != null && { passkeyDisplayName }),
     ...(ethereumProviderPolicyId != null && { ethereumProviderPolicyId }),
     ...(accountType != null && { accountType }),
     ...(recoverWalletAutomaticallyAfterAuth != null && { recoverWalletAutomaticallyAfterAuth }),
@@ -170,29 +154,23 @@ export function createWalletConfig(options: CreateWalletConfigOptions): Openfort
 
   const encryptionSession = hasCallback
     ? { getEncryptionSession }
-    : hasEndpoint
-      ? { createEncryptedSessionEndpoint: createEncryptedSessionEndpoint! }
+    : createEncryptedSessionEndpoint
+      ? { createEncryptedSessionEndpoint }
       : {}
 
   const recoverOtp = hasOtpCallback
     ? { requestWalletRecoverOTP }
-    : hasOtpEndpoint
-      ? { requestWalletRecoverOTPEndpoint: requestWalletRecoverOTPEndpoint! }
+    : requestWalletRecoverOTPEndpoint
+      ? { requestWalletRecoverOTPEndpoint }
       : {}
-
-  if (chain === 'ethereum') {
-    return {
-      ...base,
-      ethereum: { chainId: chainId!, rpcUrls },
-      ...encryptionSession,
-      ...recoverOtp,
-    } as OpenfortWalletConfig
-  }
 
   return {
     ...base,
-    solana: solana!,
     ...encryptionSession,
     ...recoverOtp,
+    ...(resolvedEthereum && {
+      ethereum: { chainId: resolvedEthereum.chainId, rpcUrls: resolvedEthereum.rpcUrls },
+    }),
+    ...(resolvedSolana && { solana: resolvedSolana }),
   } as OpenfortWalletConfig
 }

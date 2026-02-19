@@ -1,4 +1,4 @@
-import { embeddedWalletId, useConnectWithSiwe, useEthereumBridge } from '@openfort/react'
+import { embeddedWalletId, useConnectWithSiwe } from '@openfort/react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'
 import { DialogLayout } from '@/components/Showcase/auth/DialogLayout'
@@ -12,7 +12,7 @@ export const Route = createFileRoute('/_showcase/showcase/auth/connect-wallet')(
 
 function RouteComponent() {
   const nav = useNavigate()
-  const bridge = useEthereumBridge()
+  const { ethereumBridge: bridge } = useConnectWithSiwe()
   const connectWithSiwe = useConnectWithSiwe()
   const [connectingTo, setConnectingTo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)

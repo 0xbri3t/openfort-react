@@ -1,4 +1,4 @@
-import { useEthereumAccount, useGrantPermissions, useRevokePermissions } from '@openfort/react'
+import { useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
@@ -8,10 +8,10 @@ import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useEthereumAccount } from '@/hooks/useEthereumAdapterHooks'
 import { cn } from '@/lib/cn'
 import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
-
 export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
@@ -23,6 +23,7 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
   const mintContractAddress = getMintContractAddress(chainId ?? undefined)
   const key = useMemo(() => (chainId != null && address ? `${chainId}-${address}` : ''), [chainId, address])
   const grantDisabled = isLoading || submitting || !mintContractAddress
+  const isCreating = submitting || isLoading
 
   const updateSessionKeys = () => {
     const keys = getPrivateKeys(key)
@@ -97,7 +98,7 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
               <TooltipTrigger asChild>
                 <div className="w-full">
                   <Button className="btn btn-accent w-full" type="submit" disabled={grantDisabled}>
-                    {grantDisabled ? 'Creating...' : 'Create session key'}
+                    {isCreating ? 'Creating...' : 'Create session key'}
                   </Button>
                 </div>
               </TooltipTrigger>
@@ -108,7 +109,7 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
             </Tooltip>
           ) : (
             <Button className="btn btn-accent w-full" type="submit" disabled={grantDisabled}>
-              {grantDisabled ? 'Creating...' : 'Create session key'}
+              {isCreating ? 'Creating...' : 'Create session key'}
             </Button>
           )}
           {sessionKeys.map(({ privateKey, publicKey, sessionKeyId, active }) => (

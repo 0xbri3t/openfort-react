@@ -10,7 +10,7 @@
  * - You want to configure RPC URLs via context
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useMemo, useState } from 'react'
 import { logger } from '../utils/logger'
 
 /**
@@ -149,20 +149,4 @@ export function EthereumContextProvider({
   )
 
   return <EthereumContext.Provider value={value}>{children}</EthereumContext.Provider>
-}
-
-/**
- * Access Ethereum context configuration.
- *
- * @throws Error if called outside of EthereumContextProvider
- */
-export function useEthereumContext(): EthereumContextValue {
-  const context = useContext(EthereumContext)
-  if (!context) {
-    throw new Error(
-      'useEthereumContext must be used within EthereumContextProvider. ' +
-        "If you don't need context, use useEthereumEmbeddedWallet({ chainId }) directly."
-    )
-  }
-  return context
 }

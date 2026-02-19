@@ -8,11 +8,7 @@
  */
 
 export type { SetRecoveryOptions } from '../shared/types'
-export { useSolanaBalance } from './hooks/useSolanaBalance'
 export { useSolanaEmbeddedWallet } from './hooks/useSolanaEmbeddedWallet'
-export type { SolanaSendTransactionStatus, UseSolanaSendTransactionResult } from './hooks/useSolanaSendTransaction'
-export { useSolanaSendTransaction } from './hooks/useSolanaSendTransaction'
-export { useSolanaMessageSigner, useSolanaSigner } from './hooks/useSolanaSigner'
 export { LAMPORTS_PER_SOL, lamportsToSol, solToLamports } from './hooks/utils'
 export {
   getTransactionBytes,
@@ -26,7 +22,7 @@ export {
 export type { OpenfortSolanaProviderConfig } from './provider'
 export { createSolanaProvider, OpenfortSolanaProvider } from './provider'
 export type { SolanaContextProviderProps, SolanaContextValue } from './SolanaContext'
-export { SolanaContextProvider, useSolanaContext } from './SolanaContext'
+export { SolanaContextProvider } from './SolanaContext'
 export type {
   Address,
   MessagePartialSigner,

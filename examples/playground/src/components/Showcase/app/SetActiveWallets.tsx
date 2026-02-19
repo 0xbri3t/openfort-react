@@ -1,7 +1,6 @@
-import { RecoveryMethod, useConnectedWallet, useEthereumEmbeddedWallet } from '@openfort/react'
+import { type EmbeddedEthereumWalletState, RecoveryMethod } from '@openfort/react'
 
-/** Inferred from useEthereumEmbeddedWallet().wallets */
-type EmbeddedWalletItem = ReturnType<typeof useEthereumEmbeddedWallet>['wallets'][number]
+type EmbeddedWalletItem = EmbeddedEthereumWalletState['wallets'][number]
 
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
@@ -10,6 +9,7 @@ import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useActiveEmbeddedWallet } from '@/hooks/useActiveEmbeddedWallet'
 import { cn } from '@/lib/cn'
 
 const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
@@ -25,10 +25,7 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 
-const CreateWalletButton = () => {
-  const wallet = useConnectedWallet()
-  const chainId = wallet.status === 'connected' && wallet.chainId != null ? wallet.chainId : undefined
-  const ethereum = useEthereumEmbeddedWallet({ chainId })
+const CreateWalletButton = ({ ethereum }: { ethereum: EmbeddedEthereumWalletState }) => {
   const isCreating = ethereum.status === 'creating'
   const create = ethereum.create
   const error = ethereum.status === 'error' ? ethereum.error : null
@@ -116,7 +113,7 @@ const CreateWalletButton = () => {
         <TooltipContent>
           <h3 className="text-base mb-1">useEthereumEmbeddedWallet</h3>
           Create a new wallet using the
-          <Link to="/wallet/useWallets" search={{ focus: 'create' }} className="px-1 group">
+          <Link to="/wallet/useEthereumEmbeddedWallet" search={{ focus: 'create' }} className="px-1 group">
             create
           </Link>
           function.
@@ -239,8 +236,9 @@ const WalletButton = ({
     <button
       type="button"
       onClick={() => !isActive && handleClickWallet()}
-      className={cn('btn btn-accent w-full flex justify-between password-input', {
-        'text-primary': isActive,
+      className={cn('btn w-full flex justify-between password-input', {
+        'btn-accent': true,
+        'text-primary font-medium': isActive,
         'animate-pulse': isConnecting,
       })}
     >
@@ -269,28 +267,8 @@ const WalletButton = ({
 }
 
 export const SetActiveWalletsCard = () => {
-  const wallet = useConnectedWallet()
-  const chainId = wallet.status === 'connected' && wallet.chainId != null ? wallet.chainId : undefined
-  const ethereum = useEthereumEmbeddedWallet({ chainId })
+  const { ethereum, activeWallet, connectingAddress } = useActiveEmbeddedWallet()
   const wallets = ethereum.wallets
-  const connectedAddress = wallet.status === 'connected' ? wallet.address : undefined
-  // Prefer ethereum.activeWallet so the list updates immediately when user clicks "Set active".
-  // Fall back to connectedAddress (top-right) only when the hook hasn't set an active wallet yet (e.g. initial load).
-  const activeWalletFromHook =
-    ethereum.status === 'connected' ||
-    ethereum.status === 'connecting' ||
-    ethereum.status === 'reconnecting' ||
-    ethereum.status === 'needs-recovery'
-      ? ethereum.activeWallet
-      : null
-  const activeWallet =
-    activeWalletFromHook != null
-      ? activeWalletFromHook
-      : connectedAddress != null
-        ? (wallets.find((w) => w.address.toLowerCase() === connectedAddress.toLowerCase()) ?? null)
-        : null
-  const connectingAddress =
-    ethereum.status === 'connecting' || ethereum.status === 'reconnecting' ? ethereum.activeWallet?.address : undefined
 
   return (
     <Card>
@@ -327,7 +305,7 @@ export const SetActiveWalletsCard = () => {
                   ) : (
                     <p className="text-xs opacity-70">
                       Click to set this wallet as active. (
-                      <Link to="/wallet/useWallets" search={{ focus: 'setActive' }}>
+                      <Link to="/wallet/useEthereumEmbeddedWallet" search={{ focus: 'setActive' }}>
                         setActive
                       </Link>
                       )
@@ -338,7 +316,7 @@ export const SetActiveWalletsCard = () => {
             </Tooltip>
           ))}
 
-          <CreateWalletButton />
+          <CreateWalletButton ethereum={ethereum} />
         </div>
       </CardContent>
     </Card>

@@ -7,14 +7,15 @@ import { createSIWEMessage } from '../../siwe/create-siwe-message'
 import { logger } from '../../utils/logger'
 
 /**
- * Returns connectWithSiwe for linking external wallets via SIWE. Use with wagmi bridge.
+ * Returns connectWithSiwe for linking external wallets via SIWE, and ethereumBridge for bridge operations.
  *
- * @returns connectWithSiwe({ address?, onConnect?, onError?, link? })
+ * @returns { connectWithSiwe, ethereumBridge }
  *
  * @example
  * ```tsx
- * const { connectWithSiwe } = useConnectWithSiwe()
+ * const { connectWithSiwe, ethereumBridge } = useConnectWithSiwe()
  * await connectWithSiwe({ onConnect: () => router.replace('/dashboard') })
+ * // Use ethereumBridge for wallet operations
  * ```
  */
 export function useConnectWithSiwe() {
@@ -129,5 +130,5 @@ export function useConnectWithSiwe() {
     [client, user, updateUser, address, chainId, connector, accountChainId, chainName, switchChainAsync, signMessage]
   )
 
-  return connectWithSiwe
+  return { connectWithSiwe, ethereumBridge: bridge }
 }

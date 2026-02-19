@@ -1,4 +1,4 @@
-import { useConnectedWallet, useUser } from '@openfort/react'
+import { ChainTypeEnum, useChain, useEthereumEmbeddedWallet, useSolanaEmbeddedWallet, useUser } from '@openfort/react'
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
@@ -7,7 +7,11 @@ export const Route = createFileRoute('/_showcase/showcase/auth')({
 })
 
 function RouteComponent() {
-  const wallet = useConnectedWallet()
+  const { chainType } = useChain()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const { isAuthenticated } = useUser()
   const nav = useNavigate()

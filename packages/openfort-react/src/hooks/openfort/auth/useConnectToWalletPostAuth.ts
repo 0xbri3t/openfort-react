@@ -3,9 +3,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { queryKeys } from '../../../core/queryKeys'
-import { useEmbeddedWallet } from '../../../hooks/useEmbeddedWallet'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { logger } from '../../../utils/logger'
 import {
   type EthereumUserWallet,
@@ -56,7 +57,9 @@ export const useConnectToWalletPostAuth = () => {
   const { client } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
   const chainId = walletConfig?.ethereum?.chainId ?? 13337
-  const embeddedWallet = useEmbeddedWallet()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
   const { signOut } = useSignOut()
   const queryClient = useQueryClient()
 
@@ -120,10 +123,10 @@ export const useConnectToWalletPostAuth = () => {
         const first = chainWallets[0]
         if (first) {
           try {
-            if (embeddedWallet.chainType === ChainTypeEnum.SVM) {
-              await embeddedWallet.setActive({ address: first.address })
+            if (chainType === ChainTypeEnum.SVM) {
+              await (solanaWallet as typeof solanaWallet).setActive({ address: first.address })
             } else {
-              await embeddedWallet.setActive({
+              await (ethereumWallet as typeof ethereumWallet).setActive({
                 address: first.address as `0x${string}`,
                 chainId,
               })
@@ -150,7 +153,7 @@ export const useConnectToWalletPostAuth = () => {
           : undefined,
       }
     },
-    [chainType, client, walletConfig, chainId, embeddedWallet, signOut, queryClient]
+    [chainType, client, walletConfig, chainId, ethereumWallet, solanaWallet, signOut, queryClient]
   )
 
   return {

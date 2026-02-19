@@ -1,4 +1,4 @@
-import { ChainTypeEnum, getExplorerUrl, useSolanaAccount, useSolanaWriteContract } from '@openfort/react'
+import { ChainTypeEnum, useSolanaEmbeddedWallet } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
@@ -6,7 +6,9 @@ import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useSolanaSendTransaction } from '@/hooks/useSolanaSendTransaction'
 import { cn } from '@/lib/cn'
+import { getExplorerUrl } from '@/lib/explorer'
 
 const LAMPORTS_PER_SOL = 1_000_000_000
 
@@ -15,8 +17,8 @@ function solToLamports(sol: number): bigint {
 }
 
 export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { address, cluster } = useSolanaAccount()
-  const { sendSOL, data: txSignature, isPending, error, reset } = useSolanaWriteContract()
+  const { address, cluster } = useSolanaEmbeddedWallet()
+  const { sendSOL, data: txSignature, isPending, error, reset } = useSolanaSendTransaction()
 
   const explorerUrl = useMemo(() => {
     if (!txSignature || !cluster) return null

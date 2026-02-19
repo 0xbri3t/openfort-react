@@ -9,7 +9,7 @@
  * - **Server Components (Next.js App Router, Remix):** Do not use hooks or `OpenfortProvider` in
  *   Server Components. Wrap your app (or the subtree that needs Openfort) in a Client Component.
  * - **Next.js App Router:** Add `"use client"` at the top of any file that imports hooks,
- *   `OpenfortProvider`, `OpenfortButton`, or `useConnectUI`.
+ *   `OpenfortProvider`, or `OpenfortButton`.
  * - **Hydration:** No hydration mismatches when used correctly. Keep the provider and any
  *   hook-using components on the client boundary.
  *
@@ -29,16 +29,14 @@
  * | Need | Use |
  * |------|-----|
  * | Auth user (isAuthenticated, user, linkedAccounts) | `useUser()` |
- * | Am I connected? (auth + wallet ready) | `useIsReady()` or `useUser().isReady` |
- * | Wallet state (chain-agnostic, any chain) | `useConnectedWallet()` |
- * | EVM-typed address/chainId | `useEthereumAccount()` |
- * | Solana address/cluster | `useSolanaAccount()` |
- * | Send ETH/tokens | `useEthereumSendTransaction()` |
- * | Send SOL/tokens | `useSolanaSendTransaction()` |
- * | Write contract (EVM) | `useEthereumWriteContract()` |
- * | Sign message | `useEthereumSignMessage()` / `useSolanaSignMessage()` |
- * | Get balance | `useEthereumBalance()` / `useSolanaBalance()` |
- * | Create embedded wallet | `useEthereumEmbeddedWallet()` / `useSolanaEmbeddedWallet()` |
+ * | Am I connected? (auth + wallet ready) | `useUser().isReady` |
+ * | EVM wallet (address, chainId, status, create, export) | `useEthereumEmbeddedWallet()` |
+ * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` |
+ * | Send ETH / write contract / get balance (EVM) | Use `wagmi` or `viem` directly |
+ * | Get SOL balance / sign message / send SOL (Solana) | Use `@solana/kit` with embedded wallet provider |
+ * | Connect/link wallet (SIWE) + list wallets | `useWalletAuth()` (from `@openfort/wagmi`) |
+ * | Grant session key permissions | `useGrantPermissions()` |
+ * | Revoke session key permissions | `useRevokePermissions()` |
  */
 export {
   AccountTypeEnum,
@@ -59,21 +57,13 @@ export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
-export { PageLayout, type PageLayoutProps } from './components/PageLayout'
 export type { CreateWalletConfigOptions } from './config/createWalletConfig'
 export { createWalletConfig } from './config/createWalletConfig'
 export { embeddedWalletId } from './constants/openfort'
 export { formatErrorWithReason, getErrorReason, OpenfortError, OpenfortErrorCode } from './core/errors'
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
-export type {
-  EthereumSendTransactionParams,
-  UseEthereumSendTransactionReturn,
-} from './ethereum/hooks/useEthereumSendTransaction'
-export type {
-  EthereumWriteContractParams,
-  UseEthereumWriteContractReturn,
-} from './ethereum/hooks/useEthereumWriteContract'
+export { useEthereumWalletAssets } from './ethereum/hooks/useEthereumWalletAssets'
 export {
   type OpenfortEthereumBridgeAccount,
   type OpenfortEthereumBridgeChain,
@@ -112,7 +102,7 @@ export { useGrantPermissions } from './hooks/openfort/useGrantPermissions'
 export { useRevokePermissions } from './hooks/openfort/useRevokePermissions'
 export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
-export { useWalletAssets } from './hooks/openfort/useWalletAssets'
+
 export type {
   EthereumUserWallet,
   SolanaUserWallet,
@@ -120,31 +110,12 @@ export type {
 } from './hooks/openfort/walletTypes'
 export { useChainIsSupported } from './hooks/useChainIsSupported'
 export { useChains } from './hooks/useChains'
-export {
-  type ConnectedWalletState,
-  type ConnectedWalletStatus,
-  useConnectedWallet,
-  type WalletType,
-} from './hooks/useConnectedWallet'
-export type { EmbeddedWalletState } from './hooks/useEmbeddedWallet'
-export { useEmbeddedWallet } from './hooks/useEmbeddedWallet'
-export { useIsReady } from './hooks/useIsReady'
-export { useOpenfortCore as useOpenfort, useWalletStatus } from './openfort/useOpenfort'
+export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
-export type { TransactionFlowStatus, UseTransactionFlowResult } from './shared/hooks/useTransactionFlow'
-export { useTransactionFlow } from './shared/hooks/useTransactionFlow'
-export type { WalletStatus } from './shared/types'
-export { type ExplorerUrlOptions, getExplorerUrl } from './shared/utils/explorer'
 export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validation'
 export { createSIWEMessage } from './siwe/create-siwe-message'
-// Solana
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
-export type {
-  SolanaSendTransactionStatus,
-  UseSolanaSendTransactionResult,
-} from './solana/hooks/useSolanaSendTransaction'
-export { useSolanaSendTransaction } from './solana/hooks/useSolanaSendTransaction'
-export { useSolanaMessageSigner, useSolanaSigner } from './solana/hooks/useSolanaSigner'
+// Solana
 export type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
@@ -169,7 +140,6 @@ export {
   SDKOverrides,
   ThirdPartyOAuthProvider,
 } from './types'
-export { useConnectUI } from './ui/ConnectUIContext'
 export {
   formatAddress,
   formatBalance,
@@ -180,41 +150,3 @@ export {
   truncateEthAddress,
   truncateSolanaAddress,
 } from './utils/format'
-export { OPENFORT_VERSION } from './version'
-// ── Wallet Adapters (chain-specific) ──
-export {
-  useEthereumAccount,
-  useEthereumBalance,
-  useEthereumDisconnect,
-  useEthereumReadContract,
-  useEthereumSignMessage,
-  useEthereumSwitchChain,
-  useEthereumWriteContract,
-  useSolanaAccount,
-  useSolanaBalance,
-  useSolanaDisconnect,
-  useSolanaSignMessage,
-  useSolanaWriteContract,
-} from './wallet-adapters'
-export type {
-  SolanaCluster,
-  UseAccountLike,
-  UseBalanceLike,
-  UseDisconnectLike,
-  UseReadContractLike,
-  UseSignMessageLike,
-  UseSolanaAccountLike,
-  UseSolanaSendSOLLike,
-  UseSolanaSignMessageLike,
-  UseSwitchChainLike,
-  UseWriteContractLike,
-  WalletAdapterChain,
-} from './wallet-adapters/types'
-export {
-  type ExternalConnectorProps,
-  useExternalConnector,
-  useExternalConnectors,
-} from './wallets/useExternalConnectors'
-
-import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
-export type { CountryData, CountryIso2, CountrySelectorProps }

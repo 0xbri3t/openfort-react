@@ -1,4 +1,10 @@
-import { type Theme, useConnectedWallet } from '@openfort/react'
+import {
+  ChainTypeEnum,
+  type Theme,
+  useChain,
+  useEthereumEmbeddedWallet,
+  useSolanaEmbeddedWallet,
+} from '@openfort/react'
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import z from 'zod'
@@ -17,7 +23,11 @@ const themes: Theme[] = ['auto', 'midnight', 'nouns', 'retro', 'rounded', 'soft'
 let themeIndex = 0
 
 function RootComponent() {
-  const wallet = useConnectedWallet()
+  const { chainType } = useChain()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const isConnected = wallet.status === 'connected'
   const location = useLocation()
 

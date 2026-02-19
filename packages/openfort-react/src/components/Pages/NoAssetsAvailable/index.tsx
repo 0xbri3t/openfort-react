@@ -1,6 +1,9 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { BuyIcon, DollarIcon, ReceiveIcon } from '../../../assets/icons'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useChains } from '../../../hooks/useChains'
-import { useConnectedWallet } from '../../../hooks/useConnectedWallet'
+import { useChain } from '../../../shared/hooks/useChain'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalH1 } from '../../Common/Modal/styles'
 import { FloatingGraphic } from '../../FloatingGraphic'
@@ -11,12 +14,19 @@ import { ButtonsContainer } from './styles'
 
 export const NoAssetsAvailable = () => {
   const { setRoute } = useOpenfort()
+  const { chainType } = useChain()
 
-  // Use new abstraction hooks (no wagmi)
-  const wallet = useConnectedWallet()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
   const chains = useChains()
 
-  const chainId = wallet.status === 'connected' ? wallet.chainId : undefined
+  const chainId =
+    wallet.status === 'connected' && chainType === ChainTypeEnum.EVM
+      ? (wallet as typeof ethereumWallet).chainId
+      : undefined
   const chain = chains.find((c) => c.id === chainId)
   const showBuyOption = chain && !chain.testnet
 
