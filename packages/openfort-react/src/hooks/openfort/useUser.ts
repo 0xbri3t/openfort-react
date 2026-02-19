@@ -7,19 +7,20 @@ import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWal
 import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
 
 /**
- * Returns the current user, linked accounts, auth state, wallet readiness, and token helpers.
+ * Returns the current user, linked accounts, auth state, and token helpers.
  *
- * Use `isReady` for the common "am I connected?" check: true when authenticated and wallet is ready.
+ * Use `isConnected` for the common "am I connected?" check: true when authenticated and
+ * wallet is ready for the current chain.
  *
  * @remarks Client-only. Use in a Client Component (e.g. add `"use client"` in Next.js App Router).
  *
- * @returns user, linkedAccounts, isAuthenticated, isWalletReady, isReady, getAccessToken, validateAndRefreshToken
+ * @returns user, linkedAccounts, isAuthenticated, isConnected, isWalletReady, isReady, getAccessToken, validateAndRefreshToken
  *
  * @example
  * ```tsx
- * const { user, isAuthenticated, isWalletReady, isReady, getAccessToken } = useUser()
+ * const { user, isConnected, getAccessToken } = useUser()
  *
- * if (!isReady) return <Spinner />
+ * if (!isConnected) return <Spinner />
  * // User is authenticated and wallet is connected — safe to send/sign
  *
  * const token = await getAccessToken()
@@ -35,7 +36,7 @@ export function useUser() {
 
   const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
   const isWalletReady = wallet.isConnected
-  const isReady = isAuthenticated && isWalletReady
+  const isConnected = isAuthenticated && isWalletReady
 
   const getAccessTokenAndUpdate = useCallback(async () => {
     try {
@@ -61,8 +62,9 @@ export function useUser() {
     user,
     linkedAccounts,
     isAuthenticated,
+    isConnected,
     isWalletReady,
-    isReady,
+    isReady: isConnected,
     getAccessToken: getAccessTokenAndUpdate,
     validateAndRefreshToken: validateAndRefresh,
   }
