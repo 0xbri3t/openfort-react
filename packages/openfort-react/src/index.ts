@@ -57,8 +57,6 @@ export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
-export type { CreateWalletConfigOptions } from './config/createWalletConfig'
-export { createWalletConfig } from './config/createWalletConfig'
 export { embeddedWalletId } from './constants/openfort'
 export { formatErrorWithReason, getErrorReason, OpenfortError, OpenfortErrorCode } from './core/errors'
 // Ethereum

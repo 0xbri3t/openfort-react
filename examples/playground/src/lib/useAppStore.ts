@@ -1,8 +1,8 @@
-import { AuthProvider, createWalletConfig, type OpenfortProvider, RecoveryMethod } from '@openfort/react'
+import { AuthProvider, type OpenfortProvider, type OpenfortWalletConfig, RecoveryMethod } from '@openfort/react'
 import { baseSepolia, beamTestnet, polygonAmoy } from 'viem/chains'
 import { create } from 'zustand'
 
-const defaultWalletConfig = createWalletConfig({
+const defaultWalletConfig: OpenfortWalletConfig = {
   shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
   ethereum: {
     chainId: beamTestnet.id,
@@ -32,7 +32,7 @@ const defaultWalletConfig = createWalletConfig({
       body: JSON.stringify({ user_id: userId, email, phone }),
     })
   },
-})
+}
 
 const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
   publishableKey: import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY,
