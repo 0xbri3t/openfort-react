@@ -1,6 +1,6 @@
 import {
   type ConnectedEmbeddedEthereumWallet,
-  type EmbeddedEthereumWalletState,
+  type EthereumWalletState,
   RecoveryMethod,
   useEthereumBridge,
 } from '@openfort/react'
@@ -93,7 +93,7 @@ const SimpleWalletButton = ({
   </button>
 )
 
-const CreateWalletButton = ({ ethereum }: { ethereum: EmbeddedEthereumWalletState }) => {
+const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => {
   const { create, status } = ethereum
   const [error, setError] = useState<string | null>(null)
   const isCreating = status === 'creating'
@@ -344,7 +344,7 @@ export const ConnectExternalWalletCard = () => {
 
   const embeddedWallets = ethereum.wallets
   const isOpenfortActive = ethereum.status === 'connected'
-  const isExternalActive = ethereum.isExternal
+  const isExternalActive = ethereum.walletType === 'external'
   const isBusy = ethereum.isLoading
 
   const setActive = async (opts: {

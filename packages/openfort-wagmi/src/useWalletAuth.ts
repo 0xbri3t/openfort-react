@@ -2,15 +2,8 @@
  * Connect/link external wallets via SIWE. Wagmi-only; use from @openfort/wagmi.
  */
 
-import type { OpenfortError } from '@openfort/openfort-js'
-import type { OpenfortEthereumBridgeConnector } from '@openfort/react'
-import {
-  createSIWEMessage,
-  embeddedWalletId,
-  OpenfortError as OpenfortErrorClass,
-  useEthereumBridge,
-  useOpenfort,
-} from '@openfort/react'
+import { createSIWEMessage, embeddedWalletId, OpenfortError, useEthereumBridge, useOpenfort } from '@openfort/react'
+import type { OpenfortEthereumBridgeConnector } from '@openfort/react/ethereum'
 import { useCallback, useMemo } from 'react'
 
 /** Wallet option for UI (id, name, icon, connector). */
@@ -106,7 +99,7 @@ function runConnectWithSiwe(
       } else {
         message = 'Failed to connect with SIWE.'
       }
-      params.onError(message, err instanceof OpenfortErrorClass ? err : undefined)
+      params.onError(message, err instanceof OpenfortError ? err : undefined)
     }
   })()
 }

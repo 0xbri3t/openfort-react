@@ -102,7 +102,7 @@ function SolanaContent() {
 
 function RouteComponent() {
   const { mode } = usePlaygroundMode()
-  const isSolana = mode === 'solana-only'
+  const isSVM = mode === 'solana-only'
 
   return (
     <Layout>
@@ -110,7 +110,7 @@ function RouteComponent() {
         Use <code>useEthereumEmbeddedWallet()</code> or <code>useSolanaEmbeddedWallet()</code> directly based on your
         chain. This page shows both chain-specific hooks for inspection.
       </p>
-      {isSolana ? <SolanaContent /> : <EvmContent />}
+      {isSVM ? <SolanaContent /> : <EvmContent />}
     </Layout>
   )
 }

@@ -78,7 +78,7 @@ export type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
   CreateEthereumWalletResult,
-  EmbeddedEthereumWalletState,
+  EthereumWalletState,
   SetActiveEthereumWalletOptions,
   UseEmbeddedEthereumWalletOptions,
 } from './ethereum/types'
@@ -119,9 +119,9 @@ export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 export type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
-  EmbeddedSolanaWalletState,
   SetActiveSolanaWalletOptions,
   SolanaConfig,
+  SolanaWalletState,
   UseEmbeddedSolanaWalletOptions,
 } from './solana/types'
 export type { CustomTheme } from './styles/customTheme'
@@ -150,3 +150,4 @@ export {
   truncateEthAddress,
   truncateSolanaAddress,
 } from './utils/format'
+export { OPENFORT_VERSION } from './version'

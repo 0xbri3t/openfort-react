@@ -38,7 +38,6 @@ import {
 type OpenfortProviderProps = {
   children?: React.ReactNode
   debugMode?: boolean | DebugModeOptions
-  chainType?: ChainTypeEnum
   publishableKey: string
   uiConfig?: ConnectUIOptions
   walletConfig?: OpenfortWalletConfig
@@ -56,7 +55,7 @@ let openfortProviderWarnedNoWagmi = false
  *
  * @example
  * ```tsx
- * <OpenfortProvider publishableKey="pk_test_..." chainType={ChainTypeEnum.EVM}>
+ * <OpenfortProvider publishableKey="pk_test_...">
  *   <App />
  * </OpenfortProvider>
  * ```
@@ -67,7 +66,6 @@ export const OpenfortProvider = ({
   onConnect,
   onDisconnect,
   debugMode,
-  chainType: chainTypeProp,
   publishableKey,
   walletConfig,
   overrides,
@@ -76,22 +74,6 @@ export const OpenfortProvider = ({
   const bridge = useContext(OpenfortEthereumBridgeContext)
   const hasWagmi = !!bridge
   const hasSolana = !!walletConfig?.solana
-  const hasEthereum = !!walletConfig?.ethereum
-  const chainType = chainTypeProp ?? (hasSolana ? ChainTypeEnum.SVM : ChainTypeEnum.EVM)
-
-  if (chainType === ChainTypeEnum.SVM && !hasSolana) {
-    throw new Error(
-      'OpenfortProvider with chainType SVM requires walletConfig.solana. ' +
-        'Pass walletConfig={{ solana: { cluster: "mainnet-beta" } }} (or use chainType EVM for Ethereum).'
-    )
-  }
-
-  if (chainType === ChainTypeEnum.EVM && !hasEthereum) {
-    throw new Error(
-      'OpenfortProvider with chainType EVM requires walletConfig.ethereum. ' +
-        'Pass walletConfig={{ ethereum: { chainId: 1 } }} (or use chainType SVM for Solana).'
-    )
-  }
 
   // Only allow for mounting OpenfortProvider once, so we avoid weird global
   // state collisions.
@@ -220,6 +202,7 @@ export const OpenfortProvider = ({
   const [sendForm, setSendForm] = useState<SendFormState>(defaultSendFormState)
   const [buyForm, setBuyForm] = useState<BuyFormState>(defaultBuyFormState)
   const [headerLeftSlot, setHeaderLeftSlot] = useState<React.ReactNode | null>(null)
+  const [chainType, setChainType] = useState<ChainTypeEnum>(hasSolana ? ChainTypeEnum.SVM : ChainTypeEnum.EVM)
 
   const setOpen = useCallback((value: boolean) => {
     if (value) {
@@ -295,8 +278,9 @@ export const OpenfortProvider = ({
 
   const value: ContextValue = useMemo(
     () => ({
-      chainType,
       setTheme,
+      chainType,
+      setChainType,
       mode: ckMode,
       setMode,
       setCustomTheme,
@@ -336,9 +320,10 @@ export const OpenfortProvider = ({
       onDisconnect,
     }),
     [
-      chainType,
       ckMode,
       ckLang,
+      chainType,
+      setChainType,
       open,
       setOpen,
       route,

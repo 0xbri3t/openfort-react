@@ -1,6 +1,6 @@
-import { type EmbeddedEthereumWalletState, RecoveryMethod } from '@openfort/react'
+import { type EthereumWalletState, RecoveryMethod } from '@openfort/react'
 
-type EmbeddedWalletItem = EmbeddedEthereumWalletState['wallets'][number]
+type EmbeddedWalletItem = EthereumWalletState['wallets'][number]
 
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
@@ -25,7 +25,7 @@ const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined
   }
 }
 
-const CreateWalletButton = ({ ethereum }: { ethereum: EmbeddedEthereumWalletState }) => {
+const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => {
   const isCreating = ethereum.status === 'creating'
   const create = ethereum.create
   const error = ethereum.status === 'error' ? ethereum.error : null

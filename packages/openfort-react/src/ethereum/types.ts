@@ -122,7 +122,7 @@ export interface EthereumWalletActions {
   exportPrivateKey(): Promise<string>
 }
 
-export type EmbeddedEthereumWalletStateBase =
+export type EthereumWalletStateBase =
   | (EthereumWalletActions & {
       status: 'disconnected'
       activeWallet: null
@@ -183,7 +183,7 @@ export type EmbeddedEthereumWalletStateBase =
     })
 
 /** Derived booleans for consistent hook shape. All variants include these. */
-export type EmbeddedEthereumWalletDerived = {
+export type EthereumWalletDerived = {
   /** True when status is fetching-wallets, connecting, creating, or reconnecting. */
   isLoading: boolean
   /** True when status is 'error'. */
@@ -210,15 +210,9 @@ export type EthereumConnectedWalletState = {
   isDisconnected: boolean
   /** True when reconnecting after loss of connection. */
   isReconnecting: boolean
-  /** True when the connected wallet is an Openfort embedded wallet. */
-  isEmbedded: boolean
-  /** True when the connected wallet is an external wallet. */
-  isExternal: boolean
 }
 
-export type EmbeddedEthereumWalletState = EmbeddedEthereumWalletStateBase &
-  EmbeddedEthereumWalletDerived &
-  EthereumConnectedWalletState
+export type EthereumWalletState = EthereumWalletStateBase & EthereumWalletDerived & EthereumConnectedWalletState
 
 export type UseEmbeddedEthereumWalletOptions = {
   /** Chain ID for smart account operations */

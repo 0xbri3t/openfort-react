@@ -15,7 +15,10 @@ export {
 } from './EthereumContext'
 export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './hooks/useEthereumWalletAssets'
-export { OpenfortEthereumBridgeContext } from './OpenfortEthereumBridgeContext'
+export {
+  type OpenfortEthereumBridgeConnector,
+  OpenfortEthereumBridgeContext,
+} from './OpenfortEthereumBridgeContext'
 export { type SignMessageParams, signMessage } from './operations'
 export type {
   ConnectedEmbeddedEthereumWallet,
@@ -24,8 +27,8 @@ export type {
   EIP1193EventHandler,
   EIP1193EventName,
   EIP1193RequestArguments,
-  EmbeddedEthereumWalletState,
   EthereumWalletActions,
+  EthereumWalletState,
   OpenfortEmbeddedEthereumWalletProvider,
   SetActiveEthereumWalletOptions,
   UseEmbeddedEthereumWalletOptions,

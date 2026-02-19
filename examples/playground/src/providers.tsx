@@ -1,7 +1,24 @@
-import { ChainTypeEnum, OpenfortProvider } from '@openfort/react'
+/**
+ * Unified provider tree for the Openfort playground.
+ *
+ * Supports all chains (EVM + Solana) in a single app. Mode switching only changes
+ * which chain UI is shown; the provider tree stays the same to avoid remounts.
+ *
+ * Provider order (outer → inner):
+ *   ThemeProvider → QueryClientProvider → WagmiProvider → OpenfortWagmiBridge → OpenfortProvider → children
+ *
+ * - WagmiProvider: Required for wagmi hooks (useConfig, useAccount, etc.)
+ * - OpenfortWagmiBridge: Connects wagmi to Openfort; provides external wallet connectors
+ * - OpenfortProvider: Auth, embedded wallets, connect modal
+ */
+
+import { OpenfortProvider } from '@openfort/react'
+import { getDefaultConfig, getDefaultConnectors, OpenfortWagmiBridge } from '@openfort/wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type React from 'react'
-import { createContext, lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createConfig, http, WagmiProvider } from 'wagmi'
+import { baseSepolia, beamTestnet, polygonAmoy } from 'wagmi/chains'
 import { ThemeProvider } from '@/components/theme-provider'
 import { useAppStore } from './lib/useAppStore'
 
@@ -39,31 +56,47 @@ export function usePlaygroundMode(): PlaygroundModeContextValue {
   return ctx
 }
 
-const WagmiWrapper = lazy(() => import('./providersWagmi').then((m) => ({ default: m.WagmiWrapper })))
+// ─── Wagmi config (shared across all modes) ─────────────────────────────────
+
+const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
+if (!walletConnectProjectId) {
+  throw new Error('VITE_WALLETCONNECT_PROJECT_ID is not set')
+}
+
+const defaultConnectors = getDefaultConnectors({
+  app: { name: 'Openfort demo' },
+  walletConnectProjectId,
+})
+
+const wagmiConfig = createConfig(
+  getDefaultConfig({
+    appName: 'Openfort demo',
+    walletConnectProjectId,
+    chains: [beamTestnet, polygonAmoy, baseSepolia],
+    transports: {
+      [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology'),
+      [beamTestnet.id]: http('https://build.onbeam.com/rpc/testnet'),
+      [baseSepolia.id]: http('https://sepolia.base.org'),
+    },
+    connectors: [...defaultConnectors],
+  })
+)
+
+// ─── Providers ─────────────────────────────────────────────────────────────
 
 export function Providers({ children }: { children?: React.ReactNode }) {
-  const { mode } = usePlaygroundMode()
   const { providerOptions } = useAppStore()
   const [queryClient] = useState(() => new QueryClient())
-  const chainType = mode === 'solana-only' ? ChainTypeEnum.SVM : ChainTypeEnum.EVM
-
-  const openfortContent = (
-    <OpenfortProvider {...providerOptions} chainType={chainType}>
-      {children}
-    </OpenfortProvider>
-  )
-
-  const content = (
-    <QueryClientProvider client={queryClient}>
-      <Suspense fallback={null}>
-        <WagmiWrapper>{openfortContent}</WagmiWrapper>
-      </Suspense>
-    </QueryClientProvider>
-  )
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      {content}
+      <QueryClientProvider client={queryClient}>
+        <WagmiProvider config={wagmiConfig}>
+          <OpenfortWagmiBridge>
+            <OpenfortProvider {...providerOptions}>{children}</OpenfortProvider>
+          </OpenfortWagmiBridge>
+        </WagmiProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   )
 }

@@ -16,12 +16,12 @@ import { SolanaContext } from '../SolanaContext'
 import type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
-  EmbeddedSolanaWalletState,
   OpenfortEmbeddedSolanaWalletProvider,
   SetActiveSolanaWalletOptions,
   SignedSolanaTransaction,
   SolanaCluster,
   SolanaTransaction,
+  SolanaWalletState,
   UseEmbeddedSolanaWalletOptions,
 } from '../types'
 import { resolveRecoveryForSetActive } from './recoveryResolver'
@@ -44,8 +44,6 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
       isConnecting: true,
       isDisconnected: false,
       isReconnecting: false,
-      isEmbedded: false,
-      isExternal: false,
     }
   }
 
@@ -59,8 +57,6 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
       isConnecting: true,
       isDisconnected: false,
       isReconnecting: false,
-      isEmbedded: true,
-      isExternal: false,
     }
   }
 
@@ -74,8 +70,6 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
       isConnecting: true,
       isDisconnected: false,
       isReconnecting: true,
-      isEmbedded: true,
-      isExternal: false,
     }
   }
 
@@ -89,8 +83,6 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
       isConnecting: false,
       isDisconnected: false,
       isReconnecting: false,
-      isEmbedded: true,
-      isExternal: false,
     }
   }
 
@@ -103,8 +95,6 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
     isConnecting: false,
     isDisconnected: true,
     isReconnecting: false,
-    isEmbedded: false,
-    isExternal: false,
   }
 }
 
@@ -123,13 +113,14 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
  * }
  * ```
  */
-export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): EmbeddedSolanaWalletState {
+export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): SolanaWalletState {
   const {
     client,
     embeddedAccounts,
     embeddedState,
     isLoadingAccounts,
     activeEmbeddedAddress,
+    chainType,
     updateEmbeddedAccounts,
     setActiveEmbeddedAddress,
     setWalletStatus,
@@ -487,6 +478,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       cancelled = true
     }
   }, [
+    chainType,
     isLoadingAccounts,
     state.status,
     state.activeWallet?.address,
@@ -543,9 +535,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       isConnecting: true,
       isDisconnected: false,
       isReconnecting: false,
-      isEmbedded: false,
-      isExternal: false,
-    } as EmbeddedSolanaWalletState
+    } as SolanaWalletState
   }
 
   return {
@@ -556,5 +546,5 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     ...(state.activeWallet?.address && { address: state.activeWallet.address }),
     ...(cluster && { cluster }),
     ...(solanaContext?.rpcUrl && { rpcUrl: solanaContext.rpcUrl }),
-  } as EmbeddedSolanaWalletState
+  } as SolanaWalletState
 }

@@ -43,6 +43,8 @@ import { Context } from './context'
 import { createOpenfortClient, setDefaultClient } from './core'
 
 export type OpenfortCoreContextValue = {
+  chainType: ChainTypeEnum
+  setChainType: (chainType: ChainTypeEnum) => void
   signUpGuest: () => Promise<void>
   embeddedState: EmbeddedState
   isAuthenticated: boolean
@@ -100,7 +102,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   openfortConfig,
 }) => {
   const bridge = useContext(OpenfortEthereumBridgeContext)
-  const { walletConfig, chainType, uiConfig, open, route, connector } = useOpenfort()
+  const { walletConfig, chainType, setChainType, uiConfig, open, route, connector } = useOpenfort()
 
   const bridgeConnectors = useMemo(() => {
     if (!bridge) return []
@@ -561,6 +563,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
 
   const value: OpenfortCoreContextValue = {
+    chainType,
+    setChainType,
     signUpGuest,
     embeddedState,
     isAuthenticated,

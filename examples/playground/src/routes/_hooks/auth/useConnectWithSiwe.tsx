@@ -8,8 +8,6 @@ export const Route = createFileRoute('/_hooks/auth/useConnectWithSiwe')({
 })
 
 function RouteComponent() {
-  const _connectWithSiwe = useConnectWithSiwe()
-
   return (
     <Layout>
       <HookVariable
