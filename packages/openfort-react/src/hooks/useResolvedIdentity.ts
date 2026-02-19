@@ -6,12 +6,11 @@
  */
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
-import { useQuery } from '@tanstack/react-query'
 import { createPublicClient, http } from 'viem'
 import { mainnet } from 'viem/chains'
 import { normalize } from 'viem/ens'
-
 import { useCoreContext } from '../core/CoreContext'
+import { useAsyncData } from '../shared/hooks/useAsyncData'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
 
 /**
@@ -91,12 +90,11 @@ export function useResolvedIdentity(options: UseResolvedIdentityOptions): Resolv
 
   const isEnabled = enabled && !!address && address.length > 0 && ensChainId === 1 && !!rpcUrl
 
-  const query = useQuery({
+  const { data, error, isLoading } = useAsyncData({
     queryKey: ['identity', chainType, address, ensChainId],
     queryFn: () => resolveEthereumIdentity(address, rpcUrl!),
     enabled: isEnabled,
     staleTime: 5 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
   })
 
   // Discriminated union return - status-based
@@ -104,17 +102,17 @@ export function useResolvedIdentity(options: UseResolvedIdentityOptions): Resolv
     return { status: 'idle' }
   }
 
-  if (query.isLoading || query.isPending) {
+  if (isLoading) {
     return { status: 'loading' }
   }
 
-  if (query.error) {
-    return { status: 'error', error: query.error as Error }
+  if (error) {
+    return { status: 'error', error }
   }
 
   return {
     status: 'success',
-    name: query.data?.name ?? null,
-    avatar: query.data?.avatar ?? null,
+    name: data?.name ?? null,
+    avatar: data?.avatar ?? null,
   }
 }

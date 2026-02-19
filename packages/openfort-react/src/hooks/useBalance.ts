@@ -1,9 +1,9 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { address, createSolanaRpc } from '@solana/kit'
-import { useQuery } from '@tanstack/react-query'
 import { createPublicClient, formatEther, http } from 'viem'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useCoreContext } from '../core/CoreContext'
+import { useAsyncData } from '../shared/hooks/useAsyncData'
 import { lamportsToSol } from '../solana/hooks/utils'
 import type { SolanaCluster } from '../solana/types'
 import { getDefaultEthereumRpcUrl, getDefaultSolanaRpcUrl, getNativeCurrency } from '../utils/rpc'
@@ -75,7 +75,7 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
 
   const isEnabled = enabled && !!address && address.length > 0
 
-  const query = useQuery({
+  const { data, error, isLoading, refetch } = useAsyncData({
     queryKey: ['balance', chainType, address, chainId, cluster],
     queryFn: () =>
       chainType === ChainTypeEnum.EVM
@@ -83,29 +83,27 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
         : fetchSolanaBalance(address, rpcUrl, commitment),
     enabled: isEnabled,
     refetchInterval,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 30_000,
   })
-
-  const refetch = query.refetch
 
   if (!isEnabled) {
     return { status: 'idle', refetch }
   }
 
-  if (query.isLoading || query.isPending) {
+  if (isLoading) {
     return { status: 'loading', refetch }
   }
 
-  if (query.error) {
-    return { status: 'error', error: query.error as Error, refetch }
+  if (error) {
+    return { status: 'error', error, refetch }
   }
 
   return {
     status: 'success',
-    value: query.data?.value ?? BigInt(0),
-    formatted: query.data?.formatted ?? '0',
-    symbol: query.data?.symbol ?? '',
-    decimals: query.data?.decimals ?? 18,
+    value: data?.value ?? BigInt(0),
+    formatted: data?.formatted ?? '0',
+    symbol: data?.symbol ?? '',
+    decimals: data?.decimals ?? 18,
     refetch,
   }
 }

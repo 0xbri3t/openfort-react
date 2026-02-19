@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import type { Transport } from 'viem'
 import { createWalletClient, custom, numberToHex } from 'viem'
@@ -9,6 +8,7 @@ import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { useUser } from '../../hooks/openfort/useUser'
 import { useChains } from '../../hooks/useChains'
+import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import type { OpenfortWalletConfig } from '../../types'
 import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
@@ -107,7 +107,7 @@ export const useEthereumWalletAssets = ({
     return allAssets
   }, [walletConfig?.assets, hookCustomAssets, chainId])
 
-  const { data, error, isLoading, isError, isSuccess, refetch } = useQuery({
+  const { data, error, isLoading, refetch } = useAsyncData({
     queryKey: ['wallet-assets', chainId, customAssetsToFetch, address],
     queryFn: async () => {
       if (!address || !chainId || !chain) {
@@ -206,10 +206,7 @@ export const useEthereumWalletAssets = ({
       return mergedAssets as readonly Asset[]
     },
     enabled: isConnected && !!chainId && !!chain && !!address,
-    retry: 2,
     staleTime,
-    gcTime: 5 * 60 * 1000,
-    throwOnError: false,
   })
 
   const mappedError = useMemo(() => {
@@ -225,8 +222,8 @@ export const useEthereumWalletAssets = ({
   return {
     data: data ?? null,
     isLoading,
-    isError,
-    isSuccess,
+    isError: !!error,
+    isSuccess: !!data && !error,
     isIdle: !isConnected || !chainId || !chain,
     error: mappedError,
     refetch,

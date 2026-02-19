@@ -1,8 +1,6 @@
-import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
-import { useQueryClient } from '@tanstack/react-query'
+import { AccountTypeEnum, ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
-import { queryKeys } from '../../../core/queryKeys'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
@@ -61,7 +59,6 @@ export const useConnectToWalletPostAuth = () => {
   const solanaWallet = useSolanaEmbeddedWallet()
   const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
   const { signOut } = useSignOut()
-  const queryClient = useQueryClient()
 
   const tryUseWallet = useCallback(
     async ({
@@ -88,13 +85,9 @@ export const useConnectToWalletPostAuth = () => {
           : walletConfig?.accountType === AccountTypeEnum.EOA
             ? undefined
             : AccountTypeEnum.SMART_ACCOUNT
-      const wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({
-        queryKey: queryKeys.accounts.embedded(accountType),
-        queryFn: () =>
-          client.embeddedWallet.list({
-            limit: 100,
-            accountType,
-          }),
+      const wallets = await client.embeddedWallet.list({
+        limit: 100,
+        accountType,
       })
 
       const chainWallets = wallets.filter((w) => w.chainType === chainType)
@@ -153,7 +146,7 @@ export const useConnectToWalletPostAuth = () => {
           : undefined,
       }
     },
-    [chainType, client, walletConfig, chainId, ethereumWallet, solanaWallet, signOut, queryClient]
+    [chainType, client, walletConfig, chainId, ethereumWallet, solanaWallet, signOut]
   )
 
   return {

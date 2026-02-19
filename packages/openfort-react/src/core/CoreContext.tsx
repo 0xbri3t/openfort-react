@@ -1,32 +1,16 @@
 /**
  * Core Context Provider
  *
- * Provides configuration and QueryClient to child components.
+ * Provides configuration to child components.
  * The Openfort SDK client is created by CoreOpenfortProvider (single instance).
  */
 
 import type { OpenfortSDKConfiguration } from '@openfort/openfort-js'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createContext, type PropsWithChildren, type ReactNode, useContext, useMemo } from 'react'
 import { OpenfortError, OpenfortErrorCode } from './errors'
 import type { CoreContextValue, CoreProviderConfig, OpenfortConfig } from './types'
 
 const CoreContext = createContext<CoreContextValue | null>(null)
-
-/**
- * Create a query client with Openfort-optimized defaults
- */
-function createQueryClient(): QueryClient {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 30_000, // 30 seconds
-        retry: 2,
-        refetchOnWindowFocus: false,
-      },
-    },
-  })
-}
 
 /**
  * Build SDK config shape for _sdkConfig (used by hooks). Does not create Openfort instance.
@@ -58,15 +42,7 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   }
 }
 
-export type CoreProviderProps = PropsWithChildren<
-  CoreProviderConfig & {
-    /**
-     * Custom React Query client
-     * If not provided, a default client is created
-     */
-    queryClient?: QueryClient
-  }
->
+export type CoreProviderProps = PropsWithChildren<CoreProviderConfig>
 
 /**
  * Core provider that initializes the Openfort SDK client
@@ -74,7 +50,6 @@ export type CoreProviderProps = PropsWithChildren<
  * This is the base layer of the provider hierarchy. It provides:
  * - Openfort SDK client instance
  * - Configuration access
- * - React Query client
  *
  * @example
  * ```tsx
@@ -90,9 +65,7 @@ export type CoreProviderProps = PropsWithChildren<
  * </CoreProvider>
  * ```
  */
-export function CoreProvider({ children, queryClient: externalQueryClient, ...config }: CoreProviderProps): ReactNode {
-  const queryClient = useMemo(() => externalQueryClient ?? createQueryClient(), [externalQueryClient])
-
+export function CoreProvider({ children, ...config }: CoreProviderProps): ReactNode {
   const sdkConfig = useMemo(
     () => buildSdkConfig(config),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,11 +96,7 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
     [fullConfig, config.debug]
   )
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <CoreContext.Provider value={value}>{children}</CoreContext.Provider>
-    </QueryClientProvider>
-  )
+  return <CoreContext.Provider value={value}>{children}</CoreContext.Provider>
 }
 
 /**

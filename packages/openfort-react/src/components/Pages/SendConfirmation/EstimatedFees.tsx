@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
 import type { Address } from 'viem'
 import { createPublicClient, formatUnits, http } from 'viem'
 import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
+import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { logger } from '../../../utils/logger'
 import { getDefaultEthereumRpcUrl } from '../../../utils/rpc'
 import Tooltip from '../../Common/Tooltip'
@@ -46,11 +46,8 @@ export const EstimatedFees = ({
   const { data: assets } = useEthereumWalletAssets()
   const pricePerToken = assets?.find((a) => a.type === 'native')?.metadata?.fiat?.value as number | undefined
 
-  const gas = useQuery({
+  const gas = useAsyncData({
     queryKey: ['gas-estimate', account, to, value, data, chainId],
-    enabled: enabled && !!account && !!to && !!chainId,
-    retry: true,
-    retryDelay: 1000,
     queryFn: async () => {
       if (!account || !to || !chainId) return null
       try {
@@ -72,10 +69,11 @@ export const EstimatedFees = ({
         return null
       }
     },
+    enabled: enabled && !!account && !!to && !!chainId,
   })
 
   // Handle query states
-  if (gas.status !== 'success' || !gas.data) {
+  if (!gas.data || gas.error) {
     return <>--</>
   }
 
