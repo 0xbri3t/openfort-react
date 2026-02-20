@@ -1,7 +1,8 @@
 import type { RevokePermissionsRequestParams, SessionResponse } from '@openfort/openfort-js'
+import { getWalletClient } from '@wagmi/core'
 import { useCallback, useState } from 'react'
 import type { Hex } from 'viem'
-import { useChainId, useWalletClient } from 'wagmi'
+import { useChainId, useConfig } from 'wagmi'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
 import { useChains } from '../useChains'
@@ -60,10 +61,10 @@ type RevokePermissionsHookOptions = OpenfortHookOptions<RevokePermissionsHookRes
 export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions = {}) => {
   const chains = useChains()
   const chainId = useChainId()
+  const config = useConfig()
   const [status, setStatus] = useState<BaseFlowState>({
     status: 'idle',
   })
-  const { data: walletClient } = useWalletClient()
   const [data, setData] = useState<RevokePermissionsResult | null>(null)
   const revokePermissions = useCallback(
     async (
@@ -71,6 +72,7 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
       options: RevokePermissionsHookOptions = {}
     ): Promise<RevokePermissionsHookResult> => {
       try {
+        const walletClient = await getWalletClient(config).catch(() => null)
         if (!walletClient) {
           throw new OpenfortError('Wallet client not available', OpenfortReactErrorType.WALLET_ERROR)
         }
@@ -132,7 +134,7 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
         })
       }
     },
-    [chains, chainId, setStatus, hookOptions]
+    [chains, chainId, config, setStatus, hookOptions]
   )
 
   return {
