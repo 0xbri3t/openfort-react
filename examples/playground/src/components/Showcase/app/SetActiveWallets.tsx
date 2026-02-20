@@ -1,7 +1,16 @@
 import { AccountTypeEnum, RecoveryMethod, type RecoveryParams, type UserWallet, useWallets } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
-import { ChevronLeftIcon, CornerDownRightIcon, EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon, WalletIcon } from 'lucide-react'
+import {
+  ChevronLeftIcon,
+  CornerDownRightIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FingerprintIcon,
+  KeyIcon,
+  LockIcon,
+  WalletIcon,
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -310,24 +319,24 @@ const WalletButton = ({ wallet, nested }: { wallet: UserWallet; nested?: boolean
       >
         {wallet.id}
         {wallet.isConnecting && (
-        <MP
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{
-            opacity: 0.8,
-            scale: 0.95,
-          }}
-        >
-          Connecting...
-        </MP>
-      )}
-      <div className="flex items-center gap-2">
-        <AccountTypeBadge accountType={wallet.accountType} />
-        {wallet.address && (
-          <span className="text-xs">
-            {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-          </span>
+          <MP
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{
+              opacity: 0.8,
+              scale: 0.95,
+            }}
+          >
+            Connecting...
+          </MP>
         )}
-        <WalletRecoveryIcon recovery={wallet.recoveryMethod} />
+        <div className="flex items-center gap-2">
+          <AccountTypeBadge accountType={wallet.accountType} />
+          {wallet.address && (
+            <span className="text-xs">
+              {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+            </span>
+          )}
+          <WalletRecoveryIcon recovery={wallet.recoveryMethod} />
         </div>
       </button>
     </div>
@@ -401,12 +410,7 @@ export const SetActiveWalletsCard = () => {
               <div key={wallet.id} className="space-y-1">
                 <WalletTooltipItem wallet={wallet} index={walletIndex} />
                 {children?.map((child) => (
-                  <WalletTooltipItem
-                    key={child.id}
-                    wallet={child}
-                    index={wallets.indexOf(child)}
-                    nested
-                  />
+                  <WalletTooltipItem key={child.id} wallet={child} index={wallets.indexOf(child)} nested />
                 ))}
               </div>
             )
