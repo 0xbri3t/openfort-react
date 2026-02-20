@@ -319,7 +319,7 @@ export type PhoneConfig = {
 }
 
 export type ConnectUIOptions = {
-  /** App name (e.g. for WalletConnect og:title). When using getDefaultConfig from @openfort/wagmi, pass the same appName here for consistency. */
+  /** App name (e.g. for WalletConnect og:title). When using getDefaultConfig from @openfort/react/wagmi, pass the same appName here for consistency. */
   appName?: string
   theme?: Theme
   mode?: Mode

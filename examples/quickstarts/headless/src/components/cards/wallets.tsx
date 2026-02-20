@@ -93,7 +93,7 @@ export const Wallets = () => {
       <div className="space-y-4 pb-4">
         <h2>Your Wallets</h2>
         <div className="flex flex-col space-y-2">
-          {wallets.map((wallet) => {
+          {wallets.map((wallet: ConnectedEmbeddedEthereumWallet) => {
             const isActive =
               activeWallet?.address.toLowerCase() === wallet.address.toLowerCase()
             return (
@@ -103,6 +103,7 @@ export const Wallets = () => {
                 onClick={() => handleWalletClick(wallet)}
                 data-active={isActive}
                 disabled={isActive || isConnecting}
+                type="button"
               >
                 {isConnecting && isActive ? (
                   <p>Connecting...</p>
@@ -121,6 +122,7 @@ export const Wallets = () => {
           <button
             className="p-3 border border-zinc-700 rounded cursor-pointer hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1"
             onClick={() => setCreateWalletSheetOpen(true)}
+            type="button"
           >
             + Create Wallet
           </button>
