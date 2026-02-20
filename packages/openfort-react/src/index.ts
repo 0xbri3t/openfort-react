@@ -34,7 +34,7 @@
  * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` |
  * | Send ETH / write contract / get balance (EVM) | Use `wagmi` or `viem` directly |
  * | Get SOL balance / sign message / send SOL (Solana) | Use `@solana/kit` with embedded wallet provider |
- * | Connect/link wallet (SIWE) + list wallets | `useWalletAuth()` (from `@openfort/wagmi`) |
+ * | Connect/link wallet (SIWE) + list wallets | `useWalletAuth()` (from `@openfort/react/wagmi`) |
  * | Grant session key permissions | `useGrantPermissions()` |
  * | Revoke session key permissions | `useRevokePermissions()` |
  */
