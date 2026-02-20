@@ -22,6 +22,10 @@
     "./ethereum": {
       "types": "./build/ethereum/index.d.ts",
       "import": "./build/ethereum/index.es.js"
+    },
+    "./wagmi": {
+      "types": "./build/wagmi/wagmi/index.d.ts",
+      "import": "./build/wagmi/index.es.js"
     }
   },
   "types": "./build/index.d.ts",
@@ -32,6 +36,9 @@
       ],
       "ethereum": [
         "./build/ethereum/index.d.ts"
+      ],
+      "wagmi": [
+        "./build/wagmi/wagmi/index.d.ts"
       ]
     }
   },
@@ -82,7 +89,9 @@
     "react": "17.x || 18.x || 19.x",
     "react-dom": "17.x || 18.x || 19.x",
     "styled-components": "^5.3.5",
-    "viem": "2.x"
+    "viem": "2.x",
+    "wagmi": "2.x",
+    "@tanstack/react-query": "5.x"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
@@ -97,5 +106,13 @@
     "typescript": "^5.0.4",
     "typescript-plugin-styled-components": "^2.0.0",
     "vitest": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "wagmi": {
+      "optional": true
+    },
+    "@tanstack/react-query": {
+      "optional": true
+    }
   }
 }

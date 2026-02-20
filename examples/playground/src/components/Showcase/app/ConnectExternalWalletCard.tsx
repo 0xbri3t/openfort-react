@@ -4,7 +4,7 @@ import {
   RecoveryMethod,
   useEthereumBridge,
 } from '@openfort/react'
-import { useWalletAuth } from '@openfort/wagmi'
+import { useWalletAuth } from '@openfort/react/wagmi'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
 import { EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon } from 'lucide-react'
@@ -188,7 +188,7 @@ const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => 
         <TooltipContent>
           <h3 className="text-base mb-1">useEthereumEmbeddedWallet</h3>
           Create a new wallet using
-          <Link to="/wallet/useWallets" search={{ focus: 'create' }} className="px-1 group">
+          <Link to="/wallet/useEthereumEmbeddedWallet" search={{ focus: 'create' }} className="px-1 group">
             create
           </Link>
           .
@@ -452,7 +452,7 @@ export const ConnectExternalWalletCard = () => {
                       ) : (
                         <p className="text-xs opacity-70">
                           Click to set active. (
-                          <Link to="/wallet/useWallets" search={{ focus: 'setActive' }}>
+                          <Link to="/wallet/useEthereumEmbeddedWallet" search={{ focus: 'setActive' }}>
                             setActive
                           </Link>
                           )

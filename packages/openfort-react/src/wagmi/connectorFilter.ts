@@ -1,11 +1,7 @@
-import { embeddedWalletId } from '@openfort/react'
+import { embeddedWalletId } from '../constants/openfort'
 
 type ConnectorLike = { id: string; name?: string }
 
-/**
- * Excludes connectors from the external wallet list (Openfort only; dedup MetaMask/Coinbase).
- * Internal to @openfort/wagmi — not part of the public API.
- */
 export function shouldExcludeConnector(connector: ConnectorLike, allConnectors: ConnectorLike[]): boolean {
   const { id, name } = connector
   const has = (ids: string[]) => allConnectors.some((w) => ids.includes(w.id))

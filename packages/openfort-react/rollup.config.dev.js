@@ -71,4 +71,16 @@ export default [
     ],
     plugins: [peerDepsExternal(), createTypescriptPlugin('build/ethereum')],
   },
+  {
+    input: './src/wagmi/index.ts',
+    external: [...sharedExternal, '@openfort/react'],
+    output: [
+      {
+        file: packageJson.exports['./wagmi'].import,
+        format: 'esm',
+        sourcemap: false,
+      },
+    ],
+    plugins: [peerDepsExternal(), createTypescriptPlugin('build/wagmi')],
+  },
 ]

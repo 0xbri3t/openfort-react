@@ -8,7 +8,7 @@
  */
 
 import { OpenfortProvider } from '@openfort/react'
-import { getDefaultConfig, getDefaultConnectors, OpenfortWagmiBridge } from '@openfort/wagmi'
+import { getDefaultConfig, getDefaultConnectors, OpenfortWagmiBridge } from '@openfort/react/wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type React from 'react'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'

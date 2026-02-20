@@ -1,12 +1,10 @@
-/**
- * Connect/link external wallets via SIWE. Wagmi-only; use from @openfort/wagmi.
- */
-
-import { createSIWEMessage, embeddedWalletId, OpenfortError, useEthereumBridge, useOpenfort } from '@openfort/react'
-import type { OpenfortEthereumBridgeConnector } from '@openfort/react/ethereum'
 import { useCallback, useMemo } from 'react'
+import { embeddedWalletId } from '../constants/openfort'
+import { OpenfortError } from '../core/errors'
+import { type OpenfortEthereumBridgeConnector, useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
+import { useOpenfortCore } from '../openfort/useOpenfort'
+import { createSIWEMessage } from '../siwe/create-siwe-message'
 
-/** Wallet option for UI (id, name, icon, connector). */
 export interface AvailableWallet {
   id: string
   name: string
@@ -14,14 +12,14 @@ export interface AvailableWallet {
   connector: OpenfortEthereumBridgeConnector
 }
 
-export interface WalletAuthCallbacks {
+interface WalletAuthCallbacks {
   onConnect?: () => void
   onError?: (error: string, openfortError?: OpenfortError) => void
 }
 
 function runConnectWithSiwe(
   bridge: NonNullable<ReturnType<typeof useEthereumBridge>>,
-  openfort: ReturnType<typeof useOpenfort>,
+  openfort: ReturnType<typeof useOpenfortCore>,
   params: {
     address?: `0x${string}`
     connectorType?: string
@@ -106,7 +104,7 @@ function runConnectWithSiwe(
 
 export function useWalletAuth() {
   const bridge = useEthereumBridge()
-  const openfort = useOpenfort()
+  const openfort = useOpenfortCore()
 
   const availableWallets = useMemo((): AvailableWallet[] => {
     if (!bridge?.connectors?.length) return []
