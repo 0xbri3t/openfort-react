@@ -10,6 +10,7 @@ import {
 } from '@solana/kit'
 import { useCallback, useState } from 'react'
 import { OpenfortError } from '../../../core/errors'
+import { invalidateBalance } from '../../../hooks/useBalance'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
 import { FEE_LAMPORTS, LAMPORTS_PER_SOL, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
@@ -145,6 +146,7 @@ export function SolanaSend() {
         if ((signature as any)?.value ?? signature) {
           setTxStatus('confirmed')
           refetchBalance()
+          invalidateBalance()
         } else {
           setTxStatus('error')
           setErrorMessage('Transaction failed')

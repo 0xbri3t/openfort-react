@@ -9,6 +9,7 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import type React from 'react'
 import { useEffect } from 'react'
 import { ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
+import { BALANCE_INVALIDATE_EVENT } from '../../../hooks/useBalance'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
@@ -77,6 +78,13 @@ const SolanaConnected: React.FC = () => {
     },
     enabled: Boolean(address && rpcUrl),
   })
+
+  useEffect(() => {
+    if (!address || !rpcUrl) return
+    const handler = () => balanceResult.refetch().catch(() => {})
+    window.addEventListener(BALANCE_INVALIDATE_EVENT, handler)
+    return () => window.removeEventListener(BALANCE_INVALIDATE_EVENT, handler)
+  }, [address, rpcUrl, balanceResult.refetch])
 
   const balance = balanceResult.data
   const isBalanceLoading = balanceResult.isLoading

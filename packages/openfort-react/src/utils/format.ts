@@ -11,7 +11,7 @@ const EVM_TRUNCATE_REGEX = /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/
 /**
  * Format EVM address: 0x1234...abcd
  */
-export function formatEVMAddress(address: string): string {
+function formatEVMAddress(address: string): string {
   if (!address || address.length < 10) return address
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
@@ -19,7 +19,7 @@ export function formatEVMAddress(address: string): string {
 /**
  * Format Solana address: ABC1...XYZ9
  */
-export function formatSolanaAddress(address: string): string {
+function formatSolanaAddress(address: string): string {
   if (!address || address.length < 8) return address
   return `${address.slice(0, 4)}...${address.slice(-4)}`
 }
@@ -59,7 +59,7 @@ export function formatAddress(address: string, chainType: ChainTypeEnum): string
 /**
  * Format balance with specified decimals
  */
-export function formatBalance(value: bigint, decimals: number, maxDecimals = 4): string {
+function formatBalance(value: bigint, decimals: number, maxDecimals = 4): string {
   const divisor = BigInt(10 ** decimals)
   const integerPart = value / divisor
   const fractionalPart = value % divisor
@@ -76,13 +76,13 @@ export function formatBalance(value: bigint, decimals: number, maxDecimals = 4):
 /**
  * Format ETH balance (18 decimals)
  */
-export function formatEther(value: bigint, maxDecimals = 4): string {
+function _formatEther(value: bigint, maxDecimals = 4): string {
   return formatBalance(value, 18, maxDecimals)
 }
 
 /**
  * Format SOL balance (9 decimals)
  */
-export function formatSol(value: bigint, maxDecimals = 4): string {
+function _formatSol(value: bigint, maxDecimals = 4): string {
   return formatBalance(value, 9, maxDecimals)
 }

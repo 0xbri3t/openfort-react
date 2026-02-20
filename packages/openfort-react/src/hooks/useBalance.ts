@@ -1,5 +1,6 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { address, createSolanaRpc } from '@solana/kit'
+import { useEffect } from 'react'
 import { createPublicClient, formatEther, http } from 'viem'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useCoreContext } from '../core/CoreContext'
@@ -7,6 +8,16 @@ import { useAsyncData } from '../shared/hooks/useAsyncData'
 import { lamportsToSol } from '../solana/hooks/utils'
 import type { SolanaCluster } from '../solana/types'
 import { getDefaultEthereumRpcUrl, getDefaultSolanaRpcUrl, getNativeCurrency } from '../utils/rpc'
+
+/** Event name for balance invalidation. Call invalidateBalance() after balance-changing txs. */
+export const BALANCE_INVALIDATE_EVENT = 'openfort:balance-invalidate'
+
+/** Dispatches balance invalidation so all useBalance instances refetch. Call after mint/send. */
+export function invalidateBalance(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(BALANCE_INVALIDATE_EVENT))
+  }
+}
 
 export type BalanceState =
   | { status: 'idle'; refetch: () => void }
@@ -85,6 +96,13 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
     refetchInterval,
     staleTime: 30_000,
   })
+
+  useEffect(() => {
+    if (!isEnabled) return
+    const handler = () => refetch().catch(() => {})
+    window.addEventListener(BALANCE_INVALIDATE_EVENT, handler)
+    return () => window.removeEventListener(BALANCE_INVALIDATE_EVENT, handler)
+  }, [isEnabled, refetch])
 
   if (!isEnabled) {
     return { status: 'idle', refetch }

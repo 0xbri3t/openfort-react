@@ -31,6 +31,6 @@ const EVM_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/
 /**
  * Validates an EVM address (0x-prefixed 40 hex characters).
  */
-export function isValidEvmAddress(address: string): boolean {
+function _isValidEvmAddress(address: string): boolean {
   return typeof address === 'string' && EVM_ADDRESS_REGEX.test(address)
 }

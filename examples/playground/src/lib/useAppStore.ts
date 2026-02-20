@@ -99,10 +99,9 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
   },
   thirdPartyAuth: undefined,
   debugMode: {
-    openfortReactDebugMode: true,
-    openfortCoreDebugMode: true,
-    shieldDebugMode: true,
-    // debugRoutes: true,
+    openfortReactDebugMode: false,
+    openfortCoreDebugMode: false,
+    shieldDebugMode: false,
   },
 }
 
