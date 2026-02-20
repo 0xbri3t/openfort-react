@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useActiveEmbeddedWallet } from '@/hooks/useActiveEmbeddedWallet'
+import { useActiveEthereumEmbeddedWallet } from '@/hooks/useActiveEthereumEmbeddedWallet'
 import { cn } from '@/lib/cn'
 
 const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
@@ -266,8 +266,8 @@ const WalletButton = ({
   )
 }
 
-export const SetActiveWalletsCard = () => {
-  const { ethereum, activeWallet, connectingAddress } = useActiveEmbeddedWallet()
+export const SetActiveWalletsCardEthereum = () => {
+  const { ethereum, activeWallet, connectingAddress } = useActiveEthereumEmbeddedWallet()
   const wallets = ethereum.wallets
 
   return (

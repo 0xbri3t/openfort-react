@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useActiveEmbeddedWallet } from '@/hooks/useActiveEmbeddedWallet'
+import { useActiveEthereumEmbeddedWallet } from '@/hooks/useActiveEthereumEmbeddedWallet'
 import { cn } from '@/lib/cn'
 
 const FALLBACK_CONNECTOR_ICONS: Record<string, React.ReactNode> = {
@@ -339,7 +339,7 @@ const EmbeddedWalletButton = ({
  */
 export const ConnectExternalWalletCard = () => {
   const bridge = useEthereumBridge()
-  const { ethereum, activeWallet, connectingAddress } = useActiveEmbeddedWallet()
+  const { ethereum, activeWallet, connectingAddress } = useActiveEthereumEmbeddedWallet()
   const { availableWallets: externalConnectors } = useWalletAuth()
 
   const embeddedWallets = ethereum.wallets

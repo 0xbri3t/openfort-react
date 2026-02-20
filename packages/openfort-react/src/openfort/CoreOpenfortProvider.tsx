@@ -280,9 +280,11 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   // Embedded accounts list. Will reset on logout.
   const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[] | undefined>(undefined)
   const [isAccountsPending, setAccountsPending] = useState(false)
+  const fetchSeqRef = useRef(0)
 
   const fetchEmbeddedAccounts = useCallback(
     async (options?: { silent?: boolean }) => {
+      const seq = ++fetchSeqRef.current
       if (options?.silent) setSilentRefetchInProgress(true)
       setAccountsPending(true)
       try {
@@ -290,14 +292,18 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
           limit: 100,
           accountType: embeddedAccountsAccountType,
         })
-        setEmbeddedAccounts(accounts)
+        if (seq === fetchSeqRef.current) {
+          setEmbeddedAccounts(accounts)
+        }
         return accounts
       } catch (error: unknown) {
         handleOAuthConfigError(error)
         throw error
       } finally {
-        setAccountsPending(false)
-        if (options?.silent) setSilentRefetchInProgress(false)
+        if (seq === fetchSeqRef.current) {
+          setAccountsPending(false)
+          if (options?.silent) setSilentRefetchInProgress(false)
+        }
       }
     },
     [openfort, embeddedAccountsAccountType]

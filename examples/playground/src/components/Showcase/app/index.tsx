@@ -12,7 +12,7 @@ import { CreateSessionKeyCardSolana } from '@/components/Showcase/app/CreateSess
 import { MintTokensCard } from '@/components/Showcase/app/MintTokensCard'
 import { SessionKeysCard } from '@/components/Showcase/app/SessionKeys'
 import { SessionKeysCardEVM } from '@/components/Showcase/app/SessionKeysCardEVM'
-import { SetActiveWalletsCard } from '@/components/Showcase/app/SetActiveWallets'
+import { SetActiveWalletsCardEthereum } from '@/components/Showcase/app/SetActiveWallets'
 import { SetActiveWalletsCardSolana } from '@/components/Showcase/app/SetActiveWalletsCardSolana'
 import { SignaturesCard } from '@/components/Showcase/app/Signatures'
 import { SignaturesCardEVM } from '@/components/Showcase/app/SignaturesCardEVM'
@@ -152,7 +152,7 @@ export const App = () => {
             />
           </>
         )}
-        {!isSVM && !hasWagmi && <SetActiveWalletsCard />}
+        {!isSVM && !hasWagmi && <SetActiveWalletsCardEthereum />}
       </div>
     </div>
   )

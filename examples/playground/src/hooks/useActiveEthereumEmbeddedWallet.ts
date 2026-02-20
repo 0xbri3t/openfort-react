@@ -11,7 +11,11 @@ import { type EthereumWalletState, useEthereumEmbeddedWallet, useOpenfort } from
 
 type EmbeddedWallet = EthereumWalletState['wallets'][number]
 
-export function useActiveEmbeddedWallet() {
+export function useActiveEthereumEmbeddedWallet(): {
+  ethereum: EthereumWalletState
+  activeWallet: EmbeddedWallet | null
+  connectingAddress: string | undefined
+} {
   const core = useOpenfort()
   const embedded = useEthereumEmbeddedWallet()
 

@@ -1,5 +1,4 @@
-import { ChainTypeEnum, OpenfortButton, useChain, useEthereumBridge } from '@openfort/react'
-import { useQueryClient } from '@tanstack/react-query'
+import { ChainTypeEnum, OpenfortButton, useChain, useEthereumBridge, useOpenfort } from '@openfort/react'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
@@ -12,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAutoConnectOnModeSwitch } from '@/hooks/useAutoConnectOnModeSwitch'
 import { navRoutes } from '@/lib/navRoute'
 import type { OpenfortPlaygroundMode } from '@/providers'
-import { usePlaygroundMode } from '@/providers'
+import { useModeSwitchContext, usePlaygroundMode } from '@/providers'
 import type { FileRoutesByTo } from '../routeTree.gen'
 
 const MODE_LABELS: Record<OpenfortPlaygroundMode, string> = {
@@ -46,8 +45,11 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const path = location.pathname.includes('showcase') ? '/' : location.pathname
   const { mode, setMode } = usePlaygroundMode()
   const { setChainType } = useChain()
-  const queryClient = useQueryClient()
+  const { onBeforeModeSwitch } = useModeSwitchContext()
   const bridge = useEthereumBridge()
+  const { isLoading: isAuthLoading } = useOpenfort()
+  const { isPostModeSwitch } = usePlaygroundMode()
+  const showRestoringSession = isPostModeSwitch && isAuthLoading
 
   const handleModeSwitch = useCallback(
     async (next: OpenfortPlaygroundMode) => {
@@ -55,11 +57,11 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
       if (next === 'solana-only' && bridge) {
         await bridge.disconnect()
       }
-      queryClient.clear()
+      onBeforeModeSwitch?.()
       setChainType(MODE_TO_CHAIN[next])
       setMode(next)
     },
-    [mode, queryClient, setChainType, setMode, bridge]
+    [mode, onBeforeModeSwitch, setChainType, setMode, bridge]
   )
 
   useAutoConnectOnModeSwitch(mode)
@@ -161,7 +163,10 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
             <ModeToggle className="scale-110" />
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>
-                <div className="">
+                <div
+                  className={showRestoringSession ? 'pointer-events-none opacity-60' : ''}
+                  title={showRestoringSession ? 'Restoring session…' : undefined}
+                >
                   <OpenfortButton />
                 </div>
               </TooltipTrigger>

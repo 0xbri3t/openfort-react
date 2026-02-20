@@ -25,20 +25,22 @@ export function useAutoConnectOnModeSwitch(mode: OpenfortPlaygroundMode) {
   const solanaWallet = useSolanaEmbeddedWallet()
   const prevModeRef = useRef<OpenfortPlaygroundMode | null>(null)
   const hasRunForModeRef = useRef<OpenfortPlaygroundMode | null>(null)
+  const seenLoadingForModeRef = useRef<OpenfortPlaygroundMode | null>(null)
 
   useEffect(() => {
     if (!user) return
 
     const prevMode = prevModeRef.current
 
-    // Skip only when already in sync (prevMode === mode). On initial mount (prevMode === null)
-    // we DO want to run to connect to the current mode's wallet.
     if (prevMode === mode) return
 
-    // Wait for accounts to load before deciding setActive vs create
-    if (isLoadingAccounts) return
+    if (isLoadingAccounts) {
+      seenLoadingForModeRef.current = mode
+      return
+    }
 
-    // Avoid running twice for the same mode switch
+    if (prevMode !== null && seenLoadingForModeRef.current !== mode) return
+
     if (hasRunForModeRef.current === mode) return
     hasRunForModeRef.current = mode
     prevModeRef.current = mode

@@ -1,15 +1,10 @@
 /**
- * Unified provider tree for the Openfort playground.
+ * Dynamic provider tree for the Openfort playground.
  *
- * Supports all chains (EVM + Solana) in a single app. Mode switching only changes
- * which chain UI is shown; the provider tree stays the same to avoid remounts.
+ * - evm-wagmi: ThemeProvider → QueryClientProvider → WagmiProvider → OpenfortWagmiBridge → OpenfortProvider
+ * - evm-only / solana-only: ThemeProvider → OpenfortProvider (no wagmi, no TanStack Query)
  *
- * Provider order (outer → inner):
- *   ThemeProvider → QueryClientProvider → WagmiProvider → OpenfortWagmiBridge → OpenfortProvider → children
- *
- * - WagmiProvider: Required for wagmi hooks (useConfig, useAccount, etc.)
- * - OpenfortWagmiBridge: Connects wagmi to Openfort; provides external wallet connectors
- * - OpenfortProvider: Auth, embedded wallets, connect modal
+ * Switching modes remounts the provider tree; wagmi/tanstack state is lost when leaving evm-wagmi.
  */
 
 import { OpenfortProvider } from '@openfort/react'
@@ -36,17 +31,31 @@ function readStoredMode(): OpenfortPlaygroundMode {
 type PlaygroundModeContextValue = {
   mode: OpenfortPlaygroundMode
   setMode: (mode: OpenfortPlaygroundMode) => void
+  /** True right after a mode switch; used to show "Restoring session" only during remount, not during signup/login. */
+  isPostModeSwitch: boolean
+  clearPostModeSwitch: () => void
 }
 
 const PlaygroundModeContext = createContext<PlaygroundModeContextValue | null>(null)
 
 export function PlaygroundModeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<OpenfortPlaygroundMode>(readStoredMode)
+  const [isPostModeSwitch, setIsPostModeSwitch] = useState(false)
+
   const setMode = useCallback((next: OpenfortPlaygroundMode) => {
-    setModeState(next)
+    setModeState((prev) => {
+      if (prev !== next) setIsPostModeSwitch(true)
+      return next
+    })
     localStorage.setItem(STORAGE_KEY, next)
   }, [])
-  const value = useMemo(() => ({ mode, setMode }), [mode, setMode])
+
+  const clearPostModeSwitch = useCallback(() => setIsPostModeSwitch(false), [])
+
+  const value = useMemo(
+    () => ({ mode, setMode, isPostModeSwitch, clearPostModeSwitch }),
+    [mode, setMode, isPostModeSwitch, clearPostModeSwitch]
+  )
   return <PlaygroundModeContext.Provider value={value}>{children}</PlaygroundModeContext.Provider>
 }
 
@@ -55,6 +64,10 @@ export function usePlaygroundMode(): PlaygroundModeContextValue {
   if (!ctx) throw new Error('usePlaygroundMode must be used within PlaygroundModeProvider')
   return ctx
 }
+
+/** Optional: called before mode switch when in evm-wagmi (e.g. to clear wagmi cache). */
+const ModeSwitchContext = createContext<{ onBeforeModeSwitch?: () => void }>({})
+export const useModeSwitchContext = () => useContext(ModeSwitchContext)
 
 // ─── Wagmi config (shared across all modes) ─────────────────────────────────
 
@@ -84,12 +97,12 @@ const wagmiConfig = createConfig(
 
 // ─── Providers ─────────────────────────────────────────────────────────────
 
-export function Providers({ children }: { children?: React.ReactNode }) {
-  const { providerOptions } = useAppStore()
+function WagmiProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
-
+  const { providerOptions } = useAppStore()
+  const value = useMemo(() => ({ onBeforeModeSwitch: () => queryClient.clear() }), [queryClient])
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ModeSwitchContext.Provider value={value}>
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
           <OpenfortWagmiBridge>
@@ -97,6 +110,29 @@ export function Providers({ children }: { children?: React.ReactNode }) {
           </OpenfortWagmiBridge>
         </WagmiProvider>
       </QueryClientProvider>
+    </ModeSwitchContext.Provider>
+  )
+}
+
+function OpenfortOnlyProviders({ children }: { children: React.ReactNode }) {
+  const { providerOptions } = useAppStore()
+  return (
+    <ModeSwitchContext.Provider value={{}}>
+      <OpenfortProvider {...providerOptions}>{children}</OpenfortProvider>
+    </ModeSwitchContext.Provider>
+  )
+}
+
+export function Providers({ children }: { children?: React.ReactNode }) {
+  const { mode } = usePlaygroundMode()
+
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      {mode === 'evm-wagmi' ? (
+        <WagmiProviders>{children}</WagmiProviders>
+      ) : (
+        <OpenfortOnlyProviders>{children}</OpenfortOnlyProviders>
+      )}
     </ThemeProvider>
   )
 }
