@@ -63,8 +63,8 @@ export type SolanaUIOptions = {
 export type SolanaConfig = {
   /** Solana cluster to connect to */
   cluster: SolanaCluster
-  /** Custom RPC URL (optional, defaults to public RPC) */
-  rpcUrl?: string
+  /** RPC URLs per cluster (mirrors ethereum.rpcUrls) */
+  rpcUrls?: Partial<Record<'mainnet-beta' | 'devnet' | 'testnet', string>>
   /** Commitment level for transactions (default: 'confirmed') */
   commitment?: SolanaCommitment
   /** Custom cluster options for the cluster switcher */
@@ -249,7 +249,7 @@ export interface SolanaWalletActions {
   exportPrivateKey(): Promise<string>
 }
 
-export type EmbeddedSolanaWalletStateBase =
+export type SolanaWalletStateBase =
   | (SolanaWalletActions & {
       status: 'disconnected'
       activeWallet: null
@@ -327,14 +327,10 @@ export type SolanaConnectedWalletState = {
   isDisconnected: boolean
   /** True when reconnecting after loss of connection. */
   isReconnecting: boolean
-  /** True when the connected wallet is an Openfort embedded wallet (always true for Solana). */
-  isEmbedded: boolean
-  /** True when the connected wallet is an external wallet (always false for Solana). */
-  isExternal: boolean
 }
 
 /** Derived booleans and config for consistent hook shape. All variants include these. */
-export type EmbeddedSolanaWalletDerived = {
+export type SolanaWalletDerived = {
   /** True when status is fetching-wallets, connecting, creating, or reconnecting. */
   isLoading: boolean
   /** True when status is 'error'. */
@@ -345,9 +341,7 @@ export type EmbeddedSolanaWalletDerived = {
   rpcUrl?: string
 }
 
-export type EmbeddedSolanaWalletState = EmbeddedSolanaWalletStateBase &
-  EmbeddedSolanaWalletDerived &
-  SolanaConnectedWalletState
+export type SolanaWalletState = SolanaWalletStateBase & SolanaWalletDerived & SolanaConnectedWalletState
 
 /**
  * Options for useSolanaEmbeddedWallet hook

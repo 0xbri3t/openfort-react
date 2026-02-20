@@ -7,11 +7,15 @@
  * state instances exist and the connecting status won't propagate.
  */
 
-import { type EmbeddedEthereumWalletState, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { type EthereumWalletState, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 
-type EmbeddedWallet = EmbeddedEthereumWalletState['wallets'][number]
+type EmbeddedWallet = EthereumWalletState['wallets'][number]
 
-export function useActiveEmbeddedWallet() {
+export function useActiveEthereumEmbeddedWallet(): {
+  ethereum: EthereumWalletState
+  activeWallet: EmbeddedWallet | null
+  connectingAddress: string | undefined
+} {
   const core = useOpenfort()
   const embedded = useEthereumEmbeddedWallet()
 

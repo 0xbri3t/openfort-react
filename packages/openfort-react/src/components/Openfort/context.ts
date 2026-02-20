@@ -25,6 +25,7 @@ type Connector =
 
 export type ContextValue = {
   chainType: ChainTypeEnum
+  setChainType: (chainType: ChainTypeEnum) => void
   setTheme: React.Dispatch<React.SetStateAction<Theme>>
   mode: Mode
   setMode: React.Dispatch<React.SetStateAction<Mode>>

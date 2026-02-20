@@ -1,12 +1,11 @@
 /**
  * Core Context Provider
  *
- * Provides the Openfort SDK client and configuration to all child components.
- * This is the foundation layer - no wagmi, no auth state, just the client.
+ * Provides configuration to child components.
+ * The Openfort SDK client is created by CoreOpenfortProvider (single instance).
  */
 
-import { Openfort, type OpenfortSDKConfiguration } from '@openfort/openfort-js'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { OpenfortSDKConfiguration } from '@openfort/openfort-js'
 import { createContext, type PropsWithChildren, type ReactNode, useContext, useMemo } from 'react'
 import { OpenfortError, OpenfortErrorCode } from './errors'
 import type { CoreContextValue, CoreProviderConfig, OpenfortConfig } from './types'
@@ -14,22 +13,7 @@ import type { CoreContextValue, CoreProviderConfig, OpenfortConfig } from './typ
 const CoreContext = createContext<CoreContextValue | null>(null)
 
 /**
- * Create a query client with Openfort-optimized defaults
- */
-function createQueryClient(): QueryClient {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 30_000, // 30 seconds
-        retry: 2,
-        refetchOnWindowFocus: false,
-      },
-    },
-  })
-}
-
-/**
- * Transform user config into full SDK configuration
+ * Build SDK config shape for _sdkConfig (used by hooks). Does not create Openfort instance.
  */
 function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   if (!config.publishableKey) {
@@ -42,7 +26,6 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   const shieldConfiguration = config.shieldPublishableKey
     ? {
         shieldPublishableKey: config.shieldPublishableKey,
-        // Default passkey config for browser environment
         ...(typeof window !== 'undefined' && window.location
           ? {
               passkeyRpId: window.location.hostname,
@@ -53,23 +36,13 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
     : undefined
 
   return {
-    baseConfiguration: {
-      publishableKey: config.publishableKey,
-    },
+    baseConfiguration: { publishableKey: config.publishableKey },
     shieldConfiguration,
     debug: config.debug,
   }
 }
 
-export type CoreProviderProps = PropsWithChildren<
-  CoreProviderConfig & {
-    /**
-     * Custom React Query client
-     * If not provided, a default client is created
-     */
-    queryClient?: QueryClient
-  }
->
+export type CoreProviderProps = PropsWithChildren<CoreProviderConfig>
 
 /**
  * Core provider that initializes the Openfort SDK client
@@ -77,7 +50,6 @@ export type CoreProviderProps = PropsWithChildren<
  * This is the base layer of the provider hierarchy. It provides:
  * - Openfort SDK client instance
  * - Configuration access
- * - React Query client
  *
  * @example
  * ```tsx
@@ -93,19 +65,12 @@ export type CoreProviderProps = PropsWithChildren<
  * </CoreProvider>
  * ```
  */
-export function CoreProvider({ children, queryClient: externalQueryClient, ...config }: CoreProviderProps): ReactNode {
-  const queryClient = useMemo(() => externalQueryClient ?? createQueryClient(), [externalQueryClient])
-
+export function CoreProvider({ children, ...config }: CoreProviderProps): ReactNode {
   const sdkConfig = useMemo(
     () => buildSdkConfig(config),
-    // Only rebuild if these specific config values change
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [config.publishableKey, config.shieldPublishableKey, config.debug]
   )
-
-  const client = useMemo(() => {
-    return new Openfort(sdkConfig)
-  }, [sdkConfig])
 
   const fullConfig: OpenfortConfig = useMemo(
     () => ({
@@ -125,18 +90,13 @@ export function CoreProvider({ children, queryClient: externalQueryClient, ...co
 
   const value: CoreContextValue = useMemo(
     () => ({
-      client,
       config: fullConfig,
       debug: config.debug ?? false,
     }),
-    [client, fullConfig, config.debug]
+    [fullConfig, config.debug]
   )
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <CoreContext.Provider value={value}>{children}</CoreContext.Provider>
-    </QueryClientProvider>
-  )
+  return <CoreContext.Provider value={value}>{children}</CoreContext.Provider>
 }
 
 /**

@@ -12,7 +12,7 @@ import { CreateSessionKeyCardSolana } from '@/components/Showcase/app/CreateSess
 import { MintTokensCard } from '@/components/Showcase/app/MintTokensCard'
 import { SessionKeysCard } from '@/components/Showcase/app/SessionKeys'
 import { SessionKeysCardEVM } from '@/components/Showcase/app/SessionKeysCardEVM'
-import { SetActiveWalletsCard } from '@/components/Showcase/app/SetActiveWallets'
+import { SetActiveWalletsCardEthereum } from '@/components/Showcase/app/SetActiveWallets'
 import { SetActiveWalletsCardSolana } from '@/components/Showcase/app/SetActiveWalletsCardSolana'
 import { SignaturesCard } from '@/components/Showcase/app/Signatures'
 import { SignaturesCardEVM } from '@/components/Showcase/app/SignaturesCardEVM'
@@ -43,7 +43,7 @@ export const App = () => {
         : undefined
   const { signOut } = useSignOut()
   const { mode } = usePlaygroundMode()
-  const isSolana = mode === 'solana-only'
+  const isSVM = mode === 'solana-only'
   const hasWagmi = mode === 'evm-wagmi'
 
   return (
@@ -67,7 +67,7 @@ export const App = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-        {isSolana ? (
+        {isSVM ? (
           <>
             <SignaturesCardSolana
               tooltip={{
@@ -152,7 +152,7 @@ export const App = () => {
             />
           </>
         )}
-        {!isSolana && !hasWagmi && <SetActiveWalletsCard />}
+        {!isSVM && !hasWagmi && <SetActiveWalletsCardEthereum />}
       </div>
     </div>
   )

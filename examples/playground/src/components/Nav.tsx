@@ -1,5 +1,4 @@
-import { OpenfortButton } from '@openfort/react'
-import { useQueryClient } from '@tanstack/react-query'
+import { ChainTypeEnum, OpenfortButton, useChain, useEthereumBridge, useOpenfort } from '@openfort/react'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
@@ -9,9 +8,10 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Logo } from '@/components/ui/logo'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useAutoConnectOnModeSwitch } from '@/hooks/useAutoConnectOnModeSwitch'
 import { navRoutes } from '@/lib/navRoute'
 import type { OpenfortPlaygroundMode } from '@/providers'
-import { usePlaygroundMode } from '@/providers'
+import { useModeSwitchContext, usePlaygroundMode } from '@/providers'
 import type { FileRoutesByTo } from '../routeTree.gen'
 
 const MODE_LABELS: Record<OpenfortPlaygroundMode, string> = {
@@ -34,20 +34,37 @@ export type NavRoute = {
   children?: NavRoute[]
 }
 
+const MODE_TO_CHAIN: Record<OpenfortPlaygroundMode, ChainTypeEnum> = {
+  'evm-only': ChainTypeEnum.EVM,
+  'solana-only': ChainTypeEnum.SVM,
+  'evm-wagmi': ChainTypeEnum.EVM,
+}
+
 export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const location = useLocation()
   const path = location.pathname.includes('showcase') ? '/' : location.pathname
   const { mode, setMode } = usePlaygroundMode()
-  const queryClient = useQueryClient()
+  const { setChainType } = useChain()
+  const { onBeforeModeSwitch } = useModeSwitchContext()
+  const bridge = useEthereumBridge()
+  const { isLoading: isAuthLoading } = useOpenfort()
+  const { isPostModeSwitch } = usePlaygroundMode()
+  const showRestoringSession = isPostModeSwitch && isAuthLoading
 
   const handleModeSwitch = useCallback(
-    (next: OpenfortPlaygroundMode) => {
+    async (next: OpenfortPlaygroundMode) => {
       if (next === mode) return
-      queryClient.clear()
+      if (next === 'solana-only' && bridge) {
+        await bridge.disconnect()
+      }
+      onBeforeModeSwitch?.()
+      setChainType(MODE_TO_CHAIN[next])
       setMode(next)
     },
-    [mode, queryClient, setMode]
+    [mode, onBeforeModeSwitch, setChainType, setMode, bridge]
   )
+
+  useAutoConnectOnModeSwitch(mode)
 
   const isActive = (item: NavRoute) => {
     if (item.exact) {
@@ -146,7 +163,10 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
             <ModeToggle className="scale-110" />
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>
-                <div className="">
+                <div
+                  className={showRestoringSession ? 'pointer-events-none opacity-60' : ''}
+                  title={showRestoringSession ? 'Restoring session…' : undefined}
+                >
                   <OpenfortButton />
                 </div>
               </TooltipTrigger>

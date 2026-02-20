@@ -6,7 +6,6 @@
  */
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
-import { useQuery } from '@tanstack/react-query'
 import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { Abi, Address } from 'viem'
 import { createPublicClient, encodeFunctionData, http, isAddress, parseUnits } from 'viem'
@@ -16,6 +15,7 @@ import { EthereumContext } from '../../../ethereum/EthereumContext'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
 import { useBalance } from '../../../hooks/useBalance'
+import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { useChain } from '../../../shared/hooks/useChain'
 import { getExplorerUrl } from '../../../shared/utils/explorer'
 import { truncateEthAddress } from '../../../utils'
@@ -100,11 +100,8 @@ const SendConfirmation = () => {
   const refetchNativeBalance = nativeBalance.refetch
 
   // ERC20 balance using viem publicClient directly (skipped when native send; no placeholder address)
-  const erc20Balance = useQuery({
+  const erc20Balance = useAsyncData({
     queryKey: ['erc20-balance', address, token.type === 'erc20' ? token.address : null, chainId],
-    enabled: Boolean(isErc20 && address && chainId),
-    retry: true,
-    retryDelay: 1000,
     queryFn: async () => {
       if (!isErc20 || !address || !chainId) return { value: BigInt(0), decimals: 18, symbol: 'ERC20' }
       try {
@@ -122,6 +119,7 @@ const SendConfirmation = () => {
         return { value: BigInt(0), decimals: 18, symbol: getAssetSymbol(token) }
       }
     },
+    enabled: Boolean(isErc20 && address && chainId),
   })
 
   const refetchErc20Balance = erc20Balance.refetch
@@ -146,7 +144,7 @@ const SendConfirmation = () => {
 
   // Get current balance value from discriminated unions
   const nativeBalanceValue = nativeBalance.status === 'success' ? nativeBalance.value : undefined
-  const erc20BalanceValue = erc20Balance.status === 'success' ? erc20Balance.data?.value : undefined
+  const erc20BalanceValue = erc20Balance.data && !erc20Balance.error ? erc20Balance.data?.value : undefined
   const currentBalance = isErc20 ? erc20BalanceValue : nativeBalanceValue
   const nativeSymbol = nativeBalance.status === 'success' ? nativeBalance.symbol : 'ETH'
 
@@ -240,11 +238,8 @@ const SendConfirmation = () => {
       : undefined
 
   // Wait for transaction receipt using viem publicClient directly
-  const receiptState = useQuery({
+  const receiptState = useAsyncData({
     queryKey: ['tx-receipt', transactionHash, chainId],
-    enabled: Boolean(transactionHash && chainId),
-    retry: true,
-    retryDelay: 1000,
     queryFn: async () => {
       if (!transactionHash || !chainId) return null
       try {
@@ -257,12 +252,13 @@ const SendConfirmation = () => {
         throw error
       }
     },
+    enabled: Boolean(transactionHash && chainId),
   })
 
   const receipt = receiptState.data
-  const isWaitingForReceipt = receiptState.status === 'pending'
-  const isSuccess = receiptState.status === 'success' && receiptState.data?.status === 'success'
-  const waitError = receiptState.status === 'error' ? (receiptState.error as Error | null) : null
+  const isWaitingForReceipt = receiptState.isLoading
+  const isSuccess = receiptState.data && !receiptState.error && receiptState.data?.status === 'success'
+  const waitError = receiptState.error ?? null
 
   const isSubmitting = isNativePending || isTokenPending
   const isLoading = isSubmitting || isWaitingForReceipt
@@ -371,10 +367,11 @@ const SendConfirmation = () => {
   }, [errorDetails, insufficientBalance, receipt?.transactionHash, isLoading, triggerResize])
 
   const isSponsored = useMemo(() => {
-    if (!walletConfig?.ethereumProviderPolicyId) return false
-    if (typeof walletConfig.ethereumProviderPolicyId === 'string') return true
-    return walletConfig.ethereumProviderPolicyId[chainId ?? 0] !== undefined
-  }, [walletConfig?.ethereumProviderPolicyId, chainId])
+    const policy = walletConfig?.ethereum?.ethereumProviderPolicyId
+    if (!policy) return false
+    if (typeof policy === 'string') return true
+    return policy[chainId ?? 0] !== undefined
+  }, [walletConfig?.ethereum?.ethereumProviderPolicyId, chainId])
 
   return (
     <PageContent>

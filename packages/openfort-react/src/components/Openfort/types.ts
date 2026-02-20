@@ -1,9 +1,10 @@
-import type { AccountTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
+import type { RecoveryMethod } from '@openfort/openfort-js'
 import type React from 'react'
 import type { ReactNode } from 'react'
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 import type { Hex } from 'viem'
 import type { getAssets } from 'viem/experimental/erc7811'
+import type { EthereumWalletConfig } from '../../ethereum/types'
 import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/walletTypes'
 import type { UserAccount } from '../../openfortCustomTypes'
 import type { SolanaConfig } from '../../solana/types'
@@ -153,25 +154,10 @@ export enum LinkWalletOnSignUpOption {
   DISABLED = 'disabled',
 }
 
-type PolicyConfig = string | Record<number, string>
-
-type EthereumWalletConfig = {
-  chainId: number
-  rpcUrls?: Record<number, string>
-}
-
 type CommonWalletConfig = {
   /** Publishable key for the Shield API. */
   shieldPublishableKey: string
-  /** Policy ID (pol_...) for the embedded signer. */
-  ethereumProviderPolicyId?: PolicyConfig
-  accountType?: AccountTypeEnum
   recoverWalletAutomaticallyAfterAuth?: boolean
-  assets?: {
-    [chainId: number]: Hex[]
-  }
-  ethereum?: EthereumWalletConfig
-  solana?: SolanaConfig
   /**
    * The display name shown next to the passkey credential in the browser's passkey dialog
    * (e.g. "My Wallet" or "Trading Account"). Defaults to "Openfort - Embedded Wallet".
@@ -234,7 +220,12 @@ export type DebugModeOptions = {
  * the `createEncryptedSessionEndpoint` endpoint or the `getEncryptionSession` callback.
  * Password-based and passkey-based recovery methods do not require encryption sessions.
  */
-export type OpenfortWalletConfig = CommonWalletConfig & EncryptionSession & RecoverWithOTP
+export type OpenfortWalletConfig = CommonWalletConfig &
+  EncryptionSession &
+  RecoverWithOTP & {
+    ethereum?: EthereumWalletConfig
+    solana?: SolanaConfig
+  }
 
 type OpenfortUIOptions = {
   linkWalletOnSignUp?: LinkWalletOnSignUpOption
@@ -319,7 +310,7 @@ export type PhoneConfig = {
 }
 
 export type ConnectUIOptions = {
-  /** App name (e.g. for WalletConnect og:title). When using getDefaultConfig from @openfort/wagmi, pass the same appName here for consistency. */
+  /** App name (e.g. for WalletConnect og:title). When using getDefaultConfig from @openfort/react/wagmi, pass the same appName here for consistency. */
   appName?: string
   theme?: Theme
   mode?: Mode

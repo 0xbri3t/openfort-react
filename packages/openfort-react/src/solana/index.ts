@@ -44,7 +44,6 @@ export type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
   CreateSolanaWalletResult,
-  EmbeddedSolanaWalletState,
   // Provider types
   OpenfortEmbeddedSolanaWalletProvider,
   SetActiveSolanaWalletOptions,
@@ -65,5 +64,6 @@ export type {
   SolanaTransaction,
   SolanaUIOptions,
   SolanaWalletActions,
+  SolanaWalletState,
   UseEmbeddedSolanaWalletOptions,
 } from './types'

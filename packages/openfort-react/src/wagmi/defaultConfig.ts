@@ -29,11 +29,13 @@ const defaultConfig = ({
 }: DefaultConfigProps): CreateConfigParameters => {
   globalAppName = appName
 
+  const { client: _client, transports: _transports, connectors: _connectors, ...rest } = props
+
   const transports: CreateConfigParameters['transports'] =
-    props?.transports ?? Object.fromEntries(chains.map((chain) => [chain.id, http()]))
+    _transports ?? Object.fromEntries(chains.map((chain) => [chain.id, http()]))
 
   const connectors: CreateConfigParameters['connectors'] =
-    props?.connectors ??
+    _connectors ??
     defaultConnectors({
       app: {
         name: appName,
@@ -46,7 +48,7 @@ const defaultConfig = ({
     })
 
   return {
-    ...props,
+    ...rest,
     chains,
     connectors,
     transports,

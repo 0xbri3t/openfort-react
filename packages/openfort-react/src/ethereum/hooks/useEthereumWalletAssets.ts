@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import type { Transport } from 'viem'
 import { createWalletClient, custom, numberToHex } from 'viem'
@@ -7,13 +6,14 @@ import type { getAssets } from 'viem/experimental/erc7811'
 import type { Asset } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import type { EthereumWalletConfig } from '../../ethereum/types'
 import { useUser } from '../../hooks/openfort/useUser'
 import { useChains } from '../../hooks/useChains'
-import type { OpenfortWalletConfig } from '../../types'
+import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
 type UseEthereumWalletAssetsOptions = {
-  assets?: OpenfortWalletConfig['assets']
+  assets?: EthereumWalletConfig['assets']
   staleTime?: number
 }
 
@@ -101,13 +101,13 @@ export const useEthereumWalletAssets = ({
 
   const customAssetsToFetch = useMemo(() => {
     if (!chainId) return []
-    const assetsFromConfig = walletConfig?.assets ? walletConfig.assets[chainId] || [] : []
+    const assetsFromConfig = walletConfig?.ethereum?.assets ? walletConfig.ethereum.assets[chainId] || [] : []
     const assetsFromHook = hookCustomAssets ? hookCustomAssets[chainId] || [] : []
     const allAssets = [...assetsFromConfig, ...assetsFromHook]
     return allAssets
-  }, [walletConfig?.assets, hookCustomAssets, chainId])
+  }, [walletConfig?.ethereum?.assets, hookCustomAssets, chainId])
 
-  const { data, error, isLoading, isError, isSuccess, refetch } = useQuery({
+  const { data, error, isLoading, refetch } = useAsyncData({
     queryKey: ['wallet-assets', chainId, customAssetsToFetch, address],
     queryFn: async () => {
       if (!address || !chainId || !chain) {
@@ -182,9 +182,11 @@ export const useEthereumWalletAssets = ({
       const mergedAssets = [...defaultAssets]
       const customAssetsForChain: Asset[] = customAssets[chainId].map((asset: getAssets.Asset<false>) => {
         if (asset.type !== 'erc20') return { ...asset, raw: asset } as unknown as Asset
-        if (!walletConfig?.assets) return { ...asset, raw: asset }
+        if (!walletConfig?.ethereum?.assets) return { ...asset, raw: asset }
 
-        const configAsset = walletConfig.assets[chainId].find((a) => a.toLowerCase() === asset.address.toLowerCase())
+        const configAsset = walletConfig.ethereum.assets[chainId].find(
+          (a) => a.toLowerCase() === asset.address.toLowerCase()
+        )
         if (!configAsset) return { ...asset, raw: asset }
 
         const safeAsset: Asset = {
@@ -206,10 +208,7 @@ export const useEthereumWalletAssets = ({
       return mergedAssets as readonly Asset[]
     },
     enabled: isConnected && !!chainId && !!chain && !!address,
-    retry: 2,
     staleTime,
-    gcTime: 5 * 60 * 1000,
-    throwOnError: false,
   })
 
   const mappedError = useMemo(() => {
@@ -225,8 +224,8 @@ export const useEthereumWalletAssets = ({
   return {
     data: data ?? null,
     isLoading,
-    isError,
-    isSuccess,
+    isError: !!error,
+    isSuccess: !!data && !error,
     isIdle: !isConnected || !chainId || !chain,
     error: mappedError,
     refetch,

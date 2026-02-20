@@ -6,12 +6,12 @@
  */
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
-import { useQuery } from '@tanstack/react-query'
 import type React from 'react'
 import { useEffect } from 'react'
 import { ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { useSolanaContext } from '../../../solana/SolanaContext'
 import { nFormatter, truncateSolanaAddress } from '../../../utils'
@@ -54,11 +54,8 @@ const SolanaConnected: React.FC = () => {
   const hasSolanaWallets = (embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.SVM) ?? []).length > 0
   const address = wallet.status === 'connected' ? wallet.address : undefined
 
-  const balanceResult = useQuery({
+  const balanceResult = useAsyncData({
     queryKey: ['solana-balance', address, rpcUrl],
-    enabled: Boolean(address && rpcUrl),
-    retry: true,
-    retryDelay: 1000,
     queryFn: async () => {
       if (!address || !rpcUrl) return null
       try {
@@ -69,10 +66,11 @@ const SolanaConnected: React.FC = () => {
         return null
       }
     },
+    enabled: Boolean(address && rpcUrl),
   })
 
   const balance = balanceResult.data
-  const isBalanceLoading = balanceResult.status === 'pending'
+  const isBalanceLoading = balanceResult.isLoading
 
   useEffect(() => {
     if (!address) {

@@ -1,10 +1,10 @@
 import {
   type ConnectedEmbeddedEthereumWallet,
-  type EmbeddedEthereumWalletState,
+  type EthereumWalletState,
   RecoveryMethod,
   useEthereumBridge,
 } from '@openfort/react'
-import { useWalletAuth } from '@openfort/wagmi'
+import { useWalletAuth } from '@openfort/react/wagmi'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
 import { EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon } from 'lucide-react'
@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useActiveEmbeddedWallet } from '@/hooks/useActiveEmbeddedWallet'
+import { useActiveEthereumEmbeddedWallet } from '@/hooks/useActiveEthereumEmbeddedWallet'
 import { cn } from '@/lib/cn'
 
 const FALLBACK_CONNECTOR_ICONS: Record<string, React.ReactNode> = {
@@ -93,7 +93,7 @@ const SimpleWalletButton = ({
   </button>
 )
 
-const CreateWalletButton = ({ ethereum }: { ethereum: EmbeddedEthereumWalletState }) => {
+const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => {
   const { create, status } = ethereum
   const [error, setError] = useState<string | null>(null)
   const isCreating = status === 'creating'
@@ -188,7 +188,7 @@ const CreateWalletButton = ({ ethereum }: { ethereum: EmbeddedEthereumWalletStat
         <TooltipContent>
           <h3 className="text-base mb-1">useEthereumEmbeddedWallet</h3>
           Create a new wallet using
-          <Link to="/wallet/useWallets" search={{ focus: 'create' }} className="px-1 group">
+          <Link to="/wallet/useEthereumEmbeddedWallet" search={{ focus: 'create' }} className="px-1 group">
             create
           </Link>
           .
@@ -339,12 +339,12 @@ const EmbeddedWalletButton = ({
  */
 export const ConnectExternalWalletCard = () => {
   const bridge = useEthereumBridge()
-  const { ethereum, activeWallet, connectingAddress } = useActiveEmbeddedWallet()
+  const { ethereum, activeWallet, connectingAddress } = useActiveEthereumEmbeddedWallet()
   const { availableWallets: externalConnectors } = useWalletAuth()
 
   const embeddedWallets = ethereum.wallets
   const isOpenfortActive = ethereum.status === 'connected'
-  const isExternalActive = ethereum.isExternal
+  const isExternalActive = ethereum.walletType === 'external'
   const isBusy = ethereum.isLoading
 
   const setActive = async (opts: {
@@ -452,7 +452,7 @@ export const ConnectExternalWalletCard = () => {
                       ) : (
                         <p className="text-xs opacity-70">
                           Click to set active. (
-                          <Link to="/wallet/useWallets" search={{ focus: 'setActive' }}>
+                          <Link to="/wallet/useEthereumEmbeddedWallet" search={{ focus: 'setActive' }}>
                             setActive
                           </Link>
                           )

@@ -8,9 +8,9 @@ import {
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/kit'
-import { useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { OpenfortError } from '../../../core/errors'
+import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
 import { FEE_LAMPORTS, LAMPORTS_PER_SOL, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
@@ -57,11 +57,8 @@ export function SolanaSend() {
   const walletAddress = wallet.status === 'connected' ? wallet.activeWallet.address : undefined
   const provider = wallet.status === 'connected' ? wallet.provider : null
 
-  const balanceResult = useQuery({
+  const balanceResult = useAsyncData({
     queryKey: ['solana-balance', walletAddress, rpcUrl],
-    enabled: Boolean(walletAddress && rpcUrl),
-    retry: true,
-    retryDelay: 1000,
     queryFn: async () => {
       if (!walletAddress || !rpcUrl) return null
       try {
@@ -72,6 +69,7 @@ export function SolanaSend() {
         return null
       }
     },
+    enabled: Boolean(walletAddress && rpcUrl),
   })
 
   const balanceData = balanceResult.data

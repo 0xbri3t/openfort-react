@@ -1,4 +1,4 @@
-import type { Openfort, OpenfortSDKConfiguration } from '@openfort/openfort-js'
+import type { OpenfortSDKConfiguration } from '@openfort/openfort-js'
 
 import type { SolanaConfig } from '../solana/types'
 
@@ -19,7 +19,6 @@ export type OpenfortConfig = CoreProviderConfig & {
 }
 
 export type CoreContextValue = {
-  client: Openfort
   config: OpenfortConfig
   debug: boolean
 }

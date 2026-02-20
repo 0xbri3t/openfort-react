@@ -8,14 +8,12 @@ export const Route = createFileRoute('/_hooks/auth/useConnectWithSiwe')({
 })
 
 function RouteComponent() {
-  const _connectWithSiwe = useConnectWithSiwe()
-
   return (
     <Layout>
       <HookVariable
         name="useConnectWithSiwe"
         hook={useConnectWithSiwe}
-        description="Connect or link an external wallet via SIWE (Sign-In with Ethereum). Requires @openfort/wagmi bridge."
+        description="Connect or link an external wallet via SIWE (Sign-In with Ethereum). Requires @openfort/react/wagmi bridge."
         variables={{
           connectWithSiwe: {
             description: 'Authenticate or link an external wallet using SIWE.',

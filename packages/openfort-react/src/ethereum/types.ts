@@ -11,8 +11,21 @@ import type {
   RecoveryMethod,
   RecoveryParams,
 } from '@openfort/openfort-js'
+import type { Hex } from 'viem'
 import type { SetRecoveryOptions as SharedSetRecoveryOptions } from '../shared/types'
 import type { OpenfortHookOptions } from '../types'
+
+export type PolicyConfig = string | Record<number, string>
+
+export type EthereumWalletConfig = {
+  chainId: number
+  rpcUrls?: Record<number, string>
+  /** Policy ID (pol_...) for gas sponsorship / embedded signer */
+  ethereumProviderPolicyId?: PolicyConfig
+  accountType?: AccountTypeEnum
+  /** Token addresses for asset inventory (chainId -> Hex[]) */
+  assets?: Record<number, Hex[]>
+}
 
 /**
  * EIP-1193 Provider interface for Ethereum wallets
@@ -122,7 +135,7 @@ export interface EthereumWalletActions {
   exportPrivateKey(): Promise<string>
 }
 
-export type EmbeddedEthereumWalletStateBase =
+export type EthereumWalletStateBase =
   | (EthereumWalletActions & {
       status: 'disconnected'
       activeWallet: null
@@ -183,7 +196,7 @@ export type EmbeddedEthereumWalletStateBase =
     })
 
 /** Derived booleans for consistent hook shape. All variants include these. */
-export type EmbeddedEthereumWalletDerived = {
+export type EthereumWalletDerived = {
   /** True when status is fetching-wallets, connecting, creating, or reconnecting. */
   isLoading: boolean
   /** True when status is 'error'. */
@@ -210,15 +223,9 @@ export type EthereumConnectedWalletState = {
   isDisconnected: boolean
   /** True when reconnecting after loss of connection. */
   isReconnecting: boolean
-  /** True when the connected wallet is an Openfort embedded wallet. */
-  isEmbedded: boolean
-  /** True when the connected wallet is an external wallet. */
-  isExternal: boolean
 }
 
-export type EmbeddedEthereumWalletState = EmbeddedEthereumWalletStateBase &
-  EmbeddedEthereumWalletDerived &
-  EthereumConnectedWalletState
+export type EthereumWalletState = EthereumWalletStateBase & EthereumWalletDerived & EthereumConnectedWalletState
 
 export type UseEmbeddedEthereumWalletOptions = {
   /** Chain ID for smart account operations */

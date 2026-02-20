@@ -95,7 +95,7 @@ export function WalletListCard() {
       <div className="space-y-4 pb-4">
         <h2>Your Wallets</h2>
         <div className="flex flex-col space-y-2">
-          {wallets.map((wallet) => {
+          {wallets.map((wallet: ConnectedEmbeddedEthereumWallet) => {
             const isActive =
               activeWallet?.address.toLowerCase() === wallet.address.toLowerCase()
             return (

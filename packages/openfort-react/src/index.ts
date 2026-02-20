@@ -34,7 +34,7 @@
  * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` |
  * | Send ETH / write contract / get balance (EVM) | Use `wagmi` or `viem` directly |
  * | Get SOL balance / sign message / send SOL (Solana) | Use `@solana/kit` with embedded wallet provider |
- * | Connect/link wallet (SIWE) + list wallets | `useWalletAuth()` (from `@openfort/wagmi`) |
+ * | Connect/link wallet (SIWE) + list wallets | `useWalletAuth()` (from `@openfort/react/wagmi`) |
  * | Grant session key permissions | `useGrantPermissions()` |
  * | Revoke session key permissions | `useRevokePermissions()` |
  */
@@ -44,6 +44,7 @@ export {
   AuthResponse,
   ChainTypeEnum,
   EmbeddedAccount,
+  EmbeddedState,
   OpenfortEventMap,
   OpenfortEvents,
   openfortEvents,
@@ -57,8 +58,6 @@ export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
-export type { CreateWalletConfigOptions } from './config/createWalletConfig'
-export { createWalletConfig } from './config/createWalletConfig'
 export { embeddedWalletId } from './constants/openfort'
 export { formatErrorWithReason, getErrorReason, OpenfortError, OpenfortErrorCode } from './core/errors'
 // Ethereum
@@ -78,7 +77,7 @@ export type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
   CreateEthereumWalletResult,
-  EmbeddedEthereumWalletState,
+  EthereumWalletState,
   SetActiveEthereumWalletOptions,
   UseEmbeddedEthereumWalletOptions,
 } from './ethereum/types'
@@ -119,9 +118,9 @@ export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 export type {
   ConnectedEmbeddedSolanaWallet,
   CreateSolanaWalletOptions,
-  EmbeddedSolanaWalletState,
   SetActiveSolanaWalletOptions,
   SolanaConfig,
+  SolanaWalletState,
   UseEmbeddedSolanaWalletOptions,
 } from './solana/types'
 export type { CustomTheme } from './styles/customTheme'
@@ -150,3 +149,4 @@ export {
   truncateEthAddress,
   truncateSolanaAddress,
 } from './utils/format'
+export { OPENFORT_VERSION } from './version'

@@ -6,7 +6,6 @@ import {
   type Openfort,
   type User,
 } from '@openfort/openfort-js'
-import { type QueryObserverResult, type RefetchOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import type React from 'react'
 import {
   createElement,
@@ -26,7 +25,6 @@ import { embeddedWalletId } from '../constants/openfort'
 import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
 import { OpenfortError, OpenfortErrorCode } from '../core/errors'
-import { queryKeys } from '../core/queryKeys'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
 import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
@@ -67,9 +65,7 @@ export type OpenfortCoreContextValue = {
 
   logout: () => void
 
-  updateEmbeddedAccounts: (
-    options?: RefetchOptions & { silent?: boolean }
-  ) => Promise<QueryObserverResult<EmbeddedAccount[], Error>>
+  updateEmbeddedAccounts: (options?: { silent?: boolean }) => Promise<EmbeddedAccount[] | undefined>
 
   walletStatus: WalletFlowStatus
   setWalletStatus: (status: WalletFlowStatus) => void
@@ -273,47 +269,44 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
 
-  // SVM (Solana) wallets are EOA; EVM uses walletConfig.accountType so the core sees the right list after guest signup
+  // SVM (Solana) wallets are EOA; EVM uses walletConfig.ethereum.accountType so the core sees the right list after guest signup
   const embeddedAccountsAccountType =
     chainType === ChainTypeEnum.SVM
       ? undefined
-      : walletConfig?.accountType === AccountTypeEnum.EOA
+      : walletConfig?.ethereum?.accountType === AccountTypeEnum.EOA
         ? undefined
         : AccountTypeEnum.SMART_ACCOUNT
 
   // Embedded accounts list. Will reset on logout.
-  const {
-    data: embeddedAccounts,
-    refetch: refetchEmbeddedAccounts,
-    isPending: isAccountsPending,
-  } = useQuery({
-    queryKey: queryKeys.accounts.embedded(embeddedAccountsAccountType),
-    queryFn: async () => {
+  const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[] | undefined>(undefined)
+  const [isAccountsPending, setAccountsPending] = useState(false)
+  const fetchSeqRef = useRef(0)
+
+  const fetchEmbeddedAccounts = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const seq = ++fetchSeqRef.current
+      if (options?.silent) setSilentRefetchInProgress(true)
+      setAccountsPending(true)
       try {
-        return await openfort.embeddedWallet.list({
+        const accounts = await openfort.embeddedWallet.list({
           limit: 100,
           accountType: embeddedAccountsAccountType,
         })
+        if (seq === fetchSeqRef.current) {
+          setEmbeddedAccounts(accounts)
+        }
+        return accounts
       } catch (error: unknown) {
         handleOAuthConfigError(error)
         throw error
-      }
-    },
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: false,
-  })
-
-  const fetchEmbeddedAccounts = useCallback(
-    async (options?: RefetchOptions & { silent?: boolean }) => {
-      if (options?.silent) setSilentRefetchInProgress(true)
-      try {
-        return await refetchEmbeddedAccounts(options)
       } finally {
-        if (options?.silent) setSilentRefetchInProgress(false)
+        if (seq === fetchSeqRef.current) {
+          setAccountsPending(false)
+          if (options?.silent) setSilentRefetchInProgress(false)
+        }
       }
     },
-    [refetchEmbeddedAccounts]
+    [openfort, embeddedAccountsAccountType]
   )
 
   const updateUserRef = useRef(updateUser)
@@ -365,7 +358,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [strategy, walletConfig?.ethereum, activeChainId, setActiveChainId])
 
-  // Sync active embedded address from SDK on load (only when wallet is actually recovered)
+  // Sync active embedded address from SDK on load only. Do NOT overwrite when user has
+  // explicitly switched via setActive - the async get() could resolve late and overwrite.
   useEffect(() => {
     if (!openfort || !embeddedAccounts?.length) {
       if (!embeddedAccounts?.length) setActiveEmbeddedAddress(undefined)
@@ -381,7 +375,9 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       .then((active) => {
         if (cancelled || !active) return
         const addr = active.address
-        if (addr) setActiveEmbeddedAddress(addr)
+        if (!addr) return
+        // Only set when uninitialized - avoid overwriting user's setActive with stale get() result
+        setActiveEmbeddedAddress((prev) => (prev === undefined ? addr : prev))
       })
       .catch((err) => {
         if (!cancelled) logger.warn('Failed to get active embedded wallet', err)
@@ -470,6 +466,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   useEffect(() => {
     if (!bridge || address || !user) return
+    if (chainType !== ChainTypeEnum.EVM) return
     if (isConnectedWithEmbeddedSigner) return
     if (connectingRef.current) return
     if (embeddedState !== EmbeddedState.READY) return
@@ -487,16 +484,16 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     connectingRef.current = true
     setIsConnectedWithEmbeddedSigner(true)
     bridge.connect({ connector: openfortConnector })
-  }, [bridge, address, user, embeddedState, isConnectedWithEmbeddedSigner, open, route, connector])
+  }, [bridge, address, user, chainType, embeddedState, isConnectedWithEmbeddedSigner, open, route, connector])
 
   // ---- Auth functions ----
 
-  const queryClient = useQueryClient()
   const logout = useCallback(async () => {
     if (!openfort) return
 
     setUser(null)
     setActiveEmbeddedAddress(undefined)
+    setEmbeddedAccounts(undefined)
     setWalletStatus({ status: 'idle' })
     connectingRef.current = false
     setIsConnectedWithEmbeddedSigner(false)
@@ -506,9 +503,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       await bridge.disconnect()
       bridge.reset()
     }
-    queryClient.resetQueries({ queryKey: queryKeys.accounts.all() })
     startPollingEmbeddedState()
-  }, [openfort, bridge, queryClient])
+  }, [openfort, bridge])
 
   const signUpGuest = useCallback(async () => {
     if (!openfort) return

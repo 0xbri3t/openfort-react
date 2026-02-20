@@ -72,4 +72,25 @@ export default [
       }),
     ],
   },
+  {
+    input: './src/wagmi/index.ts',
+    external: [...sharedExternal, '@openfort/react'],
+    output: {
+      file: packageJson.exports['./wagmi'].import,
+      format: 'esm',
+      sourcemap: true,
+    },
+    plugins: [
+      peerDepsExternal(),
+      typescript({
+        useTsconfigDeclarationDir: true,
+        exclude: 'node_modules/**',
+        tsconfigOverride: {
+          compilerOptions: {
+            declarationDir: 'build/wagmi',
+          },
+        },
+      }),
+    ],
+  },
 ]
