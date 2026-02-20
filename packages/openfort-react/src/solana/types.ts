@@ -63,8 +63,8 @@ export type SolanaUIOptions = {
 export type SolanaConfig = {
   /** Solana cluster to connect to */
   cluster: SolanaCluster
-  /** Custom RPC URL (optional, defaults to public RPC) */
-  rpcUrl?: string
+  /** RPC URLs per cluster (mirrors ethereum.rpcUrls) */
+  rpcUrls?: Partial<Record<'mainnet-beta' | 'devnet' | 'testnet', string>>
   /** Commitment level for transactions (default: 'confirmed') */
   commitment?: SolanaCommitment
   /** Custom cluster options for the cluster switcher */

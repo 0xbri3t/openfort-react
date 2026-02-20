@@ -14,7 +14,7 @@ export function resolveEthereumPolicy(
   config: OpenfortWalletConfig | undefined,
   chainId: number
 ): { policy: string } | undefined {
-  const policy = config?.ethereumProviderPolicyId
+  const policy = config?.ethereum?.ethereumProviderPolicyId
   if (!policy) return undefined
   if (typeof policy === 'string') return { policy }
   if (typeof policy === 'object' && chainId in policy) {

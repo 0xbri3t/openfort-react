@@ -269,11 +269,11 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
 
-  // SVM (Solana) wallets are EOA; EVM uses walletConfig.accountType so the core sees the right list after guest signup
+  // SVM (Solana) wallets are EOA; EVM uses walletConfig.ethereum.accountType so the core sees the right list after guest signup
   const embeddedAccountsAccountType =
     chainType === ChainTypeEnum.SVM
       ? undefined
-      : walletConfig?.accountType === AccountTypeEnum.EOA
+      : walletConfig?.ethereum?.accountType === AccountTypeEnum.EOA
         ? undefined
         : AccountTypeEnum.SMART_ACCOUNT
 

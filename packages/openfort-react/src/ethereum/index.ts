@@ -28,8 +28,10 @@ export type {
   EIP1193EventName,
   EIP1193RequestArguments,
   EthereumWalletActions,
+  EthereumWalletConfig,
   EthereumWalletState,
   OpenfortEmbeddedEthereumWalletProvider,
+  PolicyConfig,
   SetActiveEthereumWalletOptions,
   UseEmbeddedEthereumWalletOptions,
 } from './types'

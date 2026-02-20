@@ -386,12 +386,19 @@ export const OpenfortProvider = ({
       publishableKey,
       shieldPublishableKey: walletConfig?.shieldPublishableKey,
       debug: debugModeOptions.openfortCoreDebugMode,
-      rpcUrls: walletConfig?.ethereum?.rpcUrls,
+      rpcUrls:
+        walletConfig?.ethereum?.rpcUrls || walletConfig?.solana?.rpcUrls
+          ? {
+              ...(walletConfig?.ethereum?.rpcUrls && { ethereum: walletConfig.ethereum.rpcUrls }),
+              ...(walletConfig?.solana?.rpcUrls && { solana: walletConfig.solana.rpcUrls }),
+            }
+          : undefined,
     }),
     [
       publishableKey,
       walletConfig?.shieldPublishableKey,
       walletConfig?.ethereum?.rpcUrls,
+      walletConfig?.solana?.rpcUrls,
       debugModeOptions.openfortCoreDebugMode,
     ]
   )

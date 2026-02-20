@@ -82,7 +82,7 @@ export const useConnectToWalletPostAuth = () => {
       const accountType =
         chainType === ChainTypeEnum.SVM
           ? undefined
-          : walletConfig?.accountType === AccountTypeEnum.EOA
+          : walletConfig?.ethereum?.accountType === AccountTypeEnum.EOA
             ? undefined
             : AccountTypeEnum.SMART_ACCOUNT
       const wallets = await client.embeddedWallet.list({

@@ -11,8 +11,21 @@ import type {
   RecoveryMethod,
   RecoveryParams,
 } from '@openfort/openfort-js'
+import type { Hex } from 'viem'
 import type { SetRecoveryOptions as SharedSetRecoveryOptions } from '../shared/types'
 import type { OpenfortHookOptions } from '../types'
+
+export type PolicyConfig = string | Record<number, string>
+
+export type EthereumWalletConfig = {
+  chainId: number
+  rpcUrls?: Record<number, string>
+  /** Policy ID (pol_...) for gas sponsorship / embedded signer */
+  ethereumProviderPolicyId?: PolicyConfig
+  accountType?: AccountTypeEnum
+  /** Token addresses for asset inventory (chainId -> Hex[]) */
+  assets?: Record<number, Hex[]>
+}
 
 /**
  * EIP-1193 Provider interface for Ethereum wallets

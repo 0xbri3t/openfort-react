@@ -239,7 +239,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         const accountType =
           createOptions?.accountType === 'EOA'
             ? AccountTypeEnum.EOA
-            : (walletConfig.accountType ?? AccountTypeEnum.SMART_ACCOUNT)
+            : (walletConfig?.ethereum?.accountType ?? AccountTypeEnum.SMART_ACCOUNT)
 
         const account = await client.embeddedWallet.create({
           chainType: ChainTypeEnum.EVM,

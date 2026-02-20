@@ -110,7 +110,8 @@ function resolveRpcUrl(cluster: SolanaCluster, rpcUrlOverride: string | undefine
   if (rpcUrlOverride !== undefined) return rpcUrlOverride
   const customMatch = config.customClusters?.find((c) => c.cluster === cluster)
   if (customMatch) return customMatch.rpcUrl
-  if (config.rpcUrl !== undefined && cluster === config.cluster) return config.rpcUrl
+  const url = config.rpcUrls?.[cluster]
+  if (url) return url
   return getDefaultRpcUrl(cluster)
 }
 
