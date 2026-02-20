@@ -1,5 +1,5 @@
 import { AuthProvider, type OpenfortProvider, RecoveryMethod } from '@openfort/react'
-import { beamTestnet, polygonAmoy } from 'viem/chains'
+import { baseSepolia, beamTestnet, polygonAmoy } from 'viem/chains'
 import { create } from 'zustand'
 import { customPageComponents } from '@/components/customPageComponents'
 
@@ -66,6 +66,7 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
     ethereumProviderPolicyId: {
       [polygonAmoy.id]: import.meta.env.VITE_POLYGON_POLICY_ID!,
       [beamTestnet.id]: import.meta.env.VITE_BEAM_POLICY_ID!,
+      [baseSepolia.id]: import.meta.env.VITE_BASE_POLICY_ID!,
     },
 
     // If you want to use AUTOMATIC embedded wallet recovery, an encryption session is required.
