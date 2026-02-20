@@ -75,6 +75,7 @@ export const routes = {
   SOL_RECOVER_WALLET: 'sol:recoverWallet',
   SOL_SEND: 'sol:send',
   SOL_RECEIVE: 'sol:receive',
+  SOL_ASSET_INVENTORY: 'sol:assetInventory',
   SOL_WALLETS: 'sol:wallets',
 
   WALLET_OVERVIEW: 'walletOverview',

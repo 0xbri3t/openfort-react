@@ -395,8 +395,12 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         : (activeChainId ?? strategy.getChainId())
       : undefined
 
+  // Only init EVM provider when embeddedState is READY. Otherwise getEthereumProvider()
+  // may create a provider with an unconfigured signer (e.g. password recovery not yet done).
+  // Automatic recovery reaches READY before init; password recovery needs user action first.
   useEffect(() => {
     if (!openfort || !walletConfig || !strategy) return
+    if (strategy.chainType === ChainTypeEnum.EVM && embeddedState !== EmbeddedState.READY) return
 
     let cancelled = false
     strategy
@@ -413,7 +417,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     return () => {
       cancelled = true
     }
-  }, [openfort, walletConfig, strategy, evmChainId])
+  }, [openfort, walletConfig, strategy, evmChainId, embeddedState])
 
   const [isConnectedWithEmbeddedSigner, setIsConnectedWithEmbeddedSigner] = useState(false)
   const connectingRef = useRef(false)

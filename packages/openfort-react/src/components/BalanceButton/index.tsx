@@ -59,6 +59,7 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
+  const cluster = chainType === ChainTypeEnum.SVM && isConnected ? (wallet as typeof solanaWallet).cluster : undefined
 
   const isChainSupported = useChainIsSupported(chainId)
 
@@ -66,6 +67,7 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
     address: address ?? '',
     chainType: chainType,
     chainId: chainId ?? 13337,
+    cluster,
     enabled: isConnected && !!address,
     refetchInterval: 30_000, // Replaces blockNumber-based invalidation
   })
@@ -110,7 +112,7 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
         >
           {!isConnected || !isMounted || balanceFormatted === undefined ? (
             <Container>
-              {!hideIcon && <Chain id={chainId} />}
+              {!hideIcon && chainType === ChainTypeEnum.EVM && <Chain id={chainId} />}
               <span style={{ minWidth: 32 }}>
                 <PulseContainer>
                   <span style={{ animationDelay: '0ms' }} />
@@ -119,14 +121,14 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
                 </PulseContainer>
               </span>
             </Container>
-          ) : !isChainSupported ? (
+          ) : chainType === ChainTypeEnum.EVM && !isChainSupported ? (
             <Container>
               {!hideIcon && <Chain id={chainId} />}
               <span style={{ minWidth: 32 }}>???</span>
             </Container>
           ) : (
             <Container>
-              {!hideIcon && <Chain id={chainId} />}
+              {!hideIcon && chainType === ChainTypeEnum.EVM && <Chain id={chainId} />}
               <span style={{ minWidth: 32 }}>{nFormatter(Number(balanceFormatted))}</span>
               {!hideSymbol && balanceSymbol && ` ${balanceSymbol}`}
             </Container>

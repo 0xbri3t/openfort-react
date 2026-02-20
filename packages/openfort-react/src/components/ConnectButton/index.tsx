@@ -12,6 +12,7 @@ import { useChain } from '../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { ResetContainer } from '../../styles'
 import type { CustomTheme, Mode, Theme } from '../../types'
+import { logger } from '../../utils/logger'
 import { Balance } from '../BalanceButton'
 import Avatar from '../Common/Avatar'
 import ThemedButton, { ThemeContainer } from '../Common/ThemedButton'
@@ -355,7 +356,7 @@ export function OpenfortButton({
 
   if (!isMounted) return null
 
-  const shouldShowBalance = showBalance && chainIsSupported
+  const shouldShowBalance = showBalance && (chainType === ChainTypeEnum.SVM || chainIsSupported)
   const willShowBalance = isConnected && shouldShowBalance
 
   return (
@@ -366,6 +367,12 @@ export function OpenfortButton({
     >
       <ThemeContainer
         onClick={() => {
+          logger.log('OpenfortButton click', {
+            chainType,
+            evm: { status: ethereumWallet.status, address: ethereumWallet.address },
+            solana: { status: solanaWallet.status, address: solanaWallet.address },
+            active: { isConnected, address: wallet.address, displayAddress: wallet.displayAddress },
+          })
           if (onClick) {
             onClick(() => open())
           } else {

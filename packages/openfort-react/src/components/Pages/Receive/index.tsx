@@ -1,4 +1,5 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
+import { useEffect } from 'react'
 import Logos from '../../../assets/logos'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useChains } from '../../../hooks/useChains'
@@ -10,7 +11,7 @@ import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
-import { AddressField, AddressRow, AddressSection, Label, NetworkInfo, QRWrapper } from './styles'
+import { AddressField, AddressRow, AddressSection, Label, NetworkInfo, QRWrapper, ReceiveContent } from './styles'
 
 function formatSolanaCluster(cluster: string): string {
   if (cluster === 'mainnet-beta') return 'Mainnet'
@@ -55,26 +56,33 @@ const Receive = () => {
     return <Logos.Openfort />
   }
 
+  useEffect(() => {
+    const timer = setTimeout(() => context.triggerResize(), 100)
+    return () => clearTimeout(timer)
+  }, [address, context.triggerResize])
+
   return (
     <PageContent onBack={isSolanaRoute ? routes.SOL_CONNECTED : routes.CONNECTED}>
-      <ModalHeading>Receive funds</ModalHeading>
-      <ModalBody>Scan the QR code or copy your wallet details.</ModalBody>
+      <ReceiveContent>
+        <ModalHeading>Receive funds</ModalHeading>
+        <ModalBody>Scan the QR code or copy your wallet details.</ModalBody>
 
-      {address && (
-        <QRWrapper>
-          <CustomQRCode value={qrValue} image={<div style={{ padding: 10 }}>{renderLogo()}</div>} />
-        </QRWrapper>
-      )}
+        {address && (
+          <QRWrapper>
+            <CustomQRCode value={qrValue} image={<div style={{ padding: 10 }}>{renderLogo()}</div>} />
+          </QRWrapper>
+        )}
 
-      <AddressSection>
-        <Label>Your wallet address</Label>
-        <AddressRow>
-          <AddressField>{address ?? '--'}</AddressField>
-          <CopyIconButton value={address ?? ''} />
-        </AddressRow>
-      </AddressSection>
+        <AddressSection>
+          <Label>Your wallet address</Label>
+          <AddressRow>
+            <AddressField>{address ?? '--'}</AddressField>
+            <CopyIconButton value={address ?? ''} />
+          </AddressRow>
+        </AddressSection>
 
-      {networkLabel && <NetworkInfo>Network: {networkLabel}</NetworkInfo>}
+        {networkLabel && <NetworkInfo>Network: {networkLabel}</NetworkInfo>}
+      </ReceiveContent>
     </PageContent>
   )
 }

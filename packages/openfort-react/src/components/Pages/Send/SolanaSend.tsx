@@ -39,7 +39,7 @@ async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<numb
     }),
   })
   const data = await response.json()
-  return data.result ?? 0
+  return data.result?.value ?? 0
 }
 
 function formatSol(lamports: bigint, decimals = 4): string {
