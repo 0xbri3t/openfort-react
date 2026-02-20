@@ -3,7 +3,6 @@ import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import type React from 'react'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useUI } from '../../hooks/openfort/useUI'
-import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import useIsMounted from '../../hooks/useIsMounted'
 import useLocales from '../../hooks/useLocales'
 import { useResolvedIdentity } from '../../hooks/useResolvedIdentity'
@@ -125,7 +124,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
   const address = isConnected ? (wallet.address as Hash) : undefined
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
-  const isChainSupported = useChainIsSupported(chainId)
+  const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
 
   const identity = useResolvedIdentity({
     address: address ?? '',
@@ -152,7 +151,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
       {children({
         show,
         hide,
-        unsupported: !isChainSupported,
+        unsupported: !chainIsSupported,
         isConnected: isConnected,
         isConnecting: isOpen,
         address: address,
@@ -202,6 +201,7 @@ function OpenfortButtonInner({
 }) {
   const locales = useLocales({})
   const { user } = useOpenfortCore()
+  const context = useOpenfort()
 
   const { chainType } = useChain()
   const ethereumWallet = useEthereumEmbeddedWallet()
@@ -212,8 +212,8 @@ function OpenfortButtonInner({
   const address = isConnected ? wallet.address : undefined
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
-  const isChainSupported = useChainIsSupported(chainId)
-  const showUnsupportedWarning = chainType === ChainTypeEnum.EVM && !isChainSupported
+  const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
+  const showUnsupportedWarning = chainType === ChainTypeEnum.EVM && !chainIsSupported
 
   const identity = useResolvedIdentity({
     address: address ?? '',
@@ -350,7 +350,7 @@ export function OpenfortButton({
   const isConnected = wallet.status === 'connected'
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
-  const chainIsSupported = useChainIsSupported(chainId)
+  const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
 
   const separator = ['web95', 'rounded', 'minimal'].includes(theme ?? context.uiConfig.theme ?? '') ? '....' : undefined
 

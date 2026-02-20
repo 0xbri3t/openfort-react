@@ -3,8 +3,8 @@ import type React from 'react'
 import { useId } from 'react'
 import Chains from '../../../assets/chains'
 import { chainConfigs } from '../../../constants/chainConfigs'
-import { useChainIsSupported } from '../../../hooks/useChainIsSupported'
 import useIsMounted from '../../../hooks/useIsMounted'
+import { useOpenfort } from '../../Openfort/useOpenfort'
 import { ChainContainer, LoadingContainer, LogoContainer, Unsupported } from './styles'
 
 const Spinner = () => {
@@ -50,8 +50,9 @@ const Chain: React.FC<{
   radius?: number | string
   size?: number | string
 }> = ({ id, unsupported: controlledUnsupported, radius = '50%', size = 24 }) => {
-  const isChainSupported = useChainIsSupported(id)
-  const unsupported = controlledUnsupported ?? !isChainSupported
+  const { chains } = useOpenfort()
+  const chainIsSupported = id != null && chains.some((c) => c.id === id)
+  const unsupported = controlledUnsupported ?? !chainIsSupported
 
   const chain = chainConfigs.find((c) => c.id === id)
   const isMounted = useIsMounted()

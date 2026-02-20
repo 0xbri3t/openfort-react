@@ -7,13 +7,13 @@ import { keyframes } from 'styled-components'
 import { chainConfigs } from '../../constants/chainConfigs'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useBalance } from '../../hooks/useBalance'
-import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import useIsMounted from '../../hooks/useIsMounted'
 import { useChain } from '../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import styled from '../../styles/styled'
 import { nFormatter } from '../../utils'
 import Chain from '../Common/Chain'
+import { useOpenfort } from '../Openfort/useOpenfort'
 
 const Container = styled(motion.div)`
   display: flex;
@@ -61,7 +61,8 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
   const cluster = chainType === ChainTypeEnum.SVM && isConnected ? (wallet as typeof solanaWallet).cluster : undefined
 
-  const isChainSupported = useChainIsSupported(chainId)
+  const { chains } = useOpenfort()
+  const chainIsSupported = chainId != null && chains.some((c) => c.id === chainId)
 
   const balance = useBalance({
     address: address ?? '',
@@ -121,7 +122,7 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
                 </PulseContainer>
               </span>
             </Container>
-          ) : chainType === ChainTypeEnum.EVM && !isChainSupported ? (
+          ) : chainType === ChainTypeEnum.EVM && !chainIsSupported ? (
             <Container>
               {!hideIcon && <Chain id={chainId} />}
               <span style={{ minWidth: 32 }}>???</span>

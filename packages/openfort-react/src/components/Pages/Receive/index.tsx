@@ -2,7 +2,6 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useEffect } from 'react'
 import Logos from '../../../assets/logos'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useChains } from '../../../hooks/useChains'
 import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { CopyIconButton } from '../../Common/CopyToClipboard/CopyIconButton'
@@ -20,14 +19,13 @@ function formatSolanaCluster(cluster: string): string {
 
 const Receive = () => {
   const context = useOpenfort()
-  const currentRoute = context.route?.route ?? ''
+  const { route, chains } = context
+  const currentRoute = route?.route ?? ''
   const isSolanaRoute = currentRoute.startsWith('sol:')
   const { chainType } = useChain()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-
-  const chains = useChains()
 
   const isConnected = wallet.status === 'connected'
   const address = isConnected ? wallet.address : undefined
@@ -59,7 +57,7 @@ const Receive = () => {
   useEffect(() => {
     const timer = setTimeout(() => context.triggerResize(), 100)
     return () => clearTimeout(timer)
-  }, [address, context.triggerResize])
+  }, [address, context])
 
   return (
     <PageContent onBack={isSolanaRoute ? routes.SOL_CONNECTED : routes.CONNECTED}>

@@ -13,7 +13,6 @@ import { formatUnits } from 'viem'
 import { BuyIcon, ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
-import { useChains } from '../../../hooks/useChains'
 import useLocales from '../../../hooks/useLocales'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
@@ -44,8 +43,8 @@ function getFirstBalanceAsset(
 
 const EthereumConnected: React.FC = () => {
   const context = useOpenfort()
+  const { setHeaderLeftSlot, setRoute, chains } = context
   const themeContext = useThemeContext()
-  const { setHeaderLeftSlot, setRoute } = context
 
   const wallet = useEthereumEmbeddedWallet()
   const { embeddedAccounts } = useOpenfortCore()
@@ -62,7 +61,6 @@ const EthereumConnected: React.FC = () => {
       )
     }
   }, [chainType])
-  const chains = useChains()
   const chain = chains.find((c) => c.id === chainId)
 
   const identity = useResolvedIdentity({

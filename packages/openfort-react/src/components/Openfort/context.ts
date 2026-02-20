@@ -1,6 +1,7 @@
 import type { ChainTypeEnum, OAuthProvider, SDKOverrides, ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
 import type React from 'react'
 import { createContext } from 'react'
+import type { Chain } from 'viem'
 import type { useConnectCallbackProps } from '../../openfort/connectCallbackTypes'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import type {
@@ -66,6 +67,9 @@ export type ContextValue = {
   setSendForm: React.Dispatch<React.SetStateAction<SendFormState>>
   buyForm: BuyFormState
   setBuyForm: React.Dispatch<React.SetStateAction<BuyFormState>>
+
+  /** Configured EVM chains (from wagmi bridge or walletConfig.ethereum). Empty when not EVM. */
+  chains: Chain[]
 } & useConnectCallbackProps
 
 export const OpenfortContext = createContext<ContextValue | null>(null)

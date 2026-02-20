@@ -7,6 +7,7 @@ import {
 import { Buffer } from 'buffer'
 import type React from 'react'
 import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { DEFAULT_DEV_CHAIN_ID } from '../../core/ConnectionStrategy'
 import { CoreProvider } from '../../core/CoreContext'
 import { OpenfortEthereumBridgeContext } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useThemeFont } from '../../hooks/useGoogleFont'
@@ -15,6 +16,7 @@ import type { useConnectCallbackProps } from '../../openfort/connectCallbackType
 import { SolanaContextProvider } from '../../solana/SolanaContext'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
+import { buildChainFromConfig } from '../../utils/rpc'
 import { isFamily } from '../../utils/wallets'
 import ConnectKitModal from '../ConnectModal'
 import { type ContextValue, OpenfortContext, UIContext, type UIContextValue } from './context'
@@ -217,6 +219,22 @@ export const OpenfortProvider = ({
   useLayoutEffect(() => setCustomTheme(safeUiConfig.customTheme ?? {}), [safeUiConfig.customTheme])
   useLayoutEffect(() => setLang(safeUiConfig.language || 'en-US'), [safeUiConfig.language])
 
+  const chains = useMemo((): import('viem').Chain[] => {
+    if (bridge?.switchChain?.chains?.length) {
+      return bridge.switchChain.chains as import('viem').Chain[]
+    }
+    if (walletConfig?.ethereum) {
+      const rpcUrls = walletConfig.ethereum.rpcUrls
+      const defaultChainId = walletConfig.ethereum.chainId ?? DEFAULT_DEV_CHAIN_ID
+      const chainIds =
+        rpcUrls && Object.keys(rpcUrls).length > 0
+          ? [...new Set([...Object.keys(rpcUrls).map(Number), defaultChainId])]
+          : [defaultChainId]
+      return chainIds.map((id) => buildChainFromConfig(id, rpcUrls))
+    }
+    return []
+  }, [bridge?.switchChain?.chains, walletConfig?.ethereum?.rpcUrls, walletConfig?.ethereum?.chainId])
+
   const chain = bridge?.account.chain
   const isConnected = bridge?.account.isConnected ?? false
   const isChainSupported = !chain?.id || (bridge?.config.chains?.some((c) => c.id === chain.id) ?? false)
@@ -311,6 +329,7 @@ export const OpenfortProvider = ({
       setBuyForm,
       onConnect,
       onDisconnect,
+      chains,
     }),
     [
       ckMode,
@@ -340,6 +359,7 @@ export const OpenfortProvider = ({
       headerLeftSlot,
       onConnect,
       onDisconnect,
+      chains,
     ]
   )
 

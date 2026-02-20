@@ -120,7 +120,7 @@ function getBlockExplorerUrl(chainId: number): string | undefined {
 
 /**
  * Build a viem Chain from chainId and optional rpcUrls (e.g. from walletConfig.ethereum.rpcUrls).
- * Used when no bridge is present (embedded strategy) so useChains() and viem clients have a Chain.
+ * Used when no bridge is present (embedded strategy) so chains from context and viem clients have a Chain.
  */
 export function buildChainFromConfig(chainId: number, rpcUrls?: Record<number, string>): Chain {
   const rpcUrl = rpcUrls?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)

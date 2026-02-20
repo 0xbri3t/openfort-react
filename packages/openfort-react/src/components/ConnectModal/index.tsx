@@ -4,7 +4,6 @@ import { useEffect, useMemo } from 'react'
 type ValueOf<T> = T[keyof T]
 
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
-import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
@@ -154,7 +153,7 @@ const ConnectModal: React.FC<{
   )
   const isConnected = strategy?.isConnected(state) ?? false
   const chainId = strategy?.getChainId()
-  const chainIsSupported = useChainIsSupported(chainId, strategy)
+  const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
 
   //if chain is unsupported we enforce a "switch chain" prompt
   const closeable = !(context.uiConfig.enforceSupportedChains && isConnected && !chainIsSupported)

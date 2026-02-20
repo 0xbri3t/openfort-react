@@ -108,8 +108,6 @@ export type {
   UserWallet,
 } from './hooks/openfort/walletTypes'
 export { invalidateBalance } from './hooks/useBalance'
-export { useChainIsSupported } from './hooks/useChainIsSupported'
-export { useChains } from './hooks/useChains'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
