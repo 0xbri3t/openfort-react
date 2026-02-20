@@ -41,7 +41,7 @@ export const CreateWalletPasswordSheet = ({
           try {
             await create({
               recoveryMethod: RecoveryMethod.PASSWORD,
-              recoveryPassword: password,
+              password,
             })
             onCreateWallet?.()
             onClose()
@@ -121,7 +121,7 @@ export const WalletRecoverPasswordSheet = ({
             await setActive({
               address: wallet.address,
               recoveryMethod: RecoveryMethod.PASSWORD,
-              recoveryPassword: password,
+              password,
             })
             onClose()
           } catch (err) {

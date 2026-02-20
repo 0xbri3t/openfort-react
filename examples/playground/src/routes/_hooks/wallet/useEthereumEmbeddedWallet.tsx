@@ -32,7 +32,7 @@ function EvmContent() {
               type: 'select',
               options: ['undefined', RecoveryMethod.PASSWORD, RecoveryMethod.PASSKEY, RecoveryMethod.AUTOMATIC],
             },
-            recoveryPassword: {
+            password: {
               type: 'password',
             },
           },
@@ -47,7 +47,7 @@ function EvmContent() {
               type: 'select',
               options: ['undefined', RecoveryMethod.PASSWORD, RecoveryMethod.PASSKEY, RecoveryMethod.AUTOMATIC],
             },
-            recoveryPassword: {
+            password: {
               type: 'password',
             },
           },

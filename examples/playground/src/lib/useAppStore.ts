@@ -11,20 +11,23 @@ const defaultWalletConfig: OpenfortWalletConfig = {
       [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',
       [baseSepolia.id]: 'https://sepolia.base.org',
     },
+    ethereumProviderPolicyId: {
+      [polygonAmoy.id]: import.meta.env.VITE_POLYGON_POLICY_ID!,
+      [beamTestnet.id]: import.meta.env.VITE_BEAM_POLICY_ID!,
+      [baseSepolia.id]: import.meta.env.VITE_BASE_POLICY_ID!,
+    },
+    assets: {
+      [polygonAmoy.id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],
+      [beamTestnet.id]: [import.meta.env.VITE_BEAM_MINT_CONTRACT!],
+    },
   },
-  solana: { cluster: 'devnet' },
-  ethereumProviderPolicyId: {
-    [polygonAmoy.id]: import.meta.env.VITE_POLYGON_POLICY_ID!,
-    [beamTestnet.id]: import.meta.env.VITE_BEAM_POLICY_ID!,
-    [baseSepolia.id]: import.meta.env.VITE_BASE_POLICY_ID!,
+  solana: {
+    cluster: 'devnet',
+    rpcUrls: { devnet: 'https://api.devnet.solana.com' },
   },
   createEncryptedSessionEndpoint:
     import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT ||
     'https://create-next-app.openfort.io/api/protected-create-encryption-session',
-  assets: {
-    [polygonAmoy.id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],
-    [beamTestnet.id]: [import.meta.env.VITE_BEAM_MINT_CONTRACT!],
-  },
   requestWalletRecoverOTP: async ({ userId, email, phone }) => {
     await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {
       method: 'POST',

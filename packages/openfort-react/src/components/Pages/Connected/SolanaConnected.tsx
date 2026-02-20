@@ -52,7 +52,14 @@ const SolanaConnected: React.FC = () => {
   const { embeddedAccounts } = useOpenfortCore()
   const { rpcUrl } = useSolanaContext()
   const hasSolanaWallets = (embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.SVM) ?? []).length > 0
-  const address = wallet.status === 'connected' ? wallet.address : undefined
+  const isAddressLoading = wallet.status === 'connected' && !wallet.address
+  const address = wallet.status === 'connected' && wallet.address ? wallet.address : undefined
+
+  // When the address becomes available, trigger a modal resize so the modal
+  // height (measured via offsetHeight) reflects the full connected layout.
+  useEffect(() => {
+    if (address) context.triggerResize()
+  }, [address])
 
   const balanceResult = useAsyncData({
     queryKey: ['solana-balance', address, rpcUrl],
@@ -71,6 +78,11 @@ const SolanaConnected: React.FC = () => {
 
   const balance = balanceResult.data
   const isBalanceLoading = balanceResult.isLoading
+
+  // Re-measure when balance loads so the modal expands to fit balance + actions.
+  useEffect(() => {
+    if (!isBalanceLoading) context.triggerResize()
+  }, [isBalanceLoading])
 
   useEffect(() => {
     if (!address) {
@@ -137,6 +149,7 @@ const SolanaConnected: React.FC = () => {
         }
         hideBalance={context?.uiConfig.hideBalance}
         isBalanceLoading={isBalanceLoading}
+        isAddressLoading={isAddressLoading}
         noWalletFallback={
           hasSolanaWallets ? (
             <Button onClick={() => setRoute(routes.SOL_WALLETS)}>Manage wallets</Button>

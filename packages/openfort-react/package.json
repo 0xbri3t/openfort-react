@@ -116,6 +116,9 @@
     },
     "@tanstack/react-query": {
       "optional": true
+    },
+    "styled-components": {
+      "optional": true
     }
   }
 }

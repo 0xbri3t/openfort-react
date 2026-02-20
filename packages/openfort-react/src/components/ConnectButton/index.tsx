@@ -181,7 +181,7 @@ const ConnectedLabel = ({ separator }: { separator?: string }) => {
       if (!user) return 'Loading user...'
       return 'Not connected'
     case 'connected': {
-      // Format address with optional separator
+      if (!wallet.address) return 'Loading...'
       const formatted = separator
         ? `${wallet.address.slice(0, 6)}${separator}${wallet.address.slice(-4)}`
         : wallet.displayAddress
@@ -226,7 +226,7 @@ function OpenfortButtonInner({
 
   return (
     <AnimatePresence initial={false}>
-      {user || isConnected ? (
+      {user || (isConnected && wallet.address) ? (
         <TextContainer
           key={'connectedText'}
           initial={'initial'}

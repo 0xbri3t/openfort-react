@@ -72,7 +72,7 @@ const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => 
                     setCreatingMethod(RecoveryMethod.PASSWORD)
                     create({
                       recoveryMethod: RecoveryMethod.PASSWORD,
-                      recoveryPassword: 'example-password',
+                      password: 'example-password',
                     })
                   }}
                   disabled={isCreating}
@@ -151,11 +151,7 @@ const WalletButton = ({
   activeWallet: EmbeddedWalletItem | null
   /** Address of the wallet currently being switched to (only this button shows "Connecting..."). */
   connectingAddress: string | undefined
-  setActive: (opts: {
-    address: `0x${string}`
-    recoveryPassword?: string
-    recoveryMethod?: RecoveryMethod
-  }) => Promise<void>
+  setActive: (opts: { address: `0x${string}`; password?: string; recoveryMethod?: RecoveryMethod }) => Promise<void>
 }) => {
   const isConnecting = connectingAddress != null && connectingAddress.toLowerCase() === wallet.address.toLowerCase()
   const [password, setPassword] = useState('example-password')
@@ -180,7 +176,7 @@ const WalletButton = ({
 
   const handleSetActive = () => {
     if (wallet.recoveryMethod === RecoveryMethod.PASSWORD) {
-      setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSWORD, recoveryPassword: password })
+      setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSWORD, password })
     } else if (wallet.recoveryMethod === RecoveryMethod.PASSKEY) {
       setActive({ address: wallet.address, recoveryMethod: RecoveryMethod.PASSKEY })
     } else {

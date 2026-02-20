@@ -89,8 +89,8 @@ export type CreateEthereumWalletOptions = {
   recoveryMethod?: RecoveryMethod
   /** Passkey ID for PASSKEY recovery */
   passkeyId?: string
-  /** Recovery password for key encryption */
-  recoveryPassword?: string
+  /** Password for PASSWORD recovery */
+  password?: string
   /** OTP code for verification */
   otpCode?: string
   /** Account type (Smart Account or EOA) */
@@ -114,7 +114,7 @@ export type SetActiveEthereumWalletOptions = {
   /** Passkey ID for PASSKEY recovery */
   passkeyId?: string
   /** Password for PASSWORD recovery */
-  recoveryPassword?: string
+  password?: string
   /** OTP code for AUTOMATIC recovery */
   otpCode?: string
 }

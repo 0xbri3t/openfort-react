@@ -308,7 +308,7 @@ const CreateWalletPasswordRecovery = ({
     try {
       await create({
         recoveryMethod: RecoveryMethod.PASSWORD,
-        recoveryPassword: recoveryPhrase,
+        password: recoveryPhrase,
       })
       logger.log('Recovery success')
       setRoute(routes.CONNECTED_SUCCESS)

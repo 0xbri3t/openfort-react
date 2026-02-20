@@ -402,7 +402,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     strategy
       .initProvider(openfort, walletConfig, evmChainId)
       .then(() => {
-        if (!cancelled) fetchEmbeddedAccounts()
+        if (!cancelled) fetchEmbeddedAccounts({ silent: true })
       })
       .catch((err) => {
         if (!cancelled) {

@@ -222,7 +222,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           {
             recoveryMethod: createOptions?.recoveryMethod,
             passkeyId: createOptions?.passkeyId,
-            password: createOptions?.recoveryPassword,
+            password: createOptions?.password,
             otpCode: createOptions?.otpCode,
           },
           {
@@ -324,7 +324,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
 
         try {
-          const password = activeOptions.recoveryPassword
+          const password = activeOptions.password
           const hasExplicitRecovery =
             activeOptions.recoveryParams != null || password != null || activeOptions.recoveryMethod !== undefined
 
