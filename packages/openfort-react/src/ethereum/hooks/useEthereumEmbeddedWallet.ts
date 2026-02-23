@@ -235,11 +235,9 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           }
         )
 
-        // Determine account type
+        // Determine account type (use createOptions, then walletConfig, else default to Smart Account)
         const accountType =
-          createOptions?.accountType === 'EOA'
-            ? AccountTypeEnum.EOA
-            : (walletConfig?.ethereum?.accountType ?? AccountTypeEnum.SMART_ACCOUNT)
+          createOptions?.accountType ?? walletConfig?.ethereum?.accountType ?? AccountTypeEnum.SMART_ACCOUNT
 
         const account = await client.embeddedWallet.create({
           chainType: ChainTypeEnum.EVM,

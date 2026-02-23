@@ -1,11 +1,4 @@
-import {
-  AccountTypeEnum,
-  ChainTypeEnum,
-  type EmbeddedAccount,
-  EmbeddedState,
-  type Openfort,
-  type User,
-} from '@openfort/openfort-js'
+import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState, type Openfort, type User } from '@openfort/openfort-js'
 import type React from 'react'
 import {
   createElement,
@@ -269,13 +262,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
 
-  // SVM (Solana) wallets are EOA; EVM uses walletConfig.ethereum.accountType so the core sees the right list after guest signup
-  const embeddedAccountsAccountType =
-    chainType === ChainTypeEnum.SVM
-      ? undefined
-      : walletConfig?.ethereum?.accountType === AccountTypeEnum.EOA
-        ? undefined
-        : AccountTypeEnum.SMART_ACCOUNT
+  // List all embedded accounts (EOA, Smart Account, Delegated Account). No accountType filter.
+  const embeddedAccountsAccountType = undefined
 
   // Embedded accounts list. Will reset on logout.
   const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[] | undefined>(undefined)

@@ -1,4 +1,4 @@
-import { AccountTypeEnum, ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
+import { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
@@ -79,15 +79,9 @@ export const useConnectToWalletPostAuth = () => {
         return {}
       }
 
-      const accountType =
-        chainType === ChainTypeEnum.SVM
-          ? undefined
-          : walletConfig?.ethereum?.accountType === AccountTypeEnum.EOA
-            ? undefined
-            : AccountTypeEnum.SMART_ACCOUNT
+      // List all account types (EOA, Smart Account, Delegated Account)
       const wallets = await client.embeddedWallet.list({
         limit: 100,
-        accountType,
       })
 
       const chainWallets = wallets.filter((w) => w.chainType === chainType)

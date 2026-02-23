@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
+import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
@@ -189,9 +190,6 @@ const WalletButton = ({
     }
   }
 
-  const displayAddress =
-    wallet.address.length > 12 ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : wallet.address
-
   if (showPasswordInput) {
     return (
       <form className={cn('input w-full password-input')}>
@@ -249,7 +247,15 @@ const WalletButton = ({
         </MP>
       )}
       <div className="flex items-center gap-2">
-        {wallet.address && <span className="text-xs">{displayAddress}</span>}
+        {wallet.address && (
+          <TruncatedText
+            text={wallet.address}
+            startChars={6}
+            endChars={4}
+            displayText={`${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`}
+            className="text-xs"
+          />
+        )}
         <WalletRecoveryIcon recovery={wallet.recoveryMethod} />
       </div>
     </button>

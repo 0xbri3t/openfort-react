@@ -21,7 +21,9 @@ test.describe('Session keys - multiple + delete flow', () => {
     const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
 
     await walletsCard.getByRole('button', { name: /create new wallet/i }).click()
-    await walletsCard.getByRole('button', { name: /smart account/i }).click()
+    if (mode !== 'solana-only') {
+      await walletsCard.getByRole('button', { name: /smart account/i }).click()
+    }
     await walletsCard.getByRole('button', { name: /^password$/i }).click()
 
     const walletRowLocator = walletsCard.locator('button').filter({

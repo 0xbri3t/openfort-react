@@ -31,7 +31,9 @@ test.describe('Dashboard integration - wallets + signatures', () => {
     await expect(createNewBtn).toBeVisible({ timeout: 30_000 })
     await createNewBtn.click()
 
-    await walletsCard.getByRole('button', { name: /smart account/i }).click()
+    if (m !== 'solana-only') {
+      await walletsCard.getByRole('button', { name: /smart account/i }).click()
+    }
 
     const passwordBtn = walletsCard.getByRole('button', { name: /^password$/i })
 
