@@ -4,7 +4,6 @@ import { useEffect, useMemo } from 'react'
 type ValueOf<T> = T[keyof T]
 
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
-import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
@@ -13,7 +12,7 @@ import { ConnectKitThemeProvider } from '../ConnectKitThemeProvider/ConnectKitTh
 import { routes, type SetRouteOptions } from '../Openfort/types'
 import { useOpenfort } from '../Openfort/useOpenfort'
 import About from '../Pages/About'
-import { AssetInventory } from '../Pages/AssetInventory'
+import { AssetInventory, SolanaAssetInventory } from '../Pages/AssetInventory'
 import Buy from '../Pages/Buy'
 import BuyComplete from '../Pages/BuyComplete'
 import BuyProcessing from '../Pages/BuyProcessing'
@@ -121,6 +120,7 @@ const CHAIN_PREFIXED_PAGES: Record<ChainTypeEnum, RoutePages> = {
     'sol:recoverWallet': <RecoverPage />,
     'sol:send': <SolanaSend />,
     'sol:receive': <Receive />,
+    'sol:assetInventory': <SolanaAssetInventory />,
     'sol:wallets': <SolanaWallets />,
   },
 }
@@ -153,7 +153,7 @@ const ConnectModal: React.FC<{
   )
   const isConnected = strategy?.isConnected(state) ?? false
   const chainId = strategy?.getChainId()
-  const chainIsSupported = useChainIsSupported(chainId, strategy)
+  const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
 
   //if chain is unsupported we enforce a "switch chain" prompt
   const closeable = !(context.uiConfig.enforceSupportedChains && isConnected && !chainIsSupported)

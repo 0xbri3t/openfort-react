@@ -1,7 +1,6 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { BuyIcon, DollarIcon, ReceiveIcon } from '../../../assets/icons'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useChains } from '../../../hooks/useChains'
 import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
@@ -13,15 +12,13 @@ import { PageContent } from '../../PageContent'
 import { ButtonsContainer } from './styles'
 
 export const NoAssetsAvailable = () => {
-  const { setRoute } = useOpenfort()
+  const { setRoute, chains } = useOpenfort()
   const { chainType } = useChain()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-
-  const chains = useChains()
 
   const chainId =
     wallet.status === 'connected' && chainType === ChainTypeEnum.EVM

@@ -9,7 +9,6 @@
 
 export type { SetRecoveryOptions } from '../shared/types'
 export { useSolanaEmbeddedWallet } from './hooks/useSolanaEmbeddedWallet'
-export { LAMPORTS_PER_SOL, lamportsToSol, solToLamports } from './hooks/utils'
 export {
   getTransactionBytes,
   type SignAllTransactionsParams,

@@ -7,5 +7,3 @@ export function lamportsToSol(lamports: bigint): number {
 export function solToLamports(sol: number): bigint {
   return BigInt(Math.floor(sol * Number(LAMPORTS_PER_SOL)))
 }
-
-export { LAMPORTS_PER_SOL }

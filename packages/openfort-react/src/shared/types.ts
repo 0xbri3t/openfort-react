@@ -36,7 +36,7 @@ export type WalletStatus =
   | 'error'
 
 type _BaseCreateWalletOptions<TResult> = {
-  recoveryPassword?: string
+  password?: string
   otpCode?: string
 } & OpenfortHookOptions<TResult>
 

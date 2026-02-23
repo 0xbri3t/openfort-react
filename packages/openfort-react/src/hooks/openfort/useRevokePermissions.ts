@@ -1,6 +1,7 @@
 import type { RevokePermissionsRequestParams, SessionResponse } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
 import type { Hex } from 'viem'
+import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../../core/ConnectionStrategy'
 import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import { getEmbeddedWalletClient } from '../../ethereum/hooks/getEmbeddedWalletClient'
@@ -9,7 +10,6 @@ import type { OpenfortEmbeddedEthereumWalletProvider } from '../../ethereum/type
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { OpenfortHookOptions } from '../../types'
 import { logger } from '../../utils/logger'
-import { useChains } from '../useChains'
 import { type BaseFlowState, mapStatus } from './auth/status'
 import { onError, onSuccess } from './hookConsistency'
 
@@ -63,7 +63,7 @@ type RevokePermissionsHookOptions = OpenfortHookOptions<RevokePermissionsHookRes
  * ```
  */
 export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions = {}) => {
-  const chains = useChains()
+  const { chains } = useOpenfort()
   const { client } = useOpenfortCore()
   const ethereum = useEthereumEmbeddedWallet()
   const chainId = ethereum.chainId ?? DEFAULT_TESTNET_CHAIN_ID

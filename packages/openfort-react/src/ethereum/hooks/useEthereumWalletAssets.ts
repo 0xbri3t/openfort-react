@@ -8,7 +8,6 @@ import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
 import type { EthereumWalletConfig } from '../../ethereum/types'
 import { useUser } from '../../hooks/openfort/useUser'
-import { useChains } from '../../hooks/useChains'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
@@ -38,10 +37,8 @@ export const useEthereumWalletAssets = ({
   const address = isConnected ? wallet.address : undefined
   const chainId = isConnected ? wallet.chainId : undefined
 
-  const { walletConfig, publishableKey, overrides, thirdPartyAuth } = useOpenfort()
+  const { walletConfig, publishableKey, overrides, thirdPartyAuth, chains } = useOpenfort()
   const { getAccessToken } = useUser()
-
-  const chains = useChains()
   const chain = chains.find((c) => c.id === chainId)
 
   const buildHeaders = useCallback(async () => {

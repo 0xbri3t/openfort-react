@@ -44,7 +44,7 @@ const REASON_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
   },
   {
     pattern: /password\s+is\s+required|recovery\s+password|password\s+required/i,
-    reason: 'recovery password is required',
+    reason: 'password is required',
   },
   { pattern: /otp\s+required|otp_required/i, reason: 'OTP verification required' },
   { pattern: /access\s+token\s+not\s+found|not\s+authenticated/i, reason: 'not authenticated' },

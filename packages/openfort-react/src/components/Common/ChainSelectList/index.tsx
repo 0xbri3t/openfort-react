@@ -6,7 +6,6 @@ import { chainConfigs } from '../../../constants/chainConfigs'
 import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
-import { useChains } from '../../../hooks/useChains'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useChain } from '../../../shared/hooks/useChain'
@@ -61,7 +60,7 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
   const { setActiveChainId, activeChainId } = useOpenfortCore()
-  const embeddedChains = useChains()
+  const { chains: embeddedChains } = useOpenfort()
 
   // Inline switchChain logic for embedded EVM mode (was useEthereumSwitchChain)
   const currentChainIdFromWallet =

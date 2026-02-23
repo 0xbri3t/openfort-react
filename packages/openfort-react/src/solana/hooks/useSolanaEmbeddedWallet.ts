@@ -402,9 +402,14 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     [create, wallets, setActive, setRecovery, exportPrivateKey]
   )
 
+  // Clear local state when core clears activeEmbeddedAddress (e.g. logout).
+  useEffect(() => {
+    if (!activeEmbeddedAddress && (state.status === 'connected' || state.status === 'needs-recovery')) {
+      setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
+    }
+  }, [activeEmbeddedAddress, state.status])
+
   // Sync local state from core's activeEmbeddedAddress (single source of truth).
-  // CoreOpenfortProvider syncs from SDK on load; we only react to context here.
-  // Do NOT call setActiveEmbeddedAddress - that would create a circular update.
   useEffect(() => {
     if (
       isLoadingAccounts ||
@@ -443,6 +448,11 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         error: null,
       })
     }
+
+    // activeEmbeddedAddress is from other chain (e.g. EVM); auto-activate first SVM wallet
+    if (!accountByAddress && activeEmbeddedAddress && solanaAccounts.length > 0 && state.status === 'disconnected') {
+      setActiveEmbeddedAddress(solanaAccounts[0].address)
+    }
   }, [
     isLoadingAccounts,
     state.status,
@@ -451,6 +461,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     embeddedState,
     activeEmbeddedAddress,
     createProviderForAccount,
+    setActiveEmbeddedAddress,
   ])
 
   const derived = useMemo(

@@ -129,7 +129,7 @@
       "wagmi",
       "@wagmi/connectors",
       "@wagmi/core",
-      "viem",
+      "styled-components",
       "@babel/core"
     ]
   },

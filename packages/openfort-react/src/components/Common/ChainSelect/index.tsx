@@ -6,7 +6,6 @@ import { css } from 'styled-components'
 
 import defaultTheme from '../../../constants/defaultTheme'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useChains } from '../../../hooks/useChains'
 import useLocales from '../../../hooks/useLocales'
 import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
@@ -138,7 +137,7 @@ const ChainSelector: React.FC = () => {
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
 
-  const chains = useChains()
+  const { chains } = useOpenfort()
 
   // Find current chain from connected wallet
   const isConnected = wallet.status === 'connected'

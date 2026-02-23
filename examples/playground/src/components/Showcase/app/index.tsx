@@ -77,8 +77,8 @@ export const App = () => {
             />
             <MintTokensCard
               tooltip={{
-                hook: 'useSolanaSendTransaction',
-                body: <>Sends SOL using useSolanaSendTransaction from @openfort/react/solana.</>,
+                hook: 'requestAirdrop',
+                body: <>Funds devnet account via Solana RPC requestAirdrop.</>,
               }}
             />
             <CreateSessionKeyCardSolana />

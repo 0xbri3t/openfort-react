@@ -115,6 +115,20 @@ export const useConnectToWalletPostAuth = () => {
       if (hasAutomaticOrPasskey) {
         const first = chainWallets[0]
         if (first) {
+          const alreadyActive =
+            embeddedWallet.status === 'connected' &&
+            embeddedWallet.address &&
+            (chainType === ChainTypeEnum.SVM
+              ? embeddedWallet.address === first.address
+              : (embeddedWallet.address as string).toLowerCase() === first.address.toLowerCase())
+          if (alreadyActive) {
+            return {
+              wallet:
+                chainType === ChainTypeEnum.SVM
+                  ? embeddedAccountToSolanaUserWallet(first)
+                  : embeddedAccountToUserWallet(first),
+            }
+          }
           try {
             if (chainType === ChainTypeEnum.SVM) {
               await (solanaWallet as typeof solanaWallet).setActive({ address: first.address })

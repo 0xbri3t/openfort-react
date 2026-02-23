@@ -142,7 +142,7 @@ const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => 
                       setCreatingMethod(RecoveryMethod.PASSWORD)
                       await create({
                         recoveryMethod: RecoveryMethod.PASSWORD,
-                        recoveryPassword: 'example-password',
+                        password: 'example-password',
                       })
                     } catch (err) {
                       setError(err instanceof Error ? err.message : 'Failed to create wallet')
@@ -222,11 +222,7 @@ const EmbeddedWalletButton = ({
   wallet: ConnectedEmbeddedEthereumWallet
   activeWallet: ConnectedEmbeddedEthereumWallet | null
   connectingAddress: string | undefined
-  setActive: (opts: {
-    address: `0x${string}`
-    recoveryMethod?: RecoveryMethod
-    recoveryPassword?: string
-  }) => Promise<void>
+  setActive: (opts: { address: `0x${string}`; recoveryMethod?: RecoveryMethod; password?: string }) => Promise<void>
 }) => {
   const isConnecting = connectingAddress != null && connectingAddress.toLowerCase() === wallet.address.toLowerCase()
   const [password, setPassword] = useState('example-password')
@@ -248,7 +244,7 @@ const EmbeddedWalletButton = ({
       setActive({
         address: wallet.address,
         recoveryMethod: RecoveryMethod.PASSWORD,
-        recoveryPassword: password,
+        password,
       })
     } else if (wallet.recoveryMethod === RecoveryMethod.PASSKEY) {
       setActive({
@@ -347,11 +343,7 @@ export const ConnectExternalWalletCard = () => {
   const isExternalActive = ethereum.walletType === 'external'
   const isBusy = ethereum.isLoading
 
-  const setActive = async (opts: {
-    address: `0x${string}`
-    recoveryMethod?: RecoveryMethod
-    recoveryPassword?: string
-  }) => {
+  const setActive = async (opts: { address: `0x${string}`; recoveryMethod?: RecoveryMethod; password?: string }) => {
     await ethereum.setActive(opts)
   }
 

@@ -3,7 +3,6 @@ import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import type React from 'react'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useUI } from '../../hooks/openfort/useUI'
-import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import useIsMounted from '../../hooks/useIsMounted'
 import useLocales from '../../hooks/useLocales'
 import { useResolvedIdentity } from '../../hooks/useResolvedIdentity'
@@ -12,6 +11,7 @@ import { useChain } from '../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { ResetContainer } from '../../styles'
 import type { CustomTheme, Mode, Theme } from '../../types'
+import { logger } from '../../utils/logger'
 import { Balance } from '../BalanceButton'
 import Avatar from '../Common/Avatar'
 import ThemedButton, { ThemeContainer } from '../Common/ThemedButton'
@@ -124,7 +124,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
   const address = isConnected ? (wallet.address as Hash) : undefined
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
-  const isChainSupported = useChainIsSupported(chainId)
+  const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
 
   const identity = useResolvedIdentity({
     address: address ?? '',
@@ -151,7 +151,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
       {children({
         show,
         hide,
-        unsupported: !isChainSupported,
+        unsupported: !chainIsSupported,
         isConnected: isConnected,
         isConnecting: isOpen,
         address: address,
@@ -181,7 +181,7 @@ const ConnectedLabel = ({ separator }: { separator?: string }) => {
       if (!user) return 'Loading user...'
       return 'Not connected'
     case 'connected': {
-      // Format address with optional separator
+      if (!wallet.address) return 'Loading...'
       const formatted = separator
         ? `${wallet.address.slice(0, 6)}${separator}${wallet.address.slice(-4)}`
         : wallet.displayAddress
@@ -201,6 +201,7 @@ function OpenfortButtonInner({
 }) {
   const locales = useLocales({})
   const { user } = useOpenfortCore()
+  const context = useOpenfort()
 
   const { chainType } = useChain()
   const ethereumWallet = useEthereumEmbeddedWallet()
@@ -211,8 +212,8 @@ function OpenfortButtonInner({
   const address = isConnected ? wallet.address : undefined
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
-  const isChainSupported = useChainIsSupported(chainId)
-  const showUnsupportedWarning = chainType === ChainTypeEnum.EVM && !isChainSupported
+  const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
+  const showUnsupportedWarning = chainType === ChainTypeEnum.EVM && !chainIsSupported
 
   const identity = useResolvedIdentity({
     address: address ?? '',
@@ -226,7 +227,7 @@ function OpenfortButtonInner({
 
   return (
     <AnimatePresence initial={false}>
-      {user || isConnected ? (
+      {user || (isConnected && wallet.address) ? (
         <TextContainer
           key={'connectedText'}
           initial={'initial'}
@@ -349,13 +350,13 @@ export function OpenfortButton({
   const isConnected = wallet.status === 'connected'
   const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
 
-  const chainIsSupported = useChainIsSupported(chainId)
+  const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
 
   const separator = ['web95', 'rounded', 'minimal'].includes(theme ?? context.uiConfig.theme ?? '') ? '....' : undefined
 
   if (!isMounted) return null
 
-  const shouldShowBalance = showBalance && chainIsSupported
+  const shouldShowBalance = showBalance && (chainType === ChainTypeEnum.SVM || chainIsSupported)
   const willShowBalance = isConnected && shouldShowBalance
 
   return (
@@ -366,6 +367,12 @@ export function OpenfortButton({
     >
       <ThemeContainer
         onClick={() => {
+          logger.log('OpenfortButton click', {
+            chainType,
+            evm: { status: ethereumWallet.status, address: ethereumWallet.address },
+            solana: { status: solanaWallet.status, address: solanaWallet.address },
+            active: { isConnected, address: wallet.address, displayAddress: wallet.displayAddress },
+          })
           if (onClick) {
             onClick(() => open())
           } else {

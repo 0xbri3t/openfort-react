@@ -52,7 +52,7 @@ const RecoverPasswordWallet = ({
     () => ({
       setActive: (opts: {
         address: string
-        recoveryPassword?: string
+        password?: string
         recoveryMethod?: RecoveryMethod
         otpCode?: string
         passkeyId?: string
@@ -110,7 +110,7 @@ const RecoverPasswordWallet = ({
       />
       <ModalHeading>Recover wallet</ModalHeading>
       <ModalBody style={{ textAlign: 'center' }}>
-        Please enter the recovery password to recover wallet{' '}
+        Please enter the password to recover wallet{' '}
         <CopyText value={wallet.address}>{ensName ?? truncateEthAddress(wallet.address)}</CopyText>
       </ModalBody>
       <form
@@ -164,7 +164,7 @@ const RecoverPasskeyWallet = ({
     () => ({
       setActive: (opts: {
         address: string
-        recoveryPassword?: string
+        password?: string
         recoveryMethod?: RecoveryMethod
         otpCode?: string
         passkeyId?: string
@@ -245,7 +245,7 @@ const RecoverAutomaticWallet = ({
     () => ({
       setActive: (opts: {
         address: string
-        recoveryPassword?: string
+        password?: string
         recoveryMethod?: RecoveryMethod
         otpCode?: string
         passkeyId?: string

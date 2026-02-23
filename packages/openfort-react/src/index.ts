@@ -107,12 +107,9 @@ export type {
   SolanaUserWallet,
   UserWallet,
 } from './hooks/openfort/walletTypes'
-export { useChainIsSupported } from './hooks/useChainIsSupported'
-export { useChains } from './hooks/useChains'
+export { invalidateBalance } from './hooks/useBalance'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
-export { isValidEvmAddress, isValidSolanaAddress } from './shared/utils/validation'
-export { createSIWEMessage } from './siwe/create-siwe-message'
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 // Solana
 export type {
@@ -139,14 +136,4 @@ export {
   SDKOverrides,
   ThirdPartyOAuthProvider,
 } from './types'
-export {
-  formatAddress,
-  formatBalance,
-  formatEther,
-  formatEVMAddress,
-  formatSol,
-  formatSolanaAddress,
-  truncateEthAddress,
-  truncateSolanaAddress,
-} from './utils/format'
 export { OPENFORT_VERSION } from './version'

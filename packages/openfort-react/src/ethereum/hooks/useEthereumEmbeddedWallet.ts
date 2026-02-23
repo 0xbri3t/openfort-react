@@ -222,7 +222,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           {
             recoveryMethod: createOptions?.recoveryMethod,
             passkeyId: createOptions?.passkeyId,
-            password: createOptions?.recoveryPassword,
+            password: createOptions?.password,
             otpCode: createOptions?.otpCode,
           },
           {
@@ -324,7 +324,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
 
         try {
-          const password = activeOptions.recoveryPassword
+          const password = activeOptions.password
           const hasExplicitRecovery =
             activeOptions.recoveryParams != null || password != null || activeOptions.recoveryMethod !== undefined
 
@@ -454,9 +454,14 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     [create, wallets, setActive, setRecovery, exportPrivateKey]
   )
 
+  // Clear local state when core clears activeEmbeddedAddress (e.g. logout).
+  useEffect(() => {
+    if (!activeEmbeddedAddress && (state.status === 'connected' || state.status === 'needs-recovery')) {
+      setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
+    }
+  }, [activeEmbeddedAddress, state.status])
+
   // Sync local state from core's activeEmbeddedAddress (single source of truth).
-  // CoreOpenfortProvider syncs from SDK on load; we only react to context here.
-  // Do NOT call setActiveEmbeddedAddress - that would create a circular update.
   useEffect(() => {
     if (
       isLoadingAccounts ||
@@ -495,6 +500,11 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         cancelled = true
       }
     }
+
+    // activeEmbeddedAddress is from other chain (e.g. SVM); auto-activate first EVM wallet
+    if (!accountByAddress && activeEmbeddedAddress && ethereumAccounts.length > 0 && state.status === 'disconnected') {
+      setActiveEmbeddedAddress(ethereumAccounts[0].address)
+    }
   }, [
     isLoadingAccounts,
     state.status,
@@ -503,6 +513,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     embeddedState,
     activeEmbeddedAddress,
     getEmbeddedEthereumProvider,
+    setActiveEmbeddedAddress,
   ])
 
   const derived = useMemo(

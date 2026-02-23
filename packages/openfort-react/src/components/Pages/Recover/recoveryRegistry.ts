@@ -8,7 +8,6 @@ type RecoveryContext = {
   setActive: (opts: {
     address: string
     password?: string
-    recoveryPassword?: string
     recoveryMethod?: RecoveryMethod
     otpCode?: string
     passkeyId?: string
@@ -31,7 +30,6 @@ async function passwordEntry(wallet: RecoverableWallet, ctx: RecoveryContext): P
     address: wallet.address,
     recoveryMethod: RecoveryMethod.PASSWORD,
     password: ctx.password,
-    recoveryPassword: ctx.password,
   })
   ctx.setRoute(routes.CONNECTED_SUCCESS)
 }

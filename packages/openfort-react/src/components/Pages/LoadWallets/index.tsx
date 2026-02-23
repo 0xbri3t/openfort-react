@@ -85,7 +85,18 @@ const LoadWallets: React.FC = () => {
     }
 
     if (wallets.length === 1) {
-      handleSingleWalletRegistry[chainType](wallets[0], chainType, setRoute, setConnector)
+      const single = wallets[0]
+      const alreadyActive =
+        embeddedWallet.status === 'connected' &&
+        embeddedWallet.address &&
+        (chainType === ChainTypeEnum.SVM
+          ? embeddedWallet.address === single.address
+          : (embeddedWallet.address as string).toLowerCase() === (single.address as string).toLowerCase())
+      if (alreadyActive) {
+        setRoute(chainType === ChainTypeEnum.SVM ? routes.SOL_CONNECTED : routes.ETH_CONNECTED)
+        return
+      }
+      handleSingleWalletRegistry[chainType](single, chainType, setRoute, setConnector)
       return
     }
 

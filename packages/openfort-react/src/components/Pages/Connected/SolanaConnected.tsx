@@ -9,6 +9,7 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import type React from 'react'
 import { useEffect } from 'react'
 import { ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
+import { BALANCE_INVALIDATE_EVENT } from '../../../hooks/useBalance'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
@@ -40,7 +41,7 @@ async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<numb
     }),
   })
   const data = await response.json()
-  return data.result ?? 0
+  return data.result?.value ?? 0
 }
 
 const SolanaConnected: React.FC = () => {
@@ -52,7 +53,14 @@ const SolanaConnected: React.FC = () => {
   const { embeddedAccounts } = useOpenfortCore()
   const { rpcUrl } = useSolanaContext()
   const hasSolanaWallets = (embeddedAccounts?.filter((a) => a.chainType === ChainTypeEnum.SVM) ?? []).length > 0
-  const address = wallet.status === 'connected' ? wallet.address : undefined
+  const isAddressLoading = wallet.status === 'connected' && !wallet.address
+  const address = wallet.status === 'connected' && wallet.address ? wallet.address : undefined
+
+  // When the address becomes available, trigger a modal resize so the modal
+  // height (measured via offsetHeight) reflects the full connected layout.
+  useEffect(() => {
+    if (address) context.triggerResize()
+  }, [address])
 
   const balanceResult = useAsyncData({
     queryKey: ['solana-balance', address, rpcUrl],
@@ -60,7 +68,9 @@ const SolanaConnected: React.FC = () => {
       if (!address || !rpcUrl) return null
       try {
         const balanceLamports = await fetchSolanaBalance(rpcUrl, address)
-        return balanceLamports / 1e9 // Convert lamports to SOL
+        const balanceSol = balanceLamports / 1e9
+        logger.log('Solana balance', { address, rpcUrl, lamports: balanceLamports, sol: balanceSol })
+        return balanceSol
       } catch (error) {
         logger.error('Failed to fetch Solana balance:', error)
         return null
@@ -69,8 +79,20 @@ const SolanaConnected: React.FC = () => {
     enabled: Boolean(address && rpcUrl),
   })
 
+  useEffect(() => {
+    if (!address || !rpcUrl) return
+    const handler = () => balanceResult.refetch().catch(() => {})
+    window.addEventListener(BALANCE_INVALIDATE_EVENT, handler)
+    return () => window.removeEventListener(BALANCE_INVALIDATE_EVENT, handler)
+  }, [address, rpcUrl, balanceResult.refetch])
+
   const balance = balanceResult.data
   const isBalanceLoading = balanceResult.isLoading
+
+  // Re-measure when balance loads so the modal expands to fit balance + actions.
+  useEffect(() => {
+    if (!isBalanceLoading) context.triggerResize()
+  }, [isBalanceLoading])
 
   useEffect(() => {
     if (!address) {
@@ -104,8 +126,17 @@ const SolanaConnected: React.FC = () => {
   const avatar = address ? CustomAvatar ? <CustomAvatar address={address} /> : <Avatar address={address} /> : <span />
 
   const balanceNode =
-    balance && !isBalanceLoading ? (
-      <TextLinkButton type="button" disabled>
+    balance != null && !isBalanceLoading ? (
+      <TextLinkButton
+        type="button"
+        onClick={() => {
+          if (balance <= 0) {
+            context.setRoute(routes.NO_ASSETS_AVAILABLE)
+          } else {
+            context.setRoute(routes.SOL_ASSET_INVENTORY)
+          }
+        }}
+      >
         <Balance
           key="solana-balance"
           initial={{ opacity: 0 }}
@@ -137,6 +168,7 @@ const SolanaConnected: React.FC = () => {
         }
         hideBalance={context?.uiConfig.hideBalance}
         isBalanceLoading={isBalanceLoading}
+        isAddressLoading={isAddressLoading}
         noWalletFallback={
           hasSolanaWallets ? (
             <Button onClick={() => setRoute(routes.SOL_WALLETS)}>Manage wallets</Button>
