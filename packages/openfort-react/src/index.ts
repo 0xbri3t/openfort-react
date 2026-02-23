@@ -63,16 +63,7 @@ export { formatErrorWithReason, getErrorReason, OpenfortError, OpenfortErrorCode
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './ethereum/hooks/useEthereumWalletAssets'
-export {
-  type OpenfortEthereumBridgeAccount,
-  type OpenfortEthereumBridgeChain,
-  type OpenfortEthereumBridgeConfig,
-  type OpenfortEthereumBridgeConnector,
-  OpenfortEthereumBridgeContext,
-  type OpenfortEthereumBridgeSwitchChain,
-  type OpenfortEthereumBridgeValue,
-  useEthereumBridge,
-} from './ethereum/OpenfortEthereumBridgeContext'
+// Bridge types/context are internal
 export type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,

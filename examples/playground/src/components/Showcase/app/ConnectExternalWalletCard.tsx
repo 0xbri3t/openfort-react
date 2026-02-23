@@ -1,5 +1,5 @@
-import { type RecoveryMethod, useEthereumBridge } from '@openfort/react'
-import { useWalletAuth } from '@openfort/react/wagmi'
+import type { RecoveryMethod } from '@openfort/react'
+import { useConnect, useWalletAuth } from '@openfort/react/wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useActiveEthereumEmbeddedWallet } from '@/hooks/useActiveEthereumEmbeddedWallet'
 import { cn } from '@/lib/cn'
@@ -76,7 +76,7 @@ const SimpleWalletButton = ({
  * - Embedded: list of wallets with password/passkey recovery, create button.
  */
 export const ConnectExternalWalletCard = () => {
-  const bridge = useEthereumBridge()
+  const { connect, connectors } = useConnect()
   const { ethereum, activeWallet, connectingAddress } = useActiveEthereumEmbeddedWallet()
   const { availableWallets: externalConnectors } = useWalletAuth()
 
@@ -89,9 +89,9 @@ export const ConnectExternalWalletCard = () => {
   }
 
   const handleSelectExternal = (connectorId: string) => {
-    if (isBusy || !bridge) return
-    const wallet = externalConnectors.find((c) => c.id === connectorId)
-    if (wallet) bridge.connect({ connector: wallet.connector })
+    if (isBusy) return
+    const wagmiConnector = connectors.find((c) => c.id === connectorId)
+    if (wagmiConnector) connect({ connector: wagmiConnector })
   }
 
   return (
