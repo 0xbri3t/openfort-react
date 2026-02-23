@@ -31,13 +31,9 @@ test.describe('Dashboard integration - wallets + signatures', () => {
     await expect(createNewBtn).toBeVisible({ timeout: 30_000 })
     await createNewBtn.click()
 
-    const automaticBtn = walletsCard.getByRole('button', { name: /^automatic$/i })
-    const passwordBtn = walletsCard.getByRole('button', { name: /^password$/i })
-    const passkeyBtn = walletsCard.getByRole('button', { name: /^passkey$/i })
+    await walletsCard.getByRole('button', { name: /smart account/i }).click()
 
-    await expect(automaticBtn).toBeVisible({ timeout: 30_000 })
-    await expect(passwordBtn).toBeVisible({ timeout: 30_000 })
-    await expect(passkeyBtn).toBeVisible({ timeout: 30_000 })
+    const passwordBtn = walletsCard.getByRole('button', { name: /^password$/i })
 
     // Click Password
     await passwordBtn.click()
