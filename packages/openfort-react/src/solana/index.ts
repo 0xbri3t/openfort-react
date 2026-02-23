@@ -23,7 +23,6 @@ export type {
   SolanaClusterConfig,
   SolanaCommitment,
   SolanaConfig,
-  SolanaProviderRequest,
   SolanaSignAllTransactionsRequest,
   SolanaSignMessageRequest,
   SolanaSignTransactionRequest,

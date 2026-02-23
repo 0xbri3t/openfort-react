@@ -93,7 +93,6 @@ export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
 
 export type {
-  EthereumUserWallet,
   SolanaUserWallet,
   UserWallet,
 } from './hooks/openfort/walletTypes'

@@ -117,11 +117,6 @@ export type SolanaSignAllTransactionsRequest = {
   params: { transactions: SolanaTransaction[] }
 }
 
-export type SolanaProviderRequest =
-  | SolanaSignMessageRequest
-  | SolanaSignTransactionRequest
-  | SolanaSignAllTransactionsRequest
-
 /**
  * Solana embedded wallet provider
  *
