@@ -1,6 +1,5 @@
 import {
   ChainTypeEnum,
-  useChain,
   useEthereumEmbeddedWallet,
   useOpenfort,
   useSolanaEmbeddedWallet,
@@ -25,7 +24,7 @@ function AuthHydratingScreen() {
 }
 
 function RouteComponent() {
-  const { chainType } = useChain()
+  const { chainType } = useOpenfort()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet

@@ -15,8 +15,8 @@ import { EthereumContext } from '../../../ethereum/EthereumContext'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
 import { useBalance } from '../../../hooks/useBalance'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
-import { useChain } from '../../../shared/hooks/useChain'
 import { getExplorerUrl } from '../../../shared/utils/explorer'
 import { truncateEthAddress } from '../../../utils'
 import { parseTransactionError } from '../../../utils/errorHandling'
@@ -54,7 +54,7 @@ function isTestnetChain(chainId: number): boolean {
 
 const SendConfirmation = () => {
   const wallet = useEthereumEmbeddedWallet()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumContext = useContext(EthereumContext)
   const { sendForm, setRoute, triggerResize, walletConfig } = useOpenfort()
 

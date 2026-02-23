@@ -3,7 +3,6 @@ import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { logger } from '../../../utils/logger'
 import {
@@ -51,7 +50,7 @@ export type CreateWalletPostAuthOptions = {
  * ```
  */
 export const useConnectToWalletPostAuth = () => {
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const { client } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
   const chainId = walletConfig?.ethereum?.chainId ?? 13337

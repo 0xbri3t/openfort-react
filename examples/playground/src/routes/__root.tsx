@@ -1,4 +1,4 @@
-import { ChainTypeEnum, type Theme, useChain, useUser } from '@openfort/react'
+import { ChainTypeEnum, type Theme, useOpenfort, useUser } from '@openfort/react'
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { useEffect, useLayoutEffect } from 'react'
 import z from 'zod'
@@ -25,7 +25,7 @@ let themeIndex = 0
 
 function RootComponent() {
   const { mode } = usePlaygroundMode()
-  const { chainType, setChainType } = useChain()
+  const { chainType, setChainType } = useOpenfort()
   const { isConnected } = useUser()
 
   // Sync chainType from stored playground mode on load and when mode changes.

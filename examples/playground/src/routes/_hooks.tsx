@@ -1,4 +1,10 @@
-import { ChainTypeEnum, useChain, useEthereumEmbeddedWallet, useSolanaEmbeddedWallet, useUser } from '@openfort/react'
+import {
+  ChainTypeEnum,
+  useEthereumEmbeddedWallet,
+  useOpenfort,
+  useSolanaEmbeddedWallet,
+  useUser,
+} from '@openfort/react'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { type PropsWithChildren, useMemo } from 'react'
@@ -30,7 +36,7 @@ const SidebarLink = ({ children, href, cta = 'View in hook' }: PropsWithChildren
 const SidebarInfo = () => {
   const { mode } = usePlaygroundMode()
   const { user, linkedAccounts } = useUser()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfort()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet

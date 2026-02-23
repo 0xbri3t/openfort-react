@@ -8,7 +8,6 @@ import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEm
 import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { isCoinbaseWalletConnector, isMobile } from '../../../utils'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -55,7 +54,7 @@ const Spinner = () => {
 const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => {
   const strategy = useConnectionStrategy()
   const bridge = useEthereumBridge()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet

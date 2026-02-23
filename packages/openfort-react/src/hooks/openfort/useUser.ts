@@ -2,7 +2,6 @@ import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { useChain } from '../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
 
@@ -28,7 +27,7 @@ import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
  */
 export function useUser() {
   const { user, client, embeddedState, linkedAccounts } = useOpenfortCore()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
 

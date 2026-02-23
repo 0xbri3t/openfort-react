@@ -1,7 +1,7 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { BuyIcon, DollarIcon, ReceiveIcon } from '../../../assets/icons'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useChain } from '../../../shared/hooks/useChain'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalH1 } from '../../Common/Modal/styles'
@@ -13,7 +13,7 @@ import { ButtonsContainer } from './styles'
 
 export const NoAssetsAvailable = () => {
   const { setRoute, chains } = useOpenfort()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()

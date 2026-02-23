@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 
 import { ExternalLinkIcon } from '../../../assets/icons'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useChain } from '../../../shared/hooks/useChain'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { getExplorerUrl } from '../../../shared/utils/explorer'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
@@ -15,7 +15,7 @@ import { ContinueButtonWrapper, Section } from '../Buy/styles'
 
 const BuyComplete = () => {
   const { setRoute, triggerResize } = useOpenfort()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()

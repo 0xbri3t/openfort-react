@@ -2,7 +2,7 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useEffect } from 'react'
 import Logos from '../../../assets/logos'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useChain } from '../../../shared/hooks/useChain'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { CopyIconButton } from '../../Common/CopyToClipboard/CopyIconButton'
 import CustomQRCode from '../../Common/CustomQRCode'
@@ -22,7 +22,7 @@ const Receive = () => {
   const { route, chains } = context
   const currentRoute = route?.route ?? ''
   const isSolanaRoute = currentRoute.startsWith('sol:')
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet

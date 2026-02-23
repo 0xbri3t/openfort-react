@@ -2,7 +2,6 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import React, { useEffect } from 'react'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Loader from '../../Common/Loading'
 import { routes } from '../../Openfort/types'
@@ -12,7 +11,7 @@ import { PageContent } from '../../PageContent'
 const Loading: React.FC = () => {
   const { setRoute, walletConfig } = useOpenfort()
   const { user, isLoadingAccounts, needsRecovery } = useOpenfortCore()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()

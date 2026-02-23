@@ -1,7 +1,7 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { PlusIcon } from '../../../assets/icons'
 import { toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
-import { useChain } from '../../../shared/hooks/useChain'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import Button from '../../Common/Button'
@@ -15,7 +15,7 @@ import { ProviderIcon, ProviderLabel, ProvidersButton } from '../Providers/style
 
 function WalletRow({ wallet }: { wallet: ConnectedEmbeddedSolanaWallet }) {
   const { setRoute } = useOpenfort()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const display =
     wallet.address.length > 12 ? `${wallet.address.slice(0, 4)}...${wallet.address.slice(-4)}` : wallet.address
 

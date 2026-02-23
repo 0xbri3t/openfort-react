@@ -9,7 +9,6 @@ import Logos, { OtherSocials, providersLogos } from '../../../assets/logos'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useProviders } from '../../../hooks/openfort/useProviders'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { logger } from '../../../utils/logger'
 import { isValidEmail as isValidEmailFn } from '../../../utils/validation'
@@ -346,7 +345,7 @@ const Providers: React.FC = () => {
   const { user } = useOpenfortCore()
   const { previousRoute } = useOpenfort()
   const { mainProviders, hasExcessProviders } = useProviders()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()

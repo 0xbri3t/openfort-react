@@ -7,7 +7,6 @@ import useIsMounted from '../../hooks/useIsMounted'
 import useLocales from '../../hooks/useLocales'
 import { useResolvedIdentity } from '../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { useChain } from '../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { ResetContainer } from '../../styles'
 import type { CustomTheme, Mode, Theme } from '../../types'
@@ -115,7 +114,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
   const context = useOpenfort()
   const { open, close, isOpen } = useUI()
 
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
@@ -167,7 +166,7 @@ ConnectButtonRenderer.displayName = 'OpenfortButton.Custom'
 
 const ConnectedLabel = ({ separator }: { separator?: string }) => {
   const { user } = useOpenfortCore()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
@@ -203,7 +202,7 @@ function OpenfortButtonInner({
   const { user } = useOpenfortCore()
   const context = useOpenfort()
 
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
@@ -340,7 +339,7 @@ export function OpenfortButton({
   const isMounted = useIsMounted()
   const context = useOpenfort()
   const { open } = useUI()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()
