@@ -29,7 +29,7 @@
  * | Need | Use |
  * |------|-----|
  * | Auth user (isAuthenticated, user, linkedAccounts) | `useUser()` |
- * | Am I connected? (auth + wallet ready) | `useUser().isReady` |
+ * | Am I connected? (auth + wallet ready) | `useUser().isConnected` |
  * | EVM wallet (address, chainId, status, create, export) | `useEthereumEmbeddedWallet()` |
  * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` |
  * | Send ETH / write contract / get balance (EVM) | Use `wagmi` or `viem` directly |

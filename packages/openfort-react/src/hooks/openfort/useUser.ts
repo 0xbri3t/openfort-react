@@ -14,7 +14,7 @@ import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
  *
  * @remarks Client-only. Use in a Client Component (e.g. add `"use client"` in Next.js App Router).
  *
- * @returns user, linkedAccounts, isAuthenticated, isConnected, isWalletReady, isReady, getAccessToken, validateAndRefreshToken
+ * @returns user, linkedAccounts, isAuthenticated, isConnected, getAccessToken, validateAndRefreshToken
  *
  * @example
  * ```tsx
@@ -63,8 +63,6 @@ export function useUser() {
     linkedAccounts,
     isAuthenticated,
     isConnected,
-    isWalletReady,
-    isReady: isConnected,
     getAccessToken: getAccessTokenAndUpdate,
     validateAndRefreshToken: validateAndRefresh,
   }

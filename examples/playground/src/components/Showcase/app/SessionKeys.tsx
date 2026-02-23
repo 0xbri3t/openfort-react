@@ -10,12 +10,14 @@ import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useConnectedEthereumAccount } from '@/hooks/useConnectedEthereumAccount'
+import { useIsSessionKeySupported } from '@/hooks/useIsSessionKeySupported'
 import { cn } from '@/lib/cn'
 import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
 
 export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address, chainId } = useConnectedEthereumAccount()
+  const isSessionKeySupported = useIsSessionKeySupported()
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
   const [sessionKeys, setSessionKeys] = useState<StoredData[]>([])
@@ -23,7 +25,7 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
     useSessionKeysStorage_backendSimulation()
   const { data } = useSignMessage()
   const mintContractAddress = getMintContractAddress(chainId ?? undefined)
-  const grantDisabled = isLoading || !mintContractAddress || !address
+  const grantDisabled = isLoading || !mintContractAddress || !address || !isSessionKeySupported
   const key = `${chainId}-${address ?? ''}`
   const updateSessionKeys = () => {
     const keys = getPrivateKeys(key)
@@ -104,13 +106,28 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
               </TooltipTrigger>
               <TooltipContent side="top">
                 <h3 className="text-base mb-1">{tooltip.hook}</h3>
-                {tooltip.body}
+                {!isSessionKeySupported ? (
+                  <>Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.</>
+                ) : (
+                  tooltip.body
+                )}
               </TooltipContent>
             </Tooltip>
           ) : (
-            <Button className="btn btn-accent w-full" disabled={grantDisabled}>
-              {isLoading ? 'Creating...' : 'Create session key'}
-            </Button>
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Button className="btn btn-accent w-full" disabled={grantDisabled}>
+                    {isLoading ? 'Creating...' : 'Create session key'}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {!isSessionKeySupported
+                  ? 'Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.'
+                  : 'Grant session keys with specific permissions.'}
+              </TooltipContent>
+            </Tooltip>
           )}
           {sessionKeys.map(({ privateKey, publicKey, sessionKeyId, active }) => (
             <Tooltip key={privateKey}>

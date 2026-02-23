@@ -1,6 +1,5 @@
 export { default as getDefaultConfig } from './defaultConfig'
 export { default as getDefaultConnectors } from './defaultConnectors'
 export { OpenfortWagmiBridge } from './OpenfortWagmiBridge'
-export { useConnect } from './useConnect'
 export type { AvailableWallet } from './useWalletAuth'
 export { useWalletAuth } from './useWalletAuth'
