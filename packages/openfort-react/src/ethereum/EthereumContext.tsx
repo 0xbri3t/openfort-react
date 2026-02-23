@@ -10,8 +10,7 @@
  * - You want to configure RPC URLs via context
  */
 
-import { createContext, type ReactNode, useCallback, useMemo, useState } from 'react'
-import { logger } from '../utils/logger'
+import { createContext } from 'react'
 
 /**
  * Common chain IDs for type hints (IDE autocomplete)
@@ -29,7 +28,7 @@ type SetChainResult =
 /**
  * Ethereum context value with resolved configuration
  */
-export interface EthereumContextValue {
+interface EthereumContextValue {
   /** Current active chain ID */
   chainId: number
   /**
@@ -51,15 +50,6 @@ export interface EthereumContextValue {
 }
 
 export const EthereumContext = createContext<EthereumContextValue | null>(null)
-
-export interface EthereumContextProviderProps {
-  /** Default chain ID for descendant hooks */
-  chainId: number
-  /** RPC URLs by chain ID (optional) */
-  rpcUrls?: Record<number, string>
-  /** Child components */
-  children: ReactNode
-}
 
 /**
  * Provides default Ethereum configuration to descendant components.
@@ -102,51 +92,3 @@ export interface EthereumContextProviderProps {
  * }
  * ```
  */
-export function EthereumContextProvider({
-  chainId: initialChainId,
-  rpcUrls = {},
-  children,
-}: EthereumContextProviderProps): ReactNode {
-  const [chainId, setChainIdState] = useState(initialChainId)
-
-  // Calculate available chain IDs from rpcUrls
-  const availableChainIds = useMemo(() => Object.keys(rpcUrls).map(Number), [rpcUrls])
-
-  const setChainId = useCallback(
-    (newChainId: ChainId | number): SetChainResult => {
-      // If rpcUrls is empty, allow any chain (user didn't configure restrictions)
-      if (availableChainIds.length > 0 && !availableChainIds.includes(newChainId)) {
-        if (process.env.NODE_ENV === 'development') {
-          logger.warn(
-            `[@openfort/react] setChainId(${newChainId}) failed: chain not configured.\n` +
-              `Available chains: ${availableChainIds.join(', ')}\n` +
-              `Add rpcUrls[${newChainId}] to your EthereumContextProvider config.`
-          )
-        }
-        return {
-          success: false,
-          error: 'CHAIN_NOT_CONFIGURED',
-          requested: newChainId,
-          available: availableChainIds,
-        }
-      }
-
-      setChainIdState(newChainId)
-      return { success: true, chainId: newChainId }
-    },
-    [availableChainIds]
-  )
-
-  const value = useMemo<EthereumContextValue>(
-    () => ({
-      chainId,
-      setChainId,
-      rpcUrl: rpcUrls[chainId],
-      rpcUrls,
-      availableChainIds,
-    }),
-    [chainId, setChainId, rpcUrls, availableChainIds]
-  )
-
-  return <EthereumContext.Provider value={value}>{children}</EthereumContext.Provider>
-}

@@ -29,6 +29,9 @@ test.describe('Dashboard integration - wallets + chain', () => {
 
     // Create new wallet -> Password
     await walletsCard.getByRole('button', { name: /create new wallet/i }).click()
+    if (mode !== 'solana-only') {
+      await walletsCard.getByRole('button', { name: /smart account/i }).click()
+    }
     await walletsCard.getByRole('button', { name: /^password$/i }).click()
 
     await expect(walletsCard.getByText(/^creating wallet with password recovery/i)).toBeVisible({ timeout: 30_000 })

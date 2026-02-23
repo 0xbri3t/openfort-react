@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
-import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { logger } from '../../utils/logger'
 
@@ -28,17 +28,17 @@ export function useRecoveryOTP(): { isEnabled: boolean; requestOTP: () => Promis
 
       const accessToken = await client.getAccessToken()
       if (!accessToken) {
-        throw new OpenfortError('Openfort access token not found', OpenfortErrorCode.NOT_AUTHENTICATED)
+        throw new OpenfortError('Openfort access token not found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
       }
       if (!user?.id) {
-        throw new OpenfortError('User not found', OpenfortErrorCode.NOT_AUTHENTICATED)
+        throw new OpenfortError('User not found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
       }
       const userId = user.id
       const email = user.email
       const phone = user.email ? undefined : user.phoneNumber
 
       if (!email && !phone) {
-        throw new OpenfortError('No email or phone number found for user', OpenfortErrorCode.NOT_AUTHENTICATED)
+        throw new OpenfortError('No email or phone number found for user', OpenfortReactErrorType.AUTHENTICATION_ERROR)
       }
 
       logger.log('Requesting wallet recover OTP for user', { userId, email, phone })
@@ -68,7 +68,7 @@ export function useRecoveryOTP(): { isEnabled: boolean; requestOTP: () => Promis
       const error =
         err instanceof OpenfortError
           ? err
-          : new OpenfortError('Failed to request wallet recover OTP', OpenfortErrorCode.WALLET_RECOVERY_REQUIRED)
+          : new OpenfortError('Failed to request wallet recover OTP', OpenfortReactErrorType.WALLET_ERROR)
       throw error
     }
   }, [walletConfig, client, user])

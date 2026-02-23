@@ -1,4 +1,4 @@
-import { ChainTypeEnum, OpenfortButton, useChain, useEthereumBridge, useOpenfort } from '@openfort/react'
+import { ChainTypeEnum, OpenfortButton, useChain, useOpenfort } from '@openfort/react'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
@@ -46,7 +46,6 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const { mode, setMode } = usePlaygroundMode()
   const { setChainType } = useChain()
   const { onBeforeModeSwitch } = useModeSwitchContext()
-  const bridge = useEthereumBridge()
   const { isLoading: isAuthLoading } = useOpenfort()
   const { isPostModeSwitch } = usePlaygroundMode()
   const showRestoringSession = isPostModeSwitch && isAuthLoading
@@ -54,14 +53,11 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const handleModeSwitch = useCallback(
     async (next: OpenfortPlaygroundMode) => {
       if (next === mode) return
-      if (next === 'solana-only' && bridge) {
-        await bridge.disconnect()
-      }
       onBeforeModeSwitch?.()
       setChainType(MODE_TO_CHAIN[next])
       setMode(next)
     },
-    [mode, onBeforeModeSwitch, setChainType, setMode, bridge]
+    [mode, onBeforeModeSwitch, setChainType, setMode]
   )
 
   useAutoConnectOnModeSwitch(mode)

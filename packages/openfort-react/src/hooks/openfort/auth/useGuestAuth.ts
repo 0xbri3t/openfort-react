@@ -1,6 +1,6 @@
 import type { User } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
-import { OpenfortError, OpenfortErrorCode } from '../../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { OpenfortHookOptions } from '../../../types'
 import { logger } from '../../../utils/logger'
@@ -134,8 +134,8 @@ export const useGuestAuth = (hookOptions: GuestHookOptions = {}) => {
         })
       } catch (error) {
         logger.error('Guest signup failed:', error)
-        const openfortError = new OpenfortError('Failed to signup guest', OpenfortErrorCode.AUTH_FAILED, {
-          cause: error,
+        const openfortError = new OpenfortError('Failed to signup guest', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error,
         })
 
         setStatus({

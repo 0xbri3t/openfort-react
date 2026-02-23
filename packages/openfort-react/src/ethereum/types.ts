@@ -93,8 +93,8 @@ export type CreateEthereumWalletOptions = {
   password?: string
   /** OTP code for verification */
   otpCode?: string
-  /** Account type (Smart Account or EOA) */
-  accountType?: 'SMART_ACCOUNT' | 'EOA'
+  /** Account type (EOA, Smart Account, or Delegated Account) */
+  accountType?: AccountTypeEnum
   /** Policy ID for gas sponsorship */
   policyId?: string
 } & OpenfortHookOptions<CreateEthereumWalletResult>

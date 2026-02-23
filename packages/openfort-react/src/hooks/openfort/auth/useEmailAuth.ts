@@ -1,6 +1,6 @@
 import type { User } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
-import { OpenfortError, OpenfortErrorCode } from '../../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { OpenfortHookOptions } from '../../../types'
 import { logger } from '../../../utils/logger'
@@ -161,7 +161,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
         setRequiresEmailVerification(false)
 
         if (!options.email || !options.password) {
-          const error = new OpenfortError('Email and password are required', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Email and password are required', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -174,7 +174,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
         }
 
         if (!isValidEmail(options.email)) {
-          const error = new OpenfortError('Invalid email', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Invalid email', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -232,9 +232,13 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           })
         }
       } catch (e) {
-        const error = new OpenfortError('Failed to login with email and password', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
-        })
+        const error = new OpenfortError(
+          'Failed to login with email and password',
+          OpenfortReactErrorType.AUTHENTICATION_ERROR,
+          {
+            error: e,
+          }
+        )
 
         setStatus({
           status: 'error',
@@ -255,7 +259,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     async (options: RequestResetPasswordOptions): Promise<EmailAuthResult> => {
       try {
         if (!isValidEmail(options.email)) {
-          const error = new OpenfortError('Invalid email', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Invalid email', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -293,8 +297,8 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to reset password', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to reset password', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
         setStatus({
           status: 'error',
@@ -315,7 +319,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     async (options: ResetPasswordOptions): Promise<EmailAuthResult> => {
       try {
         if (!isValidEmail(options.email)) {
-          const error = new OpenfortError('Invalid email', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Invalid email', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -348,8 +352,8 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to reset password', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to reset password', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
         setStatus({
           status: 'error',
@@ -370,7 +374,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     async (options: SignUpEmailOptions): Promise<EmailAuthResult> => {
       try {
         if (!options.email || !options.password) {
-          const error = new OpenfortError('Email and password are required', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Email and password are required', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -383,7 +387,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
         }
 
         if (!isValidEmail(options.email)) {
-          const error = new OpenfortError('Invalid email', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Invalid email', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -443,9 +447,13 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           })
         }
       } catch (e) {
-        const error = new OpenfortError('Failed to login with email and password', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
-        })
+        const error = new OpenfortError(
+          'Failed to login with email and password',
+          OpenfortReactErrorType.AUTHENTICATION_ERROR,
+          {
+            error: e,
+          }
+        )
         setStatus({
           status: 'error',
           error,
@@ -465,7 +473,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
     async (options: LinkEmailOptions): Promise<EmailAuthResult> => {
       try {
         if (!isValidEmail(options.email)) {
-          const error = new OpenfortError('Invalid email', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Invalid email', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -481,7 +489,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
         const authToken = await client.getAccessToken()
         if (!authToken) {
           logger.log('No token found')
-          const error = new OpenfortError('No token found', OpenfortErrorCode.AUTH_FAILED)
+          const error = new OpenfortError('No token found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -513,8 +521,8 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to link email', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to link email', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
 
         setStatus({
@@ -540,7 +548,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
 
       try {
         if (!isValidEmail(options.email)) {
-          const error = new OpenfortError('Invalid email', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Invalid email', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -567,8 +575,8 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           },
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to verify email', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to verify email', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
 
         setStatus({

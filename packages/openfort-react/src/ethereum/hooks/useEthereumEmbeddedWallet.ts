@@ -9,7 +9,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
-import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
@@ -215,7 +215,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
 
       try {
         if (!walletConfig) {
-          throw new OpenfortError('Wallet config not found', OpenfortErrorCode.INVALID_CONFIG)
+          throw new OpenfortError('Wallet config not found', OpenfortReactErrorType.CONFIGURATION_ERROR)
         }
 
         const recoveryParams = await buildRecoveryParams(
@@ -235,11 +235,9 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           }
         )
 
-        // Determine account type
+        // Determine account type (use createOptions, then walletConfig, else default to Smart Account)
         const accountType =
-          createOptions?.accountType === 'EOA'
-            ? AccountTypeEnum.EOA
-            : (walletConfig?.ethereum?.accountType ?? AccountTypeEnum.SMART_ACCOUNT)
+          createOptions?.accountType ?? walletConfig?.ethereum?.accountType ?? AccountTypeEnum.SMART_ACCOUNT
 
         const account = await client.embeddedWallet.create({
           chainType: ChainTypeEnum.EVM,
@@ -270,11 +268,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError(
-                formatErrorWithReason('Failed to create Ethereum wallet', err),
-                OpenfortErrorCode.WALLET_CREATION_FAILED,
-                { cause: err }
-              )
+            : new OpenfortError('Failed to create Ethereum wallet', OpenfortReactErrorType.WALLET_ERROR, { error: err })
 
         setState((s) => ({
           ...s,
@@ -304,8 +298,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         )
 
         if (!account) {
-          throw new OpenfortError('Embedded wallet not found', OpenfortErrorCode.WALLET_NOT_FOUND, {
-            cause: { address: activeOptions.address },
+          throw new OpenfortError('Embedded wallet not found', OpenfortReactErrorType.WALLET_ERROR, {
+            address: activeOptions.address,
           })
         }
 
@@ -317,7 +311,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
             isActive: false,
             isConnecting: true,
             getProvider: async () => {
-              throw new OpenfortError('Provider not ready yet', OpenfortErrorCode.WALLET_NOT_FOUND)
+              throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
             },
           }
         )
@@ -390,11 +384,9 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           const error =
             err instanceof OpenfortError
               ? err
-              : new OpenfortError(
-                  formatErrorWithReason('Failed to set active Ethereum wallet', err),
-                  OpenfortErrorCode.WALLET_NOT_FOUND,
-                  { cause: err }
-                )
+              : new OpenfortError('Failed to set active Ethereum wallet', OpenfortReactErrorType.WALLET_ERROR, {
+                  error: err,
+                })
 
           setState((s) => ({
             ...s,
@@ -428,11 +420,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError(
-                formatErrorWithReason('Failed to set recovery method', err),
-                OpenfortErrorCode.WALLET_RECOVERY_REQUIRED,
-                { cause: err }
-              )
+            : new OpenfortError('Failed to set recovery method', OpenfortReactErrorType.WALLET_ERROR, { error: err })
         throw error
       }
     },

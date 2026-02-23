@@ -5,9 +5,6 @@ import type { CoinbaseWalletParameters } from 'wagmi/connectors'
 
 import defaultConnectors from './defaultConnectors'
 
-let globalAppName = 'Openfort'
-export const getAppName = (): string => globalAppName
-
 type DefaultConfigProps = {
   appName: string
   appIcon?: string
@@ -27,8 +24,6 @@ const defaultConfig = ({
   chains = [mainnet, polygon, optimism, arbitrum],
   ...props
 }: DefaultConfigProps): CreateConfigParameters => {
-  globalAppName = appName
-
   const { client: _client, transports: _transports, connectors: _connectors, ...rest } = props
 
   const transports: CreateConfigParameters['transports'] =

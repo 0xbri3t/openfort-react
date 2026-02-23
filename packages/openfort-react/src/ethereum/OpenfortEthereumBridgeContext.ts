@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 
-export interface OpenfortEthereumBridgeChain {
+interface OpenfortEthereumBridgeChain {
   id: number
   name?: string
 }

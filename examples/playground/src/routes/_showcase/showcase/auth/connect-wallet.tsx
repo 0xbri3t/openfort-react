@@ -1,4 +1,4 @@
-import { embeddedWalletId, useConnectWithSiwe } from '@openfort/react'
+import { useWalletAuth } from '@openfort/react/wagmi'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useState } from 'react'
 import { DialogLayout } from '@/components/Showcase/auth/DialogLayout'
@@ -12,22 +12,16 @@ export const Route = createFileRoute('/_showcase/showcase/auth/connect-wallet')(
 
 function RouteComponent() {
   const nav = useNavigate()
-  const { ethereumBridge: bridge } = useConnectWithSiwe()
-  const connectWithSiwe = useConnectWithSiwe()
+  const { availableWallets, connectWallet } = useWalletAuth()
   const [connectingTo, setConnectingTo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-
-  const externalConnectors = bridge?.connectors.filter((c) => c.id !== embeddedWalletId) ?? []
 
   const handleConnect = useCallback(
     async (connectorId: string) => {
       setConnectingTo(connectorId)
       setError(null)
       try {
-        const connector = externalConnectors.find((c) => c.id === connectorId)
-        if (!connector) throw new Error('Connector not found')
-        bridge?.connect({ connector })
-        await connectWithSiwe({
+        await connectWallet(connectorId, {
           onConnect: () => nav({ to: '/' }),
           onError: (msg) => setError(msg),
         })
@@ -37,13 +31,13 @@ function RouteComponent() {
         setConnectingTo(null)
       }
     },
-    [bridge, connectWithSiwe, externalConnectors, nav]
+    [connectWallet, nav]
   )
 
   return (
     <DialogLayout>
       <Header title="Connect Wallet" onBack={() => window.history.back()} />
-      {externalConnectors.map((c) => (
+      {availableWallets.map((c) => (
         <Button key={c.id} className="btn btn-accent" onClick={() => handleConnect(c.id)}>
           {connectingTo === c.id ? <span>Loading...</span> : (c.name ?? c.id)}
         </Button>

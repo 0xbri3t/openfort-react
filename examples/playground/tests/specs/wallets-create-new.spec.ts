@@ -35,6 +35,10 @@ test.describe('Wallets - create new wallet', () => {
     await expect(createNewBtn).toBeVisible({ timeout: 30_000 })
     await createNewBtn.click()
 
+    if (m !== 'solana-only') {
+      await walletsCard.getByRole('button', { name: /smart account/i }).click()
+    }
+
     // Available options
     const automaticBtn = walletsCard.getByRole('button', {
       name: /^automatic$/i,

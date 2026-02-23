@@ -15,6 +15,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import { createConfig, http, WagmiProvider } from 'wagmi'
 import { baseSepolia, beamTestnet, polygonAmoy } from 'wagmi/chains'
 import { ThemeProvider } from '@/components/theme-provider'
+import { EthereumAddressProviderEmbedded, EthereumAddressProviderWagmi } from '@/contexts/EthereumAddressContext'
 import { useAppStore } from './lib/useAppStore'
 
 export type OpenfortPlaygroundMode = 'evm-only' | 'solana-only' | 'evm-wagmi'
@@ -106,7 +107,9 @@ function WagmiProviders({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
           <OpenfortWagmiBridge>
-            <OpenfortProvider {...providerOptions}>{children}</OpenfortProvider>
+            <OpenfortProvider {...providerOptions}>
+              <EthereumAddressProviderWagmi>{children}</EthereumAddressProviderWagmi>
+            </OpenfortProvider>
           </OpenfortWagmiBridge>
         </WagmiProvider>
       </QueryClientProvider>
@@ -118,7 +121,9 @@ function OpenfortOnlyProviders({ children }: { children: React.ReactNode }) {
   const { providerOptions } = useAppStore()
   return (
     <ModeSwitchContext.Provider value={{}}>
-      <OpenfortProvider {...providerOptions}>{children}</OpenfortProvider>
+      <OpenfortProvider {...providerOptions}>
+        <EthereumAddressProviderEmbedded>{children}</EthereumAddressProviderEmbedded>
+      </OpenfortProvider>
     </ModeSwitchContext.Provider>
   )
 }

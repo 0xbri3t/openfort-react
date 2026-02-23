@@ -3,10 +3,37 @@ import { expect, test } from '../fixtures/test'
 test.describe('Session keys - multiple + delete flow', () => {
   test.describe.configure({ retries: 3 })
 
-  test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({ dashboardPage, mode }) => {
+  test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({
+    page,
+    dashboardPage,
+    mode,
+  }) => {
     test.setTimeout(180_000)
     const m = mode
     await dashboardPage.ensureReady(m)
+
+    // Wallets card
+    const walletsTitle = page
+      .locator('[data-slot="card-title"]')
+      .filter({ hasText: /^wallets$/i })
+      .first()
+    await expect(walletsTitle).toBeVisible({ timeout: 60_000 })
+    const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
+
+    await walletsCard.getByRole('button', { name: /create new wallet/i }).click()
+    if (mode !== 'solana-only') {
+      await walletsCard.getByRole('button', { name: /smart account/i }).click()
+    }
+    await walletsCard.getByRole('button', { name: /^password$/i }).click()
+
+    const walletRowLocator = walletsCard.locator('button').filter({
+      hasText: /0x[a-f0-9]{4,}\.\.\.[a-f0-9]{4,}/i,
+    })
+
+    let initialCount = await walletRowLocator.count()
+
+    await expect(walletsCard.getByText(/^creating wallet with password recovery/i)).toBeVisible({ timeout: 30_000 })
+    await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
 
     const sessionCard = await dashboardPage.getCardByTitle(/session keys/i)
 
@@ -30,7 +57,7 @@ test.describe('Session keys - multiple + delete flow', () => {
 
     await ensureAtLeast(2)
 
-    const initialCount = await keySpans.count()
+    initialCount = await keySpans.count()
     expect(initialCount).toBeGreaterThanOrEqual(2)
 
     // Select the 2nd key for the revoke+delete flow

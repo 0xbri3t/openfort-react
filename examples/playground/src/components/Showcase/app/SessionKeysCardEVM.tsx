@@ -9,6 +9,7 @@ import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useEthereumAccount } from '@/hooks/useEthereumAdapterHooks'
+import { useIsSessionKeySupported } from '@/hooks/useIsSessionKeySupported'
 import { cn } from '@/lib/cn'
 import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
@@ -20,9 +21,10 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
   const { addPrivateKey, getPrivateKeys, clearAll, removePrivateKey, updatePrivateKey } =
     useSessionKeysStorage_backendSimulation()
   const { address, chainId } = useEthereumAccount()
+  const isSessionKeySupported = useIsSessionKeySupported()
   const mintContractAddress = getMintContractAddress(chainId ?? undefined)
   const key = useMemo(() => (chainId != null && address ? `${chainId}-${address}` : ''), [chainId, address])
-  const grantDisabled = isLoading || submitting || !mintContractAddress
+  const grantDisabled = isLoading || submitting || !mintContractAddress || !isSessionKeySupported
   const isCreating = submitting || isLoading
 
   const updateSessionKeys = () => {
@@ -104,13 +106,28 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
               </TooltipTrigger>
               <TooltipContent side="top">
                 <h3 className="text-base mb-1">{tooltip.hook}</h3>
-                {tooltip.body}
+                {!isSessionKeySupported ? (
+                  <>Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.</>
+                ) : (
+                  tooltip.body
+                )}
               </TooltipContent>
             </Tooltip>
           ) : (
-            <Button className="btn btn-accent w-full" type="submit" disabled={grantDisabled}>
-              {isCreating ? 'Creating...' : 'Create session key'}
-            </Button>
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Button className="btn btn-accent w-full" type="submit" disabled={grantDisabled}>
+                    {isCreating ? 'Creating...' : 'Create session key'}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {!isSessionKeySupported
+                  ? 'Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.'
+                  : 'Grant session keys with specific permissions.'}
+              </TooltipContent>
+            </Tooltip>
           )}
           {sessionKeys.map(({ privateKey, publicKey, sessionKeyId, active }) => (
             <Tooltip key={privateKey}>

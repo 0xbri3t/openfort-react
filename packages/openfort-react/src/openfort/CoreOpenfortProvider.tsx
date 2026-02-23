@@ -1,11 +1,4 @@
-import {
-  AccountTypeEnum,
-  ChainTypeEnum,
-  type EmbeddedAccount,
-  EmbeddedState,
-  type Openfort,
-  type User,
-} from '@openfort/openfort-js'
+import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState, type Openfort, type User } from '@openfort/openfort-js'
 import type React from 'react'
 import {
   createElement,
@@ -24,7 +17,7 @@ import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../constants/openfort'
 import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import { OpenfortError, OpenfortErrorCode } from '../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../core/errors'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
 import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
@@ -181,7 +174,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         setPollingError(
           error instanceof OpenfortError
             ? error
-            : new OpenfortError('Embedded state polling failed', OpenfortErrorCode.UNKNOWN_ERROR)
+            : new OpenfortError('Embedded state polling failed', OpenfortReactErrorType.UNEXPECTED_ERROR)
         )
         if (pollingRef.current) {
           clearInterval(pollingRef.current)
@@ -269,13 +262,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
 
-  // SVM (Solana) wallets are EOA; EVM uses walletConfig.ethereum.accountType so the core sees the right list after guest signup
-  const embeddedAccountsAccountType =
-    chainType === ChainTypeEnum.SVM
-      ? undefined
-      : walletConfig?.ethereum?.accountType === AccountTypeEnum.EOA
-        ? undefined
-        : AccountTypeEnum.SMART_ACCOUNT
+  // List all embedded accounts (EOA, Smart Account, Delegated Account). No accountType filter.
+  const embeddedAccountsAccountType = undefined
 
   // Embedded accounts list. Will reset on logout.
   const [embeddedAccounts, setEmbeddedAccounts] = useState<EmbeddedAccount[] | undefined>(undefined)

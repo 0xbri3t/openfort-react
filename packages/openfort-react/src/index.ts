@@ -29,7 +29,7 @@
  * | Need | Use |
  * |------|-----|
  * | Auth user (isAuthenticated, user, linkedAccounts) | `useUser()` |
- * | Am I connected? (auth + wallet ready) | `useUser().isReady` |
+ * | Am I connected? (auth + wallet ready) | `useUser().isConnected` |
  * | EVM wallet (address, chainId, status, create, export) | `useEthereumEmbeddedWallet()` |
  * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` |
  * | Send ETH / write contract / get balance (EVM) | Use `wagmi` or `viem` directly |
@@ -44,7 +44,6 @@ export {
   AuthResponse,
   ChainTypeEnum,
   EmbeddedAccount,
-  EmbeddedState,
   OpenfortEventMap,
   OpenfortEvents,
   openfortEvents,
@@ -59,20 +58,11 @@ export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
 export { embeddedWalletId } from './constants/openfort'
-export { formatErrorWithReason, getErrorReason, OpenfortError, OpenfortErrorCode } from './core/errors'
+export { OpenfortError, OpenfortReactErrorType } from './core/errors'
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './ethereum/hooks/useEthereumWalletAssets'
-export {
-  type OpenfortEthereumBridgeAccount,
-  type OpenfortEthereumBridgeChain,
-  type OpenfortEthereumBridgeConfig,
-  type OpenfortEthereumBridgeConnector,
-  OpenfortEthereumBridgeContext,
-  type OpenfortEthereumBridgeSwitchChain,
-  type OpenfortEthereumBridgeValue,
-  useEthereumBridge,
-} from './ethereum/OpenfortEthereumBridgeContext'
+// Bridge types/context are internal
 export type {
   ConnectedEmbeddedEthereumWallet,
   CreateEthereumWalletOptions,
@@ -103,13 +93,13 @@ export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
 
 export type {
-  EthereumUserWallet,
   SolanaUserWallet,
   UserWallet,
 } from './hooks/openfort/walletTypes'
 export { invalidateBalance } from './hooks/useBalance'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
+export type { SetRecoveryOptions } from './shared/types'
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 // Solana
 export type {

@@ -23,7 +23,11 @@ const defaultWalletConfig: OpenfortWalletConfig = {
   },
   solana: {
     cluster: 'devnet',
-    rpcUrls: { devnet: 'https://api.devnet.solana.com' },
+    rpcUrls: {
+      devnet: import.meta.env.VITE_HELIUS_API_KEY
+        ? `https://devnet.helius-rpc.com/?api-key=${import.meta.env.VITE_HELIUS_API_KEY}`
+        : 'https://api.devnet.solana.com',
+    },
   },
   createEncryptedSessionEndpoint:
     import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT ||

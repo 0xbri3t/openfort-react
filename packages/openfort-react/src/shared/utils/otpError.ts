@@ -1,4 +1,4 @@
-import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 
 export type HandleOtpErrorResult = {
   error: OpenfortError
@@ -9,15 +9,16 @@ export type HandleOtpErrorResult = {
 export function handleOtpRecoveryError(error: Error | unknown, hasWalletRecoveryOTP: boolean): HandleOtpErrorResult {
   const msg = error instanceof Error ? error.message : String(error)
   if (msg !== 'OTP_REQUIRED') {
-    const normalized = error instanceof OpenfortError ? error : new OpenfortError(msg, OpenfortErrorCode.UNKNOWN_ERROR)
+    const normalized =
+      error instanceof OpenfortError ? error : new OpenfortError(msg, OpenfortReactErrorType.UNEXPECTED_ERROR)
     return { error: normalized, isOTPRequired: false }
   }
 
   const newError = hasWalletRecoveryOTP
-    ? new OpenfortError('OTP code is required to recover the wallet.', OpenfortErrorCode.WALLET_RECOVERY_REQUIRED)
+    ? new OpenfortError('OTP code is required to recover the wallet.', OpenfortReactErrorType.WALLET_ERROR)
     : new OpenfortError(
         'OTP code is required to recover the wallet.\nPlease set requestWalletRecoveryOTP or requestWalletRecoveryOTPEndpoint in OpenfortProvider.',
-        OpenfortErrorCode.WALLET_RECOVERY_REQUIRED
+        OpenfortReactErrorType.WALLET_ERROR
       )
 
   return { error: newError, isOTPRequired: true }

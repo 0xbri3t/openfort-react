@@ -12,7 +12,10 @@ import { getExplorerUrl } from '@/lib/explorer'
 const LAMPORTS_PER_SOL = 1_000_000_000
 const MAX_AIRDROP_SOL = 2 // devnet limit per request
 
-const RATE_LIMIT_MSG = 'Rate limited. Switch to a custom devnet RPC in cluster settings.'
+const FAUCET_LINKS = [
+  { href: 'https://faucet.solana.com', label: 'faucet.solana.com' },
+  { href: 'https://faucet.quicknode.com/solana/devnet', label: 'QuickNode faucet' },
+]
 
 async function requestAirdrop(
   address: string,
@@ -31,7 +34,7 @@ async function requestAirdrop(
   })
   const data = await res.json()
   if (res.status === 429) {
-    return { error: RATE_LIMIT_MSG }
+    return { error: 'Rate limited. Use faucet.solana.com or set VITE_HELIUS_API_KEY in .env.local.' }
   }
   if (typeof data.result === 'string') return data.result
   const errMsg = data.error?.message ?? 'Airdrop failed'
@@ -84,7 +87,8 @@ export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
       <CardHeader>
         <CardTitle>Mint tokens</CardTitle>
         <CardDescription>
-          Fund your devnet account. Enter amount (max {MAX_AIRDROP_SOL} SOL per request) and click Mint.
+          Fund your devnet account. Enter amount (max {MAX_AIRDROP_SOL} SOL) and click Mint. For reliable airdrops, set
+          VITE_HELIUS_API_KEY in .env.local.
         </CardDescription>
         {address && (
           <CardDescription>
@@ -141,6 +145,23 @@ export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
             </a>
           )}
           <InputMessage message={error ?? ''} show={!!error} variant="error" />
+          {error && (
+            <div className="mt-2 space-y-1 text-sm">
+              <p className="text-muted-foreground">Get devnet SOL from:</p>
+              <ul className="flex flex-wrap gap-2">
+                {FAUCET_LINKS.map(({ href, label }) => (
+                  <li key={href}>
+                    <a href={href} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-muted-foreground text-xs mt-1">
+                Or set VITE_HELIUS_API_KEY in .env.local for higher limits.
+              </p>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>
