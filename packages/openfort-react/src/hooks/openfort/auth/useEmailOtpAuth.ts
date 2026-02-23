@@ -1,6 +1,6 @@
 import type { User } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
-import { OpenfortError, OpenfortErrorCode } from '../../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { OpenfortHookOptions } from '../../../types'
 import { isValidEmail } from '../../../utils/validation'
@@ -49,7 +49,7 @@ export const useEmailOtpAuth = (hookOptions: UseEmailOtpHookOptions = {}) => {
         })
 
         if (!options.email || !options.otp) {
-          const error = new OpenfortError('Email and OTP are required', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Email and OTP are required', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -62,7 +62,7 @@ export const useEmailOtpAuth = (hookOptions: UseEmailOtpHookOptions = {}) => {
         }
 
         if (!isValidEmail(options.email)) {
-          const error = new OpenfortError('Invalid email', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Invalid email', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -97,8 +97,8 @@ export const useEmailOtpAuth = (hookOptions: UseEmailOtpHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to login with email OTP', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to login with email OTP', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
 
         setStatus({
@@ -124,7 +124,7 @@ export const useEmailOtpAuth = (hookOptions: UseEmailOtpHookOptions = {}) => {
         })
 
         if (!options.email) {
-          const error = new OpenfortError('Email is required', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Email is required', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -137,7 +137,7 @@ export const useEmailOtpAuth = (hookOptions: UseEmailOtpHookOptions = {}) => {
         }
 
         if (!isValidEmail(options.email)) {
-          const error = new OpenfortError('Invalid email', OpenfortErrorCode.INVALID_CONFIG)
+          const error = new OpenfortError('Invalid email', OpenfortReactErrorType.VALIDATION_ERROR)
           setStatus({
             status: 'error',
             error,
@@ -162,8 +162,8 @@ export const useEmailOtpAuth = (hookOptions: UseEmailOtpHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to request email OTP', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to request email OTP', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
 
         setStatus({

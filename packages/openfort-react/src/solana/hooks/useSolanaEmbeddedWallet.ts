@@ -3,7 +3,7 @@ import { Buffer } from 'buffer'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
-import { formatErrorWithReason, OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
@@ -206,7 +206,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
 
       try {
         if (!walletConfig) {
-          throw new OpenfortError('Wallet config not found', OpenfortErrorCode.INVALID_CONFIG)
+          throw new OpenfortError('Wallet config not found', OpenfortReactErrorType.CONFIGURATION_ERROR)
         }
 
         const recoveryParams = await buildRecoveryParams(
@@ -255,11 +255,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError(
-                formatErrorWithReason('Failed to create Solana wallet', err),
-                OpenfortErrorCode.WALLET_CREATION_FAILED,
-                { cause: err }
-              )
+            : new OpenfortError('Failed to create Solana wallet', OpenfortReactErrorType.WALLET_ERROR, { error: err })
 
         setState((s) => ({
           ...s,
@@ -280,8 +276,8 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         const account = solanaAccounts.find((acc) => acc.address === activeOptions.address)
 
         if (!account) {
-          throw new OpenfortError('Embedded wallet not found', OpenfortErrorCode.WALLET_NOT_FOUND, {
-            cause: { address: activeOptions.address },
+          throw new OpenfortError('Embedded wallet not found', OpenfortReactErrorType.WALLET_ERROR, {
+            address: activeOptions.address,
           })
         }
 
@@ -292,7 +288,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           walletIndex: solanaAccounts.indexOf(account),
           recoveryMethod: account.recoveryMethod,
           getProvider: async () => {
-            throw new OpenfortError('Provider not ready yet', OpenfortErrorCode.WALLET_NOT_FOUND)
+            throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
           },
         }
         setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
@@ -338,11 +334,9 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
           const error =
             err instanceof OpenfortError
               ? err
-              : new OpenfortError(
-                  formatErrorWithReason('Failed to set active Solana wallet', err),
-                  OpenfortErrorCode.WALLET_NOT_FOUND,
-                  { cause: err }
-                )
+              : new OpenfortError('Failed to set active Solana wallet', OpenfortReactErrorType.WALLET_ERROR, {
+                  error: err,
+                })
 
           setState((s) => ({
             ...s,
@@ -376,11 +370,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
         const error =
           err instanceof OpenfortError
             ? err
-            : new OpenfortError(
-                formatErrorWithReason('Failed to set recovery method', err),
-                OpenfortErrorCode.WALLET_RECOVERY_REQUIRED,
-                { cause: err }
-              )
+            : new OpenfortError('Failed to set recovery method', OpenfortReactErrorType.WALLET_ERROR, { error: err })
         throw error
       }
     },

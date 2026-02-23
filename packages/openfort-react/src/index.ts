@@ -58,7 +58,7 @@ export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
 export { embeddedWalletId } from './constants/openfort'
-export { OpenfortError, OpenfortErrorCode } from './core/errors'
+export { OpenfortError, OpenfortReactErrorType } from './core/errors'
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './ethereum/hooks/useEthereumWalletAssets'

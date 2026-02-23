@@ -7,7 +7,7 @@
 
 import type { OpenfortSDKConfiguration } from '@openfort/openfort-js'
 import { createContext, type PropsWithChildren, type ReactNode, useContext, useMemo } from 'react'
-import { OpenfortError, OpenfortErrorCode } from './errors'
+import { OpenfortError, OpenfortReactErrorType } from './errors'
 import type { CoreContextValue, CoreProviderConfig, OpenfortConfig } from './types'
 
 const CoreContext = createContext<CoreContextValue | null>(null)
@@ -19,7 +19,7 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   if (!config.publishableKey) {
     throw new OpenfortError(
       'publishableKey is required. Get your key from https://dashboard.openfort.io',
-      OpenfortErrorCode.INVALID_CONFIG
+      OpenfortReactErrorType.CONFIGURATION_ERROR
     )
   }
 
@@ -107,7 +107,7 @@ export function useCoreContext(): CoreContextValue {
   if (!context) {
     throw new OpenfortError(
       'useCoreContext must be used within OpenfortProvider. Make sure you have wrapped your app with <OpenfortProvider>.',
-      OpenfortErrorCode.MISSING_PROVIDER
+      OpenfortReactErrorType.CONFIGURATION_ERROR
     )
   }
   return context

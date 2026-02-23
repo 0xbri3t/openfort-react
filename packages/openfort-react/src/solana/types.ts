@@ -350,14 +350,3 @@ export type UseEmbeddedSolanaWalletOptions = {
   /** Recovery params for wallet access */
   recoveryParams?: RecoveryParams
 }
-
-/**
- * Address type (Base58 encoded string branded type)
- * Compatible with @solana/kit Address type
- */
-export type SolanaAddress = string & { readonly __brand: 'Address' }
-
-/**
- * Signature dictionary type for Kit signers
- */
-export type SignatureDictionary = Readonly<Record<string, string>>

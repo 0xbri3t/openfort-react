@@ -1,6 +1,6 @@
 import type { OAuthProvider, User } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
-import { OpenfortError, OpenfortErrorCode } from '../../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { OpenfortHookOptions } from '../../../types'
 import { onError, onSuccess } from '../hookConsistency'
@@ -148,8 +148,8 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to store credentials', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to store credentials', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
 
         setStatus({
@@ -191,8 +191,8 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to login with OAuth', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to login with OAuth', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
 
         setStatus({
@@ -222,7 +222,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
         const authToken = await client.getAccessToken()
 
         if (!authToken) {
-          throw new OpenfortError('No auth token found', OpenfortErrorCode.AUTH_FAILED)
+          throw new OpenfortError('No auth token found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
         }
 
         await client.auth.initLinkOAuth({
@@ -240,8 +240,8 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           options,
         })
       } catch (e) {
-        const error = new OpenfortError('Failed to link OAuth', OpenfortErrorCode.AUTH_FAILED, {
-          cause: e,
+        const error = new OpenfortError('Failed to link OAuth', OpenfortReactErrorType.AUTHENTICATION_ERROR, {
+          error: e,
         })
 
         setStatus({

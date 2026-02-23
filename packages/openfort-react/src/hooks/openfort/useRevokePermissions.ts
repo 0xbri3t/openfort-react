@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import type { Hex } from 'viem'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../../core/ConnectionStrategy'
-import { OpenfortError, OpenfortErrorCode } from '../../core/errors'
+import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { getEmbeddedWalletClient } from '../../ethereum/hooks/getEmbeddedWalletClient'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import type { OpenfortEmbeddedEthereumWalletProvider } from '../../ethereum/types'
@@ -79,7 +79,7 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
       try {
         const chain = chains.find((c) => c.id === chainId)
         if (!chain) {
-          throw new OpenfortError('No chain configured', OpenfortErrorCode.INVALID_CONFIG)
+          throw new OpenfortError('No chain configured', OpenfortReactErrorType.CONFIGURATION_ERROR)
         }
 
         logger.log('Revoking permissions for session key:', sessionKey)
@@ -124,8 +124,8 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
           data,
         })
       } catch (error) {
-        const openfortError = new OpenfortError('Failed to revoke permissions', OpenfortErrorCode.WALLET_NOT_FOUND, {
-          cause: error,
+        const openfortError = new OpenfortError('Failed to revoke permissions', OpenfortReactErrorType.WALLET_ERROR, {
+          error,
         })
 
         setStatus({
