@@ -101,6 +101,7 @@ export type {
 export { invalidateBalance } from './hooks/useBalance'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
 export { useChain } from './shared/hooks/useChain'
+export type { SetRecoveryOptions } from './shared/types'
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 // Solana
 export type {

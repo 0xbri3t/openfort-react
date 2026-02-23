@@ -7,37 +7,7 @@
  * @packageDocumentation
  */
 
-export type { SetRecoveryOptions } from '../shared/types'
 export { useSolanaEmbeddedWallet } from './hooks/useSolanaEmbeddedWallet'
-export {
-  getTransactionBytes,
-  type SignAllTransactionsParams,
-  type SignMessageParams,
-  type SignTransactionParams,
-  signAllTransactions,
-  signMessage,
-  signTransaction,
-} from './operations'
-export type { OpenfortSolanaProviderConfig } from './provider'
-export { createSolanaProvider, OpenfortSolanaProvider } from './provider'
-export type { SolanaContextProviderProps, SolanaContextValue } from './SolanaContext'
-export { SolanaContextProvider } from './SolanaContext'
-export type {
-  Address,
-  MessagePartialSigner,
-  SignableMessage,
-  SignableTransaction,
-  TransactionMessageBytes,
-  TransactionPartialSigner,
-  TransactionPartialSignerConfig,
-  TransactionWithLifetime,
-} from './signers/OpenfortSolanaSigner'
-export {
-  createMessageSigner,
-  createTransactionSigner,
-  OpenfortMessagePartialSigner,
-  OpenfortTransactionPartialSigner,
-} from './signers/OpenfortSolanaSigner'
 export type {
   // Wallet types
   ConnectedEmbeddedSolanaWallet,
@@ -47,9 +17,7 @@ export type {
   OpenfortEmbeddedSolanaWalletProvider,
   SetActiveSolanaWalletOptions,
   // Kit Signer types
-  SignatureDictionary,
   SignedSolanaTransaction,
-  SolanaAddress,
   // Configuration
   SolanaCluster,
   SolanaClusterConfig,
@@ -61,7 +29,6 @@ export type {
   SolanaSignTransactionRequest,
   // Transaction types
   SolanaTransaction,
-  SolanaUIOptions,
   SolanaWalletActions,
   SolanaWalletState,
   UseEmbeddedSolanaWalletOptions,
