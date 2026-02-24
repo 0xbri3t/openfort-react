@@ -9,6 +9,7 @@ import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } fr
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
 import { formatAddress } from '../../utils/format'
+import { getDefaultSolanaRpcUrlWithFallback } from '../../utils/rpc'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import { SolanaContext } from '../SolanaContext'
@@ -85,8 +86,8 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
  * Returns state for Solana embedded wallets: create, recover, list, active wallet, and provider.
  * Use for creating accounts, recovering existing ones, and signing transactions.
  *
- * @param _options - Reserved for future options
- * @returns State with status, wallets, activeWallet, create, recover, setActive, provider
+ * @param options - Optional cluster override (like chainId on Ethereum) and recoveryParams
+ * @returns State with status, wallets, activeWallet, create, recover, setActive, provider, cluster, rpcUrl
  *
  * @example
  * ```tsx
@@ -96,7 +97,7 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
  * }
  * ```
  */
-export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): SolanaWalletState {
+export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions): SolanaWalletState {
   const {
     client,
     embeddedAccounts,
@@ -451,9 +452,15 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     [state.status]
   )
 
-  // Get cluster from Solana context
+  // Cluster: option override (parity with Ethereum chainId) or Solana context
   const solanaContext = useContext(SolanaContext)
-  const cluster = solanaContext?.cluster as SolanaCluster | undefined
+  const cluster = (options?.cluster ?? solanaContext?.cluster) as SolanaCluster | undefined
+  const rpcUrl =
+    solanaContext && solanaContext.cluster === cluster
+      ? solanaContext.rpcUrl
+      : cluster
+        ? getDefaultSolanaRpcUrlWithFallback(cluster)
+        : solanaContext?.rpcUrl
 
   const connectedStateProps = useMemo(
     () => toConnectedStateProperties(state.status, state.activeWallet),
@@ -492,6 +499,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     ...(displayAddress && { displayAddress }),
     ...(state.activeWallet?.address && { address: state.activeWallet.address }),
     ...(cluster && { cluster }),
-    ...(solanaContext?.rpcUrl && { rpcUrl: solanaContext.rpcUrl }),
+    ...(rpcUrl && { rpcUrl }),
   } as SolanaWalletState
 }

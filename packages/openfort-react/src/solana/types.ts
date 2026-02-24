@@ -283,6 +283,8 @@ export type SolanaWalletState = SolanaWalletStateBase & SolanaWalletDerived & Co
  * Options for useSolanaEmbeddedWallet hook
  */
 export type UseEmbeddedSolanaWalletOptions = {
+  /** Solana cluster (mainnet-beta, devnet, testnet). Overrides context when set. */
+  cluster?: SolanaCluster
   /** Recovery params for wallet access */
   recoveryParams?: RecoveryParams
 }
