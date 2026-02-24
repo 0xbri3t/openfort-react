@@ -75,7 +75,7 @@ type StoredCluster = { cluster: SolanaCluster; rpcUrl?: string } | null
 function readStoredCluster(): StoredCluster {
   if (typeof window === 'undefined') return null
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     // Dev/test environment: only allow devnet, testnet, custom — never mainnet-beta
     if (raw === 'mainnet-beta') return null
@@ -93,13 +93,14 @@ function readStoredCluster(): StoredCluster {
 
 function writeStoredCluster(cluster: SolanaCluster, rpcUrl?: string) {
   if (typeof window === 'undefined') return
+  const storage = window.localStorage
   try {
     if (DEFAULT_CLUSTERS.includes(cluster)) {
-      localStorage.setItem(STORAGE_KEY, cluster)
+      storage.setItem(STORAGE_KEY, cluster)
     } else if (cluster === 'custom' && rpcUrl) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cluster: 'custom', rpcUrl }))
+      storage.setItem(STORAGE_KEY, JSON.stringify({ cluster: 'custom', rpcUrl }))
     } else {
-      localStorage.setItem(STORAGE_KEY, cluster)
+      storage.setItem(STORAGE_KEY, cluster)
     }
   } catch {
     // ignore

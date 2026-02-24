@@ -23,10 +23,12 @@ const ConnectWithOAuth: React.FC = () => {
 
   useEffect(() => {
     ;(async () => {
-      if (typeof window === 'undefined' || typeof document === 'undefined') return
+      const win = typeof window !== 'undefined' ? window : null
+      const doc = typeof document !== 'undefined' ? document : null
+      if (!win || !doc) return
       if (connector.type !== 'oauth') throw new Error('Invalid connector type')
 
-      const url = new URL(window.location.href.replace('?access_token=', '&access_token=')) // handle both ? and & cases
+      const url = new URL(win.location.href.replace('?access_token=', '&access_token=')) // handle both ? and & cases
       const hasProvider = !!url.searchParams.get('openfortAuthProviderUI')
       const provider = connector.id
 
@@ -44,7 +46,7 @@ const ConnectWithOAuth: React.FC = () => {
           ;['openfortAuthProviderUI', 'access_token', 'user_id', 'error'].forEach((key) => {
             url.searchParams.delete(key)
           })
-          window.history.replaceState({}, document.title, url.toString())
+          win.history.replaceState({}, doc.title, url.toString())
 
           if (!userId || !token || error) {
             logger.error(
@@ -77,7 +79,7 @@ const ConnectWithOAuth: React.FC = () => {
         case states.REDIRECT: {
           if (hasProvider) return
 
-          const cleanURL = window.location.origin + window.location.pathname
+          const cleanURL = win.location.origin + win.location.pathname
 
           const queryParams = Object.fromEntries(
             [...url.searchParams.entries()].filter(([key]) =>
@@ -99,14 +101,14 @@ const ConnectWithOAuth: React.FC = () => {
                 redirectTo: `${cleanURL}?${new URLSearchParams(queryParams).toString()}`,
               })
               logger.log(linkResponse)
-              window.location.href = linkResponse
+              win.location.href = linkResponse
             } else {
               const r = await client.auth.initOAuth({
                 provider,
                 redirectTo: `${cleanURL}?${new URLSearchParams(queryParams).toString()}`,
               })
               logger.log(r)
-              window.location.href = r
+              win.location.href = r
             }
           } catch (e) {
             logger.error('Error during OAuth initialization:', e)
