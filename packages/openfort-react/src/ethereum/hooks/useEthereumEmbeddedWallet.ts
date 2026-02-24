@@ -11,12 +11,11 @@ import { embeddedWalletId } from '../../constants/openfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
+import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { formatAddress } from '../../utils/format'
 import type {
   ConnectedEmbeddedEthereumWallet,
-  CreateEthereumWalletOptions,
   EthereumWalletState,
   OpenfortEmbeddedEthereumWalletProvider,
   SetActiveEthereumWalletOptions,
@@ -38,10 +37,7 @@ function toConnectedStateProperties(
 ) {
   if (status === 'creating' || status === 'fetching-wallets') {
     return {
-      normalizedStatus: 'connecting',
-      walletType: null,
-      connectorId: undefined,
-      connectorName: undefined,
+      embeddedWalletId: undefined,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,
@@ -51,10 +47,7 @@ function toConnectedStateProperties(
 
   if (status === 'connecting' || status === 'reconnecting') {
     return {
-      normalizedStatus: status === 'reconnecting' ? 'connecting' : 'connecting',
-      walletType: 'embedded' as const,
-      connectorId: embeddedWalletId,
-      connectorName: 'Openfort',
+      embeddedWalletId,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,
@@ -64,10 +57,7 @@ function toConnectedStateProperties(
 
   if ((status === 'connected' || status === 'needs-recovery') && activeWallet) {
     return {
-      normalizedStatus: 'connected',
-      walletType: 'embedded' as const,
-      connectorId: embeddedWalletId,
-      connectorName: 'Openfort',
+      embeddedWalletId,
       isConnected: status === 'connected',
       isConnecting: false,
       isDisconnected: false,
@@ -76,10 +66,7 @@ function toConnectedStateProperties(
   }
 
   return {
-    normalizedStatus: 'disconnected',
-    walletType: null,
-    connectorId: undefined,
-    connectorName: undefined,
+    embeddedWalletId: undefined,
     isConnected: false,
     isConnecting: false,
     isDisconnected: true,
@@ -200,7 +187,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   }, [state.status, state.activeWallet, setWalletStatus])
 
   const create = useCallback(
-    async (createOptions?: CreateEthereumWalletOptions): Promise<EmbeddedAccount> => {
+    async (createOptions?: CreateEmbeddedWalletOptions): Promise<EmbeddedAccount> => {
       setState((s) => ({ ...s, status: 'creating', error: null }))
 
       try {
@@ -534,8 +521,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       isLoading: true,
       isError: false,
       isSuccess: false,
-      normalizedStatus: 'connecting',
-      walletType: null,
+      embeddedWalletId: undefined,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,

@@ -62,11 +62,8 @@ export { OpenfortError, OpenfortReactErrorType } from './core/errors'
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './ethereum/hooks/useEthereumWalletAssets'
-// Bridge types/context are internal
 export type {
   ConnectedEmbeddedEthereumWallet,
-  CreateEthereumWalletOptions,
-  CreateEthereumWalletResult,
   EthereumWalletState,
   SetActiveEthereumWalletOptions,
   UseEmbeddedEthereumWalletOptions,
@@ -91,19 +88,22 @@ export { useGrantPermissions } from './hooks/openfort/useGrantPermissions'
 export { useRevokePermissions } from './hooks/openfort/useRevokePermissions'
 export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
-
 export type {
   SolanaUserWallet,
   UserWallet,
 } from './hooks/openfort/walletTypes'
 export { invalidateBalance } from './hooks/useBalance'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
-export type { SetRecoveryOptions } from './shared/types'
+// Bridge types/context are internal
+export type {
+  CreateEmbeddedWalletOptions,
+  CreateEmbeddedWalletResult,
+  SetRecoveryOptions,
+} from './shared/types'
 export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
 // Solana
 export type {
   ConnectedEmbeddedSolanaWallet,
-  CreateSolanaWalletOptions,
   SetActiveSolanaWalletOptions,
   SolanaConfig,
   SolanaWalletState,

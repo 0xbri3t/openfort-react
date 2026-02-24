@@ -6,12 +6,14 @@
  * @packageDocumentation
  */
 
+export type {
+  CreateEmbeddedWalletOptions,
+  CreateEmbeddedWalletResult,
+} from '../shared/types'
 export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './hooks/useEthereumWalletAssets'
 export type {
   ConnectedEmbeddedEthereumWallet,
-  CreateEthereumWalletOptions,
-  CreateEthereumWalletResult,
   EthereumWalletActions,
   EthereumWalletConfig,
   EthereumWalletState,
