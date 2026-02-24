@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react'
-import { useChainId, useSwitchChain } from 'wagmi'
+import { useSwitchChain } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useConnectedEthereumAccount } from '@/hooks/useConnectedEthereumAccount'
 
 export const SwitchChainCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { data, switchChain, chains, error, isPending } = useSwitchChain()
-  const currentChain = useChainId()
+  const { chainId: currentChain } = useConnectedEthereumAccount()
 
   return (
     <Card>

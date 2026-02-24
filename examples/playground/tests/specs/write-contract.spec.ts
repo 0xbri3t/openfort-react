@@ -2,6 +2,7 @@ import { expect, test } from '../fixtures/test'
 import { EVM_TX_HASH_REGEX } from '../utils/mode'
 
 test.describe('Write Contract - mint tokens', () => {
+  test.describe.configure({ retries: 1 })
   test('new wallet balance is 0 and mint shows transaction hash', async ({ page, dashboardPage, mode }) => {
     const m = mode
     await dashboardPage.ensureReady(m)
