@@ -39,6 +39,7 @@ test.describe('Write Contract - mint tokens', () => {
 
     const amountInput = writeCard.getByPlaceholder(/enter amount to mint/i)
     await expect(amountInput).toBeVisible({ timeout: 30_000 })
+    await page.waitForTimeout(1500)
     await amountInput.fill('7')
 
     const mintBtn = writeCard.getByRole('button', { name: /mint tokens/i })
