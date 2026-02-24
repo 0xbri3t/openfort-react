@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { formatUnits } from 'viem'
 import { symbolToColor, TOKEN_LOGO } from '../../../constants/logos'
-import { useMultiChainWalletAssets } from '../../../hooks/openfort/useMultiChainWalletAssets'
+import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
 import { useChains } from '../../../hooks/useChains'
 import Chain from '../../Common/Chain'
 import { ModalHeading } from '../../Common/Modal/styles'
@@ -166,7 +166,7 @@ function PillLogo({ symbol }: { symbol: string }) {
 }
 
 export const AssetInventory = () => {
-  const { data: walletAssets, isLoading: isBalancesLoading } = useMultiChainWalletAssets()
+  const { data, multiChain, isLoading: isBalancesLoading } = useWalletAssets({ multiChain: true })
   const { triggerResize } = useOpenfort()
   const chains = useChains()
   const [showDetails, setShowDetails] = useState(false)
@@ -175,7 +175,7 @@ export const AssetInventory = () => {
     if (!isBalancesLoading) triggerResize()
   }, [isBalancesLoading])
 
-  const tokens = walletAssets || []
+  const tokens = (multiChain ? data : null) ?? []
   const hasBalance = tokens.some((t) => t.balance > ZERO)
 
   const chainNameMap = useMemo(() => {
