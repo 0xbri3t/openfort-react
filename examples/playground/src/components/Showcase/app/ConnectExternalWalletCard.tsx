@@ -1,6 +1,7 @@
 import type { RecoveryMethod } from '@openfort/react'
+import { embeddedWalletId, useOpenfort } from '@openfort/react'
 import { useWalletAuth } from '@openfort/react/wagmi'
-import { useConnect } from 'wagmi'
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useActiveEthereumEmbeddedWallet } from '@/hooks/useActiveEthereumEmbeddedWallet'
 import { cn } from '@/lib/cn'
@@ -78,19 +79,28 @@ const SimpleWalletButton = ({
  */
 export const ConnectExternalWalletCard = () => {
   const { connect, connectors } = useConnect()
+  const { disconnectAsync } = useDisconnect()
+  const { connector } = useAccount()
+  const { setActiveEmbeddedAddress } = useOpenfort()
   const { ethereum, activeWallet, connectingAddress } = useActiveEthereumEmbeddedWallet()
   const { availableWallets: externalConnectors } = useWalletAuth()
 
-  const isOpenfortActive = ethereum.status === 'connected'
-  const isExternalActive = ethereum.walletType === 'external'
+  const openfortConnector = connectors.find((c) => c.id === embeddedWalletId || c.name === 'Openfort')
+  const isOpenfortActive = ethereum.status === 'connected' && (connector?.id === embeddedWalletId || !connector)
+  const isExternalActive = !!connector && connector.id !== embeddedWalletId
   const isBusy = ethereum.isLoading
 
   const setActive = async (opts: { address: `0x${string}`; recoveryMethod?: RecoveryMethod; password?: string }) => {
     await ethereum.setActive(opts)
+    if (connector?.id !== embeddedWalletId && openfortConnector) {
+      await disconnectAsync()
+      connect({ connector: openfortConnector })
+    }
   }
 
   const handleSelectExternal = (connectorId: string) => {
     if (isBusy) return
+    setActiveEmbeddedAddress(undefined)
     const wagmiConnector = connectors.find((c) => c.id === connectorId)
     if (wagmiConnector) connect({ connector: wagmiConnector })
   }
@@ -113,7 +123,7 @@ export const ConnectExternalWalletCard = () => {
             <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">External</p>
             <div className="flex flex-col gap-0.5">
               {externalConnectors.map((c) => {
-                const isActive = isExternalActive && ethereum.status === 'connected' && ethereum.connectorId === c.id
+                const isActive = isExternalActive && connector?.id === c.id
                 const iconSrc = typeof c.icon === 'string' ? c.icon : undefined
                 const iconNode =
                   (typeof c.icon !== 'string' && c.icon != null ? c.icon : null) ??

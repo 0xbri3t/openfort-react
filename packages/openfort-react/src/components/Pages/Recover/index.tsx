@@ -8,7 +8,6 @@ import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEm
 import type { EthereumUserWallet, SolanaUserWallet } from '../../../hooks/openfort/walletTypes'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
 import type { RecoverableWallet } from '../../../shared/types'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
@@ -41,7 +40,7 @@ const RecoverPasswordWallet = ({
   const [recoveryError, setRecoveryError] = useState<false | string>(false)
   const { triggerResize, setRoute } = useOpenfort()
   const [loading, setLoading] = useState(false)
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
@@ -153,7 +152,7 @@ const RecoverPasskeyWallet = ({
 }) => {
   const { triggerResize, setRoute } = useOpenfort()
   const [recoveryError, setRecoveryError] = useState<false | string>(false)
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
@@ -229,7 +228,7 @@ const RecoverAutomaticWallet = ({
 }) => {
   const { embeddedState } = useOpenfortCore()
   const { setRoute } = useOpenfort()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet

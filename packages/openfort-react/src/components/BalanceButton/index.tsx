@@ -8,7 +8,7 @@ import { chainConfigs } from '../../constants/chainConfigs'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useBalance } from '../../hooks/useBalance'
 import useIsMounted from '../../hooks/useIsMounted'
-import { useChain } from '../../shared/hooks/useChain'
+import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import styled from '../../styles/styled'
 import { nFormatter } from '../../utils'
@@ -51,7 +51,7 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
   const [isInitial, setIsInitial] = useState(true)
 
   // Use chain-specific hooks
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet

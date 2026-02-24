@@ -37,11 +37,22 @@ export function useConnectedEthereumAccount(): {
   const address = wagmiAddress ?? getEmbeddedAddress(embedded, core)
 
   const wagmiChainId = useChainId()
+  /** When the displayed account is the embedded one, or when embedded wallet exists (evm-wagmi), prefer core.activeChainId so the "Switch chain" card stays in sync with the avatar modal. */
+  const isEmbeddedActive =
+    address !== undefined &&
+    core.activeEmbeddedAddress !== undefined &&
+    address.toLowerCase() === core.activeEmbeddedAddress.toLowerCase()
+  const hasEmbeddedWallet = core.activeEmbeddedAddress !== undefined
   const chainId =
-    wagmiChainId ??
-    (embedded.status === 'connected' ? embedded.chainId : undefined) ??
-    core.activeChainId ??
-    DEFAULT_CHAIN_ID
+    isEmbeddedActive || hasEmbeddedWallet
+      ? (core.activeChainId ??
+        wagmiChainId ??
+        (embedded.status === 'connected' ? embedded.chainId : undefined) ??
+        DEFAULT_CHAIN_ID)
+      : (wagmiChainId ??
+        (embedded.status === 'connected' ? embedded.chainId : undefined) ??
+        core.activeChainId ??
+        DEFAULT_CHAIN_ID)
 
   return {
     address: address ?? undefined,

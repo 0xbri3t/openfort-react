@@ -1,4 +1,4 @@
-import { ChainTypeEnum, useChain, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { ChainTypeEnum, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import { useCallback, useState } from 'react'
 import { type Abi, createPublicClient, encodeFunctionData, http } from 'viem'
 import { useAsyncData } from './useAsyncData'
@@ -55,7 +55,7 @@ export interface UseWriteContractLike {
  * For evm-wagmi, use useConnectedEthereumAccount or wagmi's useAccount.
  */
 export function useEthereumAccount(): UseAccountLike {
-  const { chainType } = useChain()
+  const { chainType } = useOpenfort()
   const core = useOpenfort()
   const wallet = useEthereumEmbeddedWallet()
 

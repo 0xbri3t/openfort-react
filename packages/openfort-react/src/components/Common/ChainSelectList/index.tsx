@@ -1,6 +1,6 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useId, useState, useState as useStateLocal } from 'react'
+import { useCallback, useId, useState, useState as useStateLocal } from 'react'
 import ChainIcons from '../../../assets/chains'
 import { chainConfigs } from '../../../constants/chainConfigs'
 import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
@@ -8,7 +8,6 @@ import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEm
 import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { isCoinbaseWalletConnector, isMobile } from '../../../utils'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -55,11 +54,11 @@ const Spinner = () => {
 const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => {
   const strategy = useConnectionStrategy()
   const bridge = useEthereumBridge()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-  const { setActiveChainId, activeChainId } = useOpenfortCore()
+  const { setActiveChainId, activeChainId, activeEmbeddedAddress, client } = useOpenfortCore()
   const { chains: embeddedChains } = useOpenfort()
 
   // Inline switchChain logic for embedded EVM mode (was useEthereumSwitchChain)
@@ -82,6 +81,35 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
     }
   }
 
+  const isEmbeddedWalletActiveWithBridge =
+    bridge &&
+    activeEmbeddedAddress &&
+    bridge.account?.address &&
+    bridge.account.address.toLowerCase() === activeEmbeddedAddress.toLowerCase()
+
+  const handleEmbeddedSwitchChainWithProvider = useCallback(
+    async (params: { chainId: number }) => {
+      setEvmSwitchError(null)
+      setEvmSwitchPending(true)
+      try {
+        const provider =
+          ethereumWallet.status === 'connected' && ethereumWallet.activeWallet
+            ? await ethereumWallet.activeWallet.getProvider()
+            : await client.embeddedWallet.getEthereumProvider()
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${params.chainId.toString(16)}` }],
+        })
+        setActiveChainId(params.chainId)
+      } catch (err) {
+        setEvmSwitchError(err instanceof Error ? err : new Error('Failed to switch chain'))
+      } finally {
+        setEvmSwitchPending(false)
+      }
+    },
+    [client, ethereumWallet.activeWallet, ethereumWallet.status, setActiveChainId]
+  )
+
   const connector = bridge?.account?.connector
   const bridgeSwitchChain = bridge?.switchChain
   const {
@@ -97,20 +125,32 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
   }
 
   const isEmbeddedEVMNoBridge = strategy?.kind === 'embedded' && strategy?.chainType === ChainTypeEnum.EVM && !bridge
+  const useEmbeddedSwitch =
+    isEmbeddedEVMNoBridge || (isEmbeddedWalletActiveWithBridge && chainType === ChainTypeEnum.EVM)
 
   const bridgeChain = bridge?.account?.chain
-  const chain = isEmbeddedEVMNoBridge
-    ? { id: activeChainId ?? currentChainIdFromStrategy ?? currentChainIdFromWallet }
+  const chain = useEmbeddedSwitch
+    ? { id: activeChainId ?? bridgeChain?.id ?? currentChainIdFromStrategy ?? currentChainIdFromWallet }
     : bridgeChain
 
   const chains =
-    isEmbeddedEVMNoBridge && (currentChainIdFromWallet != null || currentChainIdFromStrategy != null)
-      ? embeddedChains.map((c) => ({ id: c.id, name: c.name }))
+    useEmbeddedSwitch &&
+    (activeChainId != null ||
+      currentChainIdFromWallet != null ||
+      currentChainIdFromStrategy != null ||
+      bridgeChains.length > 0)
+      ? embeddedChains.length > 0
+        ? embeddedChains.map((c) => ({ id: c.id, name: c.name }))
+        : bridgeChains
       : bridgeChains
 
-  const isPending = isEmbeddedEVMNoBridge ? evmSwitchPending : bridgeIsPending
-  const switchChain = isEmbeddedEVMNoBridge ? handleEmbeddedSwitchChain : bridgeSwitchChainFn
-  const error = isEmbeddedEVMNoBridge ? evmSwitchError : bridgeError
+  const isPending = useEmbeddedSwitch ? evmSwitchPending : bridgeIsPending
+  const switchChain = useEmbeddedSwitch
+    ? isEmbeddedWalletActiveWithBridge
+      ? handleEmbeddedSwitchChainWithProvider
+      : handleEmbeddedSwitchChain
+    : bridgeSwitchChainFn
+  const error = useEmbeddedSwitch ? evmSwitchError : bridgeError
 
   const [pendingChainId, setPendingChainId] = useState<number | undefined>(undefined)
 

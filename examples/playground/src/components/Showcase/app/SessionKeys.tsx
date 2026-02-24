@@ -1,10 +1,10 @@
-import { useGrantPermissions, useRevokePermissions } from '@openfort/react'
+import { embeddedWalletId, useGrantPermissions, useRevokePermissions } from '@openfort/react'
 import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { getAddress } from 'viem/utils'
-import { useSignMessage } from 'wagmi'
+import { useAccount, useSignMessage } from 'wagmi'
 import { Button } from '@/components/Showcase/ui/Button'
 import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,6 +17,7 @@ import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/
 
 export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address, chainId } = useConnectedEthereumAccount()
+  const { connector } = useAccount()
   const isSessionKeySupported = useIsSessionKeySupported()
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
@@ -25,7 +26,8 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
     useSessionKeysStorage_backendSimulation()
   const { data } = useSignMessage()
   const mintContractAddress = getMintContractAddress(chainId ?? undefined)
-  const grantDisabled = isLoading || !mintContractAddress || !address || !isSessionKeySupported
+  const isExternalWallet = !!connector && connector.id !== embeddedWalletId
+  const grantDisabled = isLoading || !mintContractAddress || !address || !isSessionKeySupported || isExternalWallet
   const key = `${chainId}-${address ?? ''}`
   const updateSessionKeys = () => {
     const keys = getPrivateKeys(key)
@@ -106,7 +108,9 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
               </TooltipTrigger>
               <TooltipContent side="top">
                 <h3 className="text-base mb-1">{tooltip.hook}</h3>
-                {!isSessionKeySupported ? (
+                {isExternalWallet ? (
+                  <>Session keys require Openfort embedded wallet. Switch from external wallet to use session keys.</>
+                ) : !isSessionKeySupported ? (
                   <>Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.</>
                 ) : (
                   tooltip.body
@@ -123,9 +127,11 @@ export const SessionKeysCard = ({ tooltip }: { tooltip?: { hook: string; body: R
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top">
-                {!isSessionKeySupported
-                  ? 'Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.'
-                  : 'Grant session keys with specific permissions.'}
+                {isExternalWallet
+                  ? 'Session keys require Openfort embedded wallet. Switch from external wallet to use session keys.'
+                  : !isSessionKeySupported
+                    ? 'Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.'
+                    : 'Grant session keys with specific permissions.'}
               </TooltipContent>
             </Tooltip>
           )}

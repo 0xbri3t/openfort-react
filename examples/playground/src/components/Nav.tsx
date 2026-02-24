@@ -1,4 +1,4 @@
-import { ChainTypeEnum, OpenfortButton, useChain, useOpenfort } from '@openfort/react'
+import { ChainTypeEnum, OpenfortButton, useOpenfort } from '@openfort/react'
 import { Link, useLocation } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { ChevronDown, SettingsIcon } from 'lucide-react'
@@ -44,7 +44,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const location = useLocation()
   const path = location.pathname.includes('showcase') ? '/' : location.pathname
   const { mode, setMode } = usePlaygroundMode()
-  const { setChainType } = useChain()
+  const { setChainType } = useOpenfort()
   const { onBeforeModeSwitch } = useModeSwitchContext()
   const { isLoading: isAuthLoading } = useOpenfort()
   const { isPostModeSwitch } = usePlaygroundMode()

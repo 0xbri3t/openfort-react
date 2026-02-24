@@ -2,13 +2,12 @@ import { AccountTypeEnum, useEthereumEmbeddedWallet } from '@openfort/react'
 
 /**
  * Session keys are only supported for Smart Accounts.
-
- * EOA (Externally Owned Accounts) and external wallets (MetaMask, etc.) cannot use session keys.
+ * EOA (Externally Owned Accounts) cannot use session keys.
+ * When using evm-wagmi, external wallets (MetaMask, etc.) are detected via useAccount().connector in the card.
  */
 export function useIsSessionKeySupported(): boolean {
   const ethereum = useEthereumEmbeddedWallet()
 
-  if (ethereum.walletType === 'external') return false
   if (ethereum.status !== 'connected' || !ethereum.activeWallet) return false
 
   const accountType = ethereum.activeWallet.accountType

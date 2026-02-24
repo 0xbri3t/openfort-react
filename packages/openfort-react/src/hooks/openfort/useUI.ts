@@ -2,6 +2,7 @@ import React from 'react'
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
+import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import { logger } from '../../utils/logger'
 
@@ -58,6 +59,7 @@ function isAccountId(id: string): boolean {
 export function useUI() {
   const { open, setOpen, setRoute, setConnector, connector, chainType } = useOpenfort()
   const { isLoading, user, needsRecovery, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
+  const bridge = useEthereumBridge()
   const strategy = useConnectionStrategy()
 
   const state = React.useMemo(
@@ -81,7 +83,7 @@ export function useUI() {
     if (isLoading) setRoute(routes.LOADING)
     else if (!user) setRoute(routes.PROVIDERS)
     else if (!isConnected) setRoute(routes.LOAD_WALLETS)
-    else if (needsRecovery) setRoute(routes.LOAD_WALLETS)
+    else if (needsRecovery && !bridge) setRoute(routes.LOAD_WALLETS)
     else setRoute(routes.CONNECTED)
   }
 

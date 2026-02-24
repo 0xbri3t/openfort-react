@@ -4,7 +4,6 @@ import { DisconnectIcon } from '../../../assets/icons'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
 import ChainSelectList from '../../Common/ChainSelectList'
@@ -15,7 +14,7 @@ import { PageContent } from '../../PageContent'
 
 const SwitchNetworks: React.FC = () => {
   const { logout } = useOpenfortCore()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const { chains } = useOpenfort()
 
   // Use chain-specific hooks

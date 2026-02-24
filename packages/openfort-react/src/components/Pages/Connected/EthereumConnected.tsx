@@ -16,7 +16,6 @@ import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWall
 import useLocales from '../../../hooks/useLocales'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { nFormatter, truncateEthAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
 import Avatar from '../../Common/Avatar'
@@ -53,7 +52,7 @@ const EthereumConnected: React.FC = () => {
   const address = isConnected ? (wallet.address as `0x${string}`) : undefined
   const chainId = isConnected ? wallet.chainId : undefined
 
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   useEffect(() => {
     if (process.env.NODE_ENV === 'development' && chainType !== ChainTypeEnum.EVM) {
       logger.warn(

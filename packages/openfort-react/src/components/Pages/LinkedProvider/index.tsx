@@ -3,8 +3,8 @@ import type { Hex } from 'viem'
 
 import { useUser } from '../../../hooks/openfort/useUser'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { UserAccount } from '../../../openfortCustomTypes'
-import { useChain } from '../../../shared/hooks/useChain'
 import styled from '../../../styles/styled'
 import { truncateEthAddress } from '../../../utils'
 import Button from '../../Common/Button'
@@ -47,7 +47,7 @@ const ProviderIconInner = styled.div`
 const SiweContent = ({ provider }: { provider: UserAccount }) => {
   const address = provider.accountId as Hex
   const context = useOpenfort()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const themeContext = useThemeContext()
 
   const identity = useResolvedIdentity({

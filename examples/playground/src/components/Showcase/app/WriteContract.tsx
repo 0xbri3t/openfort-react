@@ -1,4 +1,4 @@
-import { ChainTypeEnum, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { ChainTypeEnum, embeddedWalletId, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { encodeFunctionData, formatUnits, getAddress, parseAbi } from 'viem'
@@ -25,7 +25,7 @@ const BALANCE_ABI = [
 
 export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address, chainId } = useConnectedEthereumAccount()
-  const { isConnected } = useAccount()
+  const { isConnected, connector } = useAccount()
   const config = getMintContractConfig(chainId)
   const core = useOpenfort()
   const embedded = useEthereumEmbeddedWallet()
@@ -60,7 +60,7 @@ export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body:
     },
   })
 
-  const useWagmiWrite = isConnected
+  const useWagmiWrite = isConnected && connector?.id !== embeddedWalletId && embedded.status !== 'connected'
   const hash = useWagmiWrite ? wagmiHash : (localHash ?? undefined)
   const isPending = useWagmiWrite ? wagmiPending : localPending
   const error = useWagmiWrite ? wagmiError : localError

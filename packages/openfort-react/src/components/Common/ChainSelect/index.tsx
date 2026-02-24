@@ -7,7 +7,7 @@ import { css } from 'styled-components'
 import defaultTheme from '../../../constants/defaultTheme'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import useLocales from '../../../hooks/useLocales'
-import { useChain } from '../../../shared/hooks/useChain'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import styled from '../../../styles/styled'
 import { flattenChildren, isMobile } from '../../../utils'
@@ -130,7 +130,7 @@ const ChevronDown = ({ ...props }) => (
 const ChainSelector: React.FC = () => {
   const context = useOpenfort()
   const [isOpen, setIsOpen] = useState(false)
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()

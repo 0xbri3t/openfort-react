@@ -7,7 +7,6 @@ import Logos from '../../../assets/logos'
 import { OpenfortError } from '../../../core/errors'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
 import { handleOtpRecoveryError } from '../../../shared/utils/otpError'
@@ -507,7 +506,7 @@ const CreateOrConnectWallet = () => {
 const EthereumCreateWallet: React.FC = () => {
   const { uiConfig, walletConfig, setRoute } = useOpenfort()
   const { user } = useOpenfortCore()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()
@@ -540,7 +539,7 @@ const createWalletByChain: Record<ChainTypeEnum.EVM | ChainTypeEnum.SVM, React.R
 }
 
 const CreateWallet: React.FC = () => {
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   return createWalletByChain[chainType] ?? createWalletByChain[ChainTypeEnum.EVM]
 }
 

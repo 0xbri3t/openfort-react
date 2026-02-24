@@ -38,10 +38,11 @@ export function useAsyncData<T>({ queryFn, queryKey, enabled = true }: UseAsyncD
     }
   }, [enabled])
 
+  const queryKeyString = JSON.stringify(queryKey)
   useEffect(() => {
     if (!enabled) return
     fetchData().catch(() => {})
-  }, [enabled, ...queryKey])
+  }, [enabled, queryKeyString])
 
   return { data, error, isLoading, refetch: fetchData }
 }

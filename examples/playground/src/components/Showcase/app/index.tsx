@@ -1,7 +1,7 @@
 import {
   ChainTypeEnum,
-  useChain,
   useEthereumEmbeddedWallet,
+  useOpenfort,
   useSignOut,
   useSolanaEmbeddedWallet,
   useUser,
@@ -29,7 +29,7 @@ import { usePlaygroundMode } from '@/providers'
 
 export const App = () => {
   const { user } = useUser()
-  const { chainType } = useChain()
+  const { chainType } = useOpenfort()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet

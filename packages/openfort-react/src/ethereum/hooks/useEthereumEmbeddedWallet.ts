@@ -5,19 +5,17 @@ import {
   EmbeddedState,
   RecoveryMethod,
 } from '@openfort/openfort-js'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
+import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { formatAddress } from '../../utils/format'
-import { OpenfortEthereumBridgeContext } from '../OpenfortEthereumBridgeContext'
 import type {
   ConnectedEmbeddedEthereumWallet,
-  CreateEthereumWalletOptions,
   EthereumWalletState,
   OpenfortEmbeddedEthereumWalletProvider,
   SetActiveEthereumWalletOptions,
@@ -34,23 +32,12 @@ type InternalState = {
 
 function toConnectedStateProperties(
   status: WalletStatus,
-  internalState: {
-    address?: string
-    walletType?: 'embedded' | 'external'
-    connectorId?: string
-    connectorName?: string
-  },
   activeWallet: ConnectedEmbeddedEthereumWallet | null,
   _chainId: number | undefined
 ) {
-  const { address, walletType = 'embedded', connectorId, connectorName } = internalState
-
   if (status === 'creating' || status === 'fetching-wallets') {
     return {
-      normalizedStatus: 'connecting',
-      walletType: null,
-      connectorId: undefined,
-      connectorName: undefined,
+      embeddedWalletId: undefined,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,
@@ -60,10 +47,7 @@ function toConnectedStateProperties(
 
   if (status === 'connecting' || status === 'reconnecting') {
     return {
-      normalizedStatus: status === 'reconnecting' ? 'connecting' : 'connecting',
-      walletType: walletType ?? null,
-      connectorId,
-      connectorName,
+      embeddedWalletId,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,
@@ -71,12 +55,9 @@ function toConnectedStateProperties(
     }
   }
 
-  if ((status === 'connected' || status === 'needs-recovery') && address && activeWallet) {
+  if ((status === 'connected' || status === 'needs-recovery') && activeWallet) {
     return {
-      normalizedStatus: 'connected',
-      walletType: walletType ?? 'embedded',
-      connectorId: connectorId ?? embeddedWalletId,
-      connectorName: connectorName ?? 'Openfort',
+      embeddedWalletId,
       isConnected: status === 'connected',
       isConnecting: false,
       isDisconnected: false,
@@ -85,10 +66,7 @@ function toConnectedStateProperties(
   }
 
   return {
-    normalizedStatus: 'disconnected',
-    walletType: null,
-    connectorId: undefined,
-    connectorName: undefined,
+    embeddedWalletId: undefined,
     isConnected: false,
     isConnecting: false,
     isDisconnected: true,
@@ -155,7 +133,6 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
   const strategy = useConnectionStrategy()
-  const bridge = useContext(OpenfortEthereumBridgeContext)
 
   const creationChainId = options?.chainId ?? DEFAULT_CHAIN_ID
   const activeReturnChainId = activeChainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
@@ -210,7 +187,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   }, [state.status, state.activeWallet, setWalletStatus])
 
   const create = useCallback(
-    async (createOptions?: CreateEthereumWalletOptions): Promise<EmbeddedAccount> => {
+    async (createOptions?: CreateEmbeddedWalletOptions): Promise<EmbeddedAccount> => {
       setState((s) => ({ ...s, status: 'creating', error: null }))
 
       try {
@@ -517,42 +494,14 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     [state.status]
   )
 
-  // Compute wallet type and connector info based on strategy and bridge
-  const walletTypeInfo = useMemo(() => {
-    if (strategy?.kind !== 'bridge' || !bridge || !state.activeWallet) {
-      return { walletType: 'embedded' as const, connectorId: embeddedWalletId, connectorName: 'Openfort' }
-    }
-
-    const bridgeConnector = bridge.account.connector
-    const isEmbedded =
-      bridgeConnector?.id === embeddedWalletId ||
-      (activeEmbeddedAddress != null &&
-        activeEmbeddedAddress.toLowerCase() === state.activeWallet.address.toLowerCase())
-
-    if (isEmbedded) {
-      return { walletType: 'embedded' as const, connectorId: embeddedWalletId, connectorName: 'Openfort' }
-    }
-    return {
-      walletType: 'external' as const,
-      connectorId: bridgeConnector?.id,
-      connectorName: bridgeConnector?.name,
-    }
-  }, [strategy, bridge, state.activeWallet, activeEmbeddedAddress])
-
   const connectedStateProps = useMemo(
     () =>
       toConnectedStateProperties(
         state.status,
-        {
-          address: state.activeWallet?.address,
-          walletType: walletTypeInfo.walletType,
-          connectorId: walletTypeInfo.connectorId,
-          connectorName: walletTypeInfo.connectorName,
-        },
         state.activeWallet,
         state.activeWallet?.address ? activeReturnChainId : undefined
       ),
-    [state.status, state.activeWallet, walletTypeInfo, activeReturnChainId]
+    [state.status, state.activeWallet, activeReturnChainId]
   )
 
   // Compute displayAddress when connected
@@ -572,8 +521,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       isLoading: true,
       isError: false,
       isSuccess: false,
-      normalizedStatus: 'connecting',
-      walletType: null,
+      embeddedWalletId: undefined,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,

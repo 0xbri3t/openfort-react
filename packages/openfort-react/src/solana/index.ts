@@ -7,12 +7,14 @@
  * @packageDocumentation
  */
 
+export type {
+  CreateEmbeddedWalletOptions,
+  CreateEmbeddedWalletResult,
+} from '../shared/types'
 export { useSolanaEmbeddedWallet } from './hooks/useSolanaEmbeddedWallet'
 export type {
   // Wallet types
   ConnectedEmbeddedSolanaWallet,
-  CreateSolanaWalletOptions,
-  CreateSolanaWalletResult,
   // Provider types
   OpenfortEmbeddedSolanaWalletProvider,
   SetActiveSolanaWalletOptions,

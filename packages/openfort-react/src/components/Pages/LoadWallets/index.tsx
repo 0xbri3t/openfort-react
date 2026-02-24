@@ -4,7 +4,6 @@ import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEm
 import type { ConnectedEmbeddedEthereumWallet } from '../../../ethereum/types'
 import { toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useChain } from '../../../shared/hooks/useChain'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'
 import { logger } from '../../../utils/logger'
@@ -43,7 +42,7 @@ const errorForChainRegistry: Record<
 }
 
 const LoadWallets: React.FC = () => {
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const { user } = useOpenfortCore()
   const { triggerResize, setRoute, setConnector } = useOpenfort()
   const ethereumWallet = useEthereumEmbeddedWallet()

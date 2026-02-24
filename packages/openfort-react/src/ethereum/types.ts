@@ -12,8 +12,13 @@ import type {
   RecoveryParams,
 } from '@openfort/openfort-js'
 import type { Hex } from 'viem'
-import type { SetRecoveryOptions as SharedSetRecoveryOptions } from '../shared/types'
-import type { OpenfortHookOptions } from '../types'
+import type {
+  ConnectedWalletState,
+  CreateEmbeddedWalletOptions,
+  SetActiveEmbeddedWalletOptionsBase,
+  SetRecoveryOptions as SharedSetRecoveryOptions,
+  WalletDerived,
+} from '../shared/types'
 
 export type PolicyConfig = string | Record<number, string>
 
@@ -71,52 +76,12 @@ export type ConnectedEmbeddedEthereumWallet = {
   salt?: string
 }
 
-/**
- * Result of creating an Ethereum wallet
- */
-export type CreateEthereumWalletResult = {
-  account: EmbeddedAccount
-  error?: string
-}
-
-/**
- * Options for creating an Ethereum embedded wallet
- */
-export type CreateEthereumWalletOptions = {
-  /** Target chain ID for deployment */
-  chainId?: number
-  /** Recovery method for key encryption */
-  recoveryMethod?: RecoveryMethod
-  /** Passkey ID for PASSKEY recovery */
-  passkeyId?: string
-  /** Password for PASSWORD recovery */
-  password?: string
-  /** OTP code for verification */
-  otpCode?: string
-  /** Account type (EOA, Smart Account, or Delegated Account) */
-  accountType?: AccountTypeEnum
-  /** Policy ID for gas sponsorship */
-  policyId?: string
-} & OpenfortHookOptions<CreateEthereumWalletResult>
-
-/**
- * Options for setting active Ethereum wallet
- */
-export type SetActiveEthereumWalletOptions = {
+/** Options for setting active Ethereum wallet (chain-specific address + shared recovery). */
+export type SetActiveEthereumWalletOptions = SetActiveEmbeddedWalletOptionsBase & {
   /** Wallet address to set as active */
   address: `0x${string}`
   /** Chain ID (required for Smart Accounts) */
   chainId?: number
-  /** Recovery params for wallet access (escape hatch; prefer named options) */
-  recoveryParams?: RecoveryParams
-  /** Recovery method when recoveryParams not provided */
-  recoveryMethod?: RecoveryMethod
-  /** Passkey ID for PASSKEY recovery */
-  passkeyId?: string
-  /** Password for PASSWORD recovery */
-  password?: string
-  /** OTP code for AUTOMATIC recovery */
-  otpCode?: string
 }
 
 /**
@@ -124,7 +89,7 @@ export type SetActiveEthereumWalletOptions = {
  */
 export interface EthereumWalletActions {
   /** Create a new Ethereum embedded wallet */
-  create(options?: CreateEthereumWalletOptions): Promise<EmbeddedAccount>
+  create(options?: CreateEmbeddedWalletOptions): Promise<EmbeddedAccount>
   /** List of available Ethereum wallets */
   wallets: ConnectedEmbeddedEthereumWallet[]
   /** Set the active wallet */
@@ -195,37 +160,7 @@ export type EthereumWalletStateBase =
       displayAddress?: string
     })
 
-/** Derived booleans for consistent hook shape. All variants include these. */
-export type EthereumWalletDerived = {
-  /** True when status is fetching-wallets, connecting, creating, or reconnecting. */
-  isLoading: boolean
-  /** True when status is 'error'. */
-  isError: boolean
-  /** True when status is 'connected'. */
-  isSuccess: boolean
-}
-
-/** Connected wallet state properties (merged from useConnectedWallet) */
-export type EthereumConnectedWalletState = {
-  /** Normalized status (wagmi-compatible): 'connected', 'connecting', 'disconnected', 'reconnecting'. */
-  normalizedStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
-  /** Which wallet type is currently active: 'embedded' (Openfort) or 'external' (MetaMask, WalletConnect, etc.). */
-  walletType: 'embedded' | 'external' | null
-  /** Connector ID when connected (embeddedWalletId for embedded, external connector id otherwise). */
-  connectorId?: string
-  /** Connector name when connected (e.g. 'Openfort', 'MetaMask'). */
-  connectorName?: string
-  /** True when currently connected. */
-  isConnected: boolean
-  /** True when actively connecting or transitioning. */
-  isConnecting: boolean
-  /** True when disconnected. */
-  isDisconnected: boolean
-  /** True when reconnecting after loss of connection. */
-  isReconnecting: boolean
-}
-
-export type EthereumWalletState = EthereumWalletStateBase & EthereumWalletDerived & EthereumConnectedWalletState
+export type EthereumWalletState = EthereumWalletStateBase & WalletDerived & ConnectedWalletState
 
 export type UseEmbeddedEthereumWalletOptions = {
   /** Chain ID for smart account operations */

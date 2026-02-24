@@ -6,7 +6,7 @@
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import type React from 'react'
-import { useChain } from '../../../shared/hooks/useChain'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { EthereumSend } from './EthereumSend'
 import { SolanaSend } from './SolanaSend'
 
@@ -16,7 +16,7 @@ const SEND_REGISTRY: Partial<Record<ChainTypeEnum, React.FC>> = {
 }
 
 const Send: React.FC = () => {
-  const { chainType } = useChain()
+  const { chainType } = useOpenfortCore()
   const Component = SEND_REGISTRY[chainType]
   return Component ? <Component /> : <EthereumSend />
 }

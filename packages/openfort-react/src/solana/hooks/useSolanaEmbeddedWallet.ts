@@ -5,16 +5,16 @@ import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import type { SetRecoveryOptions, WalletStatus } from '../../shared/types'
+import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
 import { formatAddress } from '../../utils/format'
+import { getDefaultSolanaRpcUrlWithFallback } from '../../utils/rpc'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import { SolanaContext } from '../SolanaContext'
 import type {
   ConnectedEmbeddedSolanaWallet,
-  CreateSolanaWalletOptions,
   OpenfortEmbeddedSolanaWalletProvider,
   SetActiveSolanaWalletOptions,
   SignedSolanaTransaction,
@@ -35,10 +35,7 @@ type InternalState = {
 function toConnectedStateProperties(status: WalletStatus, activeWallet: ConnectedEmbeddedSolanaWallet | null) {
   if (status === 'creating' || status === 'fetching-wallets') {
     return {
-      normalizedStatus: 'connecting',
-      walletType: null,
-      connectorId: undefined,
-      connectorName: undefined,
+      embeddedWalletId: undefined,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,
@@ -48,10 +45,7 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
 
   if (status === 'connecting') {
     return {
-      normalizedStatus: 'connecting',
-      walletType: 'embedded' as const,
-      connectorId: embeddedWalletId,
-      connectorName: 'Openfort',
+      embeddedWalletId,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,
@@ -61,10 +55,7 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
 
   if (status === 'reconnecting') {
     return {
-      normalizedStatus: 'connecting',
-      walletType: 'embedded' as const,
-      connectorId: embeddedWalletId,
-      connectorName: 'Openfort',
+      embeddedWalletId,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,
@@ -74,10 +65,7 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
 
   if ((status === 'connected' || status === 'needs-recovery') && activeWallet) {
     return {
-      normalizedStatus: 'connected',
-      walletType: 'embedded' as const,
-      connectorId: embeddedWalletId,
-      connectorName: 'Openfort',
+      embeddedWalletId,
       isConnected: status === 'connected',
       isConnecting: false,
       isDisconnected: false,
@@ -86,10 +74,7 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
   }
 
   return {
-    normalizedStatus: 'disconnected',
-    walletType: null,
-    connectorId: undefined,
-    connectorName: undefined,
+    embeddedWalletId: undefined,
     isConnected: false,
     isConnecting: false,
     isDisconnected: true,
@@ -101,8 +86,8 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
  * Returns state for Solana embedded wallets: create, recover, list, active wallet, and provider.
  * Use for creating accounts, recovering existing ones, and signing transactions.
  *
- * @param _options - Reserved for future options
- * @returns State with status, wallets, activeWallet, create, recover, setActive, provider
+ * @param options - Optional cluster override (like chainId on Ethereum) and recoveryParams
+ * @returns State with status, wallets, activeWallet, create, recover, setActive, provider, cluster, rpcUrl
  *
  * @example
  * ```tsx
@@ -112,7 +97,7 @@ function toConnectedStateProperties(status: WalletStatus, activeWallet: Connecte
  * }
  * ```
  */
-export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOptions): SolanaWalletState {
+export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions): SolanaWalletState {
   const {
     client,
     embeddedAccounts,
@@ -201,7 +186,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
   }, [state.status, state.activeWallet, setWalletStatus])
 
   const create = useCallback(
-    async (createOptions?: CreateSolanaWalletOptions): Promise<EmbeddedAccount> => {
+    async (createOptions?: CreateEmbeddedWalletOptions): Promise<EmbeddedAccount> => {
       setState((s) => ({ ...s, status: 'creating', error: null }))
 
       try {
@@ -467,9 +452,15 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     [state.status]
   )
 
-  // Get cluster from Solana context
+  // Cluster: option override (parity with Ethereum chainId) or Solana context
   const solanaContext = useContext(SolanaContext)
-  const cluster = solanaContext?.cluster as SolanaCluster | undefined
+  const cluster = (options?.cluster ?? solanaContext?.cluster) as SolanaCluster | undefined
+  const rpcUrl =
+    solanaContext && solanaContext.cluster === cluster
+      ? solanaContext.rpcUrl
+      : cluster
+        ? getDefaultSolanaRpcUrlWithFallback(cluster)
+        : solanaContext?.rpcUrl
 
   const connectedStateProps = useMemo(
     () => toConnectedStateProperties(state.status, state.activeWallet),
@@ -493,8 +484,7 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
       isLoading: true,
       isError: false,
       isSuccess: false,
-      normalizedStatus: 'connecting',
-      walletType: null,
+      embeddedWalletId: undefined,
       isConnected: false,
       isConnecting: true,
       isDisconnected: false,
@@ -509,6 +499,6 @@ export function useSolanaEmbeddedWallet(_options?: UseEmbeddedSolanaWalletOption
     ...(displayAddress && { displayAddress }),
     ...(state.activeWallet?.address && { address: state.activeWallet.address }),
     ...(cluster && { cluster }),
-    ...(solanaContext?.rpcUrl && { rpcUrl: solanaContext.rpcUrl }),
+    ...(rpcUrl && { rpcUrl }),
   } as SolanaWalletState
 }

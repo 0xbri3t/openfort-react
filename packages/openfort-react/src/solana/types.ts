@@ -6,8 +6,13 @@
 
 import type { ChainTypeEnum, EmbeddedAccount, RecoveryMethod, RecoveryParams } from '@openfort/openfort-js'
 import type React from 'react'
-import type { SetRecoveryOptions as SetRecoveryOptionsBase } from '../shared/types'
-import type { OpenfortHookOptions } from '../types'
+import type {
+  ConnectedWalletState,
+  CreateEmbeddedWalletOptions,
+  SetActiveEmbeddedWalletOptionsBase,
+  SetRecoveryOptions as SetRecoveryOptionsBase,
+  WalletDerived,
+} from '../shared/types'
 
 /**
  * Solana cluster identifier
@@ -187,45 +192,10 @@ export type ConnectedEmbeddedSolanaWallet = {
   getProvider(): Promise<OpenfortEmbeddedSolanaWalletProvider>
 }
 
-/**
- * Result of creating a Solana wallet
- */
-export type CreateSolanaWalletResult = {
-  account: EmbeddedAccount
-  error?: string
-}
-
-/**
- * Options for creating a Solana embedded wallet.
- * Solana wallets are EOA; the same wallet works across all clusters.
- */
-export type CreateSolanaWalletOptions = {
-  /** Recovery method for key encryption */
-  recoveryMethod?: RecoveryMethod
-  /** Passkey ID for PASSKEY recovery */
-  passkeyId?: string
-  /** Password for PASSWORD method */
-  password?: string
-  /** OTP code for AUTOMATIC method */
-  otpCode?: string
-} & OpenfortHookOptions<CreateSolanaWalletResult>
-
-/**
- * Options for setting active Solana wallet
- */
-export type SetActiveSolanaWalletOptions = {
+/** Options for setting active Solana wallet (chain-specific address + shared recovery). */
+export type SetActiveSolanaWalletOptions = SetActiveEmbeddedWalletOptionsBase & {
   /** Wallet address to set as active (Base58) */
   address: string
-  /** Recovery params for wallet access (escape hatch; prefer named options) */
-  recoveryParams?: RecoveryParams
-  /** Recovery method when recoveryParams not provided */
-  recoveryMethod?: RecoveryMethod
-  /** Passkey ID for PASSKEY recovery */
-  passkeyId?: string
-  /** Password for PASSWORD recovery */
-  password?: string
-  /** OTP code for AUTOMATIC recovery */
-  otpCode?: string
 }
 
 /**
@@ -233,7 +203,7 @@ export type SetActiveSolanaWalletOptions = {
  */
 export interface SolanaWalletActions {
   /** Create a new Solana embedded wallet */
-  create(options?: CreateSolanaWalletOptions): Promise<EmbeddedAccount>
+  create(options?: CreateEmbeddedWalletOptions): Promise<EmbeddedAccount>
   /** List of available Solana wallets */
   wallets: ConnectedEmbeddedSolanaWallet[]
   /** Set the active wallet */
@@ -304,44 +274,17 @@ export type SolanaWalletStateBase =
       displayAddress?: string
     })
 
-/** Connected wallet state properties (merged from useConnectedWallet) */
-export type SolanaConnectedWalletState = {
-  /** Normalized status (wagmi-compatible): 'connected', 'connecting', 'disconnected', 'reconnecting'. */
-  normalizedStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
-  /** Which wallet type is currently active: always 'embedded' for Solana (Openfort). */
-  walletType: 'embedded' | null
-  /** Connector ID (always embeddedWalletId for Solana). */
-  connectorId?: string
-  /** Connector name (always 'Openfort' for Solana). */
-  connectorName?: string
-  /** True when currently connected. */
-  isConnected: boolean
-  /** True when actively connecting or transitioning. */
-  isConnecting: boolean
-  /** True when disconnected. */
-  isDisconnected: boolean
-  /** True when reconnecting after loss of connection. */
-  isReconnecting: boolean
-}
+/** Derived booleans + optional RPC URL (Solana-specific). */
+export type SolanaWalletDerived = WalletDerived & { rpcUrl?: string }
 
-/** Derived booleans and config for consistent hook shape. All variants include these. */
-export type SolanaWalletDerived = {
-  /** True when status is fetching-wallets, connecting, creating, or reconnecting. */
-  isLoading: boolean
-  /** True when status is 'error'. */
-  isError: boolean
-  /** True when status is 'connected'. */
-  isSuccess: boolean
-  /** RPC URL from Solana config (when SolanaContextProvider is mounted). */
-  rpcUrl?: string
-}
-
-export type SolanaWalletState = SolanaWalletStateBase & SolanaWalletDerived & SolanaConnectedWalletState
+export type SolanaWalletState = SolanaWalletStateBase & SolanaWalletDerived & ConnectedWalletState
 
 /**
  * Options for useSolanaEmbeddedWallet hook
  */
 export type UseEmbeddedSolanaWalletOptions = {
+  /** Solana cluster (mainnet-beta, devnet, testnet). Overrides context when set. */
+  cluster?: SolanaCluster
   /** Recovery params for wallet access */
   recoveryParams?: RecoveryParams
 }
