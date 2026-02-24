@@ -1,4 +1,4 @@
-import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { embeddedWalletId, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { createWalletClient, custom } from 'viem'
@@ -12,7 +12,7 @@ import { cn } from '@/lib/cn'
 
 export const SignaturesCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address } = useConnectedEthereumAccount()
-  const { isConnected } = useAccount()
+  const { isConnected, connector } = useAccount()
   const {
     data: wagmiData,
     signMessage: wagmiSignMessage,
@@ -26,7 +26,7 @@ export const SignaturesCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
   const [localError, setLocalError] = useState<Error | null>(null)
   const [localPending, setLocalPending] = useState(false)
 
-  const useWagmiSign = isConnected
+  const useWagmiSign = isConnected && connector?.id !== embeddedWalletId && embedded.status !== 'connected'
   const isPending = useWagmiSign ? wagmiPending : localPending
   const signature = useWagmiSign ? wagmiData : localSignature
   const error = useWagmiSign ? wagmiErrorObj : localError

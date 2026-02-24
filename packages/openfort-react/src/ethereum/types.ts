@@ -209,8 +209,8 @@ export type EthereumWalletDerived = {
 export type EthereumConnectedWalletState = {
   /** Normalized status (wagmi-compatible): 'connected', 'connecting', 'disconnected', 'reconnecting'. */
   normalizedStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting'
-  /** Which wallet type is currently active: 'embedded' (Openfort) or 'external' (MetaMask, WalletConnect, etc.). */
-  walletType: 'embedded' | 'external' | null
+  /** Which wallet type is currently active: 'embedded' (Openfort) only. External wallets use wagmi directly. */
+  walletType: 'embedded' | null
   /** Connector ID when connected (embeddedWalletId for embedded, external connector id otherwise). */
   connectorId?: string
   /** Connector name when connected (e.g. 'Openfort', 'MetaMask'). */
