@@ -9,7 +9,7 @@ import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } fr
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
 import { formatAddress } from '../../utils/format'
-import { getDefaultSolanaRpcUrlWithFallback } from '../../utils/rpc'
+import { getDefaultSolanaRpcUrl } from '../../utils/rpc'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import { SolanaContext } from '../SolanaContext'
@@ -459,7 +459,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
     solanaContext && solanaContext.cluster === cluster
       ? solanaContext.rpcUrl
       : cluster
-        ? getDefaultSolanaRpcUrlWithFallback(cluster)
+        ? getDefaultSolanaRpcUrl(cluster)
         : solanaContext?.rpcUrl
 
   const connectedStateProps = useMemo(

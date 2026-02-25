@@ -7,6 +7,7 @@
 import type { Chain } from 'viem'
 import { defineChain } from 'viem'
 import type { SolanaCluster } from '../solana/types'
+import { logger } from './logger'
 
 /**
  * Default Ethereum RPC URLs by chain ID — testnets only.
@@ -35,25 +36,27 @@ const DEFAULT_SOLANA_RPC_URLS: Partial<Record<Exclude<SolanaCluster, 'custom'>, 
  * Get default Ethereum RPC URL for a chain ID.
  * Returns undefined when chain is not in the testnet map.
  */
-export function getDefaultEthereumRpcUrl(chainId: number): string | undefined {
-  return DEFAULT_ETHEREUM_RPC_URLS[chainId]
+export function getDefaultEthereumRpcUrl(chainId: number): string {
+  if (!DEFAULT_ETHEREUM_RPC_URLS[chainId]) {
+    logger.warn(
+      `No default Ethereum RPC URL found for chain ${chainId}. Configure rpcUrls in OpenfortProvider for better reliability and rate limits.`
+    )
+  }
+  return DEFAULT_ETHEREUM_RPC_URLS[chainId] ?? 'https://rpc.sepolia.org'
 }
 
 /**
  * Get default Solana RPC URL for a cluster.
  * Returns undefined only for unknown clusters; 'custom' returns devnet.
  */
-export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string | undefined {
-  if (cluster === 'custom') return DEFAULT_SOLANA_RPC_URLS.devnet
+export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string {
+  if (!DEFAULT_SOLANA_RPC_URLS[cluster]) {
+    logger.warn(
+      `No default Solana RPC URL found for cluster ${cluster}. Configure rpcUrls in OpenfortProvider for better reliability and rate limits.`
+    )
+    return 'https://api.devnet.solana.com'
+  }
   return DEFAULT_SOLANA_RPC_URLS[cluster]
-}
-
-/**
- * Get default Solana RPC URL for a cluster, with fallback to devnet.
- * Use when a URL is required (e.g. hook options override without context).
- */
-export function getDefaultSolanaRpcUrlWithFallback(cluster: SolanaCluster): string {
-  return getDefaultSolanaRpcUrl(cluster) ?? getDefaultSolanaRpcUrl('devnet') ?? 'https://api.devnet.solana.com'
 }
 
 /**

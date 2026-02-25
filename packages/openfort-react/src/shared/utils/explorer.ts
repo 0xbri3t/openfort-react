@@ -1,5 +1,6 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import type { SolanaCluster } from '../../solana/types'
+import { logger } from '../../utils/logger'
 
 /** Options for building a block explorer URL. */
 export type ExplorerUrlOptions = {
@@ -37,13 +38,30 @@ type ExplorerUrlBuilder = (options: ExplorerUrlOptions) => string
 
 const explorerRegistry: Record<ChainTypeEnum, ExplorerUrlBuilder> = {
   [ChainTypeEnum.EVM]: (options) => {
-    const chainId = options.chainId ?? 13337
-    const base = EVM_EXPLORER_BY_CHAIN_ID[chainId] ?? 'https://amoy.polygonscan.com'
+    if (!options.chainId) {
+      logger.warn(
+        'No chain ID provided. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.'
+      )
+      return 'https://amoy.polygonscan.com'
+    }
+    if (!EVM_EXPLORER_BY_CHAIN_ID[options.chainId]) {
+      logger.warn(
+        `No explorer URL found for chain ${options.chainId}. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.`
+      )
+      return 'https://amoy.polygonscan.com'
+    }
+    const base = EVM_EXPLORER_BY_CHAIN_ID[options.chainId]
     return appendPath(base, options)
   },
   [ChainTypeEnum.SVM]: (options) => {
-    const cluster = options.cluster ?? 'devnet'
-    const base = cluster === 'mainnet-beta' ? SOLANA_EXPLORER_BASE : `${SOLANA_EXPLORER_BASE}/?cluster=${cluster}`
+    if (!options.cluster) {
+      logger.warn(
+        'No cluster provided. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.'
+      )
+      return 'https://explorer.solana.com'
+    }
+    const base =
+      options.cluster === 'mainnet-beta' ? SOLANA_EXPLORER_BASE : `${SOLANA_EXPLORER_BASE}/?cluster=${options.cluster}`
     return appendPath(base, options)
   },
 }
