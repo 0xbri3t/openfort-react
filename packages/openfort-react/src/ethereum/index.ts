@@ -14,8 +14,8 @@ export { useEthereumEmbeddedWallet } from './hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './hooks/useEthereumWalletAssets'
 export type {
   ConnectedEmbeddedEthereumWallet,
+  EthereumConfig,
   EthereumWalletActions,
-  EthereumWalletConfig,
   EthereumWalletState,
   OpenfortEmbeddedEthereumWalletProvider,
   PolicyConfig,

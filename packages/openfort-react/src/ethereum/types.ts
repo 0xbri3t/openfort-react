@@ -22,7 +22,7 @@ import type {
 
 export type PolicyConfig = string | Record<number, string>
 
-export type EthereumWalletConfig = {
+export type EthereumConfig = {
   chainId: number
   rpcUrls?: Record<number, string>
   /** Policy ID (pol_...) for gas sponsorship / embedded signer */

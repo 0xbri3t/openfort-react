@@ -20,8 +20,6 @@ import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/Conne
 import { OpenfortError, OpenfortReactErrorType } from '../core/errors'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
-import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
-import type { WalletReadiness } from '../core/types'
 import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridgeContext'
 import type { WalletFlowStatus } from '../hooks/openfort/walletTypes'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
@@ -48,7 +46,6 @@ export type OpenfortCoreContextValue = {
 
   embeddedAccounts?: EmbeddedAccount[]
   isLoadingAccounts: boolean
-  walletReadiness: WalletReadiness
 
   /** Current active embedded wallet address (drives top-right / useConnectedWallet). Set by useEthereumEmbeddedWallet.setActive and synced from SDK on load. */
   activeEmbeddedAddress: string | undefined
@@ -100,15 +97,30 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     })
   }, [bridge, uiConfig.walletConnectName])
 
+  const [solanaStrategy, setSolanaStrategy] = useState<ConnectionStrategy | null>(null)
+  useEffect(() => {
+    if (!walletConfig?.solana) {
+      setSolanaStrategy(null)
+      return
+    }
+    let cancelled = false
+    import('../core/strategies/SolanaEmbeddedStrategy').then((m) => {
+      if (!cancelled) setSolanaStrategy(m.createSolanaEmbeddedStrategy(walletConfig))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [walletConfig?.solana, walletConfig])
+
   const strategy = useMemo(() => {
     const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
-      [ChainTypeEnum.SVM]: createSolanaEmbeddedStrategy(walletConfig),
+      [ChainTypeEnum.SVM]: solanaStrategy,
       [ChainTypeEnum.EVM]: bridge
         ? createEthereumBridgeStrategy(bridge, bridgeConnectors)
         : createEthereumEmbeddedStrategy(walletConfig),
     }
     return strategyByChain[chainType] ?? null
-  }, [bridge, chainType, walletConfig, bridgeConnectors])
+  }, [bridge, chainType, walletConfig, bridgeConnectors, solanaStrategy])
 
   const address = bridge?.account.address
   const [user, setUser] = useState<User | null>(null)
@@ -543,13 +555,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const needsRecovery =
     embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED && (embeddedAccounts?.length ?? 0) > 0
 
-  const walletReadiness = useMemo((): WalletReadiness => {
-    if (isLoadingAccounts) return 'loading'
-    if (!embeddedAccounts || embeddedAccounts.length === 0) return 'not-created'
-    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) return 'needs-recovery'
-    return 'ready'
-  }, [isLoadingAccounts, embeddedAccounts, embeddedState])
-
   const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
 
   const value: OpenfortCoreContextValue = {
@@ -569,7 +574,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
     embeddedAccounts,
     isLoadingAccounts,
-    walletReadiness,
 
     activeEmbeddedAddress,
     setActiveEmbeddedAddress,

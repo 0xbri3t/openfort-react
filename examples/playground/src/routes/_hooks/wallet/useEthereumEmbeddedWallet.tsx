@@ -102,7 +102,7 @@ function SolanaContent() {
 
 function RouteComponent() {
   const { mode } = usePlaygroundMode()
-  const isSVM = mode === 'solana-only'
+  const isSVM = mode === 'svm'
 
   return (
     <Layout>

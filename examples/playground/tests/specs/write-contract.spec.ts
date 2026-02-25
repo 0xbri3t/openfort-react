@@ -16,7 +16,7 @@ test.describe('Write Contract - mint tokens', () => {
     const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
 
     await walletsCard.getByRole('button', { name: /create new wallet/i }).click()
-    if (mode !== 'solana-only') {
+    if (mode !== 'svm') {
       await walletsCard.getByRole('button', { name: /smart account/i }).click()
     }
     await walletsCard.getByRole('button', { name: /^password$/i }).click()

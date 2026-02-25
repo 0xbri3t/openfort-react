@@ -15,19 +15,24 @@ export const HookVariable = <TOptions extends object, TResult extends object>({
   maxDepth = 3,
   defaultOptions = {} as TOptions,
   optionsVariables,
+  importPath = '@openfort/react',
 }: {
   hook: (opts?: TOptions) => TResult
   name: string
   description?: string
-  variables?: Record<string, HookInput>
+  variables?: Record<string, HookInput> | ((values: TResult) => Record<string, HookInput>)
   defaultExpanded?: number
   maxDepth?: number
   defaultOptions?: TOptions
   optionsVariables?: Record<string, HookInput>
+  /** Import path for sample code (default: @openfort/react). Use e.g. @openfort/react/wagmi for wagmi hooks. */
+  importPath?: string
 }) => {
   const [opts, setOpts] = useState<TOptions>(defaultOptions)
 
   const values = hook(opts)
+  const resolvedVariables =
+    typeof variables === 'function' ? variables(values) : (variables as Record<string, HookInput>)
 
   const sample = useMemo(() => {
     let base = `${JSON.stringify(Object.keys(defaultOptions), null, 2)}`
@@ -41,7 +46,7 @@ export const HookVariable = <TOptions extends object, TResult extends object>({
     base = base.replace(/,/g, '')
     base = base.replace(
       '[',
-      `import { ${name} } from "@openfort/react"
+      `import { ${name} } from "${importPath}"
 
 function SampleComponent() {
   const {
@@ -51,7 +56,7 @@ function SampleComponent() {
     )
 
     for (const val in values) {
-      const replaced = variables?.[val]?.description || commonVariables[val as string]?.description
+      const replaced = resolvedVariables?.[val]?.description || commonVariables[val as string]?.description
       base = base.replace(`--${val}`, `${val},${replaced ? ` // ${replaced}` : ''}`)
     }
 
@@ -63,7 +68,7 @@ function SampleComponent() {
     base = base.replace('{  }', '')
 
     return base
-  }, [defaultOptions, name, optionsVariables, values, variables])
+  }, [defaultOptions, importPath, name, optionsVariables, values, resolvedVariables])
 
   const params = useSearch({ strict: false })
   const navigate = useNavigate()
@@ -186,7 +191,7 @@ function SampleComponent() {
                   value={value}
                   depth={0}
                   maxDepth={maxDepth}
-                  variables={variables}
+                  variables={resolvedVariables}
                   defaultExpanded={defaultExpanded}
                   focusedVariable={params.focus}
                 />

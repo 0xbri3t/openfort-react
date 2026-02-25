@@ -40,7 +40,7 @@ const SidebarInfo = () => {
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-  const activeWallet = mode !== 'solana-only' && 'activeWallet' in wallet ? wallet.activeWallet : null
+  const activeWallet = mode !== 'svm' && 'activeWallet' in wallet ? wallet.activeWallet : null
   const isConnected = wallet.status === 'connected'
   const address = isConnected && 'address' in wallet ? wallet.address : undefined
   const chainId =
@@ -64,6 +64,9 @@ const SidebarInfo = () => {
           <SidebarLink href="/auth/useEmailAuth?focus=signUpEmail">Sign up with email</SidebarLink>
           <SidebarLink href="/auth/useOauth?focus=initOAuth">Sign up with OAuth</SidebarLink>
           <SidebarLink href="/auth/useConnectWithSiwe?focus=connectWithSiwe">Continue with your wallet</SidebarLink>
+          {mode === 'evm' && (
+            <SidebarLink href="/auth/useWalletAuth?focus=connectWallet">useWalletAuth (list + connect)</SidebarLink>
+          )}
         </div>
       )
     }
@@ -76,7 +79,7 @@ const SidebarInfo = () => {
         </div>
       )
     }
-    const useAdapter = mode !== 'evm-wagmi'
+    const useAdapter = mode !== 'evm'
     return (
       <div className="text-sm flex flex-col gap-1">
         <p className="text-gray-500 dark:text-gray-400 mb-2">
@@ -126,9 +129,7 @@ const SidebarInfo = () => {
             <span className="text-gray-500 dark:text-gray-400">{activeWallet?.id ?? 'No wallet connected'}</span>
           </SidebarLink>
           <SidebarLink
-            href={
-              mode !== 'evm-wagmi' ? '/adapter/useSwitchChain?focus=currentChainId' : '/wagmi/useAccount?focus=chainId'
-            }
+            href={mode !== 'evm' ? '/adapter/useSwitchChain?focus=currentChainId' : '/wagmi/useAccount?focus=chainId'}
           >
             Chain:{' '}
             <span className="text-gray-500 dark:text-gray-400">

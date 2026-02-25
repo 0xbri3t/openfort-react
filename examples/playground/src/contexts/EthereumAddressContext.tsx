@@ -1,7 +1,7 @@
 /**
  * Provides the display Ethereum address for the playground.
- * - evm-wagmi: address from wagmi (external) or embedded
- * - evm-only: address from embedded only (no wagmi)
+ * - evm: address from wagmi (external) or embedded
+ * - svm: no Ethereum address (Solana only)
  */
 
 import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
@@ -18,7 +18,7 @@ function getEmbeddedAddress(
   return embedded.status === 'connected' ? embedded.address : (core.activeEmbeddedAddress as `0x${string}` | undefined)
 }
 
-/** Use inside WagmiProvider (evm-wagmi mode). */
+/** Use inside WagmiProvider (evm mode). */
 export function EthereumAddressProviderWagmi({ children }: { children: React.ReactNode }) {
   const { address: wagmiAddress } = useAccount()
   const embedded = useEthereumEmbeddedWallet()
@@ -28,7 +28,7 @@ export function EthereumAddressProviderWagmi({ children }: { children: React.Rea
   return <EthereumAddressContext.Provider value={value}>{children}</EthereumAddressContext.Provider>
 }
 
-/** Use when WagmiProvider is not mounted (evm-only mode). */
+/** Use when WagmiProvider is not mounted (SVM or non-wagmi EVM). */
 export function EthereumAddressProviderEmbedded({ children }: { children: React.ReactNode }) {
   const embedded = useEthereumEmbeddedWallet()
   const core = useOpenfort()

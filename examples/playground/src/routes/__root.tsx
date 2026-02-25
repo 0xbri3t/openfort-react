@@ -6,10 +6,9 @@ import { Nav } from '@/components/Nav'
 import { useAppStore } from '@/lib/useAppStore'
 import { usePlaygroundMode } from '@/providers'
 
-const MODE_TO_CHAIN: Record<'evm-only' | 'solana-only' | 'evm-wagmi', ChainTypeEnum> = {
-  'evm-only': ChainTypeEnum.EVM,
-  'solana-only': ChainTypeEnum.SVM,
-  'evm-wagmi': ChainTypeEnum.EVM,
+const MODE_TO_CHAIN: Record<'evm' | 'svm', ChainTypeEnum> = {
+  evm: ChainTypeEnum.EVM,
+  svm: ChainTypeEnum.SVM,
 }
 
 export const Route = createRootRoute({

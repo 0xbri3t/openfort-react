@@ -15,16 +15,14 @@ import { useModeSwitchContext, usePlaygroundMode } from '@/providers'
 import type { FileRoutesByTo } from '../routeTree.gen'
 
 const MODE_LABELS: Record<OpenfortPlaygroundMode, string> = {
-  'evm-only': 'EVM only',
-  'solana-only': 'SVM only',
-  'evm-wagmi': 'EVM + Wagmi',
+  svm: 'SVM',
+  evm: 'EVM',
 }
 
 /** Hooks used in each mode – shown as helper text on mode buttons */
 const MODE_HOOKS: Record<OpenfortPlaygroundMode, string> = {
-  'evm-only': 'useEthereumEmbeddedWallet, useAdapter (viem)',
-  'solana-only': 'useSolanaEmbeddedWallet',
-  'evm-wagmi': 'useEthereumEmbeddedWallet, wagmi hooks',
+  svm: 'useSolanaEmbeddedWallet',
+  evm: 'useEthereumEmbeddedWallet, wagmi hooks',
 }
 
 export type NavRoute = {
@@ -32,12 +30,13 @@ export type NavRoute = {
   label: string
   exact?: boolean
   children?: NavRoute[]
+  /** When true, only show in EVM mode (hidden in SVM). */
+  evmOnly?: boolean
 }
 
 const MODE_TO_CHAIN: Record<OpenfortPlaygroundMode, ChainTypeEnum> = {
-  'evm-only': ChainTypeEnum.EVM,
-  'solana-only': ChainTypeEnum.SVM,
-  'evm-wagmi': ChainTypeEnum.EVM,
+  svm: ChainTypeEnum.SVM,
+  evm: ChainTypeEnum.EVM,
 }
 
 export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
@@ -80,7 +79,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
           </div>
         )}
         <div className="flex items-center gap-4 ml-auto overflow-x-auto overflow-y-hidden">
-          <div className="sm:flex hidden flex gap-4 mr-4 items-center">
+          <div className="sm:flex hidden gap-4 mr-4 items-center">
             {navRoutes.map((route, i) =>
               route.children ? (
                 <DropdownMenu key={route.label}>
@@ -94,19 +93,21 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
                     <ChevronDown className={clsx('inline-block ml-0.5 transition-transform size-4')} />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    {route.children.map((child) => (
-                      <DropdownMenuItem key={child.href} asChild>
-                        <Link
-                          to={child.href!}
-                          className={clsx(
-                            'cursor-pointer',
-                            isActive(child) ? 'text-primary!' : 'text-gray-600 dark:text-gray-400'
-                          )}
-                        >
-                          {child.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
+                    {route.children
+                      .filter((child) => !child.evmOnly || mode === 'evm')
+                      .map((child) => (
+                        <DropdownMenuItem key={child.href} asChild>
+                          <Link
+                            to={child.href!}
+                            className={clsx(
+                              'cursor-pointer',
+                              isActive(child) ? 'text-primary!' : 'text-gray-600 dark:text-gray-400'
+                            )}
+                          >
+                            {child.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
@@ -135,7 +136,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
                   <div className="text-xs space-y-2">
-                    {(['evm-only', 'solana-only', 'evm-wagmi'] as const).map((m) => (
+                    {(['svm', 'evm'] as const).map((m) => (
                       <p key={m}>
                         <span className="font-medium">{MODE_LABELS[m]}:</span> {MODE_HOOKS[m]}
                       </p>
@@ -144,7 +145,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end">
-                {(['evm-only', 'solana-only', 'evm-wagmi'] as const).map((m) => (
+                {(['svm', 'evm'] as const).map((m) => (
                   <DropdownMenuItem
                     key={m}
                     onClick={() => void handleModeSwitch(m)}

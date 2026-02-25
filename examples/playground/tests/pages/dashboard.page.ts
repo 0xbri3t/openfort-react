@@ -21,21 +21,20 @@ export class DashboardPage {
    */
   async expectLoaded(mode: PlaygroundMode) {
     await expect(this.signOutButton()).toBeVisible({ timeout: 90_000 })
-    const connectedRegex = mode === 'solana-only' ? /Connected with/i : /Connected with 0x/i
+    const connectedRegex = mode === 'svm' ? /Connected with/i : /Connected with 0x/i
     await expect(this.page.getByText(connectedRegex)).toBeVisible({ timeout: 15_000 })
     await new Promise((r) => setTimeout(r, 1000))
   }
 
   /**
    * Ensure navigation and ready state.
-   * For evm-wagmi: skip goto() since wagmi state is in-memory — a reload would lose the connection.
-   * The evmWagmiLogin fixture already navigated to the dashboard.
+   * For evm: skip goto() since wagmi state is in-memory — a reload would lose the connection.
    */
   async ensureReady(mode: PlaygroundMode) {
     if (!mode) {
       throw new Error('Mode is required')
     }
-    if (mode !== 'evm-wagmi') {
+    if (mode !== 'evm') {
       await this.goto()
     }
     await this.expectLoaded(mode)
@@ -58,7 +57,7 @@ export class DashboardPage {
 
     await signBtn.click()
 
-    const signedRegex = mode === 'solana-only' ? SOLANA_SIGNED_REGEX : EVM_SIGNED_REGEX
+    const signedRegex = mode === 'svm' ? SOLANA_SIGNED_REGEX : EVM_SIGNED_REGEX
 
     try {
       await expect(this.page.getByText(signedRegex)).toBeVisible({ timeout: 120_000 })

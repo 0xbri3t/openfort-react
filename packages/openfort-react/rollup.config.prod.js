@@ -17,14 +17,16 @@ const sharedPlugins = [
 const sharedExternal = ['react', 'react-dom', 'framer-motion']
 
 export default [
-  // Main entry point (chain-agnostic)
+  // Main entry point (chain-agnostic); uses output.dir to support dynamic-import chunks (Solana context/strategy)
   {
     input: './src/index.ts',
     external: sharedExternal,
     output: {
-      file: packageJson.exports['.'].import,
+      dir: 'build',
       format: 'esm',
       sourcemap: true,
+      entryFileNames: 'index.es.js',
+      chunkFileNames: '[name]-[hash].js',
     },
     plugins: sharedPlugins,
   },

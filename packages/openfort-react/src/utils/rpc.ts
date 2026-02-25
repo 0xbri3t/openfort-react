@@ -26,7 +26,7 @@ const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
  * Default Solana RPC URLs by cluster.
  * Production apps should provide their own RPCs via walletConfig.solana.rpcUrls.
  */
-const DEFAULT_SOLANA_RPC_URLS: Partial<Record<Exclude<SolanaCluster, 'custom'>, string>> = {
+const DEFAULT_SOLANA_RPC_URLS: Partial<Record<SolanaCluster, string>> = {
   'mainnet-beta': 'https://api.mainnet-beta.solana.com',
   devnet: 'https://api.devnet.solana.com',
   testnet: 'https://api.testnet.solana.com',
@@ -47,7 +47,6 @@ export function getDefaultEthereumRpcUrl(chainId: number): string {
 
 /**
  * Get default Solana RPC URL for a cluster.
- * Returns undefined only for unknown clusters; 'custom' returns devnet.
  */
 export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string {
   if (!DEFAULT_SOLANA_RPC_URLS[cluster]) {

@@ -22,7 +22,7 @@ const StyledDiv = styled.div`
 
 function RouteComponent() {
   const { mode } = usePlaygroundMode()
-  const isWagmi = mode === 'evm-wagmi'
+  const isWagmi = mode === 'evm'
   return (
     <DialogLayout>
       <StyledDiv>
@@ -39,7 +39,7 @@ function RouteComponent() {
       </SampleTooltipLink>
 
       {isWagmi && (
-        <SampleTooltipLink href="/auth/useConnectWithSiwe" hook="useConnectWithSiwe" fn="connectWithSiwe">
+        <SampleTooltipLink href="/auth/useWalletAuth" hook="useWalletAuth" fn="connectWallet">
           <Link className="btn btn-accent" to="/showcase/auth/connect-wallet">
             <WalletIcon className="w-4.5 h-4.5" />
             Continue with wallet

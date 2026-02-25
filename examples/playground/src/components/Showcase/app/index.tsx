@@ -43,8 +43,8 @@ export const App = () => {
         : undefined
   const { signOut } = useSignOut()
   const { mode } = usePlaygroundMode()
-  const isSVM = mode === 'solana-only'
-  const hasWagmi = mode === 'evm-wagmi'
+  const isSVM = mode === 'svm'
+  const hasWagmi = mode === 'evm'
 
   return (
     <div className="h-full w-full p-4 ">

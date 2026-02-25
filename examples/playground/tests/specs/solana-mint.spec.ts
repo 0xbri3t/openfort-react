@@ -4,7 +4,7 @@ test.describe
   .skip('Solana - mint devnet SOL', () => {
     test.describe.configure({ retries: 3 })
     test('can mint devnet SOL (self-transfer) and shows tx signature', async ({ page, dashboardPage }) => {
-      await dashboardPage.ensureReady('solana-only')
+      await dashboardPage.ensureReady('svm')
 
       const mintCard = await dashboardPage.getCardByTitle(/mint tokens/i)
       await expect(mintCard).toBeVisible({ timeout: 60_000 })

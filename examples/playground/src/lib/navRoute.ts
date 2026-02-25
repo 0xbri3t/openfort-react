@@ -23,6 +23,12 @@ export const navRoutes: NavRoute[] = [
       {
         href: '/auth/useConnectWithSiwe',
         label: 'useConnectWithSiwe',
+        evmOnly: true,
+      },
+      {
+        href: '/auth/useWalletAuth',
+        label: 'useWalletAuth',
+        evmOnly: true,
       },
       {
         href: '/auth/useSignOut',

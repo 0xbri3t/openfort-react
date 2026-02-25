@@ -22,7 +22,6 @@ export type {
   SignedSolanaTransaction,
   // Configuration
   SolanaCluster,
-  SolanaClusterConfig,
   SolanaCommitment,
   SolanaConfig,
   SolanaSignAllTransactionsRequest,

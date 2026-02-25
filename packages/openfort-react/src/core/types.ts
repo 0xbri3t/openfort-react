@@ -22,5 +22,3 @@ export type CoreContextValue = {
   config: OpenfortConfig
   debug: boolean
 }
-
-export type WalletReadiness = 'not-created' | 'needs-recovery' | 'ready' | 'loading'

@@ -6,13 +6,13 @@ import type { getAssets } from 'viem/experimental/erc7811'
 import type { Asset } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
-import type { EthereumWalletConfig } from '../../ethereum/types'
+import type { EthereumConfig } from '../../ethereum/types'
 import { useUser } from '../../hooks/openfort/useUser'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import { useEthereumEmbeddedWallet } from './useEthereumEmbeddedWallet'
 
 type UseEthereumWalletAssetsOptions = {
-  assets?: EthereumWalletConfig['assets']
+  assets?: EthereumConfig['assets']
   staleTime?: number
 }
 

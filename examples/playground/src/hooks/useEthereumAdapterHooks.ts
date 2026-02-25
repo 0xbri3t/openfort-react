@@ -51,8 +51,7 @@ export interface UseWriteContractLike {
 }
 
 /**
- * EVM account from embedded wallet only. Safe in evm-only (no wagmi).
- * For evm-wagmi, use useConnectedEthereumAccount or wagmi's useAccount.
+ * EVM account from embedded wallet only. For evm mode use useConnectedEthereumAccount or wagmi's useAccount.
  */
 export function useEthereumAccount(): UseAccountLike {
   const { chainType } = useOpenfort()
@@ -125,7 +124,7 @@ export function useEthereumReadContractLocal(params: {
 type WriteParams = { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }
 
 /**
- * Write contract using embedded wallet provider. No wagmi. Safe in evm-only.
+ * Write contract using embedded wallet provider. No wagmi.
  */
 export function useEthereumWriteContractLocal(): UseWriteContractLike {
   const { address } = useEthereumAccount()
