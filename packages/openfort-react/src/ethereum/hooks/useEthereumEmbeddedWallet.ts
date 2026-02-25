@@ -129,10 +129,12 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     setActiveEmbeddedAddress,
     setWalletStatus,
     activeEmbeddedAddress,
-    activeChainId,
   } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
   const strategy = useConnectionStrategy()
+
+  const activeChainId = strategy?.getActiveChainId?.() ?? strategy?.getChainId()
+  const setActiveChainId = strategy?.setActiveChainId ?? (() => {})
 
   const creationChainId = options?.chainId ?? DEFAULT_CHAIN_ID
   const activeReturnChainId = activeChainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
@@ -415,8 +417,10 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       setActive,
       setRecovery,
       exportPrivateKey,
+      activeChainId,
+      setActiveChainId,
     }),
-    [create, wallets, setActive, setRecovery, exportPrivateKey]
+    [create, wallets, setActive, setRecovery, exportPrivateKey, activeChainId, setActiveChainId]
   )
 
   // Clear local state when core clears activeEmbeddedAddress (e.g. logout).

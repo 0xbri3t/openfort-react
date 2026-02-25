@@ -98,6 +98,10 @@ export interface EthereumWalletActions {
   setRecovery(options: SharedSetRecoveryOptions): Promise<void>
   /** Export the private key (requires user confirmation) */
   exportPrivateKey(): Promise<string>
+  /** Current EVM chain ID for embedded (no bridge). Undefined when using bridge or not embedded. */
+  activeChainId: number | undefined
+  /** Set EVM chain for embedded (persisted in localStorage). No-op when using bridge. */
+  setActiveChainId: (chainId: number | undefined) => void
 }
 
 export type EthereumWalletStateBase =
