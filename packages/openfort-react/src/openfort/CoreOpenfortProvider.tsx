@@ -313,19 +313,21 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const [activeEmbeddedAddress, setActiveEmbeddedAddress] = useState<string | undefined>(undefined)
 
   const ACTIVE_CHAIN_ID_KEY = 'openfort_active_chain_id'
-  const [activeChainId, setActiveChainIdState] = useState<number | undefined>(() => {
-    if (typeof window === 'undefined') return undefined
+  const [activeChainId, setActiveChainIdState] = useState<number | undefined>(undefined)
+  // Restore activeChainId from localStorage only on client (avoids SSR crash; first render is always undefined)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
     const s = window.localStorage.getItem(ACTIVE_CHAIN_ID_KEY)
-    if (s == null) return undefined
+    if (s == null) return
     const n = parseInt(s, 10)
-    if (Number.isNaN(n)) return undefined
+    if (Number.isNaN(n)) return
     // Never restore default dev chain from storage so first render uses strategy default (avoids policy/chain mismatch)
     if (n === DEFAULT_DEV_CHAIN_ID) {
       window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
-      return undefined
+      return
     }
-    return n
-  })
+    setActiveChainIdState(n)
+  }, [])
   const setActiveChainId = useCallback((chainId: number | undefined) => {
     setActiveChainIdState(chainId)
     if (typeof window !== 'undefined') {
