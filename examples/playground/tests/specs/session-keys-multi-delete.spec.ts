@@ -8,6 +8,7 @@ test.describe('Session keys - multiple + delete flow', () => {
     dashboardPage,
     mode,
   }) => {
+    test.skip(mode === 'svm', 'Session keys are EVM only')
     test.setTimeout(180_000)
     const m = mode
     await dashboardPage.ensureReady(m)
@@ -21,9 +22,7 @@ test.describe('Session keys - multiple + delete flow', () => {
     const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
 
     await walletsCard.getByRole('button', { name: /create new wallet/i }).click()
-    if (mode !== 'svm') {
-      await walletsCard.getByRole('button', { name: /smart account/i }).click()
-    }
+    await walletsCard.getByRole('button', { name: /smart account/i }).click()
     await walletsCard.getByRole('button', { name: /^password$/i }).click()
 
     const walletRowLocator = walletsCard.locator('button').filter({
@@ -39,6 +38,7 @@ test.describe('Session keys - multiple + delete flow', () => {
 
     await expect(sessionCard).toBeVisible({ timeout: 60_000 })
 
+    await page.waitForTimeout(1000)
     const createBtn = sessionCard.getByRole('button', { name: /create session key/i })
     await expect(createBtn).toBeVisible({ timeout: 30_000 })
 
@@ -49,8 +49,8 @@ test.describe('Session keys - multiple + delete flow', () => {
     const ensureAtLeast = async (n: number) => {
       while ((await keySpans.count()) < n) {
         const before = await keySpans.count()
+        await page.waitForTimeout(1000)
         await createBtn.click()
-
         await expect.poll(async () => await keySpans.count(), { timeout: 120_000 }).toBeGreaterThan(before)
       }
     }
