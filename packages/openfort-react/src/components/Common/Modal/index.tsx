@@ -316,6 +316,7 @@ const Modal: React.FC<ModalProps> = ({
       case routes.ONBOARDING:
         return locales.onboardingScreen_heading
       case routes.SWITCHNETWORKS:
+      case routes.ETH_SWITCH_NETWORK:
         return locales.switchNetworkScreen_heading
       default:
         return ''

@@ -23,7 +23,7 @@ const safeRoutes: {
   connected: [
     routes.CONNECTED,
     { route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' },
-    routes.SWITCHNETWORKS,
+    routes.ETH_SWITCH_NETWORK,
     routes.PROVIDERS,
   ],
 }
@@ -126,7 +126,7 @@ export function useUI() {
     setIsOpen: setOpen,
 
     openProfile: () => gotoAndOpen(routes.CONNECTED),
-    openSwitchNetworks: () => gotoAndOpen(routes.SWITCHNETWORKS),
+    openSwitchNetworks: () => gotoAndOpen(routes.ETH_SWITCH_NETWORK),
     openProviders: () => gotoAndOpen(routes.PROVIDERS),
     openWallets: () => gotoAndOpen({ route: routes.CONNECTORS, connectType: 'linkIfUserConnectIfNoUser' }),
   }

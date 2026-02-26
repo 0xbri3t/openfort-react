@@ -156,7 +156,7 @@ const ChainSelector: React.FC = () => {
             disabled={disabled}
             onClick={() => {
               if (mobile) {
-                context.setRoute(routes.SWITCHNETWORKS)
+                context.setRoute(routes.ETH_SWITCH_NETWORK)
               } else {
                 setIsOpen(!isOpen)
               }

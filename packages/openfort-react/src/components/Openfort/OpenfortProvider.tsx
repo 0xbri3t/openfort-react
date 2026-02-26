@@ -245,7 +245,7 @@ export const OpenfortProvider = ({
   useEffect(() => {
     if (hasWagmi && isConnected && safeUiConfig.enforceSupportedChains && !isChainSupported) {
       setOpen(true)
-      setRoute({ route: routes.SWITCHNETWORKS })
+      setRoute({ route: routes.ETH_SWITCH_NETWORK })
     }
   }, [hasWagmi, isConnected, isChainSupported, safeUiConfig.enforceSupportedChains, setOpen, setRoute])
 

@@ -81,7 +81,6 @@ function buildSharedPages(): RoutePages {
     connect: <ConnectUsing />,
     connected: <Connected />,
     profile: <Profile />,
-    switchNetworks: <SwitchNetworks />,
     linkedProviders: <LinkedProviders />,
     linkedProvider: <LinkedProvider />,
     removeLinkedProvider: <RemoveLinkedProvider />,
