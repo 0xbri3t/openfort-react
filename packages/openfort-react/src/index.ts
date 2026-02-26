@@ -52,13 +52,18 @@ export {
   SignedMessagePayload,
   User,
 } from '@openfort/openfort-js'
+export type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 export { default as Avatar } from './components/Common/Avatar'
 export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
+export type { CustomizableRoutes } from './components/Openfort/types'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
 export { embeddedWalletId } from './constants/openfort'
-export { OpenfortError, OpenfortReactErrorType } from './core/errors'
+export {
+  OpenfortError,
+  OpenfortReactErrorType as OpenfortErrorType,
+} from './core/errors'
 // Ethereum
 export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
 export { useEthereumWalletAssets } from './ethereum/hooks/useEthereumWalletAssets'
