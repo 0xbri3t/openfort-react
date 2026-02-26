@@ -1,7 +1,7 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Session keys - multiple + delete flow', () => {
-  test.describe.configure({ retries: 3 })
+  // test.describe.configure({ retries: 3 })
 
   test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({
     page,
@@ -34,11 +34,26 @@ test.describe('Session keys - multiple + delete flow', () => {
     await expect(walletsCard.getByText(/^creating wallet with password recovery/i)).toBeVisible({ timeout: 30_000 })
     await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
 
+    // Wait for the new wallet to become the active account (it may appear as second or last row)
+    await expect
+      .poll(
+        async () => {
+          const count = await walletRowLocator.count()
+          if (count <= initialCount) return false
+          const last = walletRowLocator.last()
+          const second = walletRowLocator.nth(1)
+          const lastActive = await last.evaluate((el) => el.classList.contains('text-primary'))
+          const secondActive = await second.evaluate((el) => el.classList.contains('text-primary'))
+          return lastActive || secondActive
+        },
+        { timeout: 60_000 }
+      )
+      .toBe(true)
+
     const sessionCard = await dashboardPage.getCardByTitle(/session keys/i)
 
     await expect(sessionCard).toBeVisible({ timeout: 60_000 })
 
-    await page.waitForTimeout(1000)
     const createBtn = sessionCard.getByRole('button', { name: /create session key/i })
     await expect(createBtn).toBeVisible({ timeout: 30_000 })
 
