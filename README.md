@@ -85,13 +85,13 @@ cd openfort
 pnpm install
 ```
 
-and start the code bundler:
+First, start the development server in one terminal:
 
 ```sh
 pnpm dev
 ```
 
-and then simply select the example you'd like to run:
+Then, in a separate terminal, run the example you'd like to try:
 
 ```sh
 pnpm dev:playground # Playground
