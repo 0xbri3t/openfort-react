@@ -1,9 +1,12 @@
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import React from 'react'
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
+import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
+import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { logger } from '../../utils/logger'
 
 type ModalRoutes = RoutesWithoutOptions['route'] | RouteOptions
@@ -61,6 +64,9 @@ export function useUI() {
   const { isLoading, user, needsRecovery, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
   const bridge = useEthereumBridge()
   const strategy = useConnectionStrategy()
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
 
   const state = React.useMemo(
     () => ({
@@ -72,7 +78,9 @@ export function useUI() {
     }),
     [user, embeddedAccounts, activeEmbeddedAddress, chainType, embeddedState]
   )
-  const isConnected = strategy?.isConnected(state) ?? false
+  // Bridge: strategy owns connection. Embedded: wallet hooks are source of truth.
+  const isConnected =
+    strategy?.kind === 'bridge' ? (strategy?.isConnected(state) ?? false) : wallet.status === 'connected'
 
   function defaultOpen() {
     setOpen(true)

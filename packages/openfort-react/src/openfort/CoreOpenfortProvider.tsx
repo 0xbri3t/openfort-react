@@ -20,6 +20,7 @@ import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/Conne
 import { OpenfortError, OpenfortReactErrorType } from '../core/errors'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
+import { firstEmbeddedAddress } from '../core/strategyUtils'
 import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridgeContext'
 import type { WalletFlowStatus } from '../hooks/openfort/walletTypes'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
@@ -381,6 +382,16 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       cancelled = true
     }
   }, [openfort, embeddedAccounts?.length, embeddedState])
+
+  // Bootstrap active address when uninitialized: set to first account for current chain.
+  // Runs sync so routing sees connected state immediately; get() won't overwrite (uses prev check).
+  useEffect(() => {
+    if (!embeddedAccounts?.length || embeddedState !== EmbeddedState.READY || activeEmbeddedAddress !== undefined) {
+      return
+    }
+    const first = firstEmbeddedAddress(embeddedAccounts, chainType)
+    if (first) setActiveEmbeddedAddress(first)
+  }, [embeddedAccounts, embeddedState, chainType, activeEmbeddedAddress])
 
   // Current chain for EVM provider reconfiguration. Re-runs when user switches chains.
   const evmChainId =

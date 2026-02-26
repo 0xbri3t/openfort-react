@@ -3,14 +3,14 @@ import type React from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import useMeasure from 'react-use-measure'
+import Portal from '../../../components/Common/Portal'
+import { useThemeContext } from '../../../components/ConnectKitThemeProvider/ConnectKitThemeProvider'
+import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import FocusTrap from '../../../hooks/useFocusTrap'
 import useLocales from '../../../hooks/useLocales'
 import useLockBodyScroll from '../../../hooks/useLockBodyScroll'
 import { ResetContainer } from '../../../styles'
-import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
-import { useOpenfort } from '../../Openfort/useOpenfort'
 import ChainSelectList from '../ChainSelectList'
-import Portal from '../Portal'
 import { DropdownContainer, DropdownHeading, DropdownOverlay, DropdownWindow } from './styles'
 
 const ChainSelectDropdown: React.FC<{
@@ -106,25 +106,6 @@ const ChainSelectDropdown: React.FC<{
 
     targetRef.current.style.left = `${x}px`
     targetRef.current.style.top = `${y}px`
-
-    /*
-    const contentRect = targetRef.current.getBoundingClientRect();
-
-    const w = contentRect.width;
-    const h = contentRect.height;
-
-    if (x + w > window.innerWidth) {
-      x = bounds.left + bounds.width - contentRect.width - offsetX;
-    }
-    if (y + h > window.innerHeight - 24) {
-      y = bounds.top - contentRect.height - offsetY;
-    }
-
-    setOffset({
-      x: x,
-      y: y,
-    });
-    */
   }
 
   const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect

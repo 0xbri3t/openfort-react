@@ -1,17 +1,12 @@
-import { ChainTypeEnum } from '@openfort/openfort-js'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useCallback, useId, useState, useState as useStateLocal } from 'react'
+import { useEffect, useId, useState } from 'react'
+import { useAccount, useChainId, useSwitchChain } from 'wagmi'
 import ChainIcons from '../../../assets/chains'
+import Alert from '../../../components/Common/Alert'
+import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { chainConfigs } from '../../../constants/chainConfigs'
-import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'
-import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
-import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import useLocales from '../../../hooks/useLocales'
-import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { isCoinbaseWalletConnector, isMobile } from '../../../utils'
-import { useOpenfort } from '../../Openfort/useOpenfort'
-import Alert from '../Alert'
 import {
   ChainButton,
   ChainButtonBg,
@@ -52,140 +47,47 @@ const Spinner = () => {
 }
 
 const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => {
-  const strategy = useConnectionStrategy()
-  const bridge = useEthereumBridge()
-  const { chainType } = useOpenfortCore()
-  const ethereumWallet = useEthereumEmbeddedWallet()
-  const solanaWallet = useSolanaEmbeddedWallet()
-  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-  const { setActiveChainId, activeChainId } = ethereumWallet
-  const { activeEmbeddedAddress, client } = useOpenfortCore()
-  const { chains: embeddedChains } = useOpenfort()
-
-  // Inline switchChain logic for embedded EVM mode (was useEthereumSwitchChain)
-  const currentChainIdFromWallet =
-    wallet.status === 'connected' && chainType === ChainTypeEnum.EVM
-      ? (wallet as typeof ethereumWallet).chainId
-      : undefined
-  const currentChainIdFromStrategy = strategy?.getChainId()
-  const _currentChainId = currentChainIdFromStrategy ?? currentChainIdFromWallet
-  const [evmSwitchError, setEvmSwitchError] = useStateLocal<Error | null>(null)
-  const [evmSwitchPending, setEvmSwitchPending] = useStateLocal(false)
-
-  const handleEmbeddedSwitchChain = (params: { chainId: number }) => {
-    setEvmSwitchError(null)
-    setEvmSwitchPending(true)
-    try {
-      setActiveChainId(params.chainId)
-    } finally {
-      setEvmSwitchPending(false)
-    }
-  }
-
-  const isEmbeddedWalletActiveWithBridge =
-    bridge &&
-    activeEmbeddedAddress &&
-    bridge.account?.address &&
-    bridge.account.address.toLowerCase() === activeEmbeddedAddress.toLowerCase()
-
-  const handleEmbeddedSwitchChainWithProvider = useCallback(
-    async (params: { chainId: number }) => {
-      setEvmSwitchError(null)
-      setEvmSwitchPending(true)
-      try {
-        const provider =
-          ethereumWallet.status === 'connected' && ethereumWallet.activeWallet
-            ? await ethereumWallet.activeWallet.getProvider()
-            : await client.embeddedWallet.getEthereumProvider()
-        await provider.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: `0x${params.chainId.toString(16)}` }],
-        })
-        setActiveChainId(params.chainId)
-      } catch (err) {
-        setEvmSwitchError(err instanceof Error ? err : new Error('Failed to switch chain'))
-      } finally {
-        setEvmSwitchPending(false)
-      }
-    },
-    [client, ethereumWallet.activeWallet, ethereumWallet.status, setActiveChainId]
-  )
-
-  const connector = bridge?.account?.connector
-  const bridgeSwitchChain = bridge?.switchChain
-  const {
-    chains: bridgeChains,
-    isPending: bridgeIsPending,
-    switchChain: bridgeSwitchChainFn,
-    error: bridgeError,
-  } = bridgeSwitchChain ?? {
-    chains: [] as { id: number; name?: string }[],
-    isPending: false,
-    switchChain: undefined,
-    error: null,
-  }
-
-  const isEmbeddedEVMNoBridge = strategy?.kind === 'embedded' && strategy?.chainType === ChainTypeEnum.EVM && !bridge
-  const useEmbeddedSwitch =
-    isEmbeddedEVMNoBridge || (isEmbeddedWalletActiveWithBridge && chainType === ChainTypeEnum.EVM)
-
-  const bridgeChain = bridge?.account?.chain
-  const chain = useEmbeddedSwitch
-    ? { id: activeChainId ?? bridgeChain?.id ?? currentChainIdFromStrategy ?? currentChainIdFromWallet }
-    : bridgeChain
-
-  const chains =
-    useEmbeddedSwitch &&
-    (activeChainId != null ||
-      currentChainIdFromWallet != null ||
-      currentChainIdFromStrategy != null ||
-      bridgeChains.length > 0)
-      ? embeddedChains.length > 0
-        ? embeddedChains.map((c) => ({ id: c.id, name: c.name }))
-        : bridgeChains
-      : bridgeChains
-
-  const isPending = useEmbeddedSwitch ? evmSwitchPending : bridgeIsPending
-  const switchChain = useEmbeddedSwitch
-    ? isEmbeddedWalletActiveWithBridge
-      ? handleEmbeddedSwitchChainWithProvider
-      : handleEmbeddedSwitchChain
-    : bridgeSwitchChainFn
-  const error = useEmbeddedSwitch ? evmSwitchError : bridgeError
-
+  const { connector } = useAccount()
+  const activeChainId = useChainId()
+  const { chains, isPending: bridgeIsPending, switchChain: switchChainFn, error: bridgeError } = useSwitchChain()
   const [pendingChainId, setPendingChainId] = useState<number | undefined>(undefined)
-
   const locales = useLocales({})
   const mobile = isMobile()
+  const { triggerResize } = useOpenfort()
+
+  const chainList = chains.map((ch) => ({ id: ch.id, name: ch.name }))
+
+  // Clear pending state when switch completes so next switch shows loading animation
+  useEffect(() => {
+    if (!bridgeIsPending) setPendingChainId(undefined)
+  }, [bridgeIsPending])
 
   // biome-ignore lint/complexity/useLiteralKeys: SwitchChainErrorType doesn't expose 'code' property but it exists at runtime
-  const isError = error?.['code'] === 4902 // Wallet cannot switch networks
-  const disabled = isError || !switchChain
+  const isError = bridgeError?.['code'] === 4902 // Wallet cannot switch networks
+  const disabled = isError || !switchChainFn
 
   const handleSwitchNetwork = (chainId: number) => {
-    if (switchChain) {
+    if (switchChainFn) {
       setPendingChainId(chainId)
-      switchChain({ chainId })
+      switchChainFn({ chainId })
     }
   }
 
-  const { triggerResize } = useOpenfort()
-
   return (
-    <SwitchNetworksContainer style={{ marginBottom: switchChain !== undefined ? -8 : 0 }}>
+    <SwitchNetworksContainer style={{ marginBottom: switchChainFn !== undefined ? -8 : 0 }}>
       <ChainButtonContainer>
         <ChainButtons>
-          {chains.map((x) => {
+          {chainList.map((x) => {
             const c = chainConfigs.find((ch) => ch.id === x.id)
             const ch = { ...c, ...x }
             return (
               <ChainButton
                 key={`${ch?.id}-${ch?.name}`}
                 $variant={variant}
-                disabled={disabled || ch.id === chain?.id || (isPending && pendingChainId === ch.id)}
+                disabled={disabled || ch.id === activeChainId || (bridgeIsPending && pendingChainId === ch.id)}
                 onClick={() => handleSwitchNetwork?.(ch.id)}
                 style={{
-                  opacity: disabled && ch.id !== chain?.id ? 0.4 : undefined,
+                  opacity: disabled && ch.id !== activeChainId ? 0.4 : undefined,
                 }}
               >
                 <span
@@ -195,7 +97,7 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
                     justifyContent: 'flex-start',
                     gap: 12,
                     color:
-                      ch.id === chain?.id
+                      ch.id === activeChainId
                         ? 'var(--ck-dropdown-active-color, inherit)'
                         : 'var(--ck-dropdown-color, inherit)',
                   }}
@@ -204,7 +106,7 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
                     <ChainLogoSpinner
                       initial={{ opacity: 0 }}
                       animate={{
-                        opacity: isPending && pendingChainId === ch.id ? 1 : 0,
+                        opacity: bridgeIsPending && pendingChainId === ch.id ? 1 : 0,
                       }}
                       transition={{
                         ease: [0.76, 0, 0.24, 1],
@@ -215,11 +117,12 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
                       <motion.div
                         key={`${ch?.id}-${ch?.name}`}
                         animate={
-                          // UI fix for Coinbase Wallet on mobile does not remove isPending on rejection event
-                          mobile && isCoinbaseWalletConnector(connector?.id) && isPending && pendingChainId === ch.id
+                          mobile &&
+                          isCoinbaseWalletConnector(connector?.id) &&
+                          bridgeIsPending &&
+                          pendingChainId === ch.id
                             ? {
                                 opacity: [1, 0],
-
                                 transition: { delay: 4, duration: 3 },
                               }
                             : { opacity: 1 }
@@ -235,9 +138,9 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
                 {variant !== 'secondary' && (
                   <ChainButtonStatus>
                     <AnimatePresence initial={false} exitBeforeEnter>
-                      {ch.id === chain?.id && (
+                      {ch.id === activeChainId && (
                         <motion.span
-                          key={'connectedText'}
+                          key={`connected-${ch.id}`}
                           style={{
                             color: 'var(--ck-dropdown-active-color, var(--ck-focus-color))',
                             display: 'block',
@@ -259,18 +162,15 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
                           {locales.connected}
                         </motion.span>
                       )}
-                      {isPending && pendingChainId === ch.id && (
+                      {bridgeIsPending && pendingChainId === ch.id && (
                         <motion.span
-                          key={'approveText'}
+                          key={`approve-${ch.id}`}
                           style={{
                             color: 'var(--ck-dropdown-pending-color, inherit)',
                             display: 'block',
                             position: 'relative',
                           }}
-                          initial={{
-                            opacity: 0,
-                            x: -4,
-                          }}
+                          initial={{ opacity: 0, x: -4 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 4 }}
                           transition={{
@@ -281,12 +181,12 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
                         >
                           <motion.span
                             animate={
-                              // UI fix for Coinbase Wallet on mobile does not remove isLoading on rejection event
-                              mobile &&
-                              isCoinbaseWalletConnector(connector?.id) && {
-                                opacity: [1, 0],
-                                transition: { delay: 4, duration: 4 },
-                              }
+                              mobile && isCoinbaseWalletConnector(connector?.id)
+                                ? {
+                                    opacity: [1, 0],
+                                    transition: { delay: 4, duration: 4 },
+                                  }
+                                : undefined
                             }
                           >
                             {locales.approveInWallet}
@@ -300,7 +200,7 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
                   <ChainButtonBg
                     initial={false}
                     animate={{
-                      opacity: ch.id === chain?.id ? 1 : 0,
+                      opacity: ch.id === activeChainId ? 1 : 0,
                     }}
                     transition={{
                       duration: 0.3,
@@ -308,8 +208,7 @@ const ChainSelectList = ({ variant }: { variant?: 'primary' | 'secondary' }) => 
                     }}
                   />
                 ) : (
-                  //hover === ch.name && (
-                  ch.id === chain?.id && (
+                  ch.id === activeChainId && (
                     <ChainButtonBg
                       layoutId="activeChain"
                       layout="position"

@@ -130,7 +130,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     setWalletStatus,
     activeEmbeddedAddress,
   } = useOpenfortCore()
-  const { walletConfig } = useOpenfort()
+  const { walletConfig, chainType } = useOpenfort()
   const strategy = useConnectionStrategy()
 
   const activeChainId = strategy?.getActiveChainId?.() ?? strategy?.getChainId()
@@ -470,8 +470,15 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       }
     }
 
-    // activeEmbeddedAddress is from other chain (e.g. SVM); auto-activate first EVM wallet
-    if (!accountByAddress && activeEmbeddedAddress && ethereumAccounts.length > 0 && state.status === 'disconnected') {
+    // activeEmbeddedAddress is from other chain (e.g. SVM); auto-activate first EVM wallet.
+    // Only when on EVM view to prevent ping-pong with Solana hook.
+    if (
+      chainType === ChainTypeEnum.EVM &&
+      !accountByAddress &&
+      activeEmbeddedAddress &&
+      ethereumAccounts.length > 0 &&
+      state.status === 'disconnected'
+    ) {
       setActiveEmbeddedAddress(ethereumAccounts[0].address)
     }
   }, [
@@ -481,6 +488,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     ethereumAccounts,
     embeddedState,
     activeEmbeddedAddress,
+    chainType,
     getEmbeddedEthereumProvider,
     setActiveEmbeddedAddress,
   ])

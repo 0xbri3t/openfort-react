@@ -4,7 +4,7 @@
  * - useDisplayEthereumAddress: address only. Safe in evm (e.g. header).
  *   Uses EthereumAddressContext (provided by EthereumAddressProviderWagmi/Embedded).
  * - useConnectedEthereumAccount: address + chainId. Use only when WagmiProvider is mounted (evm cards).
- *   Uses wagmi hooks directly.
+ *   Uses wagmi hooks (useChainId, useSwitchChain) – same source as modal.
  */
 
 import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
@@ -35,24 +35,7 @@ export function useConnectedEthereumAccount(): {
   const core = useOpenfort()
 
   const address = wagmiAddress ?? getEmbeddedAddress(embedded, core)
-
-  const wagmiChainId = useChainId()
-  /** When the displayed account is the embedded one, or when embedded wallet exists (evm), prefer core.activeChainId so the "Switch chain" card stays in sync with the avatar modal. */
-  const isEmbeddedActive =
-    address !== undefined &&
-    core.activeEmbeddedAddress !== undefined &&
-    address.toLowerCase() === core.activeEmbeddedAddress.toLowerCase()
-  const hasEmbeddedWallet = core.activeEmbeddedAddress !== undefined
-  const chainId =
-    isEmbeddedActive || hasEmbeddedWallet
-      ? (core.activeChainId ??
-        wagmiChainId ??
-        (embedded.status === 'connected' ? embedded.chainId : undefined) ??
-        DEFAULT_CHAIN_ID)
-      : (wagmiChainId ??
-        (embedded.status === 'connected' ? embedded.chainId : undefined) ??
-        core.activeChainId ??
-        DEFAULT_CHAIN_ID)
+  const chainId = useChainId() ?? DEFAULT_CHAIN_ID
 
   return {
     address: address ?? undefined,

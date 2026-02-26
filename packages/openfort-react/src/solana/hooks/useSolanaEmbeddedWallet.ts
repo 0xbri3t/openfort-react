@@ -107,7 +107,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
     setActiveEmbeddedAddress,
     setWalletStatus,
   } = useOpenfortCore()
-  const { walletConfig } = useOpenfort()
+  const { walletConfig, chainType } = useOpenfort()
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
 
@@ -423,8 +423,15 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
       })
     }
 
-    // activeEmbeddedAddress is from other chain (e.g. EVM); auto-activate first SVM wallet
-    if (!accountByAddress && activeEmbeddedAddress && solanaAccounts.length > 0 && state.status === 'disconnected') {
+    // activeEmbeddedAddress is from other chain (e.g. EVM); auto-activate first SVM wallet.
+    // Only when on SVM view to prevent ping-pong with Ethereum hook.
+    if (
+      chainType === ChainTypeEnum.SVM &&
+      !accountByAddress &&
+      activeEmbeddedAddress &&
+      solanaAccounts.length > 0 &&
+      state.status === 'disconnected'
+    ) {
       setActiveEmbeddedAddress(solanaAccounts[0].address)
     }
   }, [
@@ -434,6 +441,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
     solanaAccounts,
     embeddedState,
     activeEmbeddedAddress,
+    chainType,
     createProviderForAccount,
     setActiveEmbeddedAddress,
   ])
