@@ -19,7 +19,6 @@ import { nFormatter, truncateSolanaAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
 import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
-import { TextLinkButton } from '../../Common/Button/styles'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
 import { routes } from '../../Openfort/types'
@@ -28,8 +27,7 @@ import { PageContent } from '../../PageContent'
 import { ConnectedPageLayout } from './ConnectedPageLayout'
 import { ActionButton, Balance, LinkedProvidersToggle } from './styles'
 
-// Helper function to fetch Solana balance
-async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<number> {
+async function fetchSolanaBalance(rpcUrl: string, addr: string): Promise<number> {
   const response = await fetch(rpcUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -37,7 +35,7 @@ async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<numb
       jsonrpc: '2.0',
       id: 1,
       method: 'getBalance',
-      params: [address],
+      params: [addr, { commitment: 'confirmed' }],
     }),
   })
   const data = await response.json()
@@ -127,26 +125,15 @@ const SolanaConnected: React.FC = () => {
 
   const balanceNode =
     balance != null && !isBalanceLoading ? (
-      <TextLinkButton
-        type="button"
-        onClick={() => {
-          if (balance <= 0) {
-            context.setRoute(routes.NO_ASSETS_AVAILABLE)
-          } else {
-            context.setRoute(routes.SOL_ASSET_INVENTORY)
-          }
-        }}
+      <Balance
+        key="solana-balance"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
       >
-        <Balance
-          key="solana-balance"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          {nFormatter(balance)} SOL
-        </Balance>
-      </TextLinkButton>
+        {nFormatter(balance)} SOL
+      </Balance>
     ) : null
 
   return (

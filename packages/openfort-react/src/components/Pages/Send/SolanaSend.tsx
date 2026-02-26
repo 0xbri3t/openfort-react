@@ -4,12 +4,14 @@ import {
   compileTransaction,
   createSolanaRpc,
   createTransactionMessage,
+  getBase58Encoder,
+  getBase64EncodedWireTransaction,
   pipe,
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/kit'
-import { useCallback, useState } from 'react'
-import { OpenfortError } from '../../../core/errors'
+import { useCallback, useEffect, useState } from 'react'
+import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import { invalidateBalance } from '../../../hooks/useBalance'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
@@ -21,14 +23,15 @@ import { createTransferSolInstruction } from '../../../solana/utils/transfer'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import Input from '../../Common/Input'
+import Loader from '../../Common/Loading'
 import { ModalHeading } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
+import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { AmountInputWrapper, ErrorText, Field, FieldLabel, Form, HelperText, MaxButton } from './styles'
 import { sanitizeAmountInput } from './utils'
 
-// Helper function to fetch Solana balance (shared with SolanaConnected)
-async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<number> {
+async function fetchSolanaBalance(rpcUrl: string, addr: string): Promise<number> {
   const response = await fetch(rpcUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -36,7 +39,7 @@ async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<numb
       jsonrpc: '2.0',
       id: 1,
       method: 'getBalance',
-      params: [address],
+      params: [addr, { commitment: 'confirmed' }],
     }),
   })
   const data = await response.json()
@@ -47,13 +50,32 @@ function formatSol(lamports: bigint, decimals = 4): string {
   return (Number(lamports) / Number(LAMPORTS_PER_SOL)).toFixed(decimals)
 }
 
+const ED25519_SIGNATURE_LENGTH = 64
+
+/** Decode provider signature (base58 from Openfort) to 64-byte Ed25519 Uint8Array. */
+function decodeSignatureToBytes(signature: string): Uint8Array {
+  const encoded = getBase58Encoder().encode(signature)
+  let bytes = new Uint8Array(encoded)
+  // Openfort may return 65 bytes (recovery byte appended); strip to Ed25519's 64
+  if (bytes.length === ED25519_SIGNATURE_LENGTH + 1) {
+    bytes = bytes.slice(0, ED25519_SIGNATURE_LENGTH)
+  }
+  if (bytes.length === ED25519_SIGNATURE_LENGTH) return bytes
+  throw new OpenfortError(
+    `Invalid signature: expected ${ED25519_SIGNATURE_LENGTH} bytes, got ${bytes.length}.`,
+    OpenfortReactErrorType.CONFIGURATION_ERROR
+  )
+}
+
 export function SolanaSend() {
   const { rpcUrl } = useSolanaContext()
+  const { setRoute } = useOpenfort()
   const wallet = useSolanaEmbeddedWallet()
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [txStatus, setTxStatus] = useState<'idle' | 'signing' | 'sending' | 'confirmed' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [confirmedAmount, setConfirmedAmount] = useState('')
 
   const walletAddress = wallet.status === 'connected' ? wallet.activeWallet.address : undefined
   const provider = wallet.status === 'connected' ? wallet.provider : null
@@ -74,7 +96,6 @@ export function SolanaSend() {
   })
 
   const balanceData = balanceResult.data
-  const refetchBalance = () => balanceResult.refetch()
 
   const balanceLamports = balanceData?.value ?? BigInt(0)
   const recipientValid = recipient.length > 0 && isValidSolanaAddress(recipient)
@@ -115,8 +136,6 @@ export function SolanaSend() {
       try {
         const rpc = createSolanaRpc(rpcUrl)
         const { value: blockhash } = await rpc.getLatestBlockhash().send()
-        const { lastValidBlockHeight: _lastValidBlockHeight } = blockhash
-
         const fromAddress = address(walletAddress)
         const transferInstruction = createTransferSolInstruction(walletAddress, recipient, amountLamports)
 
@@ -128,38 +147,59 @@ export function SolanaSend() {
         )
 
         const compiled = compileTransaction(message)
-        // @solana/kit compiled type vs our SolanaTransaction — bridge until types aligned (ethereum-only build)
-        const signed = await provider.signTransaction({ messageBytes: compiled as any })
+
+        const signed = await provider.signTransaction({ messageBytes: compiled.messageBytes } as any)
+
+        const signatureBytes = decodeSignatureToBytes(signed.signature)
+
+        const signedTransaction = {
+          messageBytes: compiled.messageBytes,
+          signatures: { ...compiled.signatures, [fromAddress]: signatureBytes } as typeof compiled.signatures,
+        }
+
+        const encodedWire = getBase64EncodedWireTransaction(signedTransaction)
 
         setTxStatus('sending')
 
-        // @solana/kit sendTransaction expects Base64EncodedWireTransaction — bridge until types aligned (ethereum-only build)
-        const signature = await rpc
-          .sendTransaction(new Uint8Array(Buffer.from(signed.signature, 'base64')) as any, {
+        await rpc
+          .sendTransaction(encodedWire, {
             encoding: 'base64',
             preflightCommitment: 'confirmed',
             skipPreflight: false,
           })
           .send()
 
-        // Signature from @solana/kit may be branded string — bridge until types aligned (ethereum-only build)
-        if ((signature as any)?.value ?? signature) {
-          setTxStatus('confirmed')
-          refetchBalance()
-          invalidateBalance()
-        } else {
-          setTxStatus('error')
-          setErrorMessage('Transaction failed')
-        }
-      } catch (err) {
+        setConfirmedAmount(amount)
+        setTxStatus('confirmed')
+        setRecipient('')
+        setAmount('')
+      } catch (err: unknown) {
         setTxStatus('error')
-        setErrorMessage(err instanceof OpenfortError ? err.message : 'Transaction failed')
+        const msg = err instanceof OpenfortError ? err.message : err instanceof Error ? err.message : String(err)
+        setErrorMessage(msg || 'Transaction failed')
       }
     },
-    [canProceed, provider, walletAddress, amountLamports, recipient, rpcUrl, refetchBalance]
+    [canProceed, provider, walletAddress, amountLamports, recipient, rpcUrl]
   )
 
+  useEffect(() => {
+    if (txStatus !== 'confirmed') return
+    const timer = setTimeout(() => {
+      invalidateBalance()
+      setRoute(routes.SOL_CONNECTED)
+    }, 2400)
+    return () => clearTimeout(timer)
+  }, [txStatus, setRoute])
+
   const availableLabel = balanceLamports !== undefined ? formatSol(balanceLamports) : '--'
+
+  if (txStatus === 'confirmed') {
+    return (
+      <PageContent onBack={routes.SOL_CONNECTED}>
+        <Loader isSuccess header="Transfer Sent" description={`${confirmedAmount} SOL sent successfully`} />
+      </PageContent>
+    )
+  }
 
   return (
     <PageContent onBack={routes.SOL_CONNECTED}>
@@ -206,17 +246,10 @@ export function SolanaSend() {
           </Field>
         )}
 
-        {txStatus === 'confirmed' && (
-          <Field>
-            <HelperText>Transfer sent successfully.</HelperText>
-          </Field>
-        )}
-
         <Button variant="primary" disabled={!canProceed} type="submit">
           {txStatus === 'idle' && 'Send SOL'}
           {txStatus === 'signing' && 'Signing...'}
           {txStatus === 'sending' && 'Sending...'}
-          {txStatus === 'confirmed' && 'Done'}
           {txStatus === 'error' && 'Try again'}
         </Button>
       </Form>

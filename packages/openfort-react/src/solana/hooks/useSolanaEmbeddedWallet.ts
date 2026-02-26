@@ -1,5 +1,4 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
-import { Buffer } from 'buffer'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
@@ -136,7 +135,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
         },
         signTransaction: async (transaction: SolanaTransaction): Promise<SignedSolanaTransaction> => {
           const messageBytes = getTransactionBytes(transaction)
-          const signature = await client.embeddedWallet.signMessage(Buffer.from(messageBytes).toString('base64'), {
+          const signature = await client.embeddedWallet.signMessage(new Uint8Array(messageBytes), {
             hashMessage: false, // Ed25519 - no keccak256
           })
           return {
@@ -148,7 +147,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
           const results = await Promise.all(
             transactions.map(async (tx) => {
               const messageBytes = getTransactionBytes(tx)
-              const signature = await client.embeddedWallet.signMessage(Buffer.from(messageBytes).toString('base64'), {
+              const signature = await client.embeddedWallet.signMessage(new Uint8Array(messageBytes), {
                 hashMessage: false, // Ed25519 - no keccak256
               })
               return {

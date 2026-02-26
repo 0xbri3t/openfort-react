@@ -12,7 +12,7 @@ import { ConnectKitThemeProvider } from '../ConnectKitThemeProvider/ConnectKitTh
 import { routes, type SetRouteOptions } from '../Openfort/types'
 import { useOpenfort } from '../Openfort/useOpenfort'
 import About from '../Pages/About'
-import { AssetInventory, SolanaAssetInventory } from '../Pages/AssetInventory'
+import { AssetInventory } from '../Pages/AssetInventory'
 import Buy from '../Pages/Buy'
 import BuyComplete from '../Pages/BuyComplete'
 import BuyProcessing from '../Pages/BuyProcessing'
@@ -120,7 +120,6 @@ const CHAIN_PREFIXED_PAGES: Record<ChainTypeEnum, RoutePages> = {
     'sol:recoverWallet': <RecoverPage />,
     'sol:send': <SolanaSend />,
     'sol:receive': <Receive />,
-    'sol:assetInventory': <SolanaAssetInventory />,
     'sol:wallets': <SolanaWallets />,
   },
 }
