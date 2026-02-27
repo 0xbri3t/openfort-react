@@ -21,7 +21,7 @@ test.describe('Write Contract - mint tokens', () => {
       hasText: /0x[a-f0-9]{4,}\.\.\.[a-f0-9]{4,}/i,
     })
 
-    let initialCount = await walletRowLocator.count()
+    const initialCount = await walletRowLocator.count()
 
     await expect(walletsCard.getByText(/^creating wallet with password recovery/i)).toBeVisible({ timeout: 30_000 })
     await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
