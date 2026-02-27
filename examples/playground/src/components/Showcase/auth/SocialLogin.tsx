@@ -1,9 +1,9 @@
-import { type AuthProvider, useOAuth } from '@openfort/react'
+import { type OAuthProvider, useOAuth } from '@openfort/react'
 import { useState } from 'react'
 import { Button } from '@/components/Showcase/ui/Button'
 import { ProviderLogo } from '@/components/Showcase/ui/ProviderLogo'
 
-function getProviderName(provider: AuthProvider) {
+function getProviderName(provider: OAuthProvider) {
   switch (provider) {
     case 'google':
       return 'Google'
@@ -16,7 +16,7 @@ function getProviderName(provider: AuthProvider) {
   }
 }
 
-export function SocialLogin({ provider }: { provider: AuthProvider }) {
+export function SocialLogin({ provider }: { provider: OAuthProvider }) {
   const { initOAuth, error } = useOAuth({ redirectTo: '/showcase/auth/callback' })
   const [redirecting, setRedirecting] = useState(false)
 
