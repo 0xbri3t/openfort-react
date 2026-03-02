@@ -86,7 +86,7 @@ export { useSignOut } from './hooks/openfort/auth/useSignOut'
 export {
   type SignAuthorizationParameters,
   type SignAuthorizationReturnType,
-  use7702Authorization,
+  useEIP7702Authorization,
 } from './hooks/openfort/use7702Authorization'
 export { useConnectWithSiwe } from './hooks/openfort/useConnectWithSiwe'
 export { useGrantPermissions } from './hooks/openfort/useGrantPermissions'

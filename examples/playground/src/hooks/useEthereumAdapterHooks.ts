@@ -22,20 +22,20 @@ function getPlaygroundRpcUrl(chainId?: number): string {
   }
 }
 
-export interface UseAccountLike {
+interface UseAccountLike {
   address?: `0x${string}`
   chainId?: number
   isConnected: boolean
 }
 
-export interface UseReadContractLike {
+interface UseReadContractLike {
   data?: unknown
   refetch: () => void
   error: Error | null
   isLoading: boolean
 }
 
-export interface UseWriteContractLike {
+interface UseWriteContractLike {
   data?: `0x${string}`
   writeContract: (params: {
     address: `0x${string}`

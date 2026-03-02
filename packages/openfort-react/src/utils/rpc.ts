@@ -73,7 +73,7 @@ const CHAIN_NAMES: Record<number, string> = {
 /**
  * Native currency configuration
  */
-export interface NativeCurrency {
+interface NativeCurrency {
   name: string
   symbol: string
   decimals: number

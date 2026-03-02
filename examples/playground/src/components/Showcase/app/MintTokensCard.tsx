@@ -47,7 +47,8 @@ export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
   const [txSignature, setTxSignature] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const rpc = rpcUrl ?? 'https://api.devnet.solana.com'
+  const defaultRpc = 'https://api.devnet.solana.com'
+  const rpc = rpcUrl ?? defaultRpc
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -87,8 +88,16 @@ export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
       <CardHeader>
         <CardTitle>Mint tokens</CardTitle>
         <CardDescription>
-          Fund your devnet account. Enter amount (max {MAX_AIRDROP_SOL} SOL) and click Mint. For reliable airdrops, set
-          VITE_HELIUS_API_KEY in .env.local.
+          <a
+            href="https://faucet.solana.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary hover:underline"
+          >
+            Fund your devnet account
+          </a>
+          . Enter amount (max {MAX_AIRDROP_SOL} SOL) and click Mint. For reliable minting, set VITE_HELIUS_API_KEY in
+          .env.local or use a devnet RPC URL that supports airdrops.
         </CardDescription>
         {address && (
           <CardDescription>
@@ -158,7 +167,7 @@ export const MintTokensCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
                 ))}
               </ul>
               <p className="text-muted-foreground text-xs mt-1">
-                Or set VITE_HELIUS_API_KEY in .env.local for higher limits.
+                For reliable minting, set VITE_HELIUS_API_KEY in .env.local or use a devnet RPC that supports airdrops.
               </p>
             </div>
           )}

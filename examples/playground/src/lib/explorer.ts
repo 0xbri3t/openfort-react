@@ -1,7 +1,7 @@
 import { ChainTypeEnum } from '@openfort/react'
 import type { SolanaCluster } from '@openfort/react/solana'
 
-export type ExplorerUrlOptions = {
+type ExplorerUrlOptions = {
   address?: string
   txHash?: string
   chainId?: number

@@ -11,7 +11,7 @@ import type { SolanaCluster, SolanaCommitment, SolanaConfig } from './types'
 /**
  * Solana context value with resolved configuration
  */
-export interface SolanaContextValue {
+interface SolanaContextValue {
   /** Active Solana cluster */
   cluster: SolanaCluster
   /** RPC URL (resolved from config or default) */
@@ -25,13 +25,14 @@ export interface SolanaContextValue {
 const DEFAULT_RPC_URLS: Partial<Record<SolanaCluster, string>> = {
   devnet: 'https://api.devnet.solana.com',
   testnet: 'https://api.testnet.solana.com',
+  'mainnet-beta': 'https://api.mainnet-beta.solana.com',
 }
 
 function getDefaultRpcUrl(cluster: SolanaCluster): string {
   return DEFAULT_RPC_URLS[cluster] ?? DEFAULT_RPC_URLS.devnet!
 }
 
-export interface SolanaContextProviderProps {
+interface SolanaContextProviderProps {
   /** Solana configuration from OpenfortWalletConfig */
   config: SolanaConfig
   /** Child components */
@@ -74,8 +75,7 @@ const DEFAULT_CLUSTER: SolanaCluster = 'devnet'
 export function SolanaContextProvider({ config, children }: SolanaContextProviderProps) {
   const [cluster, setClusterState] = useState<SolanaCluster>(() => {
     const fromConfig = config.cluster
-    if (fromConfig === 'mainnet-beta') return DEFAULT_CLUSTER
-    return fromConfig
+    return fromConfig ?? DEFAULT_CLUSTER
   })
 
   const rpcUrl = useMemo(() => resolveRpcUrl(cluster, config), [cluster, config])

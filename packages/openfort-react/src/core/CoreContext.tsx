@@ -42,7 +42,7 @@ function buildSdkConfig(config: CoreProviderConfig): OpenfortSDKConfiguration {
   }
 }
 
-export type CoreProviderProps = PropsWithChildren<CoreProviderConfig>
+type CoreProviderProps = PropsWithChildren<CoreProviderConfig>
 
 /**
  * Core provider that initializes the Openfort SDK client
@@ -111,11 +111,4 @@ export function useCoreContext(): CoreContextValue {
     )
   }
   return context
-}
-
-/**
- * Hook to check if inside CoreProvider
- */
-function _useHasCoreProvider(): boolean {
-  return useContext(CoreContext) !== null
 }

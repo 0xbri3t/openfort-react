@@ -50,6 +50,32 @@ function formatSol(lamports: bigint, decimals = 4): string {
   return (Number(lamports) / Number(LAMPORTS_PER_SOL)).toFixed(decimals)
 }
 
+const CONFIRM_POLL_MS = 500
+const CONFIRM_TIMEOUT_MS = 60_000
+
+/** Poll RPC until transaction is confirmed or failed. */
+async function waitForConfirmation(rpcUrl: string, signature: string): Promise<void> {
+  const deadline = Date.now() + CONFIRM_TIMEOUT_MS
+  while (Date.now() < deadline) {
+    const res = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getSignatureStatuses',
+        params: [[signature], { searchTransactionHistory: true }],
+      }),
+    })
+    const data = await res.json()
+    const status = data.result?.value?.[0]
+    if (status?.err) throw new Error(typeof status.err === 'object' ? JSON.stringify(status.err) : String(status.err))
+    if (status?.confirmationStatus === 'confirmed' || status?.confirmationStatus === 'finalized') return
+    await new Promise((r) => setTimeout(r, CONFIRM_POLL_MS))
+  }
+  throw new OpenfortError('Transaction confirmation timed out', OpenfortReactErrorType.UNEXPECTED_ERROR)
+}
+
 const ED25519_SIGNATURE_LENGTH = 64
 
 /** Decode provider signature (base58 from Openfort) to 64-byte Ed25519 Uint8Array. */
@@ -168,6 +194,8 @@ export function SolanaSend() {
             skipPreflight: false,
           })
           .send()
+
+        await waitForConfirmation(rpcUrl, signed.signature)
 
         setConfirmedAmount(amount)
         setTxStatus('confirmed')

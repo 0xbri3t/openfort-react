@@ -3,7 +3,7 @@ import type { BuildRecoveryParamsConfig } from '../../shared/utils/recovery'
 import { buildRecoveryParams } from '../../shared/utils/recovery'
 import type { SetActiveSolanaWalletOptions } from '../types'
 
-export type ResolveRecoveryResult = { needsRecovery: true } | { needsRecovery: false; recoveryParams: RecoveryParams }
+type ResolveRecoveryResult = { needsRecovery: true } | { needsRecovery: false; recoveryParams: RecoveryParams }
 
 export async function resolveRecoveryForSetActive(
   account: { recoveryMethod?: RecoveryMethod },

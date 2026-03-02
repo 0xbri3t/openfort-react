@@ -388,7 +388,7 @@ const WalletTooltipItem = ({
   </Tooltip>
 )
 
-export type EmbeddedWalletsListProps = {
+type EmbeddedWalletsListProps = {
   ethereum: EthereumWalletState
   activeWallet: ConnectedEmbeddedEthereumWallet | null
   connectingAddress: string | undefined

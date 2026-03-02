@@ -9,7 +9,7 @@ const DEFAULT_BEAM_MINT = '0x45238AB60ACA6862a70fe996D1A8baDb71Af5A8f'
 
 type MintContractType = 'claim' | 'mint'
 
-export interface MintContractConfig {
+interface MintContractConfig {
   address: string
   type: MintContractType
 }

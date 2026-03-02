@@ -3,7 +3,7 @@ import type { SolanaCluster } from '../../solana/types'
 import { logger } from '../../utils/logger'
 
 /** Options for building a block explorer URL. */
-export type ExplorerUrlOptions = {
+type ExplorerUrlOptions = {
   address?: string
   txHash?: string
   chainId?: number

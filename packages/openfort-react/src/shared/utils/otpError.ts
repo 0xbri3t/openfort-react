@@ -1,6 +1,6 @@
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 
-export type HandleOtpErrorResult = {
+type HandleOtpErrorResult = {
   error: OpenfortError
   isOTPRequired: boolean
 }

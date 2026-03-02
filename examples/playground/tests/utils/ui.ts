@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 
-export type Root = Page | Locator
+type Root = Page | Locator
 
 export function clickableByText(root: Root, text: RegExp) {
   return root.locator('button, a, [role="button"]').filter({ hasText: text }).first()

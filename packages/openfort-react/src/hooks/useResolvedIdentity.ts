@@ -16,13 +16,13 @@ import { getDefaultEthereumRpcUrl } from '../utils/rpc'
 /**
  * Resolved identity state - discriminated union
  */
-export type ResolvedIdentity =
+type ResolvedIdentity =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'error'; error: Error }
   | { status: 'success'; name: string | null; avatar: string | null }
 
-export interface UseResolvedIdentityOptions {
+interface UseResolvedIdentityOptions {
   /** Address to resolve (empty string if not available yet) */
   address: string
   /** Chain type for resolution */
