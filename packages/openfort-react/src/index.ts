@@ -52,7 +52,7 @@ export {
   SignedMessagePayload,
   User,
 } from '@openfort/openfort-js'
-export type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
+export type { CountrySelectorProps } from 'react-international-phone'
 export { default as Avatar } from './components/Common/Avatar'
 export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
@@ -86,7 +86,7 @@ export { useSignOut } from './hooks/openfort/auth/useSignOut'
 export {
   type SignAuthorizationParameters,
   type SignAuthorizationReturnType,
-  useEIP7702Authorization,
+  use7702Authorization,
 } from './hooks/openfort/use7702Authorization'
 export { useConnectWithSiwe } from './hooks/openfort/useConnectWithSiwe'
 export { useGrantPermissions } from './hooks/openfort/useGrantPermissions'
