@@ -43,7 +43,7 @@ export { UserWallet, useWallets } from './hooks/openfort/useWallets'
 export { useChainIsSupported } from './hooks/useChainIsSupported'
 export { useChains } from './hooks/useChains'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
-export { openfortKeys, getUserQueryOptions, getEmbeddedAccountsQueryOptions } from './query'
+export { getEmbeddedAccountsQueryOptions, getUserQueryOptions, openfortKeys } from './query'
 export type { CustomTheme } from './styles/customTheme'
 export type {
   CustomAvatarProps,
