@@ -96,10 +96,12 @@ export const useConnectToWalletPostAuth = () => {
           walletId: embeddedWalletId,
         })
 
-        if (!setWalletResult.wallet || (setWalletResult.error && signOutOnError)) {
+        if (setWalletResult.error) {
           logger.error('Error recovering wallet:', setWalletResult.error)
-          // If there was an error and we should log out, we can call the logout function
-          await signOut()
+          if (signOutOnError) {
+            await signOut()
+          }
+          return { wallet: undefined }
         }
         wallet = setWalletResult.wallet!
       }
