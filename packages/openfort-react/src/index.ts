@@ -99,6 +99,7 @@ export type {
 } from './hooks/openfort/walletTypes'
 export { invalidateBalance } from './hooks/useBalance'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
+export { getEmbeddedAccountsQueryOptions, getUserQueryOptions, openfortKeys } from './query'
 // Bridge types/context are internal
 export type {
   CreateEmbeddedWalletOptions,

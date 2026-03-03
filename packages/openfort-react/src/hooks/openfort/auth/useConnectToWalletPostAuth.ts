@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { openfortKeys } from '../../../query/queryKeys'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { logger } from '../../../utils/logger'
 import {

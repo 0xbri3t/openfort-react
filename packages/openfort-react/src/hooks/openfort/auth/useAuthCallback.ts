@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { UIAuthProvider } from '../../../components/Openfort/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import type { OpenfortHookOptions } from '../../../types'
@@ -104,16 +104,18 @@ export const useAuthCallback = ({
     error: oAuthError,
   } = useOAuth()
 
+  const callbackProcessedRef = useRef(false)
+
   useEffect(() => {
     if (!enabled) return
+    if (callbackProcessedRef.current) return
+    callbackProcessedRef.current = true
 
     ;(async () => {
       // redirectUrl is not working with query params OF-1013
       const fixedUrl = window.location.href.replace('?state=', '&state=') // redirectUrl is not working with query params
       const url = new URL(fixedUrl)
       const openfortAuthProvider = url.searchParams.get('openfortAuthProvider')
-
-      await new Promise((resolve) => setTimeout(resolve, 5000))
 
       if (!openfortAuthProvider) {
         return
@@ -218,7 +220,13 @@ export const useAuthCallback = ({
           throwOnError: hookOptions.throwOnError,
         }
 
-        await storeCredentials({ userId, token, ...options })
+        await storeCredentials({
+          userId,
+          token,
+          logoutOnError: hookOptions.logoutOnError,
+          recoverWalletAutomatically: hookOptions.recoverWalletAutomatically,
+          ...options,
+        })
         removeParams()
       }
     })()

@@ -110,10 +110,10 @@ const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true)
   const { isLoading } = useAuthCallback({
     onSuccess: () => {
-      alert('Authentication verified!')
+      console.log('Authentication verified!')
     },
     onError: (e) => {
-      alert(`Authentication verification failed!${e.message}`)
+      console.error(`Authentication verification failed!${e.message}`)
     },
   })
 

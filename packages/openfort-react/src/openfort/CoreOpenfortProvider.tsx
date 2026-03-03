@@ -24,6 +24,8 @@ import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridg
 import type { WalletFlowStatus } from '../hooks/openfort/walletTypes'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
 import type { UserAccount } from '../openfortCustomTypes'
+import { openfortKeys } from '../query/queryKeys'
+import { getEmbeddedAccountsQueryOptions } from '../query/queryOptions'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
 import { mapBridgeConnectorsToWalletProps } from '../wallets/useExternalConnectors'
