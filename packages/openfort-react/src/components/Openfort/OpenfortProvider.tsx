@@ -17,7 +17,7 @@ import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import { buildChainFromConfig } from '../../utils/rpc'
 import { isFamily } from '../../utils/wallets'
-import ConnectKitModal from '../ConnectModal'
+
 import { type ContextValue, OpenfortContext, UIContext, type UIContextValue } from './context'
 import {
   type BuyFormState,
@@ -38,6 +38,8 @@ import {
 const SolanaContextProvider = lazy(() =>
   import('../../solana/SolanaContext').then((m) => ({ default: m.SolanaContextProvider }))
 )
+
+const LazyConnectKitModal = lazy(() => import('../ConnectModal'))
 
 /** {@link OpenfortProvider} props. */
 type OpenfortProviderProps = {
@@ -455,7 +457,14 @@ export const OpenfortProvider = ({
         </pre>
       )}
       {children}
-      <ConnectKitModal lang={ckLang} theme={ckTheme} mode={safeUiConfig.mode ?? ckMode} customTheme={ckCustomTheme} />
+      <Suspense fallback={null}>
+        <LazyConnectKitModal
+          lang={ckLang}
+          theme={ckTheme}
+          mode={safeUiConfig.mode ?? ckMode}
+          customTheme={ckCustomTheme}
+        />
+      </Suspense>
     </>
   )
 

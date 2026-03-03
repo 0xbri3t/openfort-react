@@ -26,7 +26,7 @@ export default [
       format: 'esm',
       sourcemap: true,
       entryFileNames: 'index.es.js',
-      chunkFileNames: '[name]-[hash].js',
+      chunkFileNames: 'chunks/[name]-[hash].js',
     },
     plugins: sharedPlugins,
   },
