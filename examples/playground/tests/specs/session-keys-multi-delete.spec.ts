@@ -1,13 +1,14 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Session keys - multiple + delete flow', () => {
-  test.describe.configure({ retries: 3 })
+  // test.describe.configure({ retries: 3 })
 
   test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({
     page,
     dashboardPage,
     mode,
   }) => {
+    test.skip(mode === 'svm', 'Session keys are EVM only')
     test.setTimeout(180_000)
     const m = mode
     await dashboardPage.ensureReady(m)
@@ -21,9 +22,7 @@ test.describe('Session keys - multiple + delete flow', () => {
     const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
 
     await walletsCard.getByRole('button', { name: /create new wallet/i }).click()
-    if (mode !== 'solana-only') {
-      await walletsCard.getByRole('button', { name: /smart account/i }).click()
-    }
+    await walletsCard.getByRole('button', { name: /smart account/i }).click()
     await walletsCard.getByRole('button', { name: /^password$/i }).click()
 
     const walletRowLocator = walletsCard.locator('button').filter({
@@ -34,6 +33,22 @@ test.describe('Session keys - multiple + delete flow', () => {
 
     await expect(walletsCard.getByText(/^creating wallet with password recovery/i)).toBeVisible({ timeout: 30_000 })
     await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
+
+    // Wait for the new wallet to become the active account (it may appear as second or last row)
+    await expect
+      .poll(
+        async () => {
+          const count = await walletRowLocator.count()
+          if (count <= initialCount) return false
+          const last = walletRowLocator.last()
+          const second = walletRowLocator.nth(1)
+          const lastActive = await last.evaluate((el) => el.classList.contains('text-primary'))
+          const secondActive = await second.evaluate((el) => el.classList.contains('text-primary'))
+          return lastActive || secondActive
+        },
+        { timeout: 60_000 }
+      )
+      .toBe(true)
 
     const sessionCard = await dashboardPage.getCardByTitle(/session keys/i)
 
@@ -49,8 +64,8 @@ test.describe('Session keys - multiple + delete flow', () => {
     const ensureAtLeast = async (n: number) => {
       while ((await keySpans.count()) < n) {
         const before = await keySpans.count()
+        await page.waitForTimeout(1000)
         await createBtn.click()
-
         await expect.poll(async () => await keySpans.count(), { timeout: 120_000 }).toBeGreaterThan(before)
       }
     }

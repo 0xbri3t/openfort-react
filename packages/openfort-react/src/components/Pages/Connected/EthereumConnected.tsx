@@ -18,10 +18,10 @@ import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { nFormatter, truncateEthAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
+import ChainSelector from '../../../wagmi/components/ChainSelect'
 import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
 import { TextLinkButton } from '../../Common/Button/styles'
-import ChainSelector from '../../Common/ChainSelect'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { ModalBody } from '../../Common/Modal/styles'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
@@ -83,8 +83,10 @@ const EthereumConnected: React.FC = () => {
   }, [assets])
 
   useEffect(() => {
-    refetch()
-  }, [])
+    if (isConnected) {
+      refetch()
+    }
+  }, [isConnected, refetch])
 
   const isTestnet = chain?.testnet ?? false
   const [showTestnetMessage, setShowTestnetMessage] = useState(false)
@@ -199,7 +201,12 @@ const EthereumConnected: React.FC = () => {
         }
         avatar={address ? <Avatar address={address} /> : <span />}
         beforeAvatar={
-          <ChainSelectorContainer>
+          <ChainSelectorContainer
+            key={chainId ?? 'loading'}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
             <ChainSelector />
           </ChainSelectorContainer>
         }

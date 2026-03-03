@@ -25,7 +25,7 @@ type SolanaRequestArguments = SolanaSignMessageRequest | SolanaSignTransactionRe
 /**
  * Configuration for creating an OpenfortSolanaProvider
  */
-export interface OpenfortSolanaProviderConfig {
+interface OpenfortSolanaProviderConfig {
   /** The embedded account to use for this provider */
   account: EmbeddedAccount
   /**
@@ -65,7 +65,7 @@ export interface OpenfortSolanaProviderConfig {
  * });
  * ```
  */
-export class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvider {
+class OpenfortSolanaProvider implements OpenfortEmbeddedSolanaWalletProvider {
   private readonly _account: EmbeddedAccount
   private readonly _signTransaction: (transaction: SolanaTransaction) => Promise<SignedSolanaTransaction>
   private readonly _signAllTransactions: (transactions: SolanaTransaction[]) => Promise<SignedSolanaTransaction[]>

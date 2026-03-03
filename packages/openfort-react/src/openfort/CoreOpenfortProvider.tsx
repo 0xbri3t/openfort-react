@@ -17,11 +17,9 @@ import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../constants/openfort'
 import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import { OpenfortError, OpenfortReactErrorType } from '../core/errors'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
-import { createSolanaEmbeddedStrategy } from '../core/strategies/SolanaEmbeddedStrategy'
-import type { WalletReadiness } from '../core/types'
+import { firstEmbeddedAddress } from '../core/strategyUtils'
 import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridgeContext'
 import type { WalletFlowStatus } from '../hooks/openfort/walletTypes'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
@@ -38,7 +36,6 @@ export type OpenfortCoreContextValue = {
   setChainType: (chainType: ChainTypeEnum) => void
   signUpGuest: () => Promise<void>
   embeddedState: EmbeddedState
-  isAuthenticated: boolean
 
   isLoading: boolean
   needsRecovery: boolean
@@ -48,15 +45,10 @@ export type OpenfortCoreContextValue = {
 
   embeddedAccounts?: EmbeddedAccount[]
   isLoadingAccounts: boolean
-  walletReadiness: WalletReadiness
 
   /** Current active embedded wallet address (drives top-right / useConnectedWallet). Set by useEthereumEmbeddedWallet.setActive and synced from SDK on load. */
   activeEmbeddedAddress: string | undefined
   setActiveEmbeddedAddress: (address: string | undefined) => void
-
-  /** Current chain for EVM embedded (no bridge). Persisted in localStorage. When set, useConnectedWallet and writes use this chain. */
-  activeChainId: number | undefined
-  setActiveChainId: (chainId: number | undefined) => void
 
   logout: () => void
 
@@ -65,10 +57,6 @@ export type OpenfortCoreContextValue = {
   walletStatus: WalletFlowStatus
   setWalletStatus: (status: WalletFlowStatus) => void
 
-  pollingError: OpenfortError | null
-  retryPolling: () => void
-
-  providerError: unknown
   client: Openfort
 }
 
@@ -100,21 +88,59 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     })
   }, [bridge, uiConfig.walletConnectName])
 
-  const strategy = useMemo(() => {
-    const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
-      [ChainTypeEnum.SVM]: createSolanaEmbeddedStrategy(walletConfig),
-      [ChainTypeEnum.EVM]: bridge
-        ? createEthereumBridgeStrategy(bridge, bridgeConnectors)
-        : createEthereumEmbeddedStrategy(walletConfig),
+  const [solanaStrategy, setSolanaStrategy] = useState<ConnectionStrategy | null>(null)
+  useEffect(() => {
+    if (!walletConfig?.solana) {
+      setSolanaStrategy(null)
+      return
     }
-    return strategyByChain[chainType] ?? null
-  }, [bridge, chainType, walletConfig, bridgeConnectors])
+    let cancelled = false
+    import('../core/strategies/SolanaEmbeddedStrategy').then((m) => {
+      if (!cancelled) setSolanaStrategy(m.createSolanaEmbeddedStrategy(walletConfig))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [walletConfig?.solana, walletConfig])
 
   const address = bridge?.account.address
   const [user, setUser] = useState<User | null>(null)
-  const [providerError, setProviderError] = useState<unknown>(null)
   const [linkedAccounts, setLinkedAccounts] = useState<UserAccount[]>([])
   const [walletStatus, setWalletStatus] = useState<WalletFlowStatus>({ status: 'idle' })
+
+  const ACTIVE_CHAIN_ID_KEY = 'openfort_active_chain_id'
+  const [activeChainId, setActiveChainIdState] = useState<number | undefined>(undefined)
+  const activeChainIdRef = useRef<number | undefined>(undefined)
+  activeChainIdRef.current = activeChainId
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const s = window.localStorage.getItem(ACTIVE_CHAIN_ID_KEY)
+    if (s == null) return
+    const n = parseInt(s, 10)
+    if (Number.isNaN(n)) return
+    if (n === DEFAULT_DEV_CHAIN_ID) {
+      window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
+      return
+    }
+    setActiveChainIdState(n)
+  }, [])
+  const setActiveChainId = useCallback((chainId: number | undefined) => {
+    setActiveChainIdState(chainId)
+    if (typeof window !== 'undefined') {
+      if (chainId == null) window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
+      else window.localStorage.setItem(ACTIVE_CHAIN_ID_KEY, String(chainId))
+    }
+  }, [])
+
+  const strategy = useMemo(() => {
+    const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
+      [ChainTypeEnum.SVM]: solanaStrategy,
+      [ChainTypeEnum.EVM]: bridge
+        ? createEthereumBridgeStrategy(bridge, bridgeConnectors)
+        : createEthereumEmbeddedStrategy(walletConfig, () => activeChainIdRef.current, setActiveChainId),
+    }
+    return strategyByChain[chainType] ?? null
+  }, [bridge, chainType, walletConfig, bridgeConnectors, solanaStrategy, setActiveChainId])
 
   // ---- Openfort instance ----
   const openfort = useMemo(() => {
@@ -143,8 +169,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   // ---- Embedded state ----
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
-  const [pollingError, setPollingError] = useState<OpenfortError | null>(null)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previousEmbeddedState = useRef<EmbeddedState>(EmbeddedState.NONE)
   const retryCountRef = useRef(0)
   const POLLING_RETRIES = 3
@@ -156,11 +182,14 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     try {
       const state = await openfort.embeddedWallet.getEmbeddedState()
       setEmbeddedState(state)
-      setPollingError(null)
       retryCountRef.current = 0
 
       // Stop polling once we reach a stable terminal state
       if (state === EmbeddedState.READY) {
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = null
+        }
         if (pollingRef.current) {
           clearInterval(pollingRef.current)
           pollingRef.current = null
@@ -171,13 +200,16 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       if (retryCountRef.current < POLLING_RETRIES) {
         retryCountRef.current += 1
         const delay = POLLING_BASE_MS * 2 ** retryCountRef.current
-        setTimeout(pollEmbeddedState, delay)
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = null
+        }
+        retryTimeoutRef.current = setTimeout(pollEmbeddedState, delay)
       } else {
-        setPollingError(
-          error instanceof OpenfortError
-            ? error
-            : new OpenfortError('Embedded state polling failed', OpenfortReactErrorType.UNEXPECTED_ERROR)
-        )
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = null
+        }
         if (pollingRef.current) {
           clearInterval(pollingRef.current)
           pollingRef.current = null
@@ -185,15 +217,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       }
     }
   }, [openfort])
-
-  const retryPolling = useCallback(() => {
-    retryCountRef.current = 0
-    setPollingError(null)
-    pollEmbeddedState()
-    if (!pollingRef.current) {
-      pollingRef.current = setInterval(pollEmbeddedState, 300)
-    }
-  }, [pollEmbeddedState])
 
   // Only log embedded state when it changes
   useEffect(() => {
@@ -209,6 +232,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [pollEmbeddedState])
 
   const stopPollingEmbeddedState = useCallback(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+      retryTimeoutRef.current = null
+    }
     if (pollingRef.current) {
       clearInterval(pollingRef.current)
       pollingRef.current = null
@@ -312,31 +339,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const [activeEmbeddedAddress, setActiveEmbeddedAddress] = useState<string | undefined>(undefined)
 
-  const ACTIVE_CHAIN_ID_KEY = 'openfort_active_chain_id'
-  const [activeChainId, setActiveChainIdState] = useState<number | undefined>(undefined)
-  // Restore activeChainId from localStorage only on client (avoids SSR crash; first render is always undefined)
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const s = window.localStorage.getItem(ACTIVE_CHAIN_ID_KEY)
-    if (s == null) return
-    const n = parseInt(s, 10)
-    if (Number.isNaN(n)) return
-    // Never restore default dev chain from storage so first render uses strategy default (avoids policy/chain mismatch)
-    if (n === DEFAULT_DEV_CHAIN_ID) {
-      window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
-      return
-    }
-    setActiveChainIdState(n)
-  }, [])
-  const setActiveChainId = useCallback((chainId: number | undefined) => {
-    setActiveChainIdState(chainId)
-    if (typeof window !== 'undefined') {
-      if (chainId == null) window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
-      else window.localStorage.setItem(ACTIVE_CHAIN_ID_KEY, String(chainId))
-    }
-  }, [])
-
-  // If stored activeChainId is not in configured EVM chains (e.g. old Sepolia 11155111), reset to strategy default
+  // If stored activeChainId is not in configured EVM chains (e.g. old Sepolia 11155111), reset to config default
   useEffect(() => {
     if (!strategy || strategy.kind !== 'embedded' || !walletConfig?.ethereum) return
     const ethereum = walletConfig.ethereum
@@ -345,8 +348,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       ...(ethereum.rpcUrls ? Object.keys(ethereum.rpcUrls).map(Number) : []),
     ])
     if (activeChainId != null && configuredChainIds.size > 0 && !configuredChainIds.has(activeChainId)) {
-      const defaultChainId = strategy.getChainId()
-      if (defaultChainId != null) setActiveChainId(defaultChainId)
+      const defaultChainId = ethereum.chainId ?? DEFAULT_DEV_CHAIN_ID
+      setActiveChainId(defaultChainId)
     }
   }, [strategy, walletConfig?.ethereum, activeChainId, setActiveChainId])
 
@@ -379,13 +382,19 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [openfort, embeddedAccounts?.length, embeddedState])
 
+  // Bootstrap active address when uninitialized: set to first account for current chain.
+  // Runs sync so routing sees connected state immediately; get() won't overwrite (uses prev check).
+  useEffect(() => {
+    if (!embeddedAccounts?.length || embeddedState !== EmbeddedState.READY || activeEmbeddedAddress !== undefined) {
+      return
+    }
+    const first = firstEmbeddedAddress(embeddedAccounts, chainType)
+    if (first) setActiveEmbeddedAddress(first)
+  }, [embeddedAccounts, embeddedState, chainType, activeEmbeddedAddress])
+
   // Current chain for EVM provider reconfiguration. Re-runs when user switches chains.
   const evmChainId =
-    strategy?.chainType === ChainTypeEnum.EVM
-      ? bridge
-        ? bridge.chainId
-        : (activeChainId ?? strategy.getChainId())
-      : undefined
+    strategy?.chainType === ChainTypeEnum.EVM ? (bridge ? bridge.chainId : strategy?.getChainId()) : undefined
 
   // Only init EVM provider when embeddedState is READY. Otherwise getEthereumProvider()
   // may create a provider with an unconfigured signer (e.g. password recovery not yet done).
@@ -403,7 +412,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       .catch((err) => {
         if (!cancelled) {
           logger.error('Strategy initProvider failed', err)
-          setProviderError(err)
         }
       })
     return () => {
@@ -543,21 +551,11 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const needsRecovery =
     embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED && (embeddedAccounts?.length ?? 0) > 0
 
-  const walletReadiness = useMemo((): WalletReadiness => {
-    if (isLoadingAccounts) return 'loading'
-    if (!embeddedAccounts || embeddedAccounts.length === 0) return 'not-created'
-    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) return 'needs-recovery'
-    return 'ready'
-  }, [isLoadingAccounts, embeddedAccounts, embeddedState])
-
-  const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
-
   const value: OpenfortCoreContextValue = {
     chainType,
     setChainType,
     signUpGuest,
     embeddedState,
-    isAuthenticated,
     logout,
 
     isLoading,
@@ -569,20 +567,12 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
     embeddedAccounts,
     isLoadingAccounts,
-    walletReadiness,
 
     activeEmbeddedAddress,
     setActiveEmbeddedAddress,
 
-    activeChainId,
-    setActiveChainId,
-
     walletStatus,
     setWalletStatus,
-
-    pollingError,
-    retryPolling,
-    providerError,
 
     client: openfort,
   }

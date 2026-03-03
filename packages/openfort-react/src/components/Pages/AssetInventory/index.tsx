@@ -21,8 +21,6 @@ const usdFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 })
 
-export { SolanaAssetInventory } from './SolanaAssetInventory'
-
 export const AssetInventory = () => {
   const { data: walletAssets, isLoading: isBalancesLoading } = useEthereumWalletAssets()
 

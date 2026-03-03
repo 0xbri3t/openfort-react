@@ -45,7 +45,7 @@ export function useAsyncData<T>({
     } catch (err) {
       const e = err instanceof Error ? err : new Error(String(err))
       setError(e)
-      throw err
+      throw e
     } finally {
       setIsLoading(false)
     }

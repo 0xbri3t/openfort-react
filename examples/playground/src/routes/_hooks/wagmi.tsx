@@ -21,7 +21,7 @@ function RouteComponent() {
   const { mode } = usePlaygroundMode()
   const { pathname } = useLocation()
 
-  if (mode !== 'evm-wagmi') {
+  if (mode !== 'evm') {
     return <Navigate to="/" />
   }
 

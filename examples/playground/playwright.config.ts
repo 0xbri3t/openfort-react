@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
-import { AUTH_STATE_EVM_ONLY, AUTH_STATE_SOLANA, ROOT_OUT, TEST_RESULTS_DIR } from './tests/utils/constants'
+import { AUTH_STATE_SOLANA, ROOT_OUT, TEST_RESULTS_DIR } from './tests/utils/constants'
 
 const PORT = Number(process.env.PLAYGROUND_PORT ?? 5173)
 const BASE_URL = process.env.PLAYGROUND_BASE_URL ?? `http://localhost:${PORT}`
@@ -33,31 +33,12 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'setup-evm-only',
-      testMatch: /auth\.setup\.evm-only\.ts/,
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
       name: 'setup-solana',
       testMatch: /auth\.setup\.solana\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'chromium-evm-only',
-      dependencies: ['setup-evm-only'],
-      testIgnore: [
-        /auth\.spec\.ts/, // needs unauthenticated
-        /wallet-entry\.spec\.ts/, // needs unauthenticated
-        /solana-mint\.spec\.ts/, // Solana-only
-      ],
-      testMatch: /.*\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: AUTH_STATE_EVM_ONLY,
-      },
-    },
-    {
-      name: 'chromium-evm-wagmi',
+      name: 'chromium-evm',
       testIgnore: [
         /auth\.spec\.ts/, // needs unauthenticated
         /wallet-entry\.spec\.ts/, // needs unauthenticated
@@ -88,7 +69,6 @@ export default defineConfig({
         storageState: AUTH_STATE_SOLANA,
       },
     },
-
     {
       name: 'unauthenticated',
       testMatch: /(wallet-entry|auth)\.spec\.ts/,

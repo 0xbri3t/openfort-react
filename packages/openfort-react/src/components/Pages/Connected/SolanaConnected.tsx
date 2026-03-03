@@ -9,44 +9,28 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import type React from 'react'
 import { useEffect } from 'react'
 import { ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
-import { BALANCE_INVALIDATE_EVENT } from '../../../hooks/useBalance'
+import { BALANCE_INVALIDATE_EVENT, fetchSolanaBalance } from '../../../hooks/useBalance'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
+import { formatSol } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
 import { nFormatter, truncateSolanaAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
 import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
-import { TextLinkButton } from '../../Common/Button/styles'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
-import { routes } from '../../Openfort/types'
+import { defaultSendFormState, routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { ConnectedPageLayout } from './ConnectedPageLayout'
 import { ActionButton, Balance, LinkedProvidersToggle } from './styles'
 
-// Helper function to fetch Solana balance
-async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<number> {
-  const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'getBalance',
-      params: [address],
-    }),
-  })
-  const data = await response.json()
-  return data.result?.value ?? 0
-}
-
 const SolanaConnected: React.FC = () => {
   const context = useOpenfort()
-  const { setHeaderLeftSlot, setRoute } = context
+  const { setHeaderLeftSlot, setRoute, setSendForm } = context
   const locales = useLocales()
 
   const wallet = useSolanaEmbeddedWallet()
@@ -67,10 +51,8 @@ const SolanaConnected: React.FC = () => {
     queryFn: async () => {
       if (!address || !rpcUrl) return null
       try {
-        const balanceLamports = await fetchSolanaBalance(rpcUrl, address)
-        const balanceSol = balanceLamports / 1e9
-        logger.log('Solana balance', { address, rpcUrl, lamports: balanceLamports, sol: balanceSol })
-        return balanceSol
+        const balanceLamports = await fetchSolanaBalance(address, rpcUrl, 'confirmed')
+        return balanceLamports.value
       } catch (error) {
         logger.error('Failed to fetch Solana balance:', error)
         return null
@@ -86,8 +68,9 @@ const SolanaConnected: React.FC = () => {
     return () => window.removeEventListener(BALANCE_INVALIDATE_EVENT, handler)
   }, [address, rpcUrl, balanceResult.refetch])
 
-  const balance = balanceResult.data
+  const lamports = balanceResult.data
   const isBalanceLoading = balanceResult.isLoading
+  const balanceSol = lamports != null ? formatSol(BigInt(lamports), 9) : null
 
   // Re-measure when balance loads so the modal expands to fit balance + actions.
   useEffect(() => {
@@ -126,27 +109,16 @@ const SolanaConnected: React.FC = () => {
   const avatar = address ? CustomAvatar ? <CustomAvatar address={address} /> : <Avatar address={address} /> : <span />
 
   const balanceNode =
-    balance != null && !isBalanceLoading ? (
-      <TextLinkButton
-        type="button"
-        onClick={() => {
-          if (balance <= 0) {
-            context.setRoute(routes.NO_ASSETS_AVAILABLE)
-          } else {
-            context.setRoute(routes.SOL_ASSET_INVENTORY)
-          }
-        }}
+    balanceSol != null && !isBalanceLoading ? (
+      <Balance
+        key="solana-balance"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
       >
-        <Balance
-          key="solana-balance"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          {nFormatter(balance)} SOL
-        </Balance>
-      </TextLinkButton>
+        {nFormatter(Number(balanceSol))} SOL
+      </Balance>
     ) : null
 
   return (
@@ -158,7 +130,13 @@ const SolanaConnected: React.FC = () => {
         balance={balanceNode}
         actions={
           <>
-            <ActionButton icon={<SendIcon />} onClick={() => context.setRoute(routes.SOL_SEND)}>
+            <ActionButton
+              icon={<SendIcon />}
+              onClick={() => {
+                setSendForm({ ...defaultSendFormState, asset: { type: 'native', balance: BigInt(0) } })
+                setRoute(routes.SOL_SEND)
+              }}
+            >
               Send
             </ActionButton>
             <ActionButton icon={<ReceiveIcon />} onClick={() => context.setRoute(routes.SOL_RECEIVE)}>

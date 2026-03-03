@@ -22,20 +22,20 @@ function getPlaygroundRpcUrl(chainId?: number): string {
   }
 }
 
-export interface UseAccountLike {
+interface UseAccountLike {
   address?: `0x${string}`
   chainId?: number
   isConnected: boolean
 }
 
-export interface UseReadContractLike {
+interface UseReadContractLike {
   data?: unknown
   refetch: () => void
   error: Error | null
   isLoading: boolean
 }
 
-export interface UseWriteContractLike {
+interface UseWriteContractLike {
   data?: `0x${string}`
   writeContract: (params: {
     address: `0x${string}`
@@ -51,8 +51,7 @@ export interface UseWriteContractLike {
 }
 
 /**
- * EVM account from embedded wallet only. Safe in evm-only (no wagmi).
- * For evm-wagmi, use useConnectedEthereumAccount or wagmi's useAccount.
+ * EVM account from embedded wallet only. For evm mode use useConnectedEthereumAccount or wagmi's useAccount.
  */
 export function useEthereumAccount(): UseAccountLike {
   const { chainType } = useOpenfort()
@@ -125,7 +124,7 @@ export function useEthereumReadContractLocal(params: {
 type WriteParams = { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }
 
 /**
- * Write contract using embedded wallet provider. No wagmi. Safe in evm-only.
+ * Write contract using embedded wallet provider. No wagmi.
  */
 export function useEthereumWriteContractLocal(): UseWriteContractLike {
   const { address } = useEthereumAccount()

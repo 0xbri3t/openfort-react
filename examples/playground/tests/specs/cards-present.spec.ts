@@ -10,8 +10,8 @@ test.describe('Dashboard smoke - key cards are present', () => {
     await expect(page.getByText(/^wallets$/i).first()).toBeVisible({ timeout: 60_000 })
     await expect(page.getByPlaceholder(/enter a message to sign/i)).toBeVisible({ timeout: 60_000 })
 
-    if (m === 'solana-only') {
-      // Solana layout: Signatures, Mint tokens, Session keys (coming soon), Wallets
+    if (m === 'svm') {
+      // SVM layout: Signatures, Mint tokens, Session keys (coming soon), Wallets
       await expect(page.getByText(/signatures/i).first()).toBeVisible({ timeout: 60_000 })
       await expect(page.getByText(/mint.*tokens|mint tokens/i).first()).toBeVisible({ timeout: 60_000 })
       await expect(page.getByText(/session key/i).first()).toBeVisible({ timeout: 60_000 })
@@ -20,7 +20,7 @@ test.describe('Dashboard smoke - key cards are present', () => {
       await expect(page.getByText(/write contract/i).first()).toBeVisible({ timeout: 60_000 })
       await expect(page.getByText(/switch chain/i).first()).toBeVisible({ timeout: 60_000 })
       await expect(page.getByText(/session key/i).first()).toBeVisible({ timeout: 60_000 })
-      if (m === 'evm-wagmi') {
+      if (m === 'evm') {
         // Scroll to bottom so all external connectors are rendered
         await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
         await page.waitForTimeout(500)

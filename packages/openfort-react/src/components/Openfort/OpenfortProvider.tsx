@@ -6,14 +6,13 @@ import {
 } from '@openfort/openfort-js'
 import { Buffer } from 'buffer'
 import type React from 'react'
-import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { DEFAULT_DEV_CHAIN_ID } from '../../core/ConnectionStrategy'
 import { CoreProvider } from '../../core/CoreContext'
 import { OpenfortEthereumBridgeContext } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useThemeFont } from '../../hooks/useGoogleFont'
 import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
 import type { useConnectCallbackProps } from '../../openfort/connectCallbackTypes'
-import { SolanaContextProvider } from '../../solana/SolanaContext'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import { buildChainFromConfig } from '../../utils/rpc'
@@ -35,6 +34,10 @@ import {
   type SetRouteOptions,
   UIAuthProvider,
 } from './types'
+
+const SolanaContextProvider = lazy(() =>
+  import('../../solana/SolanaContext').then((m) => ({ default: m.SolanaContextProvider }))
+)
 
 /** {@link OpenfortProvider} props. */
 type OpenfortProviderProps = {
@@ -242,7 +245,7 @@ export const OpenfortProvider = ({
   useEffect(() => {
     if (hasWagmi && isConnected && safeUiConfig.enforceSupportedChains && !isChainSupported) {
       setOpen(true)
-      setRoute({ route: routes.SWITCHNETWORKS })
+      setRoute({ route: routes.ETH_SWITCH_NETWORK })
     }
   }, [hasWagmi, isConnected, isChainSupported, safeUiConfig.enforceSupportedChains, setOpen, setRoute])
 
@@ -480,7 +483,9 @@ export const OpenfortProvider = ({
             onDisconnect={onDisconnect}
           >
             {hasSolana ? (
-              <SolanaContextProvider config={walletConfig!.solana!}>{innerChildren}</SolanaContextProvider>
+              <Suspense fallback={null}>
+                <SolanaContextProvider config={walletConfig!.solana!}>{innerChildren}</SolanaContextProvider>
+              </Suspense>
             ) : (
               innerChildren
             )}

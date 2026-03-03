@@ -1,8 +1,9 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import type { SolanaCluster } from '../../solana/types'
+import { logger } from '../../utils/logger'
 
 /** Options for building a block explorer URL. */
-export type ExplorerUrlOptions = {
+type ExplorerUrlOptions = {
   address?: string
   txHash?: string
   chainId?: number
@@ -27,24 +28,42 @@ const EVM_EXPLORER_BY_CHAIN_ID: Record<number, string> = {
   421614: 'https://sepolia.arbiscan.io',
 }
 
-function appendPath(base: string, options: { address?: string; txHash?: string }): string {
-  if (options.address) return `${base}/address/${options.address}`
-  if (options.txHash) return `${base}/tx/${options.txHash}`
-  return base
+function appendPath(base: string, options: { address?: string; txHash?: string }, queryParams?: string): string {
+  let path = base
+  if (options.address) path = `${base}/address/${options.address}`
+  else if (options.txHash) path = `${base}/tx/${options.txHash}`
+  return queryParams ? `${path}?${queryParams}` : path
 }
 
 type ExplorerUrlBuilder = (options: ExplorerUrlOptions) => string
 
 const explorerRegistry: Record<ChainTypeEnum, ExplorerUrlBuilder> = {
   [ChainTypeEnum.EVM]: (options) => {
-    const chainId = options.chainId ?? 13337
-    const base = EVM_EXPLORER_BY_CHAIN_ID[chainId] ?? 'https://amoy.polygonscan.com'
+    if (!options.chainId) {
+      logger.warn(
+        'No chain ID provided. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.'
+      )
+      return 'https://amoy.polygonscan.com'
+    }
+    if (!EVM_EXPLORER_BY_CHAIN_ID[options.chainId]) {
+      logger.warn(
+        `No explorer URL found for chain ${options.chainId}. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.`
+      )
+      return 'https://amoy.polygonscan.com'
+    }
+    const base = EVM_EXPLORER_BY_CHAIN_ID[options.chainId]
     return appendPath(base, options)
   },
   [ChainTypeEnum.SVM]: (options) => {
-    const cluster = options.cluster ?? 'devnet'
-    const base = cluster === 'mainnet-beta' ? SOLANA_EXPLORER_BASE : `${SOLANA_EXPLORER_BASE}/?cluster=${cluster}`
-    return appendPath(base, options)
+    if (!options.cluster) {
+      logger.warn(
+        'No cluster provided. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.'
+      )
+      return appendPath(SOLANA_EXPLORER_BASE, options)
+    }
+    const clusterParam =
+      options.cluster === 'mainnet-beta' ? undefined : `cluster=${encodeURIComponent(options.cluster)}`
+    return appendPath(SOLANA_EXPLORER_BASE, options, clusterParam)
   },
 }
 

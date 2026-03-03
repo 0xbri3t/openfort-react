@@ -2,41 +2,37 @@
  * Solana Context Provider
  *
  * Provides Solana configuration (cluster, RPC URL, commitment) to descendant components.
- * Cluster selection is stateful and persisted to localStorage (openfort:solana:cluster).
+ * Cluster is stateful (can be changed via setCluster) but not persisted across reloads.
  */
 
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
-import type { SolanaCluster, SolanaClusterConfig, SolanaCommitment, SolanaConfig } from './types'
-
-const STORAGE_KEY = 'openfort:solana:cluster'
+import type { SolanaCluster, SolanaCommitment, SolanaConfig } from './types'
 
 /**
  * Solana context value with resolved configuration
  */
-export interface SolanaContextValue {
+interface SolanaContextValue {
   /** Active Solana cluster */
   cluster: SolanaCluster
-  /** RPC URL (resolved from config, custom cluster, or default) */
+  /** RPC URL (resolved from config or default) */
   rpcUrl: string
   /** Transaction commitment level */
   commitment: SolanaCommitment
-  /** Custom cluster list from config (if any) */
-  customClusters: SolanaClusterConfig[] | undefined
-  /** Set active cluster (and optional rpcUrl for custom); persists to localStorage */
-  setCluster: (cluster: SolanaCluster, rpcUrl?: string) => void
+  /** Set active cluster (in-memory only; resets on reload) */
+  setCluster: (cluster: SolanaCluster) => void
 }
 
-const DEFAULT_RPC_URLS: Partial<Record<Exclude<SolanaCluster, 'custom'>, string>> = {
+const DEFAULT_RPC_URLS: Partial<Record<SolanaCluster, string>> = {
   devnet: 'https://api.devnet.solana.com',
   testnet: 'https://api.testnet.solana.com',
+  'mainnet-beta': 'https://api.mainnet-beta.solana.com',
 }
 
 function getDefaultRpcUrl(cluster: SolanaCluster): string {
-  if (cluster === 'custom') return DEFAULT_RPC_URLS.devnet!
   return DEFAULT_RPC_URLS[cluster] ?? DEFAULT_RPC_URLS.devnet!
 }
 
-export interface SolanaContextProviderProps {
+interface SolanaContextProviderProps {
   /** Solana configuration from OpenfortWalletConfig */
   config: SolanaConfig
   /** Child components */
@@ -68,49 +64,7 @@ export const SolanaContext = createContext<SolanaContextValue | null>(null)
  * </OpenfortProvider>
  * ```
  */
-const DEFAULT_CLUSTERS: SolanaCluster[] = ['devnet', 'testnet']
-
-type StoredCluster = { cluster: SolanaCluster; rpcUrl?: string } | null
-
-function readStoredCluster(): StoredCluster {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    // Dev/test environment: only allow devnet, testnet, custom — never mainnet-beta
-    if (raw === 'mainnet-beta') return null
-    if (DEFAULT_CLUSTERS.includes(raw as SolanaCluster)) return { cluster: raw as SolanaCluster }
-    if (raw === 'custom') return { cluster: 'custom' }
-    const parsed = JSON.parse(raw) as { cluster?: string; rpcUrl?: string }
-    if (parsed?.cluster === 'mainnet-beta') return null
-    if (parsed?.cluster === 'custom' && typeof parsed?.rpcUrl === 'string')
-      return { cluster: 'custom', rpcUrl: parsed.rpcUrl }
-    return null
-  } catch {
-    return null
-  }
-}
-
-function writeStoredCluster(cluster: SolanaCluster, rpcUrl?: string) {
-  if (typeof window === 'undefined') return
-  const storage = window.localStorage
-  try {
-    if (DEFAULT_CLUSTERS.includes(cluster)) {
-      storage.setItem(STORAGE_KEY, cluster)
-    } else if (cluster === 'custom' && rpcUrl) {
-      storage.setItem(STORAGE_KEY, JSON.stringify({ cluster: 'custom', rpcUrl }))
-    } else {
-      storage.setItem(STORAGE_KEY, cluster)
-    }
-  } catch {
-    // ignore
-  }
-}
-
-function resolveRpcUrl(cluster: SolanaCluster, rpcUrlOverride: string | undefined, config: SolanaConfig): string {
-  if (rpcUrlOverride !== undefined) return rpcUrlOverride
-  const customMatch = config.customClusters?.find((c) => c.cluster === cluster)
-  if (customMatch) return customMatch.rpcUrl
+function resolveRpcUrl(cluster: SolanaCluster, config: SolanaConfig): string {
   const url = config.rpcUrls?.[cluster]
   if (url) return url
   return getDefaultRpcUrl(cluster)
@@ -120,21 +74,14 @@ const DEFAULT_CLUSTER: SolanaCluster = 'devnet'
 
 export function SolanaContextProvider({ config, children }: SolanaContextProviderProps) {
   const [cluster, setClusterState] = useState<SolanaCluster>(() => {
-    const s = readStoredCluster()
-    const fromStored = s?.cluster
     const fromConfig = config.cluster
-    // Dev/test environment: never use mainnet-beta as default
-    if (fromStored === 'mainnet-beta' || fromConfig === 'mainnet-beta') return DEFAULT_CLUSTER
-    return fromStored ?? fromConfig
+    return fromConfig ?? DEFAULT_CLUSTER
   })
-  const [rpcUrlOverride, setRpcUrlOverride] = useState<string | undefined>(() => readStoredCluster()?.rpcUrl)
 
-  const rpcUrl = useMemo(() => resolveRpcUrl(cluster, rpcUrlOverride, config), [cluster, rpcUrlOverride, config])
+  const rpcUrl = useMemo(() => resolveRpcUrl(cluster, config), [cluster, config])
 
-  const setCluster = useCallback((newCluster: SolanaCluster, customRpcUrl?: string) => {
+  const setCluster = useCallback((newCluster: SolanaCluster) => {
     setClusterState(newCluster)
-    setRpcUrlOverride(customRpcUrl)
-    writeStoredCluster(newCluster, customRpcUrl)
   }, [])
 
   const value = useMemo<SolanaContextValue>(
@@ -142,10 +89,9 @@ export function SolanaContextProvider({ config, children }: SolanaContextProvide
       cluster,
       rpcUrl,
       commitment: config.commitment ?? 'confirmed',
-      customClusters: config.customClusters,
       setCluster,
     }),
-    [cluster, rpcUrl, config.commitment, config.customClusters, setCluster]
+    [cluster, rpcUrl, config.commitment, setCluster]
   )
 
   return <SolanaContext.Provider value={value}>{children}</SolanaContext.Provider>

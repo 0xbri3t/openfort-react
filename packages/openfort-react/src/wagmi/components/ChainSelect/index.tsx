@@ -1,21 +1,17 @@
-import { ChainTypeEnum } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { css } from 'styled-components'
-
+import { useChainId, useSwitchChain } from 'wagmi'
+import Chain from '../../../components/Common/Chain'
+import Tooltip from '../../../components/Common/Tooltip'
+import { routes } from '../../../components/Openfort/types'
+import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import defaultTheme from '../../../constants/defaultTheme'
-import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import useLocales from '../../../hooks/useLocales'
-import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import styled from '../../../styles/styled'
 import { flattenChildren, isMobile } from '../../../utils'
-import { routes } from '../../Openfort/types'
-import { useOpenfort } from '../../Openfort/useOpenfort'
-import Chain from '../Chain'
 import ChainSelectDropdown from '../ChainSelectDropdown'
-import Tooltip from '../Tooltip'
 
 const Container = styled(motion.div)``
 
@@ -130,29 +126,24 @@ const ChevronDown = ({ ...props }) => (
 const ChainSelector: React.FC = () => {
   const context = useOpenfort()
   const [isOpen, setIsOpen] = useState(false)
-  const { chainType } = useOpenfortCore()
+  const chainId = useChainId()
+  const { chains } = useSwitchChain()
 
-  // Use chain-specific hooks
-  const ethereumWallet = useEthereumEmbeddedWallet()
-  const solanaWallet = useSolanaEmbeddedWallet()
-  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-
-  const { chains } = useOpenfort()
-
-  // Find current chain from connected wallet
-  const isConnected = wallet.status === 'connected'
-  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
   const chain = chains.find((c) => c.id === chainId)
 
   const locales = useLocales({
     CHAIN: chain?.name ?? 'UNKNOWN',
   })
 
-  const mobile = isMobile() || window?.innerWidth < defaultTheme.mobileWidth
+  const mobile = isMobile() || (typeof window !== 'undefined' && window?.innerWidth < defaultTheme.mobileWidth)
 
   useEffect(() => {
     if (!context.open) setIsOpen(false)
   }, [context.open])
+
+  useEffect(() => {
+    context.triggerResize()
+  }, [chainId, context])
 
   const disabled = chains.length <= 1
 
@@ -165,7 +156,7 @@ const ChainSelector: React.FC = () => {
             disabled={disabled}
             onClick={() => {
               if (mobile) {
-                context.setRoute(routes.SWITCHNETWORKS)
+                context.setRoute(routes.ETH_SWITCH_NETWORK)
               } else {
                 setIsOpen(!isOpen)
               }

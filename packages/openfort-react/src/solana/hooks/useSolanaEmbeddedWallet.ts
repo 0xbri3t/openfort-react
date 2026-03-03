@@ -1,5 +1,4 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
-import { Buffer } from 'buffer'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
@@ -9,7 +8,7 @@ import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } fr
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
 import { formatAddress } from '../../utils/format'
-import { getDefaultSolanaRpcUrlWithFallback } from '../../utils/rpc'
+import { getDefaultSolanaRpcUrl } from '../../utils/rpc'
 import { getTransactionBytes } from '../operations'
 import { createSolanaProvider } from '../provider'
 import { SolanaContext } from '../SolanaContext'
@@ -108,7 +107,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
     setActiveEmbeddedAddress,
     setWalletStatus,
   } = useOpenfortCore()
-  const { walletConfig } = useOpenfort()
+  const { walletConfig, chainType } = useOpenfort()
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
 
@@ -136,7 +135,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
         },
         signTransaction: async (transaction: SolanaTransaction): Promise<SignedSolanaTransaction> => {
           const messageBytes = getTransactionBytes(transaction)
-          const signature = await client.embeddedWallet.signMessage(Buffer.from(messageBytes).toString('base64'), {
+          const signature = await client.embeddedWallet.signMessage(new Uint8Array(messageBytes), {
             hashMessage: false, // Ed25519 - no keccak256
           })
           return {
@@ -148,7 +147,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
           const results = await Promise.all(
             transactions.map(async (tx) => {
               const messageBytes = getTransactionBytes(tx)
-              const signature = await client.embeddedWallet.signMessage(Buffer.from(messageBytes).toString('base64'), {
+              const signature = await client.embeddedWallet.signMessage(new Uint8Array(messageBytes), {
                 hashMessage: false, // Ed25519 - no keccak256
               })
               return {
@@ -424,8 +423,15 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
       })
     }
 
-    // activeEmbeddedAddress is from other chain (e.g. EVM); auto-activate first SVM wallet
-    if (!accountByAddress && activeEmbeddedAddress && solanaAccounts.length > 0 && state.status === 'disconnected') {
+    // activeEmbeddedAddress is from other chain (e.g. EVM); auto-activate first SVM wallet.
+    // Only when on SVM view to prevent ping-pong with Ethereum hook.
+    if (
+      chainType === ChainTypeEnum.SVM &&
+      !accountByAddress &&
+      activeEmbeddedAddress &&
+      solanaAccounts.length > 0 &&
+      state.status === 'disconnected'
+    ) {
       setActiveEmbeddedAddress(solanaAccounts[0].address)
     }
   }, [
@@ -435,6 +441,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
     solanaAccounts,
     embeddedState,
     activeEmbeddedAddress,
+    chainType,
     createProviderForAccount,
     setActiveEmbeddedAddress,
   ])
@@ -459,7 +466,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
     solanaContext && solanaContext.cluster === cluster
       ? solanaContext.rpcUrl
       : cluster
-        ? getDefaultSolanaRpcUrlWithFallback(cluster)
+        ? getDefaultSolanaRpcUrl(cluster)
         : solanaContext?.rpcUrl
 
   const connectedStateProps = useMemo(

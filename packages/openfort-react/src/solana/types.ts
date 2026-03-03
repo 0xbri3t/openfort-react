@@ -17,21 +17,7 @@ import type {
 /**
  * Solana cluster identifier
  */
-export type SolanaCluster = 'mainnet-beta' | 'devnet' | 'testnet' | 'custom'
-
-/**
- * Custom cluster entry for the cluster switcher
- */
-export type SolanaClusterConfig = {
-  /** Display name (e.g. "My Devnet") */
-  name: string
-  /** Network identifier for explorer links etc. */
-  cluster: SolanaCluster
-  /** RPC endpoint (required for custom clusters) */
-  rpcUrl: string
-  /** Optional WebSocket URL */
-  wsUrl?: string
-}
+export type SolanaCluster = 'mainnet-beta' | 'devnet' | 'testnet'
 
 /**
  * Solana commitment level for transactions
@@ -42,8 +28,6 @@ export type SolanaCommitment = 'processed' | 'confirmed' | 'finalized'
  * UI options for Solana-connected views (e.g. SolanaConnected page)
  */
 export type SolanaUIOptions = {
-  /** When true, hide the cluster badge and switch button */
-  hideClusterSelector?: boolean
   /** Custom avatar component; receives address for display */
   customAvatar?: React.ComponentType<{ address: string }>
 }
@@ -72,8 +56,6 @@ export type SolanaConfig = {
   rpcUrls?: Partial<Record<'mainnet-beta' | 'devnet' | 'testnet', string>>
   /** Commitment level for transactions (default: 'confirmed') */
   commitment?: SolanaCommitment
-  /** Custom cluster options for the cluster switcher */
-  customClusters?: SolanaClusterConfig[]
   /** UI options for Solana-connected screens */
   ui?: SolanaUIOptions
 }

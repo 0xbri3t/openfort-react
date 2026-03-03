@@ -1,10 +1,10 @@
 /**
  * Dynamic provider tree for the Openfort playground.
  *
- * - evm-wagmi: ThemeProvider → QueryClientProvider → WagmiProvider → OpenfortWagmiBridge → OpenfortProvider
- * - evm-only / solana-only: ThemeProvider → OpenfortProvider (no wagmi, no TanStack Query)
+ * - evm: ThemeProvider → QueryClientProvider → WagmiProvider → OpenfortWagmiBridge → OpenfortProvider
+ * - svm: ThemeProvider → OpenfortProvider (no wagmi, no TanStack Query)
  *
- * Switching modes remounts the provider tree; wagmi/tanstack state is lost when leaving evm-wagmi.
+ * Switching modes remounts the provider tree; wagmi/tanstack state is lost when leaving evm.
  */
 
 import { OpenfortProvider } from '@openfort/react'
@@ -18,15 +18,15 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { EthereumAddressProviderEmbedded, EthereumAddressProviderWagmi } from '@/contexts/EthereumAddressContext'
 import { useAppStore } from './lib/useAppStore'
 
-export type OpenfortPlaygroundMode = 'evm-only' | 'solana-only' | 'evm-wagmi'
+export type OpenfortPlaygroundMode = 'svm' | 'evm'
 
 const STORAGE_KEY = 'openfort-playground-mode'
 
 function readStoredMode(): OpenfortPlaygroundMode {
-  if (typeof window === 'undefined') return 'evm-only'
+  if (typeof window === 'undefined') return 'svm'
   const raw = localStorage.getItem(STORAGE_KEY)
-  if (raw === 'evm-wagmi' || raw === 'solana-only') return raw
-  return 'evm-only'
+  if (raw === 'evm' || raw === 'svm') return raw
+  return 'evm'
 }
 
 type PlaygroundModeContextValue = {
@@ -66,7 +66,7 @@ export function usePlaygroundMode(): PlaygroundModeContextValue {
   return ctx
 }
 
-/** Optional: called before mode switch when in evm-wagmi (e.g. to clear wagmi cache). */
+/** Optional: called before mode switch when in evm (e.g. to clear wagmi cache). */
 const ModeSwitchContext = createContext<{ onBeforeModeSwitch?: () => void }>({})
 export const useModeSwitchContext = () => useContext(ModeSwitchContext)
 
@@ -133,7 +133,7 @@ export function Providers({ children }: { children?: React.ReactNode }) {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      {mode === 'evm-wagmi' ? (
+      {mode === 'evm' ? (
         <WagmiProviders>{children}</WagmiProviders>
       ) : (
         <OpenfortOnlyProviders>{children}</OpenfortOnlyProviders>

@@ -12,7 +12,7 @@ const DEFAULT_POLYGON_MINT = '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'
 /** Contract type: Beam uses claim(amount), Polygon uses mint(address, amount) */
 type MintContractType = 'claim' | 'mint'
 
-export interface MintContractConfig {
+interface MintContractConfig {
   address: string
   type: MintContractType
 }

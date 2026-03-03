@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 
-export type PlaygroundMode = 'evm-only' | 'solana-only' | 'evm-wagmi'
+export type PlaygroundMode = 'evm' | 'svm'
 
 export function setPlaygroundMode(page: Page, mode: PlaygroundMode) {
   return page.addInitScript((m) => {
@@ -9,9 +9,8 @@ export function setPlaygroundMode(page: Page, mode: PlaygroundMode) {
 }
 
 export function getModeFromProjectName(projectName: string): PlaygroundMode {
-  if (projectName.includes('evm-only')) return 'evm-only'
-  if (projectName.includes('evm-wagmi')) return 'evm-wagmi'
-  if (projectName.includes('solana')) return 'solana-only'
+  if (projectName.includes('evm')) return 'evm'
+  if (projectName.includes('solana')) return 'svm'
   throw new Error('Invalid project name')
 }
 

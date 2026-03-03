@@ -7,12 +7,13 @@ import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
+import SwitchNetworks from '../../wagmi/components/SwitchNetworks'
 import Modal from '../Common/Modal'
 import { ConnectKitThemeProvider } from '../ConnectKitThemeProvider/ConnectKitThemeProvider'
 import { routes, type SetRouteOptions } from '../Openfort/types'
 import { useOpenfort } from '../Openfort/useOpenfort'
 import About from '../Pages/About'
-import { AssetInventory, SolanaAssetInventory } from '../Pages/AssetInventory'
+import { AssetInventory } from '../Pages/AssetInventory'
 import Buy from '../Pages/Buy'
 import BuyComplete from '../Pages/BuyComplete'
 import BuyProcessing from '../Pages/BuyProcessing'
@@ -49,8 +50,8 @@ import Send from '../Pages/Send'
 import { SolanaSend } from '../Pages/Send/SolanaSend'
 import SendConfirmation from '../Pages/SendConfirmation'
 import SocialProviders from '../Pages/SoicalProviders'
+import SolanaSendConfirmation from '../Pages/SolanaSendConfirmation'
 import SolanaWallets from '../Pages/SolanaWallets'
-import SwitchNetworks from '../Pages/SwitchNetworks'
 import ConnectUsing from './ConnectUsing'
 import ConnectWithMobile from './ConnectWithMobile'
 
@@ -81,7 +82,6 @@ function buildSharedPages(): RoutePages {
     connect: <ConnectUsing />,
     connected: <Connected />,
     profile: <Profile />,
-    switchNetworks: <SwitchNetworks />,
     linkedProviders: <LinkedProviders />,
     linkedProvider: <LinkedProvider />,
     removeLinkedProvider: <RemoveLinkedProvider />,
@@ -119,8 +119,8 @@ const CHAIN_PREFIXED_PAGES: Record<ChainTypeEnum, RoutePages> = {
     'sol:createWallet': <CreateWallet />,
     'sol:recoverWallet': <RecoverPage />,
     'sol:send': <SolanaSend />,
+    'sol:sendConfirmation': <SolanaSendConfirmation />,
     'sol:receive': <Receive />,
-    'sol:assetInventory': <SolanaAssetInventory />,
     'sol:wallets': <SolanaWallets />,
   },
 }

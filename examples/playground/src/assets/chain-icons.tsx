@@ -64,33 +64,7 @@ const SolanaIcon = ({ className, size = 20 }: { className?: string; size?: numbe
   </svg>
 )
 
-const WagmiIcon = ({ className, size = 20 }: { className?: string; size?: number }) => (
-  <svg
-    className={className}
-    role="img"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-    id="Wagmi--Streamline-Simple-Icons"
-    height={size}
-    width={size}
-  >
-    <desc>Wagmi Streamline Icon: https://streamlinehq.com</desc>
-    <title>Wagmi</title>
-    <path
-      d="M2.7391 13.2065c0 0.7564 0.6132 1.3696 1.3696 1.3696h2.7391c0.7564 0 1.3696 -0.6132 1.3696 -1.3696V7.7283c0 -0.7564 0.6132 -1.3696 1.3696 -1.3696s1.3695 0.6132 1.3695 1.3696v5.4782c0 0.7564 0.6132 1.3696 1.3696 1.3696h2.7391c0.7564 0 1.3696 -0.6132 1.3696 -1.3696V7.7283c0 -0.7564 0.6131 -1.3696 1.3695 -1.3696s1.3696 0.6132 1.3696 1.3696v8.2174c0 0.7564 -0.6132 1.3695 -1.3696 1.3695H1.3696C0.6132 17.3152 0 16.7021 0 15.9457V7.7283c0 -0.7564 0.6132 -1.3696 1.3696 -1.3696s1.3695 0.6132 1.3695 1.3696zm19.4348 4.4348c1.0085 0 1.8261 -0.8176 1.8261 -1.826 0 -1.0086 -0.8176 -1.8262 -1.826 -1.8262 -1.0086 0 -1.8262 0.8176 -1.8262 1.8261 0 1.0085 0.8176 1.826 1.8261 1.826z"
-      fill="#000000"
-      strokeWidth={1}
-    ></path>
-  </svg>
-)
-
 export const MODE_ICONS: Record<OpenfortPlaygroundMode, React.ReactNode> = {
-  'evm-only': <EthereumIcon size={18} />,
-  'solana-only': <SolanaIcon size={18} />,
-  'evm-wagmi': (
-    <span className="flex items-center gap-1">
-      <EthereumIcon size={16} />
-      <WagmiIcon size={16} />
-    </span>
-  ),
+  svm: <SolanaIcon size={18} />,
+  evm: <EthereumIcon size={16} />,
 }

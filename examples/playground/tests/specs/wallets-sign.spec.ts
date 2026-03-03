@@ -19,7 +19,7 @@ test.describe('Dashboard integration - wallets + signatures', () => {
     const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
     await expect(walletsCard).toBeVisible({ timeout: 60_000 })
 
-    const addressRegex = m === 'solana-only' ? SOLANA_ADDRESS_DISPLAY_REGEX : EVM_ADDRESS_REGEX
+    const addressRegex = m === 'svm' ? SOLANA_ADDRESS_DISPLAY_REGEX : EVM_ADDRESS_REGEX
     const walletRowLocator = walletsCard.locator('button').filter({
       hasText: addressRegex,
     })
@@ -31,7 +31,7 @@ test.describe('Dashboard integration - wallets + signatures', () => {
     await expect(createNewBtn).toBeVisible({ timeout: 30_000 })
     await createNewBtn.click()
 
-    if (m !== 'solana-only') {
+    if (m !== 'svm') {
       await walletsCard.getByRole('button', { name: /smart account/i }).click()
     }
 

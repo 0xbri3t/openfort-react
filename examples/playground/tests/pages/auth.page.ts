@@ -43,7 +43,7 @@ export class AuthPage {
       await guestBtn.click({ timeout: 30_000 })
     }
 
-    const connectedRegex = mode === 'solana-only' ? /Connected with/i : /Connected with 0x/i
+    const connectedRegex = mode === 'svm' ? /Connected with/i : /Connected with 0x/i
     const connectTimeout = 120_000
     await expect(this.page.getByText(connectedRegex)).toBeVisible({ timeout: connectTimeout })
   }

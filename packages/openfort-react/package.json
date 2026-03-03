@@ -24,7 +24,7 @@
       "import": "./build/ethereum/index.es.js"
     },
     "./wagmi": {
-      "types": "./build/wagmi/wagmi/index.d.ts",
+      "types": "./build/wagmi/index.d.ts",
       "import": "./build/wagmi/index.es.js"
     }
   },
@@ -38,7 +38,7 @@
         "./build/ethereum/index.d.ts"
       ],
       "wagmi": [
-        "./build/wagmi/wagmi/index.d.ts"
+        "./build/wagmi/index.d.ts"
       ]
     }
   },
@@ -90,8 +90,7 @@
     "react-dom": "17.x || 18.x || 19.x",
     "styled-components": "^5.3.5",
     "viem": "2.x",
-    "wagmi": "2.x",
-    "@tanstack/react-query": "5.x"
+    "wagmi": "2.x"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
@@ -101,7 +100,7 @@
     "@types/react": "^18.0.6",
     "@types/react-dom": "^18.0.2",
     "@types/styled-components": "^5.1.25",
-    "@wagmi/connectors": "^6.1.0",
+    "@wagmi/connectors": "^6.2.0",
     "@wagmi/core": "^2.22.1",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-typescript2": "^0.36.0",

@@ -45,7 +45,7 @@ export function useAutoConnectOnModeSwitch(mode: OpenfortPlaygroundMode) {
     hasRunForModeRef.current = mode
     prevModeRef.current = mode
 
-    const targetChain = mode === 'solana-only' ? ChainTypeEnum.SVM : ChainTypeEnum.EVM
+    const targetChain = mode === 'svm' ? ChainTypeEnum.SVM : ChainTypeEnum.EVM
     const wallet = targetChain === ChainTypeEnum.SVM ? solanaWallet : ethereumWallet
 
     if (wallet.status === 'connected') return

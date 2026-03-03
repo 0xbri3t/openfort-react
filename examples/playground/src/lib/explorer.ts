@@ -1,7 +1,7 @@
 import { ChainTypeEnum } from '@openfort/react'
 import type { SolanaCluster } from '@openfort/react/solana'
 
-export type ExplorerUrlOptions = {
+type ExplorerUrlOptions = {
   address?: string
   txHash?: string
   chainId?: number
@@ -26,10 +26,11 @@ const EVM_EXPLORER_BY_CHAIN_ID: Record<number, string> = {
   421614: 'https://sepolia.arbiscan.io',
 }
 
-function appendPath(base: string, options: { address?: string; txHash?: string }): string {
-  if (options.address) return `${base}/address/${options.address}`
-  if (options.txHash) return `${base}/tx/${options.txHash}`
-  return base
+function appendPath(base: string, options: { address?: string; txHash?: string }, queryParams?: string): string {
+  let path = base
+  if (options.address) path = `${base}/address/${options.address}`
+  else if (options.txHash) path = `${base}/tx/${options.txHash}`
+  return queryParams ? `${path}?${queryParams}` : path
 }
 
 export function getExplorerUrl(chainType: ChainTypeEnum, options: ExplorerUrlOptions): string {
@@ -40,6 +41,6 @@ export function getExplorerUrl(chainType: ChainTypeEnum, options: ExplorerUrlOpt
   }
 
   const cluster = options.cluster ?? 'devnet'
-  const base = cluster === 'mainnet-beta' ? SOLANA_EXPLORER_BASE : `${SOLANA_EXPLORER_BASE}/?cluster=${cluster}`
-  return appendPath(base, options)
+  const clusterParam = cluster === 'mainnet-beta' ? undefined : `cluster=${encodeURIComponent(cluster)}`
+  return appendPath(SOLANA_EXPLORER_BASE, options, clusterParam)
 }

@@ -129,10 +129,12 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     setActiveEmbeddedAddress,
     setWalletStatus,
     activeEmbeddedAddress,
-    activeChainId,
   } = useOpenfortCore()
-  const { walletConfig } = useOpenfort()
+  const { walletConfig, chainType } = useOpenfort()
   const strategy = useConnectionStrategy()
+
+  const activeChainId = strategy?.getActiveChainId?.() ?? strategy?.getChainId()
+  const setActiveChainId = strategy?.setActiveChainId ?? (() => {})
 
   const creationChainId = options?.chainId ?? DEFAULT_CHAIN_ID
   const activeReturnChainId = activeChainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
@@ -415,8 +417,10 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       setActive,
       setRecovery,
       exportPrivateKey,
+      activeChainId,
+      setActiveChainId,
     }),
-    [create, wallets, setActive, setRecovery, exportPrivateKey]
+    [create, wallets, setActive, setRecovery, exportPrivateKey, activeChainId, setActiveChainId]
   )
 
   // Clear local state when core clears activeEmbeddedAddress (e.g. logout).
@@ -466,8 +470,15 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       }
     }
 
-    // activeEmbeddedAddress is from other chain (e.g. SVM); auto-activate first EVM wallet
-    if (!accountByAddress && activeEmbeddedAddress && ethereumAccounts.length > 0 && state.status === 'disconnected') {
+    // activeEmbeddedAddress is from other chain (e.g. SVM); auto-activate first EVM wallet.
+    // Only when on EVM view to prevent ping-pong with Solana hook.
+    if (
+      chainType === ChainTypeEnum.EVM &&
+      !accountByAddress &&
+      activeEmbeddedAddress &&
+      ethereumAccounts.length > 0 &&
+      state.status === 'disconnected'
+    ) {
       setActiveEmbeddedAddress(ethereumAccounts[0].address)
     }
   }, [
@@ -477,6 +488,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     ethereumAccounts,
     embeddedState,
     activeEmbeddedAddress,
+    chainType,
     getEmbeddedEthereumProvider,
     setActiveEmbeddedAddress,
   ])

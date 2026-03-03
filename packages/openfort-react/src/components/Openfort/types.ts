@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
 import type { Hex } from 'viem'
 import type { getAssets } from 'viem/experimental/erc7811'
-import type { EthereumWalletConfig } from '../../ethereum/types'
+import type { EthereumConfig } from '../../ethereum/types'
 import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/walletTypes'
 import type { UserAccount } from '../../openfortCustomTypes'
 import type { SolanaConfig } from '../../solana/types'
@@ -74,6 +74,7 @@ export const routes = {
   SOL_CREATE_WALLET: 'sol:createWallet',
   SOL_RECOVER_WALLET: 'sol:recoverWallet',
   SOL_SEND: 'sol:send',
+  SOL_SEND_CONFIRMATION: 'sol:sendConfirmation',
   SOL_RECEIVE: 'sol:receive',
   SOL_ASSET_INVENTORY: 'sol:assetInventory',
   SOL_WALLETS: 'sol:wallets',
@@ -224,7 +225,7 @@ export type DebugModeOptions = {
 export type OpenfortWalletConfig = CommonWalletConfig &
   EncryptionSession &
   RecoverWithOTP & {
-    ethereum?: EthereumWalletConfig
+    ethereum?: EthereumConfig
     solana?: SolanaConfig
   }
 

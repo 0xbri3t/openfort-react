@@ -1,61 +1,33 @@
-import {
-  address,
-  appendTransactionMessageInstruction,
-  compileTransaction,
-  createSolanaRpc,
-  createTransactionMessage,
-  pipe,
-  setTransactionMessageFeePayer,
-  setTransactionMessageLifetimeUsingBlockhash,
-} from '@solana/kit'
-import { useCallback, useState } from 'react'
-import { OpenfortError } from '../../../core/errors'
-import { invalidateBalance } from '../../../hooks/useBalance'
+import { useCallback } from 'react'
+import { fetchSolanaBalance } from '../../../hooks/useBalance'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
-import { FEE_LAMPORTS, LAMPORTS_PER_SOL, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
+import { FEE_LAMPORTS, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
-import { solToLamports } from '../../../solana/hooks/utils'
+import { formatSol, solToLamports } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
-import { createTransferSolInstruction } from '../../../solana/utils/transfer'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import Input from '../../Common/Input'
 import { ModalHeading } from '../../Common/Modal/styles'
+import type { SendFormState } from '../../Openfort/types'
 import { routes } from '../../Openfort/types'
+import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { AmountInputWrapper, ErrorText, Field, FieldLabel, Form, HelperText, MaxButton } from './styles'
-import { sanitizeAmountInput } from './utils'
+import { sanitizeAmountInput, sanitizeForParsing } from './utils'
 
-// Helper function to fetch Solana balance (shared with SolanaConnected)
-async function fetchSolanaBalance(rpcUrl: string, address: string): Promise<number> {
-  const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'getBalance',
-      params: [address],
-    }),
-  })
-  const data = await response.json()
-  return data.result?.value ?? 0
-}
-
-function formatSol(lamports: bigint, decimals = 4): string {
-  return (Number(lamports) / Number(LAMPORTS_PER_SOL)).toFixed(decimals)
-}
+const RENT_EXEMPT_LAMPORTS = BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
 
 export function SolanaSend() {
   const { rpcUrl } = useSolanaContext()
+  const { sendForm, setSendForm, setRoute } = useOpenfort()
   const wallet = useSolanaEmbeddedWallet()
-  const [recipient, setRecipient] = useState('')
-  const [amount, setAmount] = useState('')
-  const [txStatus, setTxStatus] = useState<'idle' | 'signing' | 'sending' | 'confirmed' | 'error'>('idle')
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const walletAddress = wallet.status === 'connected' ? wallet.activeWallet.address : undefined
+  const recipient = sendForm.recipient
+  const amount = sendForm.amount
+
+  const walletAddress = wallet.status === 'connected' ? wallet.activeWallet?.address : undefined
   const provider = wallet.status === 'connected' ? wallet.provider : null
 
   const balanceResult = useAsyncData({
@@ -63,8 +35,8 @@ export function SolanaSend() {
     queryFn: async () => {
       if (!walletAddress || !rpcUrl) return null
       try {
-        const balanceLamports = await fetchSolanaBalance(rpcUrl, walletAddress)
-        return { value: BigInt(balanceLamports) }
+        const result = await fetchSolanaBalance(walletAddress, rpcUrl, 'confirmed')
+        return { value: result.value }
       } catch (error) {
         logger.error('Failed to fetch Solana balance:', error)
         return null
@@ -73,10 +45,7 @@ export function SolanaSend() {
     enabled: Boolean(walletAddress && rpcUrl),
   })
 
-  const balanceData = balanceResult.data
-  const refetchBalance = () => balanceResult.refetch()
-
-  const balanceLamports = balanceData?.value ?? BigInt(0)
+  const balanceLamports = balanceResult.data?.value ?? BigInt(0)
   const recipientValid = recipient.length > 0 && isValidSolanaAddress(recipient)
 
   const amountNum = amount === '' || amount === '.' ? null : parseFloat(amount)
@@ -86,80 +55,47 @@ export function SolanaSend() {
     amountLamports !== null && balanceLamports !== undefined ? amountLamports > balanceLamports : false
   const belowRentExempt =
     amountLamports !== null && balanceLamports !== undefined
-      ? balanceLamports - amountLamports < BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
+      ? balanceLamports - amountLamports < RENT_EXEMPT_LAMPORTS
       : false
   const hasAmount = amountLamports !== null && amountLamports > BigInt(0)
   const amountValid = hasAmount && !insufficientBalance && !belowRentExempt
 
-  const maxLamports =
-    balanceLamports > FEE_LAMPORTS
-      ? balanceLamports - FEE_LAMPORTS - BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
-      : BigInt(0)
+  const maxLamports = balanceLamports > FEE_LAMPORTS ? balanceLamports - FEE_LAMPORTS - RENT_EXEMPT_LAMPORTS : BigInt(0)
   const maxLamportsSafe = maxLamports > BigInt(0) ? maxLamports : BigInt(0)
 
-  const canProceed = recipientValid && amountValid && provider && txStatus === 'idle'
+  const canProceed = recipientValid && amountValid && !!provider
 
   const handleMax = useCallback(() => {
     if (maxLamportsSafe <= BigInt(0)) return
-    setAmount(formatSol(maxLamportsSafe, 9))
-  }, [maxLamportsSafe])
+    setSendForm((prev: SendFormState) => ({ ...prev, amount: formatSol(maxLamportsSafe, 9) }))
+  }, [maxLamportsSafe, setSendForm])
 
-  const handleSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault()
-      if (!canProceed || !provider || !walletAddress || !amountLamports || amountLamports <= BigInt(0)) return
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!canProceed || !amountLamports || amountLamports <= BigInt(0)) return
+    const normalized = sanitizeForParsing(amount)
+    if (!normalized) return
+    setSendForm((prev: SendFormState) => ({
+      ...prev,
+      amount: normalized,
+      recipient,
+      asset: prev.asset,
+    }))
+    setRoute(routes.SOL_SEND_CONFIRMATION)
+  }
 
-      setErrorMessage(null)
-      setTxStatus('signing')
+  const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSendForm((prev) => ({ ...prev, recipient: e.target.value }))
+  }
 
-      try {
-        const rpc = createSolanaRpc(rpcUrl)
-        const { value: blockhash } = await rpc.getLatestBlockhash().send()
-        const { lastValidBlockHeight: _lastValidBlockHeight } = blockhash
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = sanitizeAmountInput(e.target.value)
+    if (raw === '' || /^[0-9]*\.?[0-9]*$/.test(raw)) {
+      setSendForm((prev) => ({ ...prev, amount: raw }))
+    }
+  }
 
-        const fromAddress = address(walletAddress)
-        const transferInstruction = createTransferSolInstruction(walletAddress, recipient, amountLamports)
-
-        const message = pipe(
-          createTransactionMessage({ version: 0 }),
-          (msg) => setTransactionMessageFeePayer(fromAddress, msg),
-          (msg) => setTransactionMessageLifetimeUsingBlockhash(blockhash, msg),
-          (msg) => appendTransactionMessageInstruction(transferInstruction, msg)
-        )
-
-        const compiled = compileTransaction(message)
-        // @solana/kit compiled type vs our SolanaTransaction — bridge until types aligned (ethereum-only build)
-        const signed = await provider.signTransaction({ messageBytes: compiled as any })
-
-        setTxStatus('sending')
-
-        // @solana/kit sendTransaction expects Base64EncodedWireTransaction — bridge until types aligned (ethereum-only build)
-        const signature = await rpc
-          .sendTransaction(new Uint8Array(Buffer.from(signed.signature, 'base64')) as any, {
-            encoding: 'base64',
-            preflightCommitment: 'confirmed',
-            skipPreflight: false,
-          })
-          .send()
-
-        // Signature from @solana/kit may be branded string — bridge until types aligned (ethereum-only build)
-        if ((signature as any)?.value ?? signature) {
-          setTxStatus('confirmed')
-          refetchBalance()
-          invalidateBalance()
-        } else {
-          setTxStatus('error')
-          setErrorMessage('Transaction failed')
-        }
-      } catch (err) {
-        setTxStatus('error')
-        setErrorMessage(err instanceof OpenfortError ? err.message : 'Transaction failed')
-      }
-    },
-    [canProceed, provider, walletAddress, amountLamports, recipient, rpcUrl, refetchBalance]
-  )
-
-  const availableLabel = balanceLamports !== undefined ? formatSol(balanceLamports) : '--'
+  const availableLabel = balanceResult.data != null ? formatSol(balanceLamports) : '--'
 
   return (
     <PageContent onBack={routes.SOL_CONNECTED}>
@@ -171,10 +107,7 @@ export function SolanaSend() {
             <Input
               placeholder="0.00"
               value={amount}
-              onChange={(e) => {
-                const raw = sanitizeAmountInput(e.target.value)
-                if (raw === '' || /^[0-9]*\.?[0-9]*$/.test(raw)) setAmount(raw)
-              }}
+              onChange={handleAmountChange}
               inputMode="decimal"
               autoComplete="off"
               style={{ paddingRight: '86px' }}
@@ -194,30 +127,14 @@ export function SolanaSend() {
           <Input
             placeholder="Base58 address..."
             value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
+            onChange={handleRecipientChange}
             autoComplete="off"
           />
           {recipient && !recipientValid && <ErrorText>Enter a valid Solana address.</ErrorText>}
         </Field>
 
-        {txStatus === 'error' && errorMessage && (
-          <Field>
-            <ErrorText>{errorMessage}</ErrorText>
-          </Field>
-        )}
-
-        {txStatus === 'confirmed' && (
-          <Field>
-            <HelperText>Transfer sent successfully.</HelperText>
-          </Field>
-        )}
-
         <Button variant="primary" disabled={!canProceed} type="submit">
-          {txStatus === 'idle' && 'Send SOL'}
-          {txStatus === 'signing' && 'Signing...'}
-          {txStatus === 'sending' && 'Sending...'}
-          {txStatus === 'confirmed' && 'Done'}
-          {txStatus === 'error' && 'Try again'}
+          Review transfer
         </Button>
       </Form>
     </PageContent>

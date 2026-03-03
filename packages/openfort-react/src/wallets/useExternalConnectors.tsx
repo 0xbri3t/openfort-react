@@ -13,7 +13,7 @@ export type ExternalConnectorProps = {
   isInstalled?: boolean
 } & WalletConfigProps
 
-export type MapBridgeConnectorsOptions = { walletConnectName?: string }
+type MapBridgeConnectorsOptions = { walletConnectName?: string }
 
 /** Maps bridge.connectors to ExternalConnectorProps[]. Used by EthereumBridgeStrategy and useExternalConnectors. */
 export function mapBridgeConnectorsToWalletProps(

@@ -32,6 +32,11 @@ export interface ConnectionStrategy {
   /** External wallet connectors; only when wagmi/bridge exists. Otherwise []. */
   getConnectors(): ExternalConnectorProps[]
 
+  /** EVM embedded only: current user-selected chain id. When set, getChainId() returns this. */
+  getActiveChainId?(): number | undefined
+  /** EVM embedded only: set user-selected chain (persisted in localStorage by provider). */
+  setActiveChainId?(chainId: number | undefined): void
+
   /** @param chainId - Current chain for EVM; when provided, uses this for policy/rpc instead of config default. */
   initProvider(openfort: Openfort, walletConfig: OpenfortWalletConfig, chainId?: number): Promise<void>
   disconnect(openfort: Openfort): Promise<void>

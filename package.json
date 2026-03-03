@@ -56,7 +56,7 @@
     "@changesets/cli": "^2.29.7",
     "@playwright/test": "^1.57.0",
     "knip": "^5.64.0",
-    "rollup": "^2.67.1",
+    "rollup": "^2.80.0",
     "simple-git-hooks": "^2.13.1",
     "typescript": "^5.0.4",
     "typescript-plugin-styled-components": "^2.0.0",
@@ -74,7 +74,7 @@
       "viem": "^2.38.4",
       "wagmi": "^2.18.2",
       "typescript": "^5.0.4",
-      "hono": ">=4.11.10",
+      "hono": ">=4.12.2",
       "cross-spawn": ">=6.0.6",
       "got": ">=11.8.5",
       "esbuild": ">=0.25.0",
@@ -124,8 +124,6 @@
       "packages/create-openfort/.github/**",
       "packages/create-openfort/template/**",
       "examples/playground/tests/auth/auth.setup.ts",
-      "examples/playground/tests/auth/auth.setup.evm-only.ts",
-      "examples/playground/tests/auth/auth.setup.evm-wagmi.ts",
       "examples/playground/tests/auth/auth.setup.solana.ts"
     ],
     "ignoreDependencies": [

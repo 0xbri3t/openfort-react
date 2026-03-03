@@ -1,5 +1,5 @@
 /**
- * Shared embedded wallets list for evm-only and wagmi.
+ * Shared embedded wallets list for evm (wagmi) and svm.
  * Renders parent/child hierarchy (EOA → Smart Account) with CornerDownRightIcon.
  */
 
@@ -388,7 +388,7 @@ const WalletTooltipItem = ({
   </Tooltip>
 )
 
-export type EmbeddedWalletsListProps = {
+type EmbeddedWalletsListProps = {
   ethereum: EthereumWalletState
   activeWallet: ConnectedEmbeddedEthereumWallet | null
   connectingAddress: string | undefined
