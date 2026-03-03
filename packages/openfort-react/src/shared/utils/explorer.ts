@@ -28,10 +28,11 @@ const EVM_EXPLORER_BY_CHAIN_ID: Record<number, string> = {
   421614: 'https://sepolia.arbiscan.io',
 }
 
-function appendPath(base: string, options: { address?: string; txHash?: string }): string {
-  if (options.address) return `${base}/address/${options.address}`
-  if (options.txHash) return `${base}/tx/${options.txHash}`
-  return base
+function appendPath(base: string, options: { address?: string; txHash?: string }, queryParams?: string): string {
+  let path = base
+  if (options.address) path = `${base}/address/${options.address}`
+  else if (options.txHash) path = `${base}/tx/${options.txHash}`
+  return queryParams ? `${path}?${queryParams}` : path
 }
 
 type ExplorerUrlBuilder = (options: ExplorerUrlOptions) => string
@@ -58,11 +59,11 @@ const explorerRegistry: Record<ChainTypeEnum, ExplorerUrlBuilder> = {
       logger.warn(
         'No cluster provided. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.'
       )
-      return 'https://explorer.solana.com'
+      return appendPath(SOLANA_EXPLORER_BASE, options)
     }
-    const base =
-      options.cluster === 'mainnet-beta' ? SOLANA_EXPLORER_BASE : `${SOLANA_EXPLORER_BASE}/?cluster=${options.cluster}`
-    return appendPath(base, options)
+    const clusterParam =
+      options.cluster === 'mainnet-beta' ? undefined : `cluster=${encodeURIComponent(options.cluster)}`
+    return appendPath(SOLANA_EXPLORER_BASE, options, clusterParam)
   },
 }
 

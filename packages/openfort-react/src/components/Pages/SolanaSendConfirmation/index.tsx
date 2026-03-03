@@ -5,6 +5,7 @@
  * Shows: From, To, Amount, Fee (or Sponsored).
  */
 
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import {
   address,
   appendTransactionMessageInstruction,
@@ -21,6 +22,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { TickIcon } from '../../../assets/icons'
 import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import { invalidateBalance } from '../../../hooks/useBalance'
+import { getExplorerUrl } from '../../../shared/utils/explorer'
 import { FEE_LAMPORTS } from '../../../solana/constants'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { formatSol, solToLamports } from '../../../solana/hooks/utils'
@@ -90,7 +92,7 @@ function decodeSignatureToBytes(signature: string): Uint8Array {
 }
 
 export default function SolanaSendConfirmation() {
-  const { rpcUrl } = useSolanaContext()
+  const { rpcUrl, cluster } = useSolanaContext()
   const { sendForm, setRoute, triggerResize } = useOpenfort()
   const wallet = useSolanaEmbeddedWallet()
 
@@ -98,6 +100,7 @@ export default function SolanaSendConfirmation() {
   const provider = wallet.status === 'connected' ? wallet.provider : null
 
   const [txStatus, setTxStatus] = useState<'idle' | 'signing' | 'sending' | 'confirmed' | 'error'>('idle')
+  const [txSignature, setTxSignature] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const confirmAbortRef = useRef<AbortController | null>(null)
 
@@ -163,6 +166,7 @@ export default function SolanaSendConfirmation() {
       confirmAbortRef.current = confirmController
       await waitForConfirmation(rpcUrl, signed.signature)
 
+      setTxSignature(signed.signature)
       setTxStatus('confirmed')
       invalidateBalance()
     } catch (err: unknown) {
@@ -180,24 +184,27 @@ export default function SolanaSendConfirmation() {
   }, [])
 
   useEffect(() => {
-    if (txStatus === 'confirmed') {
-      const timer = setTimeout(() => setRoute(routes.SOL_CONNECTED), 2400)
-      return () => clearTimeout(timer)
-    }
-  }, [txStatus, setRoute])
-
-  useEffect(() => {
     setTimeout(triggerResize, 10)
   }, [txStatus, errorMessage, triggerResize])
 
   const feeDisplay = isSponsored ? 'Sponsored' : `~${formatSol(FEE_LAMPORTS, 6)} SOL`
+
+  const explorerUrl =
+    txSignature && cluster ? getExplorerUrl(ChainTypeEnum.SVM, { txHash: txSignature, cluster }) : undefined
+
+  const handleOpenBlockExplorer = () => {
+    if (explorerUrl) window.open(explorerUrl, '_blank', 'noopener,noreferrer')
+  }
 
   if (txStatus === 'confirmed') {
     return (
       <PageContent onBack={routes.SOL_CONNECTED}>
         <Loader isSuccess header="Transfer Sent" description={`${normalisedAmount || '0'} SOL sent successfully`} />
         <ButtonRow>
-          <Button variant="primary" onClick={() => setRoute(routes.SOL_CONNECTED)}>
+          <Button variant="primary" onClick={handleOpenBlockExplorer}>
+            View on Explorer
+          </Button>
+          <Button variant="secondary" onClick={() => setRoute(routes.SOL_CONNECTED)}>
             Back to profile
           </Button>
         </ButtonRow>
