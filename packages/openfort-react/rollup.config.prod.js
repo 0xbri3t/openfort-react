@@ -9,9 +9,11 @@ export default [
     input: ['./src/index.ts'],
     external: ['react', 'react-dom', 'framer-motion', 'wagmi'],
     output: {
-      file: packageJson.exports.import,
+      dir: './build',
       format: 'esm',
       sourcemap: true,
+      entryFileNames: 'index.es.js',
+      chunkFileNames: 'chunks/[name]-[hash].js',
     },
     plugins: [
       peerDepsExternal(),

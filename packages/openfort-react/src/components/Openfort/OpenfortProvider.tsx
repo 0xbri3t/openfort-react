@@ -1,6 +1,6 @@
 import { RecoveryMethod, type SDKOverrides, type ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
 import { Buffer } from 'buffer'
-import React, { createElement, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { Suspense, createElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAccount, WagmiContext } from 'wagmi'
 import { useChainIsSupported } from '../../hooks/useChainIsSupported'
 import type { useConnectCallbackProps } from '../../hooks/useConnectCallback'
@@ -10,8 +10,9 @@ import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
 import type { CustomTheme, Languages, Mode, Theme } from '../../types'
 import { logger } from '../../utils/logger'
 import { isFamily } from '../../utils/wallets'
-import ConnectKitModal from '../ConnectModal'
 import { Web3ContextProvider } from '../contexts/web3'
+
+const LazyConnectKitModal = React.lazy(() => import('../ConnectModal'))
 import { type ContextValue, Openfortcontext } from './context'
 import {
   type BuyFormState,
@@ -384,7 +385,9 @@ export const OpenfortProvider = ({
             theme={defaultTheme}
           > */}
         {children}
-        <ConnectKitModal lang={ckLang} theme={ckTheme} mode={safeUiConfig.mode ?? ckMode} customTheme={ckCustomTheme} />
+        <Suspense fallback={null}>
+          <LazyConnectKitModal lang={ckLang} theme={ckTheme} mode={safeUiConfig.mode ?? ckMode} customTheme={ckCustomTheme} />
+        </Suspense>
         {/* </ThemeProvider> */}
       </CoreOpenfortProvider>
     </Web3ContextProvider>

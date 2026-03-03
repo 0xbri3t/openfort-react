@@ -15,9 +15,11 @@ export default [
     external: ['react', 'react-dom', 'framer-motion', 'wagmi'],
     output: [
       {
-        file: packageJson.exports.import,
+        dir: './build',
         format: 'esm',
         sourcemap: false,
+        entryFileNames: 'index.es.js',
+        chunkFileNames: 'chunks/[name]-[hash].js',
       },
     ],
     plugins: [
