@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- [#186](https://github.com/openfort-xyz/openfort-react/pull/186) [`fdb39df`](https://github.com/openfort-xyz/openfort-react/commit/fdb39dffbfc52fd015ddb17a43cff321461047d1) Thanks [@isardmart](https://github.com/isardmart)! - added retries on connector of useWallets, fixed error on headless social login
+
 ## 0.3.0
 
 ### Minor Changes
