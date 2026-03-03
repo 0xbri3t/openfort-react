@@ -7,9 +7,10 @@ import {
   type RecoveryParams,
 } from '@openfort/openfort-js'
 import { useQueryClient } from '@tanstack/react-query'
+import { getConnectors } from '@wagmi/core'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Hex } from 'viem'
-import { type Connector, useAccount, useChainId, useDisconnect, useSwitchChain } from 'wagmi'
+import { type Connector, useAccount, useChainId, useConfig, useDisconnect, useSwitchChain } from 'wagmi'
 import { type GetEncryptionSessionParams, routes, UIAuthProvider } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
@@ -85,6 +86,21 @@ type SetRecoveryOptions = {
 } & OpenfortHookOptions<CreateWalletResult>
 
 type WalletOptions = OpenfortHookOptions<SetActiveWalletResult | CreateWalletResult>
+
+/** Poll wagmi connectors until one with the given id appears (max ~5s). */
+async function waitForConnector(config: ReturnType<typeof useConfig>, connectorId: string): Promise<Connector | null> {
+  const MAX_ATTEMPTS = 10
+  const DELAY_MS = 500
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, DELAY_MS))
+    const found = getConnectors(config).find((c) => c.id === connectorId)
+    if (found) {
+      logger.log(`Embedded connector found after ${attempt + 1} retries`)
+      return found
+    }
+  }
+  return null
+}
 
 // get accounts from the same address and chain type
 const getSimpleAccounts = ({
@@ -213,6 +229,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     undefined
   )
   const { switchChainAsync } = useSwitchChain()
+  const wagmiConfig = useConfig()
 
   const { connect } = useConnect({
     mutation: {
@@ -503,12 +520,21 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
       if (typeof optionsObject.walletId === 'string') {
         const wallet = availableWallets.find((c) => c.id === optionsObject.walletId)
-        if (!wallet) {
-          logger.log('Connector not found', connector)
+        if (wallet) {
+          logger.log('Connecting to', wallet.connector)
+          connector = wallet.connector
+        } else if (optionsObject.walletId === embeddedWalletId) {
+          // The embedded connector is registered dynamically via EIP-6963 and may not
+          // be available in wagmi yet. Wait briefly for it to appear.
+          connector = await waitForConnector(wagmiConfig, embeddedWalletId)
+          if (!connector) {
+            logger.log('Embedded connector not found after retries')
+            return { error: new OpenfortError('Connector not found', OpenfortReactErrorType.WALLET_ERROR) }
+          }
+        } else {
+          logger.log('Connector not found', optionsObject.walletId)
           return { error: new OpenfortError('Connector not found', OpenfortReactErrorType.WALLET_ERROR) }
         }
-        logger.log('Connecting to', wallet.connector)
-        connector = wallet.connector
       } else {
         connector = optionsObject.walletId
       }
@@ -766,7 +792,20 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
       return {}
     },
-    [wallets, setOpen, setRoute, setConnector, disconnectAsync, address, client, walletConfig, chainId, hookOptions]
+    [
+      wallets,
+      setOpen,
+      setRoute,
+      setConnector,
+      disconnectAsync,
+      address,
+      client,
+      walletConfig,
+      chainId,
+      hookOptions,
+      availableWallets,
+      wagmiConfig,
+    ]
   )
 
   useEffect(() => {
