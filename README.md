@@ -27,17 +27,7 @@
 
 The easiest way to use embedded wallets, with built-in authentication and payments capabilities in React.
 
-## Features
-
-- TypeScript Ready — Get types straight out of the box.
-- Ecosystem Friendly — Uses top libraries such as [wagmi](https://github.com/wagmi-dev/wagmi) for hooks.
-- Simple UI — Use prebuilt elements for authenticaiton and wallet connection.
-- EVM Support - Chains like BSC, Arbitrum or Base are supported
-- React Hooks - To interact directly with embedded wallet capabilities.
-
-and much more...
-
-## Quick Start
+## Quickstart
 
 ### New app
 
@@ -70,6 +60,17 @@ npm install @openfort/react @tanstack/react-query wagmi viem
 ```sh
 pnpm add @openfort/react @tanstack/react-query wagmi viem
 ```
+
+## Features
+
+- TypeScript Ready — Get types straight out of the box.
+- Ecosystem Friendly — Uses top libraries such as [wagmi](https://github.com/wagmi-dev/wagmi) for hooks.
+- Simple UI — Use prebuilt elements for authenticaiton and wallet connection.
+- EVM and SVM Support - Chains like BSC, Arbitrum or Base are supported
+- React Hooks - To interact directly with embedded wallet capabilities.
+
+and much more...
+
 
 ## Examples
 
