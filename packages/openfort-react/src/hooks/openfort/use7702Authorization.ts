@@ -40,8 +40,10 @@ type SignAuthorizationOptions = {
  * ```
  */
 export function use7702Authorization() {
+  // biome-ignore lint/correctness/useHookAtTopLevel: use7702Authorization is a valid hook name
   const { client } = useOpenfortCore()
 
+  // biome-ignore lint/correctness/useHookAtTopLevel: use7702Authorization is a valid hook name
   const signAuthorization = useCallback(
     async (
       parameters: SignAuthorizationParameters,

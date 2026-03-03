@@ -1,10 +1,10 @@
-import type { AuthProvider } from '@openfort/react'
+import type { OAuthProvider } from '@openfort/react'
 import { Globe } from 'lucide-react'
 import { Facebook, Google, Twitter } from '@/assets/logos'
 import { cn } from '@/lib/cn'
 
 type Props = {
-  provider: AuthProvider
+  provider: OAuthProvider
   size?: number
   className?: string
 }

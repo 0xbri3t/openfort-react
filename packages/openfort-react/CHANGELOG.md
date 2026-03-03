@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- [#180](https://github.com/openfort-xyz/openfort-react/pull/180) [`f031ee7`](https://github.com/openfort-xyz/openfort-react/commit/f031ee7c9c443f88991ec28f5aab74549136775f) Thanks [@n00m4d](https://github.com/n00m4d)! - Update openfort js sdk version
+
+### Patch Changes
+
+- [#184](https://github.com/openfort-xyz/openfort-react/pull/184) [`f47222c`](https://github.com/openfort-xyz/openfort-react/commit/f47222cc0632d7871d3f7c3c73214ca0433844b5) Thanks [@jamalavedra](https://github.com/jamalavedra)! - update oauth redirect
+
 ## 0.2.9
 
 ### Patch Changes
