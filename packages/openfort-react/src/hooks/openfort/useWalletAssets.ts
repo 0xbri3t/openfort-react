@@ -6,6 +6,7 @@ import { erc7811Actions } from 'viem/experimental'
 import { type Transport, useAccount, useChainId, useWalletClient } from 'wagmi'
 import type { Asset } from '../../components/Openfort/types'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
+import { openfortKeys } from '../../query/queryKeys'
 import { OpenfortError, OpenfortReactErrorType, type OpenfortWalletConfig } from '../../types'
 import { useUser } from './useUser'
 
@@ -84,7 +85,7 @@ export const useWalletAssets = ({ assets: hookCustomAssets, staleTime = 30000 }:
   }, [walletConfig?.assets, hookCustomAssets, chainId])
 
   const { data, error, isLoading, isError, isSuccess, refetch } = useQuery({
-    queryKey: ['wallet-assets', chainId, customAssetsToFetch, address],
+    queryKey: openfortKeys.walletAssets(chainId, customAssetsToFetch, address),
     queryFn: async () => {
       if (!walletClient) {
         throw new OpenfortError('No wallet client available', OpenfortReactErrorType.UNEXPECTED_ERROR, {

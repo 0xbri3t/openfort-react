@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../../constants/openfort'
+import { openfortKeys } from '../../../query/queryKeys'
 import { logger } from '../../../utils/logger'
 import { type UserWallet, useWallets } from '../useWallets'
 import { useSignOut } from './useSignOut'
@@ -70,7 +71,7 @@ export const useConnectToWalletPostAuth = () => {
       }
 
       const wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({
-        queryKey: ['openfortEmbeddedAccountsList'],
+        queryKey: openfortKeys.embeddedAccounts(),
       })
 
       let wallet: UserWallet | undefined

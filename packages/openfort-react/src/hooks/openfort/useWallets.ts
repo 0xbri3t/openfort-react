@@ -15,6 +15,7 @@ import { type GetEncryptionSessionParams, routes, UIAuthProvider } from '../../c
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
 import { useOpenfortCore, useWalletStatus } from '../../openfort/useOpenfort'
+import { openfortKeys } from '../../query/queryKeys'
 import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../types'
 import { logger } from '../../utils/logger'
 import { useWagmiWallets } from '../../wallets/useWagmiWallets'
@@ -600,7 +601,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
         try {
           const embeddedAccounts = await queryClient.ensureQueryData<EmbeddedAccount[]>({
-            queryKey: ['openfortEmbeddedAccountsList'],
+            queryKey: openfortKeys.embeddedAccounts(),
             queryFn: () =>
               client.embeddedWallet.list({
                 limit: 100,

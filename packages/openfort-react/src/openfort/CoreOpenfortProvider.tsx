@@ -8,6 +8,8 @@ import type { WalletFlowStatus } from '../hooks/openfort/useWallets'
 import { useConnect } from '../hooks/useConnect'
 import { useConnectCallback, type useConnectCallbackProps } from '../hooks/useConnectCallback'
 import type { UserAccount } from '../openfortCustomTypes'
+import { openfortKeys } from '../query/queryKeys'
+import { getEmbeddedAccountsQueryOptions } from '../query/queryOptions'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
 import { Context } from './context'
@@ -177,7 +179,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     refetch: fetchEmbeddedAccounts,
     isPending: isLoadingAccounts,
   } = useQuery({
-    queryKey: ['openfortEmbeddedAccountsList'],
+    ...getEmbeddedAccountsQueryOptions(openfort),
     queryFn: async () => {
       try {
         return await openfort.embeddedWallet.list({
@@ -188,9 +190,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         throw error
       }
     },
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: false,
   })
 
   // Update ethereum provider when chainId changes
@@ -302,7 +301,8 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     logger.log('Logging out...')
     await openfort.auth.logout()
     await disconnectAsync()
-    queryClient.resetQueries({ queryKey: ['openfortEmbeddedAccountsList'] })
+    queryClient.resetQueries({ queryKey: openfortKeys.embeddedAccounts() })
+    queryClient.removeQueries({ queryKey: openfortKeys.user() })
     reset()
     startPollingEmbeddedState()
   }, [openfort])
