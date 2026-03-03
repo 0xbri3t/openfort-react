@@ -181,7 +181,7 @@ export const useEthereumWalletAssets = ({
         if (asset.type !== 'erc20') return { ...asset, raw: asset } as unknown as Asset
         if (!walletConfig?.ethereum?.assets) return { ...asset, raw: asset }
 
-        const configAsset = walletConfig.ethereum.assets[chainId].find(
+        const configAsset = walletConfig.ethereum.assets[chainId]?.find(
           (a) => a.toLowerCase() === asset.address.toLowerCase()
         )
         if (!configAsset) return { ...asset, raw: asset }

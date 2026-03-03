@@ -173,6 +173,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
   const [_pollingError, setPollingError] = useState<OpenfortError | null>(null)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previousEmbeddedState = useRef<EmbeddedState>(EmbeddedState.NONE)
   const retryCountRef = useRef(0)
   const POLLING_RETRIES = 3
@@ -189,6 +190,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
       // Stop polling once we reach a stable terminal state
       if (state === EmbeddedState.READY) {
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = null
+        }
         if (pollingRef.current) {
           clearInterval(pollingRef.current)
           pollingRef.current = null
@@ -199,13 +204,21 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       if (retryCountRef.current < POLLING_RETRIES) {
         retryCountRef.current += 1
         const delay = POLLING_BASE_MS * 2 ** retryCountRef.current
-        setTimeout(pollEmbeddedState, delay)
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = null
+        }
+        retryTimeoutRef.current = setTimeout(pollEmbeddedState, delay)
       } else {
         setPollingError(
           error instanceof OpenfortError
             ? error
             : new OpenfortError('Embedded state polling failed', OpenfortReactErrorType.UNEXPECTED_ERROR)
         )
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = null
+        }
         if (pollingRef.current) {
           clearInterval(pollingRef.current)
           pollingRef.current = null
@@ -213,15 +226,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       }
     }
   }, [openfort])
-
-  const _retryPolling = useCallback(() => {
-    retryCountRef.current = 0
-    setPollingError(null)
-    pollEmbeddedState()
-    if (!pollingRef.current) {
-      pollingRef.current = setInterval(pollEmbeddedState, 300)
-    }
-  }, [pollEmbeddedState])
 
   // Only log embedded state when it changes
   useEffect(() => {
@@ -237,6 +241,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [pollEmbeddedState])
 
   const stopPollingEmbeddedState = useCallback(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+      retryTimeoutRef.current = null
+    }
     if (pollingRef.current) {
       clearInterval(pollingRef.current)
       pollingRef.current = null

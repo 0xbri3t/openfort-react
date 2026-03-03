@@ -41,8 +41,9 @@ export function getDefaultEthereumRpcUrl(chainId: number): string {
     logger.warn(
       `No default Ethereum RPC URL found for chain ${chainId}. Configure rpcUrls in OpenfortProvider for better reliability and rate limits.`
     )
+    return 'https://rpc.sepolia.org'
   }
-  return DEFAULT_ETHEREUM_RPC_URLS[chainId] ?? 'https://rpc.sepolia.org'
+  return DEFAULT_ETHEREUM_RPC_URLS[chainId]
 }
 
 /**

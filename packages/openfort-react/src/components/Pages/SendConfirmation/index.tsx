@@ -6,12 +6,11 @@
  */
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Abi, Address } from 'viem'
 import { createPublicClient, encodeFunctionData, http, isAddress, parseUnits } from 'viem'
 import { TickIcon } from '../../../assets/icons'
 import { erc20Abi } from '../../../constants/erc20'
-import { EthereumContext } from '../../../ethereum/EthereumContext'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
 import { useBalance } from '../../../hooks/useBalance'
@@ -55,11 +54,10 @@ function isTestnetChain(chainId: number): boolean {
 const SendConfirmation = () => {
   const wallet = useEthereumEmbeddedWallet()
   const { chainType } = useOpenfortCore()
-  const ethereumContext = useContext(EthereumContext)
   const { sendForm, setRoute, triggerResize, walletConfig } = useOpenfort()
 
   const address = wallet.status === 'connected' ? (wallet.address as `0x${string}`) : undefined
-  const chainId = ethereumContext?.chainId
+  const chainId = wallet.status === 'connected' ? wallet.chainId : undefined
 
   // Build chain info for block explorer
   const chain = chainId

@@ -5,7 +5,7 @@ import { createPublicClient, formatEther, http } from 'viem'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
 import { useCoreContext } from '../core/CoreContext'
 import { useAsyncData } from '../shared/hooks/useAsyncData'
-import { lamportsToSol } from '../solana/hooks/utils'
+import { formatSol } from '../solana/hooks/utils'
 import type { SolanaCluster } from '../solana/types'
 import { getDefaultEthereumRpcUrl, getDefaultSolanaRpcUrl, getNativeCurrency } from '../utils/rpc'
 
@@ -51,7 +51,7 @@ async function fetchEvmBalance(address: string, rpcUrl: string, chainId: number)
   return { value: balance, formatted: formatEther(balance), symbol, decimals }
 }
 
-async function fetchSolanaBalance(
+export async function fetchSolanaBalance(
   addressStr: string,
   rpcUrl: string,
   commitment: 'processed' | 'confirmed' | 'finalized'
@@ -60,7 +60,7 @@ async function fetchSolanaBalance(
   const { value: lamports } = await rpc.getBalance(address(addressStr), { commitment }).send()
   return {
     value: BigInt(lamports),
-    formatted: lamportsToSol(BigInt(lamports)).toFixed(9),
+    formatted: formatSol(BigInt(lamports), 9),
     symbol: 'SOL',
     decimals: 9,
   }

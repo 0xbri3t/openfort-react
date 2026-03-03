@@ -12,12 +12,12 @@ import {
 } from '@solana/kit'
 import { useCallback, useEffect, useState } from 'react'
 import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
-import { invalidateBalance } from '../../../hooks/useBalance'
+import { fetchSolanaBalance, invalidateBalance } from '../../../hooks/useBalance'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
-import { FEE_LAMPORTS, LAMPORTS_PER_SOL, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
+import { FEE_LAMPORTS, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
-import { solToLamports } from '../../../solana/hooks/utils'
+import { formatSol, solToLamports } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
 import { createTransferSolInstruction } from '../../../solana/utils/transfer'
 import { logger } from '../../../utils/logger'
@@ -30,25 +30,6 @@ import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { AmountInputWrapper, ErrorText, Field, FieldLabel, Form, HelperText, MaxButton } from './styles'
 import { sanitizeAmountInput } from './utils'
-
-async function fetchSolanaBalance(rpcUrl: string, addr: string): Promise<number> {
-  const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'getBalance',
-      params: [addr, { commitment: 'confirmed' }],
-    }),
-  })
-  const data = await response.json()
-  return data.result?.value ?? 0
-}
-
-function formatSol(lamports: bigint, decimals = 4): string {
-  return (Number(lamports) / Number(LAMPORTS_PER_SOL)).toFixed(decimals)
-}
 
 const CONFIRM_POLL_MS = 500
 const CONFIRM_TIMEOUT_MS = 60_000
@@ -106,13 +87,15 @@ export function SolanaSend() {
   const walletAddress = wallet.status === 'connected' ? wallet.activeWallet.address : undefined
   const provider = wallet.status === 'connected' ? wallet.provider : null
 
+  const RENT_EXEMPT_LAMPORTS = BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
+
   const balanceResult = useAsyncData({
     queryKey: ['solana-balance', walletAddress, rpcUrl],
     queryFn: async () => {
       if (!walletAddress || !rpcUrl) return null
       try {
-        const balanceLamports = await fetchSolanaBalance(rpcUrl, walletAddress)
-        return { value: BigInt(balanceLamports) }
+        const result = await fetchSolanaBalance(walletAddress, rpcUrl, 'confirmed')
+        return { value: result.value }
       } catch (error) {
         logger.error('Failed to fetch Solana balance:', error)
         return null
@@ -121,9 +104,7 @@ export function SolanaSend() {
     enabled: Boolean(walletAddress && rpcUrl),
   })
 
-  const balanceData = balanceResult.data
-
-  const balanceLamports = balanceData?.value ?? BigInt(0)
+  const balanceLamports = balanceResult.data?.value ?? BigInt(0)
   const recipientValid = recipient.length > 0 && isValidSolanaAddress(recipient)
 
   const amountNum = amount === '' || amount === '.' ? null : parseFloat(amount)
@@ -133,15 +114,12 @@ export function SolanaSend() {
     amountLamports !== null && balanceLamports !== undefined ? amountLamports > balanceLamports : false
   const belowRentExempt =
     amountLamports !== null && balanceLamports !== undefined
-      ? balanceLamports - amountLamports < BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
+      ? balanceLamports - amountLamports < RENT_EXEMPT_LAMPORTS
       : false
   const hasAmount = amountLamports !== null && amountLamports > BigInt(0)
   const amountValid = hasAmount && !insufficientBalance && !belowRentExempt
 
-  const maxLamports =
-    balanceLamports > FEE_LAMPORTS
-      ? balanceLamports - FEE_LAMPORTS - BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
-      : BigInt(0)
+  const maxLamports = balanceLamports > FEE_LAMPORTS ? balanceLamports - FEE_LAMPORTS - RENT_EXEMPT_LAMPORTS : BigInt(0)
   const maxLamportsSafe = maxLamports > BigInt(0) ? maxLamports : BigInt(0)
 
   const canProceed = recipientValid && amountValid && provider && txStatus === 'idle'
@@ -219,7 +197,7 @@ export function SolanaSend() {
     return () => clearTimeout(timer)
   }, [txStatus, setRoute])
 
-  const availableLabel = balanceLamports !== undefined ? formatSol(balanceLamports) : '--'
+  const availableLabel = balanceResult.data != null ? formatSol(balanceLamports) : '--'
 
   if (txStatus === 'confirmed') {
     return (

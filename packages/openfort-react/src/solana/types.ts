@@ -28,8 +28,6 @@ export type SolanaCommitment = 'processed' | 'confirmed' | 'finalized'
  * UI options for Solana-connected views (e.g. SolanaConnected page)
  */
 export type SolanaUIOptions = {
-  /** When true, hide the cluster badge and switch button */
-  hideClusterSelector?: boolean
   /** Custom avatar component; receives address for display */
   customAvatar?: React.ComponentType<{ address: string }>
 }

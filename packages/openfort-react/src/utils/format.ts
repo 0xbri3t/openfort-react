@@ -55,34 +55,3 @@ export function formatAddress(address: string, chainType: ChainTypeEnum): string
   const formatter = addressFormatters[chainType]
   return formatter(address)
 }
-
-/**
- * Format balance with specified decimals
- */
-function formatBalance(value: bigint, decimals: number, maxDecimals = 4): string {
-  const divisor = BigInt(10 ** decimals)
-  const integerPart = value / divisor
-  const fractionalPart = value % divisor
-
-  // Convert fractional to string with leading zeros
-  const fractionalStr = fractionalPart.toString().padStart(decimals, '0')
-
-  // Trim to maxDecimals and remove trailing zeros
-  const trimmed = fractionalStr.slice(0, maxDecimals).replace(/0+$/, '')
-
-  return trimmed ? `${integerPart}.${trimmed}` : integerPart.toString()
-}
-
-/**
- * Format ETH balance (18 decimals)
- */
-function _formatEther(value: bigint, maxDecimals = 4): string {
-  return formatBalance(value, 18, maxDecimals)
-}
-
-/**
- * Format SOL balance (9 decimals)
- */
-function _formatSol(value: bigint, maxDecimals = 4): string {
-  return formatBalance(value, 9, maxDecimals)
-}
