@@ -50,6 +50,7 @@ import Send from '../Pages/Send'
 import { SolanaSend } from '../Pages/Send/SolanaSend'
 import SendConfirmation from '../Pages/SendConfirmation'
 import SocialProviders from '../Pages/SoicalProviders'
+import SolanaSendConfirmation from '../Pages/SolanaSendConfirmation'
 import SolanaWallets from '../Pages/SolanaWallets'
 import ConnectUsing from './ConnectUsing'
 import ConnectWithMobile from './ConnectWithMobile'
@@ -118,6 +119,7 @@ const CHAIN_PREFIXED_PAGES: Record<ChainTypeEnum, RoutePages> = {
     'sol:createWallet': <CreateWallet />,
     'sol:recoverWallet': <RecoverPage />,
     'sol:send': <SolanaSend />,
+    'sol:sendConfirmation': <SolanaSendConfirmation />,
     'sol:receive': <Receive />,
     'sol:wallets': <SolanaWallets />,
   },

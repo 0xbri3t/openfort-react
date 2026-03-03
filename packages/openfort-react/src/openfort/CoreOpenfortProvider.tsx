@@ -17,7 +17,6 @@ import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../constants/openfort'
 import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import { OpenfortError, OpenfortReactErrorType } from '../core/errors'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
 import { firstEmbeddedAddress } from '../core/strategyUtils'
@@ -106,7 +105,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const address = bridge?.account.address
   const [user, setUser] = useState<User | null>(null)
-  const [_providerError, setProviderError] = useState<unknown>(null)
   const [linkedAccounts, setLinkedAccounts] = useState<UserAccount[]>([])
   const [walletStatus, setWalletStatus] = useState<WalletFlowStatus>({ status: 'idle' })
 
@@ -171,7 +169,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   // ---- Embedded state ----
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
-  const [_pollingError, setPollingError] = useState<OpenfortError | null>(null)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previousEmbeddedState = useRef<EmbeddedState>(EmbeddedState.NONE)
@@ -185,7 +182,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     try {
       const state = await openfort.embeddedWallet.getEmbeddedState()
       setEmbeddedState(state)
-      setPollingError(null)
       retryCountRef.current = 0
 
       // Stop polling once we reach a stable terminal state
@@ -210,11 +206,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         }
         retryTimeoutRef.current = setTimeout(pollEmbeddedState, delay)
       } else {
-        setPollingError(
-          error instanceof OpenfortError
-            ? error
-            : new OpenfortError('Embedded state polling failed', OpenfortReactErrorType.UNEXPECTED_ERROR)
-        )
         if (retryTimeoutRef.current) {
           clearTimeout(retryTimeoutRef.current)
           retryTimeoutRef.current = null
@@ -421,7 +412,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       .catch((err) => {
         if (!cancelled) {
           logger.error('Strategy initProvider failed', err)
-          setProviderError(err)
         }
       })
     return () => {

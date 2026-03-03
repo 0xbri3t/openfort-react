@@ -14,6 +14,7 @@ import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
+import { formatSol } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
 import { nFormatter, truncateSolanaAddress } from '../../../utils'
 import { logger } from '../../../utils/logger'
@@ -21,7 +22,7 @@ import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
-import { routes } from '../../Openfort/types'
+import { defaultSendFormState, routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { ConnectedPageLayout } from './ConnectedPageLayout'
@@ -29,7 +30,7 @@ import { ActionButton, Balance, LinkedProvidersToggle } from './styles'
 
 const SolanaConnected: React.FC = () => {
   const context = useOpenfort()
-  const { setHeaderLeftSlot, setRoute } = context
+  const { setHeaderLeftSlot, setRoute, setSendForm } = context
   const locales = useLocales()
 
   const wallet = useSolanaEmbeddedWallet()
@@ -51,7 +52,7 @@ const SolanaConnected: React.FC = () => {
       if (!address || !rpcUrl) return null
       try {
         const balanceLamports = await fetchSolanaBalance(address, rpcUrl, 'confirmed')
-        return Number(balanceLamports.value)
+        return balanceLamports.value
       } catch (error) {
         logger.error('Failed to fetch Solana balance:', error)
         return null
@@ -69,7 +70,7 @@ const SolanaConnected: React.FC = () => {
 
   const lamports = balanceResult.data
   const isBalanceLoading = balanceResult.isLoading
-  const balanceSol = lamports != null ? lamports / 1e9 : null
+  const balanceSol = lamports != null ? formatSol(BigInt(lamports), 9) : null
 
   // Re-measure when balance loads so the modal expands to fit balance + actions.
   useEffect(() => {
@@ -116,7 +117,7 @@ const SolanaConnected: React.FC = () => {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
-        {nFormatter(balanceSol)} SOL
+        {nFormatter(Number(balanceSol))} SOL
       </Balance>
     ) : null
 
@@ -129,7 +130,13 @@ const SolanaConnected: React.FC = () => {
         balance={balanceNode}
         actions={
           <>
-            <ActionButton icon={<SendIcon />} onClick={() => context.setRoute(routes.SOL_SEND)}>
+            <ActionButton
+              icon={<SendIcon />}
+              onClick={() => {
+                setSendForm({ ...defaultSendFormState, asset: { type: 'native', balance: BigInt(0) } })
+                setRoute(routes.SOL_SEND)
+              }}
+            >
               Send
             </ActionButton>
             <ActionButton icon={<ReceiveIcon />} onClick={() => context.setRoute(routes.SOL_RECEIVE)}>

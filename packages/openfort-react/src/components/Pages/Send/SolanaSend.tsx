@@ -1,93 +1,34 @@
-import {
-  address,
-  appendTransactionMessageInstruction,
-  compileTransaction,
-  createSolanaRpc,
-  createTransactionMessage,
-  getBase58Encoder,
-  getBase64EncodedWireTransaction,
-  pipe,
-  setTransactionMessageFeePayer,
-  setTransactionMessageLifetimeUsingBlockhash,
-} from '@solana/kit'
-import { useCallback, useEffect, useState } from 'react'
-import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
-import { fetchSolanaBalance, invalidateBalance } from '../../../hooks/useBalance'
+import { useCallback } from 'react'
+import { fetchSolanaBalance } from '../../../hooks/useBalance'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
 import { FEE_LAMPORTS, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { formatSol, solToLamports } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
-import { createTransferSolInstruction } from '../../../solana/utils/transfer'
 import { logger } from '../../../utils/logger'
 import Button from '../../Common/Button'
 import Input from '../../Common/Input'
-import Loader from '../../Common/Loading'
 import { ModalHeading } from '../../Common/Modal/styles'
+import type { SendFormState } from '../../Openfort/types'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { AmountInputWrapper, ErrorText, Field, FieldLabel, Form, HelperText, MaxButton } from './styles'
-import { sanitizeAmountInput } from './utils'
+import { sanitizeAmountInput, sanitizeForParsing } from './utils'
 
-const CONFIRM_POLL_MS = 500
-const CONFIRM_TIMEOUT_MS = 60_000
-
-/** Poll RPC until transaction is confirmed or failed. */
-async function waitForConfirmation(rpcUrl: string, signature: string): Promise<void> {
-  const deadline = Date.now() + CONFIRM_TIMEOUT_MS
-  while (Date.now() < deadline) {
-    const res = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'getSignatureStatuses',
-        params: [[signature], { searchTransactionHistory: true }],
-      }),
-    })
-    const data = await res.json()
-    const status = data.result?.value?.[0]
-    if (status?.err) throw new Error(typeof status.err === 'object' ? JSON.stringify(status.err) : String(status.err))
-    if (status?.confirmationStatus === 'confirmed' || status?.confirmationStatus === 'finalized') return
-    await new Promise((r) => setTimeout(r, CONFIRM_POLL_MS))
-  }
-  throw new OpenfortError('Transaction confirmation timed out', OpenfortReactErrorType.UNEXPECTED_ERROR)
-}
-
-const ED25519_SIGNATURE_LENGTH = 64
-
-/** Decode provider signature (base58 from Openfort) to 64-byte Ed25519 Uint8Array. */
-function decodeSignatureToBytes(signature: string): Uint8Array {
-  const encoded = getBase58Encoder().encode(signature)
-  let bytes = new Uint8Array(encoded)
-  // Openfort may return 65 bytes (recovery byte appended); strip to Ed25519's 64
-  if (bytes.length === ED25519_SIGNATURE_LENGTH + 1) {
-    bytes = bytes.slice(0, ED25519_SIGNATURE_LENGTH)
-  }
-  if (bytes.length === ED25519_SIGNATURE_LENGTH) return bytes
-  throw new OpenfortError(
-    `Invalid signature: expected ${ED25519_SIGNATURE_LENGTH} bytes, got ${bytes.length}.`,
-    OpenfortReactErrorType.CONFIGURATION_ERROR
-  )
-}
+const RENT_EXEMPT_LAMPORTS = BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
 
 export function SolanaSend() {
   const { rpcUrl } = useSolanaContext()
-  const { setRoute } = useOpenfort()
+  const { sendForm, setSendForm, setRoute } = useOpenfort()
   const wallet = useSolanaEmbeddedWallet()
-  const [recipient, setRecipient] = useState('')
-  const [amount, setAmount] = useState('')
-  const [txStatus, setTxStatus] = useState<'idle' | 'signing' | 'sending' | 'confirmed' | 'error'>('idle')
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [confirmedAmount, setConfirmedAmount] = useState('')
 
-  const walletAddress = wallet.status === 'connected' ? wallet.activeWallet.address : undefined
+  const recipient = sendForm.recipient
+  const amount = sendForm.amount
+
+  const walletAddress = wallet.status === 'connected' ? wallet.activeWallet?.address : undefined
   const provider = wallet.status === 'connected' ? wallet.provider : null
-
-  const RENT_EXEMPT_LAMPORTS = BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
 
   const balanceResult = useAsyncData({
     queryKey: ['solana-balance', walletAddress, rpcUrl],
@@ -122,90 +63,39 @@ export function SolanaSend() {
   const maxLamports = balanceLamports > FEE_LAMPORTS ? balanceLamports - FEE_LAMPORTS - RENT_EXEMPT_LAMPORTS : BigInt(0)
   const maxLamportsSafe = maxLamports > BigInt(0) ? maxLamports : BigInt(0)
 
-  const canProceed = recipientValid && amountValid && provider && txStatus === 'idle'
+  const canProceed = recipientValid && amountValid && !!provider
 
   const handleMax = useCallback(() => {
     if (maxLamportsSafe <= BigInt(0)) return
-    setAmount(formatSol(maxLamportsSafe, 9))
-  }, [maxLamportsSafe])
+    setSendForm((prev: SendFormState) => ({ ...prev, amount: formatSol(maxLamportsSafe, 9) }))
+  }, [maxLamportsSafe, setSendForm])
 
-  const handleSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault()
-      if (!canProceed || !provider || !walletAddress || !amountLamports || amountLamports <= BigInt(0)) return
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!canProceed || !amountLamports || amountLamports <= BigInt(0)) return
+    const normalized = sanitizeForParsing(amount)
+    if (!normalized) return
+    setSendForm((prev: SendFormState) => ({
+      ...prev,
+      amount: normalized,
+      recipient,
+      asset: prev.asset,
+    }))
+    setRoute(routes.SOL_SEND_CONFIRMATION)
+  }
 
-      setErrorMessage(null)
-      setTxStatus('signing')
+  const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSendForm((prev) => ({ ...prev, recipient: e.target.value }))
+  }
 
-      try {
-        const rpc = createSolanaRpc(rpcUrl)
-        const { value: blockhash } = await rpc.getLatestBlockhash().send()
-        const fromAddress = address(walletAddress)
-        const transferInstruction = createTransferSolInstruction(walletAddress, recipient, amountLamports)
-
-        const message = pipe(
-          createTransactionMessage({ version: 0 }),
-          (msg) => setTransactionMessageFeePayer(fromAddress, msg),
-          (msg) => setTransactionMessageLifetimeUsingBlockhash(blockhash, msg),
-          (msg) => appendTransactionMessageInstruction(transferInstruction, msg)
-        )
-
-        const compiled = compileTransaction(message)
-
-        const signed = await provider.signTransaction({ messageBytes: compiled.messageBytes } as any)
-
-        const signatureBytes = decodeSignatureToBytes(signed.signature)
-
-        const signedTransaction = {
-          messageBytes: compiled.messageBytes,
-          signatures: { ...compiled.signatures, [fromAddress]: signatureBytes } as typeof compiled.signatures,
-        }
-
-        const encodedWire = getBase64EncodedWireTransaction(signedTransaction)
-
-        setTxStatus('sending')
-
-        await rpc
-          .sendTransaction(encodedWire, {
-            encoding: 'base64',
-            preflightCommitment: 'confirmed',
-            skipPreflight: false,
-          })
-          .send()
-
-        await waitForConfirmation(rpcUrl, signed.signature)
-
-        setConfirmedAmount(amount)
-        setTxStatus('confirmed')
-        setRecipient('')
-        setAmount('')
-      } catch (err: unknown) {
-        setTxStatus('error')
-        const msg = err instanceof OpenfortError ? err.message : err instanceof Error ? err.message : String(err)
-        setErrorMessage(msg || 'Transaction failed')
-      }
-    },
-    [canProceed, provider, walletAddress, amountLamports, recipient, rpcUrl]
-  )
-
-  useEffect(() => {
-    if (txStatus !== 'confirmed') return
-    const timer = setTimeout(() => {
-      invalidateBalance()
-      setRoute(routes.SOL_CONNECTED)
-    }, 2400)
-    return () => clearTimeout(timer)
-  }, [txStatus, setRoute])
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = sanitizeAmountInput(e.target.value)
+    if (raw === '' || /^[0-9]*\.?[0-9]*$/.test(raw)) {
+      setSendForm((prev) => ({ ...prev, amount: raw }))
+    }
+  }
 
   const availableLabel = balanceResult.data != null ? formatSol(balanceLamports) : '--'
-
-  if (txStatus === 'confirmed') {
-    return (
-      <PageContent onBack={routes.SOL_CONNECTED}>
-        <Loader isSuccess header="Transfer Sent" description={`${confirmedAmount} SOL sent successfully`} />
-      </PageContent>
-    )
-  }
 
   return (
     <PageContent onBack={routes.SOL_CONNECTED}>
@@ -217,10 +107,7 @@ export function SolanaSend() {
             <Input
               placeholder="0.00"
               value={amount}
-              onChange={(e) => {
-                const raw = sanitizeAmountInput(e.target.value)
-                if (raw === '' || /^[0-9]*\.?[0-9]*$/.test(raw)) setAmount(raw)
-              }}
+              onChange={handleAmountChange}
               inputMode="decimal"
               autoComplete="off"
               style={{ paddingRight: '86px' }}
@@ -240,23 +127,14 @@ export function SolanaSend() {
           <Input
             placeholder="Base58 address..."
             value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
+            onChange={handleRecipientChange}
             autoComplete="off"
           />
           {recipient && !recipientValid && <ErrorText>Enter a valid Solana address.</ErrorText>}
         </Field>
 
-        {txStatus === 'error' && errorMessage && (
-          <Field>
-            <ErrorText>{errorMessage}</ErrorText>
-          </Field>
-        )}
-
         <Button variant="primary" disabled={!canProceed} type="submit">
-          {txStatus === 'idle' && 'Send SOL'}
-          {txStatus === 'signing' && 'Signing...'}
-          {txStatus === 'sending' && 'Sending...'}
-          {txStatus === 'error' && 'Try again'}
+          Review transfer
         </Button>
       </Form>
     </PageContent>

@@ -71,7 +71,7 @@ export const EthereumSend = () => {
     setSendForm((prev: SendFormState) => ({
       ...prev,
       amount: normalized,
-      token: selectedToken,
+      asset: prev.asset,
     }))
     setRoute(routes.SEND_CONFIRMATION)
   }

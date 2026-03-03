@@ -83,8 +83,10 @@ const EthereumConnected: React.FC = () => {
   }, [assets])
 
   useEffect(() => {
-    refetch()
-  }, [])
+    if (isConnected) {
+      refetch()
+    }
+  }, [isConnected, refetch])
 
   const isTestnet = chain?.testnet ?? false
   const [showTestnetMessage, setShowTestnetMessage] = useState(false)

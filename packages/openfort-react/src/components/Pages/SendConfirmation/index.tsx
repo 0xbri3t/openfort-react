@@ -23,6 +23,7 @@ import { logger } from '../../../utils/logger'
 import { getChainName, getDefaultEthereumRpcUrl } from '../../../utils/rpc'
 import Button from '../../Common/Button'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
+import Loader from '../../Common/Loading'
 import { ModalBody, ModalHeading } from '../../Common/Modal/styles'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
@@ -370,6 +371,24 @@ const SendConfirmation = () => {
     if (typeof policy === 'string') return true
     return policy[chainId ?? 0] !== undefined
   }, [walletConfig?.ethereum?.ethereumProviderPolicyId, chainId])
+
+  if (isSuccess) {
+    const successAmount = normalisedAmount || '0'
+    const successSymbol = getAssetSymbol(token)
+    return (
+      <PageContent>
+        <Loader isSuccess header="Transfer Sent" description={`${successAmount} ${successSymbol} sent successfully`} />
+        <ButtonRow>
+          <Button variant="primary" onClick={handleOpenBlockExplorer}>
+            View on Explorer
+          </Button>
+          <Button variant="secondary" onClick={handleFinish}>
+            Back to profile
+          </Button>
+        </ButtonRow>
+      </PageContent>
+    )
+  }
 
   return (
     <PageContent>
