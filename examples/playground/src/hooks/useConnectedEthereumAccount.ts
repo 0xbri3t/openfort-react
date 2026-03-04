@@ -10,8 +10,7 @@
 import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import { useAccount, useChainId } from 'wagmi'
 import { useEthereumAddressContext } from '@/contexts/EthereumAddressContext'
-
-const DEFAULT_CHAIN_ID = 13337
+import { DEFAULT_EVM_CHAIN } from '@/lib/chains'
 
 function getEmbeddedAddress(
   embedded: ReturnType<typeof useEthereumEmbeddedWallet>,
@@ -35,7 +34,7 @@ export function useConnectedEthereumAccount(): {
   const core = useOpenfort()
 
   const address = wagmiAddress ?? getEmbeddedAddress(embedded, core)
-  const chainId = useChainId() ?? DEFAULT_CHAIN_ID
+  const chainId = useChainId() ?? DEFAULT_EVM_CHAIN.id
 
   return {
     address: address ?? undefined,

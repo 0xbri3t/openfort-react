@@ -8,12 +8,13 @@ import { createMockOpenfortClient } from '../mocks/openfortClient'
 import { buildContextValue } from '../mocks/TestWrapper'
 
 // Mock dependencies that useEthereumEmbeddedWallet needs
-vi.mock('../../components/Openfort/useOpenfort', () => ({
-  useOpenfort: () => ({
+vi.mock('../../components/Openfort/useOpenfort', () => {
+  const hook = () => ({
     walletConfig: { ethereum: { chainId: 80002 } },
     chainType: ChainTypeEnum.EVM,
-  }),
-}))
+  })
+  return { useOpenfort: hook, useOpenfortUIContext: hook }
+})
 vi.mock('../../core/ConnectionStrategyContext', () => ({
   useConnectionStrategy: () => ({
     kind: 'embedded',

@@ -1,18 +1,19 @@
 import { useGrantPermissions, useRevokePermissions } from '@openfort/react'
-import { CircleX, TrashIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { getAddress } from 'viem/utils'
-import { Button } from '@/components/Showcase/ui/Button'
-import { InputMessage } from '@/components/Showcase/ui/InputMessage'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useEthereumAccount } from '@/hooks/useEthereumAdapterHooks'
 import { useIsSessionKeySupported } from '@/hooks/useIsSessionKeySupported'
-import { cn } from '@/lib/cn'
 import { getMintContractAddress } from '@/lib/contracts'
 import { type StoredData, useSessionKeysStorage_backendSimulation } from '@/lib/useSessionKeysStorage'
+import {
+  SessionKeyListItem,
+  SessionKeyMessages,
+  SessionKeysCardShell,
+  SessionKeysCreateButton,
+} from './session-keys-shared'
+
 export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { grantPermissions, isLoading, error } = useGrantPermissions()
   const { revokePermissions, isLoading: isRevoking, error: revokeError } = useRevokePermissions()
@@ -42,151 +43,74 @@ export const SessionKeysCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
   }, [key])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Session keys</CardTitle>
-        <CardDescription>
-          Grant session keys with specific permissions to enhance security and control over wallet actions.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form
-          className="space-y-2"
-          onSubmit={async (e) => {
-            e.preventDefault()
-            if (grantDisabled) return
-            setSubmitting(true)
-            try {
-              const privateKey = generatePrivateKey()
-              const accountSessionAddress = privateKeyToAccount(privateKey).address
-              const { error: grantError, permissionsContext } = await grantPermissions({
-                sessionKey: privateKey,
-                request: {
-                  signer: {
-                    type: 'account',
-                    data: {
-                      id: accountSessionAddress,
-                    },
+    <SessionKeysCardShell>
+      <form
+        className="space-y-2"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          if (grantDisabled) return
+          setSubmitting(true)
+          try {
+            const privateKey = generatePrivateKey()
+            const accountSessionAddress = privateKeyToAccount(privateKey).address
+            const { error: grantError, permissionsContext } = await grantPermissions({
+              sessionKey: privateKey,
+              request: {
+                signer: {
+                  type: 'account',
+                  data: {
+                    id: accountSessionAddress,
                   },
-                  expiry: 60 * 60 * 24,
-                  permissions: [
-                    {
-                      type: 'contract-call',
-                      data: {
-                        address: getAddress(mintContractAddress!),
-                        calls: [],
-                      },
-                      policies: [],
-                    },
-                  ],
                 },
+                expiry: 60 * 60 * 24,
+                permissions: [
+                  {
+                    type: 'contract-call',
+                    data: {
+                      address: getAddress(mintContractAddress!),
+                      calls: [],
+                    },
+                    policies: [],
+                  },
+                ],
+              },
+            })
+            if (!grantError && permissionsContext) {
+              addPrivateKey(key, {
+                privateKey: privateKey,
+                publicKey: accountSessionAddress,
+                sessionKeyId: permissionsContext,
+                active: true,
               })
-              if (!grantError && permissionsContext) {
-                addPrivateKey(key, {
-                  privateKey: privateKey,
-                  publicKey: accountSessionAddress,
-                  sessionKeyId: permissionsContext,
-                  active: true,
-                })
-                setTimeout(updateSessionKeys, 100)
-              }
-            } finally {
-              setSubmitting(false)
+              setTimeout(updateSessionKeys, 100)
             }
-          }}
-        >
-          {tooltip ? (
-            <Tooltip delayDuration={500}>
-              <TooltipTrigger asChild>
-                <div className="w-full">
-                  <Button className="btn btn-accent w-full" type="submit" disabled={grantDisabled}>
-                    {isCreating ? 'Creating...' : 'Create session key'}
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <h3 className="text-base mb-1">{tooltip.hook}</h3>
-                {!isSessionKeySupported ? (
-                  <>Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.</>
-                ) : (
-                  tooltip.body
-                )}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <Tooltip delayDuration={500}>
-              <TooltipTrigger asChild>
-                <div className="w-full">
-                  <Button className="btn btn-accent w-full" type="submit" disabled={grantDisabled}>
-                    {isCreating ? 'Creating...' : 'Create session key'}
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {!isSessionKeySupported
-                  ? 'Session keys are only available for Smart Accounts. EOA wallets cannot use session keys.'
-                  : 'Grant session keys with specific permissions.'}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {sessionKeys.map(({ privateKey, publicKey, sessionKeyId, active }) => (
-            <Tooltip key={privateKey}>
-              <TooltipTrigger asChild>
-                <div className="px-4 py-2 border rounded break-all flex justify-between items-center">
-                  <div className={cn('overflow-hidden text-muted-foreground inline-flex', !active && 'line-through')}>
-                    <span className="truncate font-mono">
-                      {publicKey.slice(0, 15)}...{publicKey.slice(-4)}
-                    </span>
-                  </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-ghost text-error! p-0 ml-2"
-                        onClick={async () => {
-                          if (!active) {
-                            removePrivateKey(key, sessionKeyId)
-                            setTimeout(updateSessionKeys)
-                            return
-                          }
-                          const { error: revErr } = await revokePermissions({
-                            sessionKey: publicKey,
-                          })
-                          updatePrivateKey(key, { sessionKeyId, active: false })
-                          if (!revErr) setTimeout(updateSessionKeys, 100)
-                        }}
-                      >
-                        {active ? <CircleX size={16} /> : <TrashIcon size={16} />}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>{active ? 'Revoke permissions' : 'Remove session key from list'}</TooltipContent>
-                  </Tooltip>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div>Public key: {publicKey}</div>
-                <div>Private key: {privateKey}</div>
-                <div>Session key ID: {sessionKeyId}</div>
-                <div>
-                  Status:{' '}
-                  <span className={active ? '' : 'text-error'}>{active ? 'Active' : 'PERMISSIONS REVOKED'}</span>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-          <InputMessage
-            message={error?.message || 'An error occurred while granting permissions.'}
-            show={!!error}
-            variant="error"
+          } finally {
+            setSubmitting(false)
+          }
+        }}
+      >
+        <SessionKeysCreateButton
+          tooltip={tooltip}
+          isCreating={isCreating}
+          disabled={grantDisabled}
+          isSessionKeySupported={isSessionKeySupported}
+        />
+        {sessionKeys.map((item) => (
+          <SessionKeyListItem
+            key={item.privateKey}
+            item={item}
+            storageKey={key}
+            onRevoke={async (publicKey) => {
+              const result = await revokePermissions({ sessionKey: publicKey })
+              return { error: result.error }
+            }}
+            onRemove={(sessionKeyId) => removePrivateKey(key, sessionKeyId)}
+            onUpdate={(k, d) => updatePrivateKey(k, d)}
+            onRefresh={updateSessionKeys}
           />
-          <InputMessage
-            message={revokeError?.message || 'An error occurred while revoking permissions.'}
-            show={!!revokeError}
-            variant="error"
-          />
-          <InputMessage message={'Revoking permissions...'} show={!!isRevoking} variant="default" />
-        </form>
-      </CardContent>
-    </Card>
+        ))}
+        <SessionKeyMessages error={error} revokeError={revokeError} isRevoking={isRevoking} />
+      </form>
+    </SessionKeysCardShell>
   )
 }

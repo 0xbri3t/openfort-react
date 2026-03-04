@@ -11,34 +11,13 @@ import {
 } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
-import {
-  ChevronLeftIcon,
-  CornerDownRightIcon,
-  EyeIcon,
-  EyeOffIcon,
-  FingerprintIcon,
-  KeyIcon,
-  LockIcon,
-  WalletIcon,
-} from 'lucide-react'
+import { ChevronLeftIcon, CornerDownRightIcon, EyeIcon, EyeOffIcon, WalletIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { MP } from '@/components/motion/motion'
+import { WalletRecoveryIcon } from '@/components/Showcase/app/WalletRecoveryIcon'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
-
-const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
-  switch (recovery) {
-    case RecoveryMethod.PASSWORD:
-      return <KeyIcon className="h-4 w-4" />
-    case RecoveryMethod.PASSKEY:
-      return <FingerprintIcon className="h-4 w-4" />
-    case RecoveryMethod.AUTOMATIC:
-      return <LockIcon className="h-4 w-4" />
-    default:
-      return null
-  }
-}
 
 const ACCOUNT_TYPE_BADGE: Record<AccountTypeEnum, string> = {
   [AccountTypeEnum.EOA]: 'EOA',

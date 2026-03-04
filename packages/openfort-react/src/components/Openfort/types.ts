@@ -1,4 +1,4 @@
-import type { RecoveryMethod } from '@openfort/openfort-js'
+import type { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
 import type React from 'react'
 import type { ReactNode } from 'react'
 import type { CountryData, CountryIso2, CountrySelectorProps } from 'react-international-phone'
@@ -225,6 +225,8 @@ export type DebugModeOptions = {
 export type OpenfortWalletConfig = CommonWalletConfig &
   EncryptionSession &
   RecoverWithOTP & {
+    /** Which chain type to activate on first mount. Defaults to EVM. */
+    chainType?: ChainTypeEnum
     ethereum?: EthereumConfig
     solana?: SolanaConfig
   }

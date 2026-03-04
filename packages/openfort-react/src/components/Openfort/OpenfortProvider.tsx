@@ -208,7 +208,7 @@ export const OpenfortProvider = ({
   const [sendForm, setSendForm] = useState<SendFormState>(defaultSendFormState)
   const [buyForm, setBuyForm] = useState<BuyFormState>(defaultBuyFormState)
   const [headerLeftSlot, setHeaderLeftSlot] = useState<React.ReactNode | null>(null)
-  const [chainType, setChainType] = useState<ChainTypeEnum>(hasSolana ? ChainTypeEnum.SVM : ChainTypeEnum.EVM)
+  const [chainType, setChainType] = useState<ChainTypeEnum>(walletConfig?.chainType ?? ChainTypeEnum.EVM)
 
   const setOpen = useCallback((value: boolean) => {
     if (value) {

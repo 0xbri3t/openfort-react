@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import peerDepsExternal from 'rollup-plugin-peer-deps-external'
 import typescript from 'rollup-plugin-typescript2'
 import { createTransformer as createStyledComponentsTransformer } from 'typescript-plugin-styled-components'
@@ -31,6 +32,28 @@ const createTypescriptPlugin = (declarationDir) =>
     }),
   })
 
+const SRC_ROOT = resolve('src')
+
+/**
+ * Rollup plugin that rewrites relative imports escaping a sub-path directory
+ * (e.g. src/wagmi/) to '@openfort/react', so the sub-path bundle shares
+ * React contexts and Zustand stores with the main bundle at runtime.
+ */
+function rewriteToMainBundle(subdir) {
+  const subpathRoot = resolve('src', subdir)
+  return {
+    name: `rewrite-to-main-bundle-${subdir}`,
+    resolveId(source, importer) {
+      if (!importer || !source.startsWith('.')) return null
+      const resolved = resolve(dirname(importer), source)
+      if (resolved.startsWith(SRC_ROOT) && !resolved.startsWith(subpathRoot)) {
+        return { id: '@openfort/react', external: true }
+      }
+      return null
+    },
+  }
+}
+
 export default [
   // Main entry point (chain-agnostic)
   {
@@ -58,7 +81,7 @@ export default [
         sourcemap: false,
       },
     ],
-    plugins: [peerDepsExternal(), createTypescriptPlugin('build/solana')],
+    plugins: [rewriteToMainBundle('solana'), peerDepsExternal(), createTypescriptPlugin('build/solana')],
   },
   // Ethereum subpath export
   {
@@ -71,11 +94,12 @@ export default [
         sourcemap: false,
       },
     ],
-    plugins: [peerDepsExternal(), createTypescriptPlugin('build/ethereum')],
+    plugins: [rewriteToMainBundle('ethereum'), peerDepsExternal(), createTypescriptPlugin('build/ethereum')],
   },
+  // Wagmi subpath export
   {
     input: './src/wagmi/index.ts',
-    external: [...sharedExternal, '@openfort/react'],
+    external: sharedExternal,
     output: [
       {
         file: packageJson.exports['./wagmi'].import,
@@ -83,6 +107,6 @@ export default [
         sourcemap: false,
       },
     ],
-    plugins: [peerDepsExternal(), createTypescriptPlugin('build/wagmi')],
+    plugins: [rewriteToMainBundle('wagmi'), peerDepsExternal(), createTypescriptPlugin('build/wagmi')],
   },
 ]

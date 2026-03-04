@@ -8,12 +8,13 @@ import { SolanaContext } from '../../solana/SolanaContext'
 import { buildContextValue } from '../mocks/TestWrapper'
 
 // Mock dependencies that useSolanaEmbeddedWallet needs
-vi.mock('../../components/Openfort/useOpenfort', () => ({
-  useOpenfort: () => ({
+vi.mock('../../components/Openfort/useOpenfort', () => {
+  const hook = () => ({
     walletConfig: { solana: { cluster: 'devnet' } },
     chainType: ChainTypeEnum.SVM,
-  }),
-}))
+  })
+  return { useOpenfort: hook, useOpenfortUIContext: hook }
+})
 
 const { useSolanaEmbeddedWallet } = await import('../../solana/hooks/useSolanaEmbeddedWallet')
 

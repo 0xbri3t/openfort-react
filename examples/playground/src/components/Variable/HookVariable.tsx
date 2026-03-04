@@ -6,6 +6,8 @@ import { commonVariables, onSettledInputs } from '@/components/Variable/commonVa
 import { BaseVariable, type HookInput } from '@/components/Variable/Variable'
 import { cn } from '@/lib/cn'
 
+const EMPTY_OPTIONS = {} as any
+
 export const HookVariable = <TOptions extends object, TResult extends object>({
   hook,
   name,
@@ -13,7 +15,7 @@ export const HookVariable = <TOptions extends object, TResult extends object>({
   variables = {},
   defaultExpanded = 0,
   maxDepth = 3,
-  defaultOptions = {} as TOptions,
+  defaultOptions = EMPTY_OPTIONS as TOptions,
   optionsVariables,
   importPath = '@openfort/react',
 }: {
@@ -73,20 +75,18 @@ function SampleComponent() {
   const params = useSearch({ strict: false })
   const navigate = useNavigate()
   useEffect(() => {
-    if (params.focus) {
-      return clearTimeout(
-        setTimeout(() => {
-          navigate({
-            to: '.',
-            search: (prev) => {
-              const { focus, ...rest } = prev
-              return rest
-            },
-            replace: true,
-          })
-        }, 2000)
-      )
-    }
+    if (!params.focus) return
+    const id = setTimeout(() => {
+      navigate({
+        to: '.',
+        search: (prev) => {
+          const { focus, ...rest } = prev
+          return rest
+        },
+        replace: true,
+      })
+    }, 2000)
+    return () => clearTimeout(id)
   }, [params.focus, navigate])
 
   const [copied, setCopied] = useState(false)
@@ -169,20 +169,6 @@ function SampleComponent() {
           <div className="flex flex-col gap-2 group">
             {Object.entries(values)
               .sort()
-              // .sort(([a], [b]) => {
-              //   const typeA = typeof values[a]
-              //   const typeB = typeof values[b];
-              //   if (typeA === typeB) {
-              //     return a.localeCompare(b);
-              //   }
-              //   if (typeA === "function" || typeB === "function") {
-              //     return typeA === "function" ? 1 : -1; // Functions last
-              //   }
-              //   if (typeA === "object" || typeB === "object") {
-              //     return typeA === "object" ? 1 : -1; // Objects last
-              //   }
-              //   return a.localeCompare(b);
-              // })
               .map(([key, value], i) => (
                 <BaseVariable
                   // biome-ignore lint/suspicious/noArrayIndexKey: allowed for simplicity

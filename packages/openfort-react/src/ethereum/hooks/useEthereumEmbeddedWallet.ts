@@ -8,7 +8,7 @@ import {
   RecoveryMethod,
 } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useOpenfort } from '../../components/Openfort/useOpenfort'
+import { useOpenfortUIContext as useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'

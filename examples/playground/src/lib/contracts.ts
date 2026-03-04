@@ -1,36 +1,39 @@
-import { baseSepolia, beamTestnet, polygonAmoy } from 'wagmi/chains'
+import { PLAYGROUND_EVM_CHAINS } from '@/lib/chains'
 
 /** Chain IDs supported for mint contracts */
-const BEAM_CHAIN_ID = beamTestnet.id
-const POLYGON_CHAIN_ID = polygonAmoy.id
-const BASE_SEPOLIA_CHAIN_ID = baseSepolia.id
+const SUPPORTED_CHAIN_IDS = new Set(PLAYGROUND_EVM_CHAINS.map((c) => c.id))
 
 /** Fallback addresses when env vars are not set */
-const DEFAULT_BEAM_MINT = '0x45238AB60ACA6862a70fe996D1A8baDb71Af5A8f'
-const DEFAULT_POLYGON_MINT = '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'
+const DEFAULT_POLYGON_MINT = '0xbabe0001489722187FbaF0689C47B2f5E97545C5'
 
 /** Contract type: Beam uses claim(amount), Polygon uses mint(address, amount) */
 type MintContractType = 'claim' | 'mint'
 
-interface MintContractConfig {
+export interface MintContractConfig {
   address: string
   type: MintContractType
 }
 
+export const BALANCE_ABI = [
+  {
+    type: 'function',
+    name: 'balanceOf',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ type: 'uint256' }],
+  },
+] as const
+
 /**
  * Returns the mint contract address for the given chainId.
- * Beam Testnet: VITE_BEAM_MINT_CONTRACT (claim interface)
  * Polygon Amoy / Base Sepolia: VITE_POLYGON_MINT_CONTRACT (mint interface)
  */
 export function getMintContractAddress(chainId: number | undefined): string | undefined {
   if (chainId == null) return undefined
-  if (chainId === BEAM_CHAIN_ID) {
-    return import.meta.env.VITE_BEAM_MINT_CONTRACT ?? DEFAULT_BEAM_MINT
-  }
-  if (chainId === POLYGON_CHAIN_ID || chainId === BASE_SEPOLIA_CHAIN_ID) {
+  if (SUPPORTED_CHAIN_IDS.has(chainId)) {
     return import.meta.env.VITE_POLYGON_MINT_CONTRACT ?? DEFAULT_POLYGON_MINT
   }
-  return import.meta.env.VITE_POLYGON_MINT_CONTRACT ?? DEFAULT_POLYGON_MINT
+  return undefined
 }
 
 /**
@@ -42,6 +45,6 @@ export function getMintContractConfig(chainId: number | undefined): MintContract
   if (!address) return undefined
   return {
     address,
-    type: chainId === BEAM_CHAIN_ID ? 'claim' : 'mint',
+    type: 'mint',
   }
 }

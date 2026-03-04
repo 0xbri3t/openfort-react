@@ -1,5 +1,6 @@
 import { ChainTypeEnum } from '@openfort/react'
 import type { SolanaCluster } from '@openfort/react/solana'
+import { DEFAULT_EVM_CHAIN, EVM_CHAIN_BY_ID, SOLANA_CLUSTER } from '@/lib/chains'
 
 type ExplorerUrlOptions = {
   address?: string
@@ -10,22 +11,6 @@ type ExplorerUrlOptions = {
 
 const SOLANA_EXPLORER_BASE = 'https://explorer.solana.com'
 
-const EVM_EXPLORER_BY_CHAIN_ID: Record<number, string> = {
-  1: 'https://etherscan.io',
-  10: 'https://optimistic.etherscan.io',
-  137: 'https://polygonscan.com',
-  8453: 'https://basescan.org',
-  42161: 'https://arbiscan.io',
-  56: 'https://bscscan.com',
-  43114: 'https://snowtrace.io',
-  80002: 'https://amoy.polygonscan.com',
-  84532: 'https://sepolia.basescan.org',
-  13337: 'https://subnets-test.avax.network/beam',
-  11155111: 'https://sepolia.etherscan.io',
-  11155420: 'https://sepolia-optimism.etherscan.io',
-  421614: 'https://sepolia.arbiscan.io',
-}
-
 function appendPath(base: string, options: { address?: string; txHash?: string }, queryParams?: string): string {
   let path = base
   if (options.address) path = `${base}/address/${options.address}`
@@ -35,12 +20,12 @@ function appendPath(base: string, options: { address?: string; txHash?: string }
 
 export function getExplorerUrl(chainType: ChainTypeEnum, options: ExplorerUrlOptions): string {
   if (chainType === ChainTypeEnum.EVM) {
-    const chainId = options.chainId ?? 13337
-    const base = EVM_EXPLORER_BY_CHAIN_ID[chainId] ?? 'https://amoy.polygonscan.com'
+    const chainId = options.chainId ?? DEFAULT_EVM_CHAIN.id
+    const base = EVM_CHAIN_BY_ID[chainId]?.explorerUrl ?? DEFAULT_EVM_CHAIN.explorerUrl
     return appendPath(base, options)
   }
 
-  const cluster = options.cluster ?? 'devnet'
-  const clusterParam = cluster === 'mainnet-beta' ? undefined : `cluster=${encodeURIComponent(cluster)}`
+  const cluster = options.cluster ?? SOLANA_CLUSTER
+  const clusterParam = `cluster=${encodeURIComponent(cluster)}`
   return appendPath(SOLANA_EXPLORER_BASE, options, clusterParam)
 }

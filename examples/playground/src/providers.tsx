@@ -13,9 +13,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type React from 'react'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { createConfig, http, WagmiProvider } from 'wagmi'
-import { baseSepolia, beamTestnet, polygonAmoy } from 'wagmi/chains'
 import { ThemeProvider } from '@/components/theme-provider'
 import { EthereumAddressProviderEmbedded, EthereumAddressProviderWagmi } from '@/contexts/EthereumAddressContext'
+import { PLAYGROUND_EVM_CHAINS } from '@/lib/chains'
 import { useAppStore } from './lib/useAppStore'
 
 export type OpenfortPlaygroundMode = 'svm' | 'evm'
@@ -23,7 +23,7 @@ export type OpenfortPlaygroundMode = 'svm' | 'evm'
 const STORAGE_KEY = 'openfort-playground-mode'
 
 function readStoredMode(): OpenfortPlaygroundMode {
-  if (typeof window === 'undefined') return 'svm'
+  if (typeof window === 'undefined') return 'evm'
   const raw = localStorage.getItem(STORAGE_KEY)
   if (raw === 'evm' || raw === 'svm') return raw
   return 'evm'
@@ -72,26 +72,25 @@ export const useModeSwitchContext = () => useContext(ModeSwitchContext)
 
 // ─── Wagmi config (shared across all modes) ─────────────────────────────────
 
-const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
-if (!walletConnectProjectId) {
-  throw new Error('VITE_WALLETCONNECT_PROJECT_ID is not set')
-}
-
 const defaultConnectors = getDefaultConnectors({
   app: { name: 'Openfort demo' },
-  walletConnectProjectId,
 })
+
+const wagmiChains = PLAYGROUND_EVM_CHAINS.map((c) => c.viemChain) as [
+  (typeof PLAYGROUND_EVM_CHAINS)[number]['viemChain'],
+  ...(typeof PLAYGROUND_EVM_CHAINS)[number]['viemChain'][],
+]
+
+const wagmiTransports = Object.fromEntries(PLAYGROUND_EVM_CHAINS.map((c) => [c.id, http(c.rpcUrl)])) as Record<
+  number,
+  ReturnType<typeof http>
+>
 
 const wagmiConfig = createConfig(
   getDefaultConfig({
     appName: 'Openfort demo',
-    walletConnectProjectId,
-    chains: [beamTestnet, polygonAmoy, baseSepolia],
-    transports: {
-      [polygonAmoy.id]: http('https://rpc-amoy.polygon.technology'),
-      [beamTestnet.id]: http('https://build.onbeam.com/rpc/testnet'),
-      [baseSepolia.id]: http('https://sepolia.base.org'),
-    },
+    chains: wagmiChains,
+    transports: wagmiTransports,
     connectors: [...defaultConnectors],
   })
 )

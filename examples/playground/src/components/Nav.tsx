@@ -42,11 +42,9 @@ const MODE_TO_CHAIN: Record<OpenfortPlaygroundMode, ChainTypeEnum> = {
 export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
   const location = useLocation()
   const path = location.pathname.includes('showcase') ? '/' : location.pathname
-  const { mode, setMode } = usePlaygroundMode()
-  const { setChainType } = useOpenfort()
+  const { mode, setMode, isPostModeSwitch } = usePlaygroundMode()
+  const { setChainType, isLoading: isAuthLoading } = useOpenfort()
   const { onBeforeModeSwitch } = useModeSwitchContext()
-  const { isLoading: isAuthLoading } = useOpenfort()
-  const { isPostModeSwitch } = usePlaygroundMode()
   const showRestoringSession = isPostModeSwitch && isAuthLoading
 
   const handleModeSwitch = useCallback(

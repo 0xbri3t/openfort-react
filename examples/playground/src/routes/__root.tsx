@@ -36,14 +36,13 @@ function RootComponent() {
   }, [mode, chainType, setChainType])
   const location = useLocation()
 
-  const { setProviderOptions, providerOptions } = useAppStore()
-
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
       if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && (e.target as HTMLElement).tagName !== 'INPUT') {
         const delta = e.key === 'ArrowRight' ? 1 : -1
         themeIndex = (themeIndex + delta + themes.length) % themes.length
 
+        const { providerOptions, setProviderOptions } = useAppStore.getState()
         setProviderOptions({
           ...providerOptions,
           uiConfig: {
@@ -56,7 +55,7 @@ function RootComponent() {
 
     document.addEventListener('keydown', handleKeydown)
     return () => document.removeEventListener('keydown', handleKeydown)
-  }, [setProviderOptions, providerOptions])
+  }, [])
 
   return (
     <div className="flex flex-col min-h-screen w-screen">

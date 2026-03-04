@@ -5,6 +5,7 @@
 
 import { useSolanaEmbeddedWallet } from '@openfort/react'
 import { useCallback, useState } from 'react'
+import { toError } from '@/lib/errors'
 
 export function useSolanaMessageSigner() {
   const solana = useSolanaEmbeddedWallet()
@@ -24,7 +25,7 @@ export function useSolanaMessageSigner() {
         const signature = await solana.provider.signMessage(params.message)
         setData(signature)
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(String(err)))
+        setError(toError(err))
       } finally {
         setIsPending(false)
       }

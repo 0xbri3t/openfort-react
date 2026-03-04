@@ -15,45 +15,44 @@ jobs:
       actions: write
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v6
-      with:
-        node-version: 24
-        cache: 'pnpm'
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
 
-    - name: Install root dependencies
-      run: pnpm install --frozen-lockfile
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
 
-    - name: Build
-      run: pnpm build
+      - name: Build
+        run: pnpm build
 
-    - name: Install Playwright Browsers
-      run: pnpm playwright install --with-deps
-      working-directory: examples/playground
+      - name: Install Playwright Browsers
+        run: pnpm playwright install --with-deps
+        working-directory: examples/playground
 
-    - name: Run Playwright tests
-      env:
-        VITE_OPENFORT_PUBLISHABLE_KEY: ${{ vars.VITE_OPENFORT_PUBLISHABLE_KEY }}
-        VITE_SHIELD_PUBLISHABLE_KEY: ${{ vars.VITE_SHIELD_PUBLISHABLE_KEY }}
-        VITE_POLYGON_POLICY_ID: ${{ vars.VITE_POLYGON_POLICY_ID }}
-        VITE_BEAM_POLICY_ID: ${{ vars.VITE_BEAM_POLICY_ID }}
-        VITE_BASE_POLICY_ID: ${{ vars.VITE_BASE_POLICY_ID }}
-        VITE_BEAM_MINT_CONTRACT: ${{ vars.VITE_BEAM_MINT_CONTRACT }}
-        VITE_POLYGON_MINT_CONTRACT: ${{ vars.VITE_POLYGON_MINT_CONTRACT }}
-        VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT: ${{ vars.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT }}
-        VITE_WALLETCONNECT_PROJECT_ID: ${{ vars.VITE_WALLETCONNECT_PROJECT_ID }}
-      run: pnpm test
-      working-directory: examples/playground
+      - name: Run Playwright tests
+        env:
+          VITE_OPENFORT_PUBLISHABLE_KEY: ${{ vars.VITE_OPENFORT_PUBLISHABLE_KEY }}
+          VITE_SHIELD_PUBLISHABLE_KEY: ${{ vars.VITE_SHIELD_PUBLISHABLE_KEY }}
+          VITE_POLYGON_POLICY_ID: ${{ vars.VITE_POLYGON_POLICY_ID }}
+          VITE_BEAM_POLICY_ID: ${{ vars.VITE_BEAM_POLICY_ID }}
+          VITE_BASE_POLICY_ID: ${{ vars.VITE_BASE_POLICY_ID }}
+          VITE_BEAM_MINT_CONTRACT: ${{ vars.VITE_BEAM_MINT_CONTRACT }}
+          VITE_POLYGON_MINT_CONTRACT: ${{ vars.VITE_POLYGON_MINT_CONTRACT }}
+          VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT: ${{ vars.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT }}
+        run: pnpm test
+        working-directory: examples/playground
 
-    - uses: actions/upload-artifact@v5.0.0
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report
-        retention-days: 30
+      - uses: actions/upload-artifact@v5.0.0
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 30

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { toError } from '@/lib/errors'
 
 type UseAsyncDataOptions<T> = {
   queryFn: () => Promise<T>
@@ -30,8 +31,7 @@ export function useAsyncData<T>({ queryFn, queryKey, enabled = true }: UseAsyncD
       setData(result)
       return result
     } catch (err) {
-      const e = err instanceof Error ? err : new Error(String(err))
-      setError(e)
+      setError(toError(err))
       throw err
     } finally {
       setIsLoading(false)
@@ -42,7 +42,7 @@ export function useAsyncData<T>({ queryFn, queryKey, enabled = true }: UseAsyncD
   useEffect(() => {
     if (!enabled) return
     fetchData().catch(() => {})
-  }, [enabled, queryKeyString])
+  }, [enabled, queryKeyString, fetchData])
 
   return { data, error, isLoading, refetch: fetchData }
 }

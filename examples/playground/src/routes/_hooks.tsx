@@ -7,9 +7,10 @@ import {
 } from '@openfort/react'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
-import { type PropsWithChildren, useMemo } from 'react'
+import type { PropsWithChildren } from 'react'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { PLAYGROUND_EVM_CHAINS } from '@/lib/chains'
 import { cn } from '@/lib/cn'
 import { usePlaygroundMode } from '@/providers'
 
@@ -47,13 +48,8 @@ const SidebarInfo = () => {
     isConnected && chainType === ChainTypeEnum.EVM && 'chainId' in wallet
       ? (wallet as typeof ethereumWallet).chainId
       : undefined
-  const chains = [
-    { id: 80002, name: 'Polygon Amoy' },
-    { id: 84532, name: 'Base Sepolia' },
-    { id: 13337, name: 'Beam Testnet' },
-  ]
 
-  const connectedChain = useMemo(() => chains.find((c) => c.id === chainId), [chains, chainId])
+  const connectedChain = PLAYGROUND_EVM_CHAINS.find((c) => c.id === chainId)
 
   const renderSuggestedActions = () => {
     if (!user) {
@@ -74,7 +70,15 @@ const SidebarInfo = () => {
       return (
         <div className="text-sm flex flex-col gap-1">
           <p className="text-gray-500 dark:text-gray-400 mb-2">You are authenticated, but no wallet is connected.</p>
-          <SidebarLink href="/wallet/useWallets?focus=setActive">Connect a wallet</SidebarLink>
+          <SidebarLink
+            href={
+              mode === 'svm'
+                ? '/wallet/useSolanaEmbeddedWallet?focus=create'
+                : '/wallet/useEthereumEmbeddedWallet?focus=create'
+            }
+          >
+            Connect a wallet
+          </SidebarLink>
           <SidebarLink href="/auth/useSignOut?focus=signOut">Sign out</SidebarLink>
         </div>
       )
@@ -85,11 +89,13 @@ const SidebarInfo = () => {
         <p className="text-gray-500 dark:text-gray-400 mb-2">
           You are authenticated and have a wallet connected. Good job!
         </p>
-        <SidebarLink href={useAdapter ? '/adapter/useBalance?focus=data' : '/wagmi/useBalance?focus=data'}>
+        <SidebarLink
+          href={useAdapter ? '/wallet/useSolanaEmbeddedWallet?focus=address' : '/wagmi/useBalance?focus=data'}
+        >
           Check balance
         </SidebarLink>
         <SidebarLink
-          href={useAdapter ? '/adapter/useDisconnect?focus=disconnect' : '/wagmi/useDisconnect?focus=disconnect'}
+          href={useAdapter ? '/wallet/useSolanaEmbeddedWallet?focus=status' : '/wagmi/useDisconnect?focus=disconnect'}
         >
           Disconnect wallet
         </SidebarLink>
@@ -118,18 +124,30 @@ const SidebarInfo = () => {
               {user ? <>[{linkedAccounts.map((a) => a.provider).join(',')}]</> : 'No user'}
             </span>
           </SidebarLink>
-          <SidebarLink href="/wallet/useWallets?focus=activeWallet">
+          <SidebarLink
+            href={
+              mode === 'svm'
+                ? '/wallet/useSolanaEmbeddedWallet?focus=activeWallet'
+                : '/wallet/useEthereumEmbeddedWallet?focus=activeWallet'
+            }
+          >
             Wallet address:{' '}
             <span className="text-gray-500 dark:text-gray-400">
               {address ? <TruncatedText text={address} /> : 'No wallet connected'}
             </span>
           </SidebarLink>
-          <SidebarLink href="/wallet/useWallets?focus=activeWallet">
+          <SidebarLink
+            href={
+              mode === 'svm'
+                ? '/wallet/useSolanaEmbeddedWallet?focus=activeWallet'
+                : '/wallet/useEthereumEmbeddedWallet?focus=activeWallet'
+            }
+          >
             Wallet ID:{' '}
             <span className="text-gray-500 dark:text-gray-400">{activeWallet?.id ?? 'No wallet connected'}</span>
           </SidebarLink>
           <SidebarLink
-            href={mode !== 'evm' ? '/adapter/useSwitchChain?focus=currentChainId' : '/wagmi/useAccount?focus=chainId'}
+            href={mode !== 'evm' ? '/solana/useSolanaEmbeddedWallet?focus=cluster' : '/wagmi/useAccount?focus=chainId'}
           >
             Chain:{' '}
             <span className="text-gray-500 dark:text-gray-400">

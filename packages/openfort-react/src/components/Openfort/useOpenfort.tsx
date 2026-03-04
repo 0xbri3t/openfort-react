@@ -8,3 +8,6 @@ export const useOpenfort = () => {
   if (!context) throw Error('Openfort Hook must be inside a Provider.')
   return context
 }
+
+/** Alias used by sub-path bundles to avoid naming collision with the public useOpenfort (useOpenfortCore). */
+export { useOpenfort as useOpenfortUIContext }

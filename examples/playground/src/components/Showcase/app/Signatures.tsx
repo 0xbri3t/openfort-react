@@ -3,12 +3,9 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { createWalletClient, custom } from 'viem'
 import { useAccount, useSignMessage } from 'wagmi'
-import { Button } from '@/components/Showcase/ui/Button'
-import { InputMessage } from '@/components/Showcase/ui/InputMessage'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useConnectedEthereumAccount } from '@/hooks/useConnectedEthereumAccount'
-import { cn } from '@/lib/cn'
+import { toError } from '@/lib/errors'
+import { SignaturesLayout } from './signatures-shared'
 
 export const SignaturesCard = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address } = useConnectedEthereumAccount()
@@ -31,9 +28,7 @@ export const SignaturesCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
   const signature = useWagmiSign ? wagmiData : localSignature
   const error = useWagmiSign ? wagmiErrorObj : localError
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const message = (e.currentTarget.message.value as string) || ''
+  const handleSign = async (message: string) => {
     if (!address) return
 
     if (useWagmiSign) {
@@ -60,61 +55,20 @@ export const SignaturesCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
       })
       setLocalSignature(sig)
     } catch (err) {
-      setLocalError(err instanceof Error ? err : new Error('Failed to sign message'))
+      setLocalError(toError(err))
     } finally {
       setLocalPending(false)
     }
   }
 
-  const SignButton = () => (
-    <Button className="btn btn-accent w-full" disabled={isPending || !address}>
-      {isPending ? 'Signing...' : 'Sign a message'}
-    </Button>
-  )
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Signatures</CardTitle>
-        <CardDescription>
-          Sign messages with your wallet to prove ownership and perform actions in the app.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form className="space-y-2" onSubmit={handleSubmit}>
-          <label className={cn('input w-full')}>
-            <input
-              name="message"
-              type="text"
-              placeholder="Enter a message to sign"
-              className="grow peer"
-              defaultValue="Hello from Openfort!"
-              disabled={!address}
-            />
-          </label>
-          {tooltip ? (
-            <Tooltip delayDuration={500}>
-              <TooltipTrigger asChild>
-                <div className="w-full">
-                  <SignButton />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <h3 className="text-base mb-1">{tooltip.hook}</h3>
-                {tooltip.body}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <SignButton />
-          )}
-          <InputMessage
-            message={`Signed message: ${signature?.slice(0, 10)}...${signature?.slice(-10)}`}
-            show={!!signature}
-            variant="success"
-          />
-          <InputMessage message={error?.message ?? 'Connect a wallet to sign.'} show={!!error} variant="error" />
-        </form>
-      </CardContent>
-    </Card>
+    <SignaturesLayout
+      tooltip={tooltip}
+      isPending={isPending}
+      canSign={!!address}
+      signature={signature ?? undefined}
+      error={error}
+      onSubmit={handleSign}
+    />
   )
 }

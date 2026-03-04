@@ -1,28 +1,16 @@
 import { RecoveryMethod, useSolanaEmbeddedWallet } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
-import { EyeIcon, EyeOffIcon, FingerprintIcon, KeyIcon, LockIcon } from 'lucide-react'
+import { EyeIcon, EyeOffIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
+import { WalletRecoveryIcon } from '@/components/Showcase/app/WalletRecoveryIcon'
 import { TruncatedText } from '@/components/TruncatedText'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 
 type EmbeddedWalletItem = ReturnType<typeof useSolanaEmbeddedWallet>['wallets'][number]
-
-const WalletRecoveryIcon = ({ recovery }: { recovery: RecoveryMethod | undefined }) => {
-  switch (recovery) {
-    case RecoveryMethod.PASSWORD:
-      return <KeyIcon className="h-4 w-4" />
-    case RecoveryMethod.PASSKEY:
-      return <FingerprintIcon className="h-4 w-4" />
-    case RecoveryMethod.AUTOMATIC:
-      return <LockIcon className="h-4 w-4" />
-    default:
-      return null
-  }
-}
 
 const CreateWalletButton = ({ solana }: { solana: ReturnType<typeof useSolanaEmbeddedWallet> }) => {
   const isCreating = solana.status === 'creating'

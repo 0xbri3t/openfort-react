@@ -7,12 +7,8 @@ import { InputMessage } from '@/components/Showcase/ui/InputMessage'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useEthereumAccount } from '@/hooks/useEthereumAdapterHooks'
-
-const PLAYGROUND_CHAINS = [
-  { id: 80002, name: 'Polygon Amoy' },
-  { id: 84532, name: 'Base Sepolia' },
-  { id: 13337, name: 'Beam Testnet' },
-]
+import { PLAYGROUND_EVM_CHAINS } from '@/lib/chains'
+import { toError } from '@/lib/errors'
 
 export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const embedded = useEthereumEmbeddedWallet()
@@ -47,10 +43,10 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
       })
 
       setActiveChainId(targetChainId)
-      const chain = PLAYGROUND_CHAINS.find((c) => c.id === targetChainId)
-      setData(chain || { id: targetChainId, name: `Chain ${targetChainId}` })
+      const chain = PLAYGROUND_EVM_CHAINS.find((c) => c.id === targetChainId)
+      setData(chain ? { id: chain.id, name: chain.name } : { id: targetChainId, name: `Chain ${targetChainId}` })
     } catch (err) {
-      const e = err instanceof Error ? err : new Error('Failed to switch chain')
+      const e = toError(err)
       setError(e)
     } finally {
       setIsPending(false)
@@ -58,7 +54,7 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
   }
 
   const chainName =
-    PLAYGROUND_CHAINS.find((chain) => chain.id === currentChainId)?.name ||
+    PLAYGROUND_EVM_CHAINS.find((chain) => chain.id === currentChainId)?.name ||
     (currentChainId != null ? `Chain ${currentChainId}` : 'Unknown')
 
   return (
@@ -73,7 +69,7 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {PLAYGROUND_CHAINS.map((chain) => (
+          {PLAYGROUND_EVM_CHAINS.map((chain) => (
             <div key={chain.id}>
               {tooltip ? (
                 <Tooltip delayDuration={500}>

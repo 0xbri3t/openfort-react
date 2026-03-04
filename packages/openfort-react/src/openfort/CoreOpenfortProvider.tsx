@@ -83,18 +83,44 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [walletConfig?.solana, walletConfig])
 
-  // ---- Zustand store ----
+  // ---- Zustand store + Openfort client ----
   const bridgeRef = useRef(bridge)
   bridgeRef.current = bridge
 
-  const store = useMemo(
-    () =>
-      createOpenfortStore(chainType, () => ({
-        hasBridge: !!bridgeRef.current,
-        address: bridgeRef.current?.account.address,
-      })),
-    []
-  )
+  // ---- Openfort instance ----
+  const openfort = useMemo(() => {
+    logger.log('Creating Openfort instance.', openfortConfig)
+
+    if (!openfortConfig.baseConfiguration.publishableKey)
+      throw Error('CoreOpenfortProvider requires a publishableKey to be set in the baseConfiguration.')
+
+    if (
+      openfortConfig.shieldConfiguration &&
+      !openfortConfig.shieldConfiguration?.passkeyRpId &&
+      typeof window !== 'undefined'
+    ) {
+      openfortConfig.shieldConfiguration = {
+        passkeyRpId: window.location.hostname,
+        passkeyRpName: document.title || 'Openfort app',
+        ...openfortConfig.shieldConfiguration,
+      }
+    }
+
+    const newClient = createOpenfortClient(openfortConfig)
+
+    setDefaultClient(newClient)
+    return newClient
+  }, [])
+
+  const store = useMemo(() => {
+    const s = createOpenfortStore(chainType, () => ({
+      hasBridge: !!bridgeRef.current,
+      address: bridgeRef.current?.account.address,
+    }))
+    // Inject client at creation time — avoids setState during render
+    s.setState({ client: openfort })
+    return s
+  }, [])
 
   // Sync chainType from UI context into the store
   useEffect(() => {
@@ -141,34 +167,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
     return strategyByChain[chainType] ?? null
   }, [bridge, chainType, walletConfig, bridgeConnectors, solanaStrategy, setActiveChainId])
-
-  // ---- Openfort instance ----
-  const openfort = useMemo(() => {
-    logger.log('Creating Openfort instance.', openfortConfig)
-
-    if (!openfortConfig.baseConfiguration.publishableKey)
-      throw Error('CoreOpenfortProvider requires a publishableKey to be set in the baseConfiguration.')
-
-    if (
-      openfortConfig.shieldConfiguration &&
-      !openfortConfig.shieldConfiguration?.passkeyRpId &&
-      typeof window !== 'undefined'
-    ) {
-      openfortConfig.shieldConfiguration = {
-        passkeyRpId: window.location.hostname,
-        passkeyRpName: document.title || 'Openfort app',
-        ...openfortConfig.shieldConfiguration,
-      }
-    }
-
-    const newClient = createOpenfortClient(openfortConfig)
-
-    setDefaultClient(newClient)
-    return newClient
-  }, [])
-
-  // Inject client into store immediately
-  store.setState({ client: openfort })
 
   // ---- Embedded state ----
   useEffect(() => {
@@ -483,15 +481,15 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [openfort])
 
   // ---- Inject actions into store ----
-  // Actions are stable refs (useCallback), so this is safe to call during render.
-  // Like Wagmi's config pattern: functions live alongside state in the store.
-  store.setState({
-    logout,
-    signUpGuest,
-    updateUser,
-    updateEmbeddedAccounts: fetchEmbeddedAccounts,
-    setChainType,
-  })
+  useLayoutEffect(() => {
+    store.setState({
+      logout,
+      signUpGuest,
+      updateUser,
+      updateEmbeddedAccounts: fetchEmbeddedAccounts,
+      setChainType,
+    })
+  }, [store, logout, signUpGuest, updateUser, fetchEmbeddedAccounts, setChainType])
 
   return createElement(
     StoreContext.Provider,

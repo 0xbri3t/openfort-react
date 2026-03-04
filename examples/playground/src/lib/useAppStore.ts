@@ -1,32 +1,30 @@
-import { AuthProvider, type OpenfortProvider, type OpenfortWalletConfig, RecoveryMethod } from '@openfort/react'
-import { baseSepolia, beamTestnet, polygonAmoy } from 'viem/chains'
+import {
+  AuthProvider,
+  ChainTypeEnum,
+  type OpenfortProvider,
+  type OpenfortWalletConfig,
+  RecoveryMethod,
+} from '@openfort/react'
 import { create } from 'zustand'
+import { DEFAULT_EVM_CHAIN, PLAYGROUND_EVM_CHAINS, RPC_URLS, SOLANA_CLUSTER, SOLANA_DEFAULT_RPC } from '@/lib/chains'
 
 const defaultWalletConfig: OpenfortWalletConfig = {
   shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
+  chainType: ChainTypeEnum.EVM,
   ethereum: {
-    chainId: beamTestnet.id,
-    rpcUrls: {
-      [polygonAmoy.id]: 'https://rpc-amoy.polygon.technology',
-      [beamTestnet.id]: 'https://build.onbeam.com/rpc/testnet',
-      [baseSepolia.id]: 'https://sepolia.base.org',
-    },
-    ethereumProviderPolicyId: {
-      [polygonAmoy.id]: import.meta.env.VITE_POLYGON_POLICY_ID!,
-      [beamTestnet.id]: import.meta.env.VITE_BEAM_POLICY_ID!,
-      [baseSepolia.id]: import.meta.env.VITE_BASE_POLICY_ID!,
-    },
+    chainId: DEFAULT_EVM_CHAIN.id,
+    rpcUrls: RPC_URLS,
+    ethereumProviderPolicyId: Object.fromEntries(
+      PLAYGROUND_EVM_CHAINS.map((c) => [c.id, import.meta.env.VITE_POLICY_ID!])
+    ),
     assets: {
-      [polygonAmoy.id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],
-      [beamTestnet.id]: [import.meta.env.VITE_BEAM_MINT_CONTRACT!],
+      [PLAYGROUND_EVM_CHAINS[0].id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],
     },
   },
   solana: {
-    cluster: 'devnet',
+    cluster: SOLANA_CLUSTER,
     rpcUrls: {
-      devnet: import.meta.env.VITE_HELIUS_API_KEY
-        ? `https://devnet.helius-rpc.com/?api-key=${import.meta.env.VITE_HELIUS_API_KEY}`
-        : 'https://api.devnet.solana.com',
+      [SOLANA_CLUSTER]: SOLANA_DEFAULT_RPC,
     },
   },
   createEncryptedSessionEndpoint:
@@ -60,7 +58,7 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
       AuthProvider.DISCORD,
     ],
     phoneConfig: {
-      defaultCountry: 'es',
+      defaultCountry: 'us',
     },
     avoidLayoutShift: undefined,
     bufferPolyfill: undefined,
