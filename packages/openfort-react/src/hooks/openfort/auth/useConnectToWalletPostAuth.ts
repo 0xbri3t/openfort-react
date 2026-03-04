@@ -65,7 +65,10 @@ export const useConnectToWalletPostAuth = () => {
     async ({
       logoutOnError: signOutOnError = true,
       recoverWalletAutomatically,
-    }: CreateWalletPostAuthOptions): Promise<{ wallet?: EthereumUserWallet | SolanaUserWallet }> => {
+    }: CreateWalletPostAuthOptions): Promise<{
+      wallet?: EthereumUserWallet | SolanaUserWallet
+      passwordRequired?: boolean
+    }> => {
       if (walletConfig?.recoverWalletAutomaticallyAfterAuth === false && recoverWalletAutomatically === undefined) {
         return {}
       }
@@ -144,6 +147,11 @@ export const useConnectToWalletPostAuth = () => {
             if (signOutOnError) await signOut()
           }
         }
+      }
+
+      // Password recovery requires user input — signal the caller
+      if (chainWallets.some((w) => w.recoveryMethod === RecoveryMethod.PASSWORD)) {
+        return { wallet: undefined, passwordRequired: true }
       }
 
       const first = chainWallets[0]
