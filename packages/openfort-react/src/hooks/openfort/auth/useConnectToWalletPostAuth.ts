@@ -1,6 +1,6 @@
 'use client'
 
-import { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
+import { ChainTypeEnum, EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
@@ -14,6 +14,7 @@ import {
   type SolanaUserWallet,
 } from '../walletTypes'
 import { useSignOut } from './useSignOut'
+import { useQueryClient } from '@tanstack/react-query'
 
 /**
  * Options that control the behaviour of {@link useConnectToWalletPostAuth} when attempting to
@@ -60,7 +61,7 @@ export const useConnectToWalletPostAuth = () => {
   const solanaWallet = useSolanaEmbeddedWallet()
   const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
   const { signOut } = useSignOut()
-
+  const queryClient = useQueryClient()
   const tryUseWallet = useCallback(
     async ({
       logoutOnError: signOutOnError = true,
@@ -83,9 +84,9 @@ export const useConnectToWalletPostAuth = () => {
         return {}
       }
 
-      // List all account types (EOA, Smart Account, Delegated Account)
-      const wallets = await client.embeddedWallet.list({
-        limit: 100,
+      const wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({
+        queryKey: ['openfortEmbeddedAccountsList'],
+        queryFn: () => client.embeddedWallet.list({ limit: 100 }),
       })
 
       const chainWallets = wallets.filter((w) => w.chainType === chainType)
@@ -163,7 +164,7 @@ export const useConnectToWalletPostAuth = () => {
           : undefined,
       }
     },
-    [chainType, client, walletConfig, chainId, ethereumWallet, solanaWallet, signOut]
+    [chainType, client, walletConfig, chainId, ethereumWallet, solanaWallet, signOut, queryClient]
   )
 
   return {

@@ -1,6 +1,6 @@
 {
   "name": "@openfort/react",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "author": "Openfort (https://www.openfort.io)",
   "license": "BSD-2-Clause license",
   "description": "The easiest way to integrate Openfort to your project.",
@@ -104,6 +104,8 @@
     "@wagmi/connectors": "^6.2.0",
     "@wagmi/core": "^2.22.1",
     "happy-dom": "^20.8.3",
+    "axios": "^1.7.7",
+    "jsdom": "^28.1.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-typescript2": "^0.36.0",
     "styled-components": "^5.3.5",

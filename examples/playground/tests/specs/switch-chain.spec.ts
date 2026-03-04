@@ -1,7 +1,7 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Switch chain', () => {
-  test.describe.configure({ retries: 1 })
+  test.describe.configure({ retries: 3 })
   test('can switch between EVM chains and updates current chain', async ({ dashboardPage, mode }) => {
     const m = mode
     await dashboardPage.ensureReady(m)

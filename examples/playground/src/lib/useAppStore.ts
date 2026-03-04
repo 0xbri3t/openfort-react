@@ -7,6 +7,7 @@ import {
 } from '@openfort/react'
 import { create } from 'zustand'
 import { DEFAULT_EVM_CHAIN, PLAYGROUND_EVM_CHAINS, RPC_URLS, SOLANA_CLUSTER, SOLANA_DEFAULT_RPC } from '@/lib/chains'
+import { polygonAmoy } from 'viem/chains'
 
 const defaultWalletConfig: OpenfortWalletConfig = {
   shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
@@ -18,7 +19,7 @@ const defaultWalletConfig: OpenfortWalletConfig = {
       PLAYGROUND_EVM_CHAINS.map((c) => [c.id, import.meta.env.VITE_POLICY_ID!])
     ),
     assets: {
-      [PLAYGROUND_EVM_CHAINS[0].id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],
+      [polygonAmoy.id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],
     },
   },
   solana: {
@@ -27,13 +28,23 @@ const defaultWalletConfig: OpenfortWalletConfig = {
       [SOLANA_CLUSTER]: SOLANA_DEFAULT_RPC,
     },
   },
+
+  // If you want to use AUTOMATIC embedded wallet recovery, an encryption session is required.
+  // See: https://www.openfort.io/docs/products/embedded-wallet/react-native/quickstart/automatic
+  // For backend setup, check: https://github.com/openfort-xyz/openfort-backend-quickstart
+  getEncryptionSession: undefined, // Optional function to get the encryption session
   createEncryptedSessionEndpoint:
     import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT ||
     'https://create-next-app.openfort.io/api/protected-create-encryption-session',
+  recoverWalletAutomaticallyAfterAuth: undefined,
+  accountType: undefined,
+
   requestWalletRecoverOTP: async ({ userId, email, phone }) => {
     await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ user_id: userId, email, phone }),
     })
   },
