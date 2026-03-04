@@ -1,7 +1,7 @@
 import type { Chain } from 'viem/chains'
 import { baseSepolia, polygonAmoy } from 'viem/chains'
 
-export interface PlaygroundEvmChain {
+interface PlaygroundEvmChain {
   id: number
   name: string
   rpcUrl: string

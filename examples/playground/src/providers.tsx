@@ -7,11 +7,11 @@
  * Switching modes remounts the provider tree; wagmi/tanstack state is lost when leaving evm.
  */
 
-import { OpenfortProvider } from '@openfort/react'
+import { ChainTypeEnum, OpenfortProvider } from '@openfort/react'
 import { getDefaultConfig, getDefaultConnectors, OpenfortWagmiBridge } from '@openfort/react/wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type React from 'react'
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { createConfig, http, WagmiProvider } from 'wagmi'
 import { ThemeProvider } from '@/components/theme-provider'
 import { EthereumAddressProviderEmbedded, EthereumAddressProviderWagmi } from '@/contexts/EthereumAddressContext'
@@ -52,6 +52,13 @@ export function PlaygroundModeProvider({ children }: { children: React.ReactNode
   }, [])
 
   const clearPostModeSwitch = useCallback(() => setIsPostModeSwitch(false), [])
+
+  // Safety net: auto-clear after 4 s in case SDK isLoading gets stuck
+  useEffect(() => {
+    if (!isPostModeSwitch) return
+    const id = setTimeout(() => setIsPostModeSwitch(false), 4_000)
+    return () => clearTimeout(id)
+  }, [isPostModeSwitch])
 
   const value = useMemo(
     () => ({ mode, setMode, isPostModeSwitch, clearPostModeSwitch }),
@@ -97,16 +104,28 @@ const wagmiConfig = createConfig(
 
 // ─── Providers ─────────────────────────────────────────────────────────────
 
+const MODE_TO_CHAIN = { evm: ChainTypeEnum.EVM, svm: ChainTypeEnum.SVM } as const
+
 function WagmiProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
   const { providerOptions } = useAppStore()
+  const { mode } = usePlaygroundMode()
+  const options = useMemo(
+    () => ({
+      ...providerOptions,
+      walletConfig: providerOptions.walletConfig
+        ? { ...providerOptions.walletConfig, chainType: MODE_TO_CHAIN[mode] }
+        : undefined,
+    }),
+    [providerOptions, mode]
+  )
   const value = useMemo(() => ({ onBeforeModeSwitch: () => queryClient.clear() }), [queryClient])
   return (
     <ModeSwitchContext.Provider value={value}>
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
           <OpenfortWagmiBridge>
-            <OpenfortProvider {...providerOptions}>
+            <OpenfortProvider {...options}>
               <EthereumAddressProviderWagmi>{children}</EthereumAddressProviderWagmi>
             </OpenfortProvider>
           </OpenfortWagmiBridge>
@@ -118,9 +137,19 @@ function WagmiProviders({ children }: { children: React.ReactNode }) {
 
 function OpenfortOnlyProviders({ children }: { children: React.ReactNode }) {
   const { providerOptions } = useAppStore()
+  const { mode } = usePlaygroundMode()
+  const options = useMemo(
+    () => ({
+      ...providerOptions,
+      walletConfig: providerOptions.walletConfig
+        ? { ...providerOptions.walletConfig, chainType: MODE_TO_CHAIN[mode] }
+        : undefined,
+    }),
+    [providerOptions, mode]
+  )
   return (
     <ModeSwitchContext.Provider value={{}}>
-      <OpenfortProvider {...providerOptions}>
+      <OpenfortProvider {...options}>
         <EthereumAddressProviderEmbedded>{children}</EthereumAddressProviderEmbedded>
       </OpenfortProvider>
     </ModeSwitchContext.Provider>

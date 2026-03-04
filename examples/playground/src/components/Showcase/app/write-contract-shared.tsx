@@ -10,7 +10,7 @@ import { cn } from '@/lib/cn'
 import type { MintContractConfig } from '@/lib/contracts'
 import { getExplorerUrl } from '@/lib/explorer'
 
-export interface WriteContractLayoutProps {
+interface WriteContractLayoutProps {
   tooltip?: { hook: string; body: ReactNode }
   config: MintContractConfig | undefined
   address: `0x${string}` | undefined

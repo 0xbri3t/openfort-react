@@ -135,7 +135,8 @@
       "@wagmi/connectors",
       "@wagmi/core",
       "styled-components",
-      "@babel/core"
+      "@babel/core",
+      "@testing-library/react-hooks"
     ]
   },
   "simple-git-hooks": {

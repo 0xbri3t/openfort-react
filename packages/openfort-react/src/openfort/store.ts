@@ -26,6 +26,8 @@ export type OpenfortStoreActions = {
   setActiveEmbeddedAddress: (address: string | undefined) => void
   setWalletStatus: (status: WalletFlowStatus) => void
   setChainType: (chainType: ChainTypeEnum) => void
+  /** Force-recompute isLoading from current state + bridge info. */
+  recomputeIsLoading: () => void
 
   // Injected by CoreOpenfortProvider after mount
   logout: () => Promise<void>
@@ -105,6 +107,14 @@ export function createOpenfortStore(
     },
     setChainType: (chainType) => {
       set({ chainType })
+    },
+    recomputeIsLoading: () => {
+      const state = store.getState()
+      const info = getBridgeInfo?.() ?? { hasBridge: false, address: undefined }
+      const loading = computeIsLoading(state.embeddedState, state.user, info.hasBridge, info.address)
+      if (loading !== state.isLoading) {
+        set({ isLoading: loading })
+      }
     },
 
     // Injected by CoreOpenfortProvider after creation

@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/cn'
 import type { StoredData } from '@/lib/useSessionKeysStorage'
 
-export interface SessionKeyListItemProps {
+interface SessionKeyListItemProps {
   item: StoredData
   storageKey: string
   onRevoke: (publicKey: string) => Promise<{ error?: Error | null }>
@@ -70,7 +70,7 @@ export function SessionKeyListItem({
   )
 }
 
-export interface SessionKeyMessagesProps {
+interface SessionKeyMessagesProps {
   error: Error | null | undefined
   revokeError: Error | null | undefined
   isRevoking: boolean
@@ -102,7 +102,7 @@ export function SessionKeyMessages({ error, revokeError, isRevoking, signedData 
   )
 }
 
-export interface SessionKeysCreateButtonProps {
+interface SessionKeysCreateButtonProps {
   tooltip?: { hook: string; body: ReactNode }
   isCreating: boolean
   disabled: boolean

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 
-export interface SignaturesLayoutProps {
+interface SignaturesLayoutProps {
   tooltip?: { hook: string; body: ReactNode }
   isPending: boolean
   canSign: boolean

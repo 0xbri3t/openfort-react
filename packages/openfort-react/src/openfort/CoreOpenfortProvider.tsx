@@ -130,8 +130,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   // Recompute isLoading when bridge address changes (bridge connects/disconnects)
   const address = bridge?.account.address
   useEffect(() => {
-    const s = store.getState()
-    store.setState({ embeddedState: s.embeddedState })
+    store.getState().recomputeIsLoading()
   }, [store, address])
 
   const ACTIVE_CHAIN_ID_KEY = 'openfort_active_chain_id'

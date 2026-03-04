@@ -9,7 +9,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import { ConnectExternalWalletCard } from '@/components/Showcase/app/ConnectExternalWalletCard'
 import { CreateSessionKeyCardSolana } from '@/components/Showcase/app/CreateSessionKeyCardSolana'
-import { MintTokensCard } from '@/components/Showcase/app/MintTokensCard'
+import { SendTransactionCardSolana } from '@/components/Showcase/app/SendTransactionCardSolana'
 import { SessionKeysCard } from '@/components/Showcase/app/SessionKeys'
 import { SessionKeysCardEVM } from '@/components/Showcase/app/SessionKeysCardEVM'
 import { SetActiveWalletsCardEthereum } from '@/components/Showcase/app/SetActiveWallets'
@@ -19,6 +19,7 @@ import { SignaturesCardEVM } from '@/components/Showcase/app/SignaturesCardEVM'
 import { SignaturesCardSolana } from '@/components/Showcase/app/SignaturesCardSolana'
 import { SwitchChainCard } from '@/components/Showcase/app/SwitchChain'
 import { SwitchChainCardEVM } from '@/components/Showcase/app/SwitchChainCardEVM'
+import { TransactionHistoryCardSolana } from '@/components/Showcase/app/TransactionHistoryCardSolana'
 import { WriteContractCard } from '@/components/Showcase/app/WriteContract'
 import { WriteContractCardEVM } from '@/components/Showcase/app/WriteContractCardEVM'
 import { SampleTooltipLink } from '@/components/Showcase/auth/SampleTooltipLink'
@@ -75,10 +76,16 @@ export const App = () => {
                 body: <>Signs messages using @solana/kit MessagePartialSigner from @openfort/react/solana.</>,
               }}
             />
-            <MintTokensCard
+            <SendTransactionCardSolana
               tooltip={{
-                hook: 'requestAirdrop',
-                body: <>Funds devnet account via Solana RPC requestAirdrop.</>,
+                hook: 'sendSolTransaction',
+                body: <>Sends SOL via @solana/kit pipe API or gasless via Kora fee payer.</>,
+              }}
+            />
+            <TransactionHistoryCardSolana
+              tooltip={{
+                hook: 'getTransactionHistory',
+                body: <>Fetches recent transactions via getSignaturesForAddress.</>,
               }}
             />
             <CreateSessionKeyCardSolana />

@@ -31,7 +31,7 @@ const defaultConnectors = ({
   }
 
   connectors.push(
-    injected({ target: 'metaMask' }),
+    injected(),
     coinbaseWallet({
       appName: app.name,
       appLogoUrl: app.icon,

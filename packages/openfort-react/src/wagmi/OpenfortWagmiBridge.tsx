@@ -74,7 +74,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
 
   const connectBridge = useCallback(
     (params: { connector: OpenfortEthereumBridgeConnector }) => {
-      const c = stableConnectors.find((x) => x.id === params.connector.id && x.name === params.connector.name)
+      const c = stableConnectors.find((x) => x.id === params.connector.id)
       if (c) connect({ connector: c })
     },
     [stableConnectors, connect]
@@ -82,7 +82,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
 
   const connectAsyncBridge = useCallback(
     async (params: { connector: OpenfortEthereumBridgeConnector }) => {
-      const c = stableConnectors.find((x) => x.id === params.connector.id && x.name === params.connector.name)
+      const c = stableConnectors.find((x) => x.id === params.connector.id)
       if (!c) throw new Error('Connector not found')
       return wagmiConnectAsync({ connector: c })
     },
@@ -124,7 +124,7 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
 
   const getConnectorAccounts = useCallback(
     async (connectorBridge: OpenfortEthereumBridgeConnector): Promise<`0x${string}`[]> => {
-      const c = stableConnectors.find((x) => x.id === connectorBridge.id && x.name === connectorBridge.name)
+      const c = stableConnectors.find((x) => x.id === connectorBridge.id)
       if (!c?.getAccounts) return []
       const accounts = await c.getAccounts()
       return accounts as `0x${string}`[]
