@@ -8,7 +8,7 @@ import {
 } from '@openfort/openfort-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { getConnectors } from '@wagmi/core'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Hex } from 'viem'
 import { type Connector, useAccount, useChainId, useConfig, useDisconnect, useSwitchChain } from 'wagmi'
 import { type GetEncryptionSessionParams, routes, UIAuthProvider } from '../../components/Openfort/types'
@@ -264,7 +264,7 @@ function capMessage(msg: string, max = 200): string {
 export function useWallets(hookOptions: WalletOptions = {}) {
   const { client, embeddedAccounts, isLoadingAccounts: isLoadingWallets, updateEmbeddedAccounts } = useOpenfortCore()
   const { linkedAccounts, user } = useUser()
-  const { walletConfig, setOpen, setRoute, setConnector, uiConfig } = useOpenfort()
+  const { walletConfig, setOpen, setRoute, setConnector } = useOpenfort()
   const { connector, isConnected, address } = useAccount()
   const chainId = useChainId()
   const availableWallets = useWagmiWallets() // TODO: Map wallets object to be the same as wallets
@@ -276,6 +276,9 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   const { switchChainAsync } = useSwitchChain()
   const wagmiConfig = useConfig()
   const queryClient = useQueryClient()
+
+  const hookOptionsRef = useRef(hookOptions)
+  hookOptionsRef.current = hookOptions
 
   const { connect } = useConnect({
     mutation: {
@@ -899,7 +902,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
         await updateEmbeddedAccounts()
         return onSuccess({
-          hookOptions,
+          hookOptions: hookOptionsRef.current,
           options,
           data: {
             wallet: parseEmbeddedAccount({
@@ -922,7 +925,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         })
         onError({
           error,
-          hookOptions,
+          hookOptions: hookOptionsRef.current,
           options,
         })
         return { error, isOTPRequired }
@@ -930,12 +933,10 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     },
     [
       client,
-      uiConfig,
       chainId,
       walletConfig,
       openfortConnector,
       parseWalletRecovery,
-      hookOptions,
       updateEmbeddedAccounts,
       isWalletRecoveryOTPEnabled,
     ]
