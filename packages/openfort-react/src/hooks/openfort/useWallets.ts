@@ -671,7 +671,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             let accountToRecover: EmbeddedAccount | undefined
             // Check if the embedded wallet is already created in the current chain
             if (walletConfig?.accountType === AccountTypeEnum.EOA) {
-              accountToRecover = embeddedAccounts.find((w) => w.accountType === AccountTypeEnum.EOA)
+              accountToRecover = embeddedAccounts.find(
+                (w) =>
+                  w.accountType === AccountTypeEnum.EOA &&
+                  (optionsObject.recovery?.password || w.recoveryMethod !== RecoveryMethod.PASSWORD)
+              )
               if (!accountToRecover) {
                 throw new OpenfortError('No embedded wallet found with type EOA', OpenfortReactErrorType.WALLET_ERROR)
               }
@@ -679,7 +683,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
               accountToRecover = embeddedAccounts.find((w) => w.chainId === chainId)
               if (!accountToRecover) {
                 // EOA wallets have no chainId — fall back to matching by account type
-                accountToRecover = embeddedAccounts.find((w) => w.accountType === AccountTypeEnum.EOA)
+                accountToRecover = embeddedAccounts.find(
+                  (w) =>
+                    w.accountType === AccountTypeEnum.EOA &&
+                    (optionsObject.recovery?.password || w.recoveryMethod !== RecoveryMethod.PASSWORD)
+                )
               }
               if (!accountToRecover) {
                 // TODO: Connect to wallet in the other chain and then switch chain
