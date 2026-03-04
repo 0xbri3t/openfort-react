@@ -678,7 +678,10 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             } else {
               accountToRecover = embeddedAccounts.find((w) => w.chainId === chainId)
               if (!accountToRecover) {
-                // Here it should check if there is a wallet that can recover in another chain and recover it in the current chain (its a different account so its not supported yet)
+                // EOA wallets have no chainId — fall back to matching by account type
+                accountToRecover = embeddedAccounts.find((w) => w.accountType === AccountTypeEnum.EOA)
+              }
+              if (!accountToRecover) {
                 // TODO: Connect to wallet in the other chain and then switch chain
                 throw new OpenfortError(
                   'No embedded wallet found for the current chain',
