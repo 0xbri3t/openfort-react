@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- [#191](https://github.com/openfort-xyz/openfort-react/pull/191) [`44f2f1f`](https://github.com/openfort-xyz/openfort-react/commit/44f2f1f8e39f4e806a9c8357b381bd0f0dc767ad) Thanks [@isardmart](https://github.com/isardmart)! - updated fallback when no chainId on wallet, fallback to eoa check, added export key in headless example
+
 ## 0.3.1
 
 ### Patch Changes
