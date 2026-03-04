@@ -41,7 +41,9 @@
     "build:playground": "pnpm build && pnpm --filter playground build",
     "build:ci": "pnpm -r run build",
     "start:cli": "pnpm --filter create-openfort start",
-    "test": "pnpm --filter playground test",
+    "test": "pnpm --filter @openfort/react test && pnpm --filter playground test",
+    "test:unit": "pnpm --filter @openfort/react test",
+    "test:e2e": "pnpm --filter playground test",
     "test:ui": "pnpm --filter playground test:ui",
     "test:debug": "pnpm --filter playground test:debug"
   },

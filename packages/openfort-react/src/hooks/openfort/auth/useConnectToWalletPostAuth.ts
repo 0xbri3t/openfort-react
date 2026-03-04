@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../../constants/openfort'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { logger } from '../../../utils/logger'
 import { type UserWallet, useWallets } from '../useWallets'
 import { useSignOut } from './useSignOut'
@@ -46,6 +47,7 @@ export type CreateWalletPostAuthOptions = {
 export const useConnectToWalletPostAuth = () => {
   const { createWallet, setActiveWallet } = useWallets()
   const { walletConfig } = useOpenfort()
+  const { client } = useOpenfortCore()
   const { signOut } = useSignOut()
   const queryClient = useQueryClient()
 
@@ -71,19 +73,19 @@ export const useConnectToWalletPostAuth = () => {
 
       const wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({
         queryKey: ['openfortEmbeddedAccountsList'],
+        queryFn: () => client.embeddedWallet.list({ limit: 100 }),
       })
 
       let wallet: UserWallet | undefined
 
       if (wallets.length === 0) {
         const createWalletResult = await createWallet()
-        if (createWalletResult.error && signOutOnError) {
+        if (createWalletResult.error) {
           logger.error('Error creating wallet:', createWalletResult.error)
-          // If there was an error and we should log out, we can call the logout function
-          await signOut()
+          if (signOutOnError) await signOut()
           return {}
         }
-        wallet = createWalletResult.wallet!
+        wallet = createWalletResult.wallet
       }
 
       // Has a wallet with automatic recovery
@@ -103,7 +105,7 @@ export const useConnectToWalletPostAuth = () => {
           }
           return { wallet: undefined }
         }
-        wallet = setWalletResult.wallet!
+        wallet = setWalletResult.wallet
       }
 
       // Password recovery requires user input — signal the caller
@@ -113,7 +115,7 @@ export const useConnectToWalletPostAuth = () => {
 
       return { wallet }
     },
-    [walletConfig, setActiveWallet, signOut]
+    [walletConfig, createWallet, setActiveWallet, signOut, client, queryClient]
   )
 
   return {
