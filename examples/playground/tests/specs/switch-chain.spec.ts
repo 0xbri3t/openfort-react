@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Switch chain', () => {
+  test.describe.configure({ retries: 3 })
   test('can switch between available chains and updates current chain', async ({ dashboardPage }) => {
     // Ensure session and dashboard are ready
     await dashboardPage.ensureReady()

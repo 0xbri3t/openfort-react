@@ -8,7 +8,7 @@ import {
 } from '@openfort/openfort-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { getConnectors } from '@wagmi/core'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Hex } from 'viem'
 import { type Connector, useAccount, useChainId, useConfig, useDisconnect, useSwitchChain } from 'wagmi'
 import { type GetEncryptionSessionParams, routes, UIAuthProvider } from '../../components/Openfort/types'
@@ -92,12 +92,12 @@ async function waitForConnector(config: ReturnType<typeof useConfig>, connectorI
   const MAX_ATTEMPTS = 10
   const DELAY_MS = 500
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, DELAY_MS))
     const found = getConnectors(config).find((c) => c.id === connectorId)
     if (found) {
-      logger.log(`Embedded connector found after ${attempt + 1} retries`)
+      logger.log(`Embedded connector found after ${attempt} retries`)
       return found
     }
+    await new Promise((resolve) => setTimeout(resolve, DELAY_MS))
   }
   return null
 }
@@ -166,6 +166,51 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
   }
 }
 
+/** Check whether a wallet can be recovered without the user providing a password. */
+const canRecoverWithoutPassword = (w: EmbeddedAccount, password?: string): boolean =>
+  !!password || w.recoveryMethod !== RecoveryMethod.PASSWORD
+
+/** Normalise SDK / fetch errors into a consistent `OpenfortError` + OTP flag. */
+function mapRecoveryError(err: unknown, isOTPEnabled: boolean): { error: OpenfortError; isOTPRequired: boolean } {
+  let error: OpenfortError
+  let isOTPRequired = false
+
+  if (err instanceof MissingRecoveryPasswordError) {
+    error = new OpenfortError('Missing recovery password', OpenfortReactErrorType.WALLET_ERROR)
+  } else if (err instanceof OpenfortError) {
+    error = err
+  } else if (typeof err === 'string') {
+    error = new OpenfortError(err, OpenfortReactErrorType.WALLET_ERROR)
+  } else {
+    const errorObj = err instanceof Error ? err : new Error('Failed to recover embedded wallet')
+    error = new OpenfortError('Failed to recover embedded wallet', OpenfortReactErrorType.WALLET_ERROR, {
+      error: errorObj,
+    })
+    if (error.message === 'Wrong recovery password for this embedded signer') {
+      error.message = 'Wrong password, Please try again.'
+    }
+  }
+
+  if (error.message === 'OTP_REQUIRED') {
+    if (!isOTPEnabled) {
+      error = new OpenfortError(
+        'OTP code is required to recover the wallet.\nPlease set requestWalletRecoverOTP or requestWalletRecoverOTPEndpoint in OpenfortProvider.',
+        OpenfortReactErrorType.WALLET_ERROR
+      )
+    } else {
+      error = new OpenfortError('OTP code is required to recover the wallet.', OpenfortReactErrorType.WALLET_ERROR)
+    }
+    isOTPRequired = true
+  }
+
+  return { error, isOTPRequired }
+}
+
+/** Cap a server message to avoid leaking long internals. */
+function capMessage(msg: string, max = 200): string {
+  return msg.length > max ? `${msg.slice(0, max)}…` : msg
+}
+
 /**
  * Hook for managing and interacting with user wallets
  *
@@ -219,7 +264,7 @@ const mapWalletStatus = (status: WalletFlowStatus) => {
 export function useWallets(hookOptions: WalletOptions = {}) {
   const { client, embeddedAccounts, isLoadingAccounts: isLoadingWallets, updateEmbeddedAccounts } = useOpenfortCore()
   const { linkedAccounts, user } = useUser()
-  const { walletConfig, setOpen, setRoute, setConnector, uiConfig } = useOpenfort()
+  const { walletConfig, setOpen, setRoute, setConnector } = useOpenfort()
   const { connector, isConnected, address } = useAccount()
   const chainId = useChainId()
   const availableWallets = useWagmiWallets() // TODO: Map wallets object to be the same as wallets
@@ -230,6 +275,10 @@ export function useWallets(hookOptions: WalletOptions = {}) {
   )
   const { switchChainAsync } = useSwitchChain()
   const wagmiConfig = useConfig()
+  const queryClient = useQueryClient()
+
+  const hookOptionsRef = useRef(hookOptions)
+  hookOptionsRef.current = hookOptions
 
   const { connect } = useConnect({
     mutation: {
@@ -302,7 +351,13 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       const respJSON = await resp.json()
       if (!resp.ok) {
         if (respJSON.error === 'OTP_REQUIRED') throw new Error('OTP_REQUIRED')
-        throw new Error('Failed to create encryption session')
+        const serverMsg =
+          typeof respJSON.error === 'string'
+            ? respJSON.error
+            : typeof respJSON.message === 'string'
+              ? respJSON.message
+              : ''
+        throw new Error(capMessage(`Failed to create encryption session${serverMsg ? `: ${serverMsg}` : ''}`))
       }
 
       return respJSON.session
@@ -355,7 +410,14 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       })
 
       if (!resp.ok) {
-        throw new Error('Failed to request wallet recover OTP')
+        let serverMsg = ''
+        try {
+          const body = await resp.json()
+          serverMsg = typeof body.error === 'string' ? body.error : typeof body.message === 'string' ? body.message : ''
+        } catch {
+          /* ignore parse failures */
+        }
+        throw new Error(capMessage(`Failed to request wallet recover OTP${serverMsg ? `: ${serverMsg}` : ''}`))
       }
       return { sentTo: email ? 'email' : 'phone', email, phone }
     } catch (err) {
@@ -671,7 +733,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             let accountToRecover: EmbeddedAccount | undefined
             // Check if the embedded wallet is already created in the current chain
             if (walletConfig?.accountType === AccountTypeEnum.EOA) {
-              accountToRecover = embeddedAccounts.find((w) => w.accountType === AccountTypeEnum.EOA)
+              accountToRecover = embeddedAccounts.find(
+                (w) =>
+                  w.accountType === AccountTypeEnum.EOA &&
+                  canRecoverWithoutPassword(w, optionsObject.recovery?.password)
+              )
               if (!accountToRecover) {
                 throw new OpenfortError('No embedded wallet found with type EOA', OpenfortReactErrorType.WALLET_ERROR)
               }
@@ -679,7 +745,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
               accountToRecover = embeddedAccounts.find((w) => w.chainId === chainId)
               if (!accountToRecover) {
                 // EOA wallets have no chainId — fall back to matching by account type
-                accountToRecover = embeddedAccounts.find((w) => w.accountType === AccountTypeEnum.EOA)
+                accountToRecover = embeddedAccounts.find(
+                  (w) =>
+                    w.accountType === AccountTypeEnum.EOA &&
+                    canRecoverWithoutPassword(w, optionsObject.recovery?.password)
+                )
               }
               if (!accountToRecover) {
                 // TODO: Connect to wallet in the other chain and then switch chain
@@ -727,40 +797,8 @@ export function useWallets(hookOptions: WalletOptions = {}) {
             hookOptions,
           })
         } catch (err) {
-          let error: OpenfortError
-
-          if (err instanceof MissingRecoveryPasswordError) {
-            error = new OpenfortError('Missing recovery password', OpenfortReactErrorType.WALLET_ERROR)
-          } else if (err instanceof OpenfortError) {
-            error = err
-          } else if (typeof err === 'string') {
-            error = new OpenfortError(err, OpenfortReactErrorType.WALLET_ERROR)
-          } else {
-            error = new OpenfortError('Failed to recover embedded wallet', OpenfortReactErrorType.WALLET_ERROR, {
-              error: err,
-            })
-            if (error.message === 'Wrong recovery password for this embedded signer') {
-              error.message = 'Wrong password, Please try again.'
-            }
-          }
-
+          const { error, isOTPRequired } = mapRecoveryError(err, isWalletRecoveryOTPEnabled)
           logger.log('Error handling recovery with Openfort:', error, err)
-
-          let isOTPRequired = false
-          if (error.message === 'OTP_REQUIRED') {
-            if (!isWalletRecoveryOTPEnabled) {
-              error = new OpenfortError(
-                'OTP code is required to recover the wallet.\nPlease set requestWalletRecoverOTP or requestWalletRecoverOTPEndpoint in OpenfortProvider.',
-                OpenfortReactErrorType.WALLET_ERROR
-              )
-            } else {
-              error = new OpenfortError(
-                'OTP code is required to recover the wallet.',
-                OpenfortReactErrorType.WALLET_ERROR
-              )
-            }
-            isOTPRequired = true
-          }
 
           setStatus({
             status: 'error',
@@ -808,6 +846,11 @@ export function useWallets(hookOptions: WalletOptions = {}) {
       hookOptions,
       availableWallets,
       wagmiConfig,
+      activeWallet,
+      openfortConnector,
+      parseWalletRecovery,
+      queryClient,
+      isWalletRecoveryOTPEnabled,
     ]
   )
 
@@ -825,7 +868,6 @@ export function useWallets(hookOptions: WalletOptions = {}) {
     })()
   }, [shouldSwitchToChain])
 
-  const queryClient = useQueryClient()
   const createWallet = useCallback(
     async ({ recovery, ...options }: CreateWalletOptions = {}): Promise<CreateWalletResult> => {
       setStatus({
@@ -860,7 +902,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
 
         await updateEmbeddedAccounts()
         return onSuccess({
-          hookOptions,
+          hookOptions: hookOptionsRef.current,
           options,
           data: {
             wallet: parseEmbeddedAccount({
@@ -875,27 +917,7 @@ export function useWallets(hookOptions: WalletOptions = {}) {
           },
         })
       } catch (e) {
-        const errorObj = e instanceof Error ? e : new Error('Failed to create wallet')
-        let error =
-          e instanceof OpenfortError
-            ? e
-            : new OpenfortError('Failed to create wallet', OpenfortReactErrorType.WALLET_ERROR, { error: errorObj })
-
-        let isOTPRequired = false
-        if (error.message === 'OTP_REQUIRED') {
-          if (!isWalletRecoveryOTPEnabled) {
-            error = new OpenfortError(
-              'OTP code is required to recover the wallet.\nPlease set requestWalletRecoverOTP or requestWalletRecoverOTPEndpoint in OpenfortProvider.',
-              OpenfortReactErrorType.WALLET_ERROR
-            )
-          } else {
-            error = new OpenfortError(
-              'OTP code is required to recover the wallet.',
-              OpenfortReactErrorType.WALLET_ERROR
-            )
-          }
-          isOTPRequired = true
-        }
+        const { error, isOTPRequired } = mapRecoveryError(e, isWalletRecoveryOTPEnabled)
 
         setStatus({
           status: 'error',
@@ -903,13 +925,21 @@ export function useWallets(hookOptions: WalletOptions = {}) {
         })
         onError({
           error,
-          hookOptions,
+          hookOptions: hookOptionsRef.current,
           options,
         })
         return { error, isOTPRequired }
       }
     },
-    [client, uiConfig, chainId]
+    [
+      client,
+      chainId,
+      walletConfig,
+      openfortConnector,
+      parseWalletRecovery,
+      updateEmbeddedAccounts,
+      isWalletRecoveryOTPEnabled,
+    ]
   )
 
   const setRecovery = useCallback(
