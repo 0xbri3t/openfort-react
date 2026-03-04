@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Tests
 on:
   pull_request:
     branches:
@@ -32,6 +32,10 @@ jobs:
 
     - name: Build
       run: pnpm build
+
+    - name: Run unit tests
+      run: pnpm test
+      working-directory: packages/openfort-react
 
     - name: Install Playwright Browsers
       run: pnpm playwright install --with-deps
