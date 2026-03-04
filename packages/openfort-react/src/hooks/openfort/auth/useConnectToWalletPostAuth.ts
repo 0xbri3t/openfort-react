@@ -53,7 +53,7 @@ export const useConnectToWalletPostAuth = () => {
     async ({
       logoutOnError: signOutOnError = true,
       recoverWalletAutomatically,
-    }: CreateWalletPostAuthOptions): Promise<{ wallet?: UserWallet }> => {
+    }: CreateWalletPostAuthOptions): Promise<{ wallet?: UserWallet; passwordRequired?: boolean }> => {
       if (walletConfig?.recoverWalletAutomaticallyAfterAuth === false && recoverWalletAutomatically === undefined) {
         return {}
       }
@@ -104,6 +104,11 @@ export const useConnectToWalletPostAuth = () => {
           return { wallet: undefined }
         }
         wallet = setWalletResult.wallet!
+      }
+
+      // Password recovery requires user input — signal the caller
+      if (!wallet && wallets.some((w) => w.recoveryMethod === RecoveryMethod.PASSWORD)) {
+        return { wallet: undefined, passwordRequired: true }
       }
 
       return { wallet }
