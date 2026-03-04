@@ -80,7 +80,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
         )}
         <div className="flex items-center gap-4 ml-auto overflow-x-auto overflow-y-hidden">
           <div className="sm:flex hidden gap-4 mr-4 items-center">
-            {navRoutes.map((route, i) =>
+            {navRoutes.map((route) =>
               route.children ? (
                 <DropdownMenu key={route.label}>
                   <DropdownMenuTrigger
@@ -112,7 +112,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
                 </DropdownMenu>
               ) : (
                 <Link
-                  key={`${route.href}-${i}`}
+                  key={route.href ?? route.label}
                   to={route.href!}
                   className={clsx(
                     'whitespace-nowrap hover:underline',
@@ -186,7 +186,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  {navRoutes.map((route, i) =>
+                  {navRoutes.map((route) =>
                     route.children ? (
                       route.children.map((child) => (
                         <DropdownMenuItem key={child.href} asChild>
@@ -202,7 +202,7 @@ export const Nav = ({ showLogo }: { showLogo?: boolean }) => {
                         </DropdownMenuItem>
                       ))
                     ) : (
-                      <DropdownMenuItem key={`${route.href}-${i}`} asChild>
+                      <DropdownMenuItem key={route.href ?? route.label} asChild>
                         <Link
                           to={route.href!}
                           className={clsx(

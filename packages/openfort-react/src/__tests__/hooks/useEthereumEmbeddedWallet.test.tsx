@@ -2,8 +2,8 @@ import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { act, renderHook } from '@testing-library/react'
 import { createElement, type PropsWithChildren } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import type { OpenfortCoreContextValue } from '../../openfort/CoreOpenfortProvider'
-import { Context } from '../../openfort/context'
+import { StoreContext } from '../../openfort/context'
+import { createOpenfortStore } from '../../openfort/store'
 import { createMockOpenfortClient } from '../mocks/openfortClient'
 import { buildContextValue } from '../mocks/TestWrapper'
 
@@ -28,10 +28,28 @@ vi.mock('../../core/ConnectionStrategyContext', () => ({
 
 const { useEthereumEmbeddedWallet } = await import('../../ethereum/hooks/useEthereumEmbeddedWallet')
 
-function createWrapper(overrides: Partial<OpenfortCoreContextValue> = {}) {
-  const value = buildContextValue(overrides)
+function createWrapper(overrides: Partial<Parameters<typeof buildContextValue>[0]> = {}) {
+  const defaults = buildContextValue(overrides)
+  const store = createOpenfortStore(defaults.chainType)
+  const s = store.getState()
+  s.setUser(defaults.user)
+  s.setLinkedAccounts(defaults.linkedAccounts)
+  s.setEmbeddedState(defaults.embeddedState)
+  s.setEmbeddedAccounts(defaults.embeddedAccounts)
+  s.setIsLoadingAccounts(defaults.isLoadingAccounts)
+  s.setActiveEmbeddedAddress(defaults.activeEmbeddedAddress)
+  s.setWalletStatus(defaults.walletStatus)
+  store.setState({
+    logout: defaults.logout,
+    signUpGuest: defaults.signUpGuest,
+    updateUser: defaults.updateUser,
+    updateEmbeddedAccounts: defaults.updateEmbeddedAccounts,
+    setChainType: defaults.setChainType,
+    client: defaults.client,
+  })
+
   return function Wrapper({ children }: PropsWithChildren) {
-    return createElement(Context.Provider, { value }, children)
+    return createElement(StoreContext.Provider, { value: store }, children)
   }
 }
 

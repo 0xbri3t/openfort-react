@@ -2,8 +2,8 @@ import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { renderHook } from '@testing-library/react'
 import { createElement, type PropsWithChildren } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import type { OpenfortCoreContextValue } from '../../openfort/CoreOpenfortProvider'
-import { Context } from '../../openfort/context'
+import { StoreContext } from '../../openfort/context'
+import { createOpenfortStore } from '../../openfort/store'
 import { SolanaContext } from '../../solana/SolanaContext'
 import { buildContextValue } from '../mocks/TestWrapper'
 
@@ -18,12 +18,30 @@ vi.mock('../../components/Openfort/useOpenfort', () => ({
 const { useSolanaEmbeddedWallet } = await import('../../solana/hooks/useSolanaEmbeddedWallet')
 
 function createWrapper(
-  coreOverrides: Partial<OpenfortCoreContextValue> = {},
+  coreOverrides: Partial<Parameters<typeof buildContextValue>[0]> = {},
   solanaCtx?: { cluster: string; rpcUrl: string; commitment: string; setCluster: (c: string) => void }
 ) {
-  const value = buildContextValue({ chainType: ChainTypeEnum.SVM, ...coreOverrides })
+  const defaults = buildContextValue({ chainType: ChainTypeEnum.SVM, ...coreOverrides })
+  const store = createOpenfortStore(defaults.chainType)
+  const s = store.getState()
+  s.setUser(defaults.user)
+  s.setLinkedAccounts(defaults.linkedAccounts)
+  s.setEmbeddedState(defaults.embeddedState)
+  s.setEmbeddedAccounts(defaults.embeddedAccounts)
+  s.setIsLoadingAccounts(defaults.isLoadingAccounts)
+  s.setActiveEmbeddedAddress(defaults.activeEmbeddedAddress)
+  s.setWalletStatus(defaults.walletStatus)
+  store.setState({
+    logout: defaults.logout,
+    signUpGuest: defaults.signUpGuest,
+    updateUser: defaults.updateUser,
+    updateEmbeddedAccounts: defaults.updateEmbeddedAccounts,
+    setChainType: defaults.setChainType,
+    client: defaults.client,
+  })
+
   return function Wrapper({ children }: PropsWithChildren) {
-    const core = createElement(Context.Provider, { value }, children)
+    const core = createElement(StoreContext.Provider, { value: store }, children)
     if (solanaCtx) {
       return createElement(SolanaContext.Provider, { value: solanaCtx }, core)
     }

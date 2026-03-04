@@ -4,7 +4,7 @@ import { useContext, useEffect, useRef } from 'react'
 import { OpenfortContext } from '../components/Openfort/context'
 import type { ConnectionStrategy } from '../core/ConnectionStrategy'
 import type { ConnectCallbackProps } from '../openfort/connectCallbackTypes'
-import { Context as OpenfortCoreContext } from '../openfort/context'
+import { useOpenfortStore } from '../openfort/useOpenfortStore'
 
 /**
  * Standalone hook: subscribes to connection lifecycle and fires onConnect/onDisconnect
@@ -16,19 +16,22 @@ export function useConnectLifecycle(
   onConnect: ConnectCallbackProps['onConnect'],
   onDisconnect: ConnectCallbackProps['onDisconnect']
 ): void {
-  const core = useContext(OpenfortCoreContext)
+  const user = useOpenfortStore((s) => s.user)
+  const embeddedAccounts = useOpenfortStore((s) => s.embeddedAccounts)
+  const activeEmbeddedAddress = useOpenfortStore((s) => s.activeEmbeddedAddress)
+  const embeddedState = useOpenfortStore((s) => s.embeddedState)
   const ui = useContext(OpenfortContext)
   const prevConnected = useRef(false)
 
   useEffect(() => {
-    if (!strategy || !core || !ui) return
+    if (!strategy || !ui) return
 
     const state = {
-      user: core.user,
-      embeddedAccounts: core.embeddedAccounts,
+      user,
+      embeddedAccounts,
       chainType: ui.chainType,
-      activeEmbeddedAddress: core.activeEmbeddedAddress,
-      embeddedState: core.embeddedState,
+      activeEmbeddedAddress,
+      embeddedState,
     }
     const connected = strategy.isConnected(state)
 
@@ -46,5 +49,5 @@ export function useConnectLifecycle(
     } else {
       prevConnected.current = connected
     }
-  }, [strategy, core, ui, onConnect, onDisconnect])
+  }, [strategy, user, embeddedAccounts, activeEmbeddedAddress, embeddedState, ui, onConnect, onDisconnect])
 }

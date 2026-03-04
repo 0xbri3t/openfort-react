@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
-import { Context } from './context'
+import type { OpenfortCoreContextValue } from './CoreOpenfortProvider'
+import { useOpenfortStore } from './useOpenfortStore'
 
 /**
  * Access Openfort core context: user, embedded accounts, active chain, auth, and wallet operations.
@@ -10,8 +10,6 @@ import { Context } from './context'
  * @returns Core context with user, embeddedAccounts, activeChainId, setActiveChainId, logout, etc.
  * @throws Error if used outside CoreOpenfortProvider
  */
-export const useOpenfortCore = () => {
-  const context = React.useContext(Context)
-  if (!context) throw Error('useOpenfortContext Hook must be inside CoreOpenfortProvider.')
-  return context
+export const useOpenfortCore = (): OpenfortCoreContextValue => {
+  return useOpenfortStore((s) => s)
 }

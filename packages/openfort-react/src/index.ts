@@ -98,7 +98,18 @@ export type {
   UserWallet,
 } from './hooks/openfort/walletTypes'
 export { invalidateBalance } from './hooks/useBalance'
+export {
+  selectActiveAddress,
+  selectChainType,
+  selectEmbeddedState,
+  selectIsAuthenticated,
+  selectIsLoading,
+  selectUser,
+  selectWalletStatus,
+} from './openfort/selectors'
+export type { OpenfortStore, OpenfortStoreState } from './openfort/store'
 export { useOpenfortCore as useOpenfort } from './openfort/useOpenfort'
+export { useOpenfortStore } from './openfort/useOpenfortStore'
 export { getEmbeddedAccountsQueryOptions, getUserQueryOptions, openfortKeys } from './query'
 // Bridge types/context are internal
 export type {
