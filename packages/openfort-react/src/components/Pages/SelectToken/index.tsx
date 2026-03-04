@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from 'react'
 import { formatUnits } from 'viem'
 import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'

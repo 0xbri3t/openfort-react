@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from 'react'
 import type { Hex } from 'viem'
 import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'

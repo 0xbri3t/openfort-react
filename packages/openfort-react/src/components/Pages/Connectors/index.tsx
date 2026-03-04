@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * @deprecated This component requires wagmi and will be moved to @openfort/react/wagmi in v3.0.
  * For embedded wallets, external wallet connections are not needed.

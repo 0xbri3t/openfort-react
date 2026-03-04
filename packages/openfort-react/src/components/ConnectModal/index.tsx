@@ -1,3 +1,5 @@
+'use client'
+
 import { ChainTypeEnum, OAuthProvider } from '@openfort/openfort-js'
 import { useEffect, useMemo } from 'react'
 

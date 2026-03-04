@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from 'react'
 import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 import { logger } from '../utils/logger'

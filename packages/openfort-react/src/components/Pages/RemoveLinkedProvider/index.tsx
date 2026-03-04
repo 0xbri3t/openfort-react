@@ -1,3 +1,5 @@
+'use client'
+
 import type { OAuthProvider } from '@openfort/openfort-js'
 import { useEffect, useMemo, useState } from 'react'
 import type { Hex } from 'viem'

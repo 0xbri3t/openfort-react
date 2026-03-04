@@ -1,3 +1,5 @@
+'use client'
+
 import { AnimatePresence, type Variants } from 'framer-motion'
 import React from 'react'
 import { useEmailAuth } from '../../../hooks/openfort/auth/useEmailAuth'

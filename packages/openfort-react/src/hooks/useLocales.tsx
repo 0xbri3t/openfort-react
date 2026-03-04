@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useMemo } from 'react'
 import Logos from '../assets/logos'
 
@@ -43,6 +45,7 @@ const localize = (text: string, replacements?: Record<string, string>) => {
 const replaceMarkdown = (markdownText: string): React.ReactNode[] => {
   const lines = markdownText.split('\n')
   return lines.map((t, i) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: static markdown lines don't reorder
     <React.Fragment key={`line-${i}-${t.substring(0, 20)}`}>
       {wrapTags(t)}
       {i < lines.length - 1 && <br />}
@@ -56,6 +59,7 @@ const wrapTags = (text: string) => {
   const result = textArray.map((str, i) => {
     if (/(\*\*.*\*\*)/g.test(str)) {
       // use `replace` instead of `replaceAll` to support Node 14
+      // biome-ignore lint/suspicious/noArrayIndexKey: static markdown splits don't reorder
       return <strong key={`bold-${i}-${str.substring(0, 10)}`}>{str.replace(/\*\*/g, '')}</strong>
     }
     return `${str}`

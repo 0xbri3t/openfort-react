@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from 'react'
 
 import { DisconnectIcon, GuestIcon, KeyIcon } from '../../../assets/icons'

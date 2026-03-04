@@ -1,3 +1,5 @@
+'use client'
+
 import { useMemo } from 'react'
 import { EmailIcon, PhoneIcon, WalletIcon } from '../../../assets/icons'
 import Logos, { providersLogos } from '../../../assets/logos'

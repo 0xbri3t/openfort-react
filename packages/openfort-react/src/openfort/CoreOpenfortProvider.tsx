@@ -1,3 +1,5 @@
+'use client'
+
 import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState, type Openfort, type User } from '@openfort/openfort-js'
 import type React from 'react'
 import {
@@ -169,93 +171,25 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   // ---- Embedded state ----
   const [embeddedState, setEmbeddedState] = useState<EmbeddedState>(EmbeddedState.NONE)
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const previousEmbeddedState = useRef<EmbeddedState>(EmbeddedState.NONE)
-  const retryCountRef = useRef(0)
-  const POLLING_RETRIES = 3
-  const POLLING_BASE_MS = 2000
-
-  const cancelledRef = useRef(false)
-
-  const pollEmbeddedState = useCallback(async () => {
-    if (!openfort) return
-    if (cancelledRef.current) return
-
-    try {
-      const state = await openfort.embeddedWallet.getEmbeddedState()
-      if (cancelledRef.current) return
-      setEmbeddedState(state)
-      retryCountRef.current = 0
-
-      // Stop polling once we reach a stable terminal state
-      if (state === EmbeddedState.READY) {
-        if (retryTimeoutRef.current) {
-          clearTimeout(retryTimeoutRef.current)
-          retryTimeoutRef.current = null
-        }
-        if (pollingRef.current) {
-          clearInterval(pollingRef.current)
-          pollingRef.current = null
-        }
-      }
-    } catch (error) {
-      logger.error('Error checking embedded state with Openfort:', error)
-      if (retryCountRef.current < POLLING_RETRIES) {
-        retryCountRef.current += 1
-        const delay = POLLING_BASE_MS * 2 ** retryCountRef.current
-        if (retryTimeoutRef.current) {
-          clearTimeout(retryTimeoutRef.current)
-          retryTimeoutRef.current = null
-        }
-        retryTimeoutRef.current = setTimeout(pollEmbeddedState, delay)
-      } else {
-        if (retryTimeoutRef.current) {
-          clearTimeout(retryTimeoutRef.current)
-          retryTimeoutRef.current = null
-        }
-        if (pollingRef.current) {
-          clearInterval(pollingRef.current)
-          pollingRef.current = null
-        }
-      }
-    }
-  }, [openfort])
-
-  // Only log embedded state when it changes
-  useEffect(() => {
-    if (previousEmbeddedState.current !== embeddedState) {
-      logger.log('Embedded state changed:', EmbeddedState[embeddedState])
-      previousEmbeddedState.current = embeddedState
-    }
-  }, [embeddedState])
-
-  const startPollingEmbeddedState = useCallback(() => {
-    if (pollingRef.current) return
-    pollingRef.current = setInterval(pollEmbeddedState, 300)
-  }, [pollEmbeddedState])
-
-  const stopPollingEmbeddedState = useCallback(() => {
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current)
-      retryTimeoutRef.current = null
-    }
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current)
-      pollingRef.current = null
-    }
-  }, [])
 
   useEffect(() => {
     if (!openfort) return
-    cancelledRef.current = false
-
-    startPollingEmbeddedState()
-
-    return () => {
-      cancelledRef.current = true
-      stopPollingEmbeddedState()
-    }
+    const unwatch = openfort.embeddedWallet.watchEmbeddedState({
+      onChange: (state, prevState) => {
+        logger.log(
+          'Embedded state changed:',
+          EmbeddedState[state],
+          '(prev:',
+          prevState !== undefined ? EmbeddedState[prevState] : 'none',
+          ')'
+        )
+        setEmbeddedState(state)
+      },
+      onError: (error) => {
+        logger.error('Error watching embedded state:', error)
+      },
+    })
+    return unwatch
   }, [openfort])
 
   const updateUser = useCallback(
@@ -513,7 +447,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       await bridge.disconnect()
       bridge.reset()
     }
-    startPollingEmbeddedState()
   }, [openfort, bridge])
 
   const signUpGuest = useCallback(async () => {

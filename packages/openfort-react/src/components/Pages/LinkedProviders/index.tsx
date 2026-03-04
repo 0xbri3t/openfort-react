@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react'
 import { useProviders } from '../../../hooks/openfort/useProviders'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'

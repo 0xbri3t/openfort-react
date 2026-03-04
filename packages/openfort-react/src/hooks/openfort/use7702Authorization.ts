@@ -1,3 +1,5 @@
+'use client'
+
 import { useCallback } from 'react'
 import { type AuthorizationRequest, type Hex, parseSignature, type SignedAuthorization } from 'viem'
 import { hashAuthorization } from 'viem/utils'

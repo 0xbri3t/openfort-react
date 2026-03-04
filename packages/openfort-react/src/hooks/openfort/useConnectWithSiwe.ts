@@ -1,3 +1,5 @@
+'use client'
+
 import { OpenfortError } from '@openfort/openfort-js'
 import { AxiosError } from 'axios'
 import { useCallback } from 'react'

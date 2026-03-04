@@ -1,3 +1,5 @@
+'use client'
+
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { address, createSolanaRpc } from '@solana/kit'
 import { useEffect } from 'react'

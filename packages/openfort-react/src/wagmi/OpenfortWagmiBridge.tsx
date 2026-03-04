@@ -1,3 +1,5 @@
+'use client'
+
 import {
   getEnsAddress as getEnsAddressAction,
   getEnsAvatar as getEnsAvatarAction,

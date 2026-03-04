@@ -1,3 +1,5 @@
+'use client'
+
 import { ChainTypeEnum, OAuthProvider } from '@openfort/openfort-js'
 import { AnimatePresence, motion } from 'framer-motion'
 import type React from 'react'

@@ -1,3 +1,5 @@
+'use client'
+
 import { useCallback } from 'react'
 import { fetchSolanaBalance } from '../../../hooks/useBalance'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'

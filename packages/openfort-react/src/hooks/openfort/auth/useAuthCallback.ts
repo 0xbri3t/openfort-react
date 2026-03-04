@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useRef, useState } from 'react'
 import type { UIAuthProvider } from '../../../components/Openfort/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'

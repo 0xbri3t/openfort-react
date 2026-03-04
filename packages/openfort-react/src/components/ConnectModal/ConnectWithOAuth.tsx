@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from 'react'
 import { providersLogos } from '../../assets/logos'
 import { useOpenfortCore } from '../../openfort/useOpenfort'

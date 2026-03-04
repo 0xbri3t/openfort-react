@@ -1,3 +1,5 @@
+'use client'
+
 import { useContext, useEffect, useRef } from 'react'
 import { OpenfortContext } from '../components/Openfort/context'
 import type { ConnectionStrategy } from '../core/ConnectionStrategy'

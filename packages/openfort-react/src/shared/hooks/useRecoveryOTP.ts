@@ -1,3 +1,5 @@
+'use client'
+
 import { useCallback, useMemo } from 'react'
 import { useOpenfort } from '../../components/Openfort/useOpenfort'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'

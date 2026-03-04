@@ -1,3 +1,5 @@
+'use client'
+
 import { ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
 import type React from 'react'

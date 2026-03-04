@@ -1,3 +1,5 @@
+'use client'
+
 import type { ChainTypeEnum, OAuthProvider, SDKOverrides, ThirdPartyAuthConfiguration } from '@openfort/openfort-js'
 import type React from 'react'
 import { createContext } from 'react'

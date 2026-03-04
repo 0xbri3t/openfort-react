@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Solana Send Confirmation Page
  *

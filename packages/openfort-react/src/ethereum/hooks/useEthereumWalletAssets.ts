@@ -1,3 +1,5 @@
+'use client'
+
 import { useCallback, useMemo } from 'react'
 import type { Transport } from 'viem'
 import { createWalletClient, custom, numberToHex } from 'viem'

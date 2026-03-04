@@ -1,3 +1,5 @@
+'use client'
+
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import React from 'react'
 import { type RouteOptions, type RoutesWithoutOptions, routes } from '../../components/Openfort/types'

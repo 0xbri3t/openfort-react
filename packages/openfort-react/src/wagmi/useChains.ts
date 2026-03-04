@@ -1,3 +1,5 @@
+'use client'
+
 import type { Chain } from 'viem'
 import { useConfig } from 'wagmi'
 

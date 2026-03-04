@@ -1,3 +1,5 @@
+'use client'
+
 import { useCallback, useState } from 'react'
 import type { Chain, Hex } from 'viem'
 import { createWalletClient, custom } from 'viem'

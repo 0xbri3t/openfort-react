@@ -1,3 +1,5 @@
+'use client'
+
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useConnectionStrategy } from '../../../core/ConnectionStrategyContext'

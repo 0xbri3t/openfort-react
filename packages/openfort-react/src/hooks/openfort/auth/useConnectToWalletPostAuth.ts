@@ -1,3 +1,5 @@
+'use client'
+
 import { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'

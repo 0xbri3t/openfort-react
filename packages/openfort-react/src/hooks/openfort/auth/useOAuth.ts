@@ -1,3 +1,5 @@
+'use client'
+
 import type { OAuthProvider, User } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
 import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'

@@ -1,3 +1,5 @@
+'use client'
+
 import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
