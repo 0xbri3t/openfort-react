@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 type UseAsyncDataOptions<T> = {
   queryFn: () => Promise<T>
-  queryKey: unknown[]
+  queryKey: readonly unknown[]
   enabled?: boolean
   refetchInterval?: number
   staleTime?: number

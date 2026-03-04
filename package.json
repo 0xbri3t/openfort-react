@@ -62,7 +62,7 @@
     "typescript-plugin-styled-components": "^2.0.0",
     "wagmi": "^2.18.2"
   },
-  "packageManager": "pnpm@10.16.1",
+  "packageManager": "pnpm@10.30.3",
   "pnpm": {
     "overrides": {
       "bn.js": ">=5.2.3",

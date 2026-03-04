@@ -176,11 +176,15 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const POLLING_RETRIES = 3
   const POLLING_BASE_MS = 2000
 
+  const cancelledRef = useRef(false)
+
   const pollEmbeddedState = useCallback(async () => {
     if (!openfort) return
+    if (cancelledRef.current) return
 
     try {
       const state = await openfort.embeddedWallet.getEmbeddedState()
+      if (cancelledRef.current) return
       setEmbeddedState(state)
       retryCountRef.current = 0
 
@@ -244,10 +248,12 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   useEffect(() => {
     if (!openfort) return
+    cancelledRef.current = false
 
     startPollingEmbeddedState()
 
     return () => {
+      cancelledRef.current = true
       stopPollingEmbeddedState()
     }
   }, [openfort])

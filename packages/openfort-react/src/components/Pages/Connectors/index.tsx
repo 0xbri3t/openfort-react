@@ -41,8 +41,21 @@ const ConnectWithMobile = () => {
       const walletConnectDeeplinkChoice = localStorage.getItem('WALLETCONNECT_DEEPLINK_CHOICE')
 
       if (walletConnectDeeplinkChoice) {
-        const parsedChoice: { href: string; name: string } = JSON.parse(walletConnectDeeplinkChoice)
-        setConnector({ id: parsedChoice.name })
+        try {
+          const parsedChoice: unknown = JSON.parse(walletConnectDeeplinkChoice)
+          if (
+            parsedChoice &&
+            typeof parsedChoice === 'object' &&
+            'name' in parsedChoice &&
+            typeof (parsedChoice as { name: unknown }).name === 'string'
+          ) {
+            setConnector({ id: (parsedChoice as { name: string }).name })
+          } else {
+            setConnector({ id: connector.id })
+          }
+        } catch {
+          setConnector({ id: connector.id })
+        }
       } else {
         setConnector({ id: connector.id })
       }

@@ -106,7 +106,7 @@ export const useEthereumWalletAssets = ({
   }, [walletConfig?.ethereum?.assets, hookCustomAssets, chainId])
 
   const { data, error, isLoading, refetch } = useAsyncData({
-    queryKey: openfortKeys.walletAssets(chainId, customAssetsToFetch, address),
+    queryKey: [...openfortKeys.walletAssets(chainId!, customAssetsToFetch, address)],
     queryFn: async () => {
       if (!address || !chainId || !chain) {
         throw new OpenfortError('Wallet not connected', OpenfortReactErrorType.UNEXPECTED_ERROR, {

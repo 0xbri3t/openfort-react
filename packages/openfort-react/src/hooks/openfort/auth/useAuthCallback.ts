@@ -175,9 +175,8 @@ export const useAuthCallback = ({
 
         if (!userId || !token) {
           logger.error(`Missing user id or access token`, {
-            userId,
-            token: token ? `${token.substring(0, 10)}...` : token,
-            fixedUrl,
+            hasUserId: !!userId,
+            hasToken: !!token,
           })
           onError({
             hookOptions,

@@ -39,7 +39,7 @@ export class OpenfortError extends Error {
   constructor(message: string, type: OpenfortReactErrorType, data?: OpenfortErrorData) {
     if (data?.error instanceof OpenfortError) {
       super(data.error.message)
-      this.data = data.error.data
+      this.data = Object.freeze(data.error.data)
       this.type = data.error.type
       this.name = data.error.name
       return
@@ -50,7 +50,7 @@ export class OpenfortError extends Error {
       super(message)
     }
     this.type = type
-    this.data = data ?? {}
+    this.data = Object.freeze(data ?? {})
     this.name = 'OpenfortError'
   }
 }
