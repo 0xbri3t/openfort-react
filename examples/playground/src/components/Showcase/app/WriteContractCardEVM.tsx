@@ -1,6 +1,7 @@
-import { AccountTypeEnum, useEthereumEmbeddedWallet } from '@openfort/react'
+import { AccountTypeEnum, embeddedWalletId, useEthereumEmbeddedWallet } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { getAddress, parseAbi } from 'viem'
+import { useAccount } from 'wagmi'
 import { useConnectedEthereumAccount } from '@/hooks/useConnectedEthereumAccount'
 import { useEthereumReadContractLocal, useEthereumWriteContractLocal } from '@/hooks/useEthereumAdapterHooks'
 import { BALANCE_ABI, getMintContractConfig } from '@/lib/contracts'
@@ -8,8 +9,11 @@ import { WriteContractLayout } from './write-contract-shared'
 
 export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const { address, chainId } = useConnectedEthereumAccount()
+  const { connector } = useAccount()
   const ethereum = useEthereumEmbeddedWallet()
-  const isEoa = ethereum.status === 'connected' && ethereum.activeWallet?.accountType === AccountTypeEnum.EOA
+  const isExternalWallet = !!connector && connector.id !== embeddedWalletId
+  const isEoa =
+    !isExternalWallet && ethereum.status === 'connected' && ethereum.activeWallet?.accountType === AccountTypeEnum.EOA
   const { data: hash, writeContract, isPending, error } = useEthereumWriteContractLocal()
   const config = getMintContractConfig(chainId ?? undefined)
 

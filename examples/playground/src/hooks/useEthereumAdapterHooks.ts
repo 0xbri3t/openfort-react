@@ -151,7 +151,10 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
 
         let txHash: `0x${string}`
 
-        if (useExternalWallet && walletClient) {
+        if (useExternalWallet) {
+          if (!walletClient) {
+            throw new Error('External wallet client is not ready. Please try again.')
+          }
           txHash = await walletClient.sendTransaction({
             account: address,
             to: params.address,

@@ -372,6 +372,7 @@ type EmbeddedWalletsListProps = {
   activeWallet: ConnectedEmbeddedEthereumWallet | null
   connectingAddress: string | undefined
   setActive: (opts: { address: `0x${string}`; password?: string; recoveryMethod?: RecoveryMethod }) => Promise<void>
+  isExternalActive?: boolean
 }
 
 export function EmbeddedWalletsList({
@@ -379,6 +380,7 @@ export function EmbeddedWalletsList({
   activeWallet,
   connectingAddress,
   setActive,
+  isExternalActive,
 }: EmbeddedWalletsListProps) {
   const wallets = ethereum.wallets
   const { topLevel, childrenByOwner } = useMemo(() => {
@@ -400,31 +402,38 @@ export function EmbeddedWalletsList({
     return { topLevel, childrenByOwner }
   }, [wallets])
 
+  // When an external wallet is active, suppress embedded active indicators
+  const effectiveActiveWallet = isExternalActive ? null : activeWallet
+
   return (
     <div className="space-y-2">
       {topLevel.map((wallet) => {
         const children = childrenByOwner.get(wallet.address.toLowerCase())
         const walletIndex = wallets.indexOf(wallet)
+        const displayWallet = isExternalActive ? { ...wallet, isActive: false } : wallet
         return (
           <div key={wallet.id} className="space-y-1">
             <WalletTooltipItem
-              wallet={wallet}
+              wallet={displayWallet}
               index={walletIndex}
-              activeWallet={activeWallet}
+              activeWallet={effectiveActiveWallet}
               connectingAddress={connectingAddress}
               setActive={setActive}
             />
-            {children?.map((child) => (
-              <WalletTooltipItem
-                key={child.id}
-                wallet={child}
-                index={wallets.indexOf(child)}
-                activeWallet={activeWallet}
-                connectingAddress={connectingAddress}
-                setActive={setActive}
-                nested
-              />
-            ))}
+            {children?.map((child) => {
+              const displayChild = isExternalActive ? { ...child, isActive: false } : child
+              return (
+                <WalletTooltipItem
+                  key={child.id}
+                  wallet={displayChild}
+                  index={wallets.indexOf(child)}
+                  activeWallet={effectiveActiveWallet}
+                  connectingAddress={connectingAddress}
+                  setActive={setActive}
+                  nested
+                />
+              )
+            })}
           </div>
         )
       })}

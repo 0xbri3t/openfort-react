@@ -1,4 +1,4 @@
-import { embeddedWalletId, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { AccountTypeEnum, embeddedWalletId, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { encodeFunctionData, getAddress, parseAbi } from 'viem'
@@ -45,6 +45,9 @@ export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body:
     },
   })
 
+  const isExternalWallet = !!connector && connector.id !== embeddedWalletId
+  const isEoa =
+    !isExternalWallet && embedded.status === 'connected' && embedded.activeWallet?.accountType === AccountTypeEnum.EOA
   const useWagmiWrite = isConnected && connector?.id !== embeddedWalletId && embedded.status !== 'connected'
   const hash = useWagmiWrite ? wagmiHash : (localHash ?? undefined)
   const isPending = useWagmiWrite ? wagmiPending : localPending
@@ -118,6 +121,7 @@ export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body:
       isPending={isPending}
       error={error}
       onSubmit={submit}
+      disabledReason={isEoa ? 'Minting requires a Smart Account or Delegated Account (gas sponsorship)' : undefined}
     />
   )
 }

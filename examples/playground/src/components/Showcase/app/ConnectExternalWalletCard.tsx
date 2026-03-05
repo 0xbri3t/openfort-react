@@ -175,6 +175,7 @@ export const ConnectExternalWalletCard = () => {
                   activeWallet={activeWallet}
                   connectingAddress={connectingAddress}
                   setActive={setActive}
+                  isExternalActive={isExternalActive}
                 />
               )}
             </div>
