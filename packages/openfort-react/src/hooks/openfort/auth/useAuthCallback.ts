@@ -90,6 +90,7 @@ export const useAuthCallback = ({
 }: UseAuthCallbackOptions = {}) => {
   const [provider, setProvider] = useState<UIAuthProvider | null>(null)
   const [email, setEmail] = useState<string | null>(null)
+  const [alreadyVerified, setAlreadyVerified] = useState(false)
   const {
     verifyEmail,
     isSuccess: isEmailSuccess,
@@ -125,20 +126,12 @@ export const useAuthCallback = ({
 
       setProvider(openfortAuthProvider as UIAuthProvider)
       if (openfortAuthProvider === 'email') {
-        // Verify email flow
+        // Email verification flow
+        // The backend verifies the email server-side via /auth/verify-email?token=...
+        // and then redirects here. If a `state` token is present we verify client-side
+        // as well; otherwise the email is already verified and we just signal success.
         const state = url.searchParams.get('state')
         const email = url.searchParams.get('email')
-
-        if (!state || !email) {
-          logger.error('No state or email found in URL')
-          onError({
-            hookOptions,
-            options: {},
-            error: new OpenfortError('No state or email found in URL', OpenfortReactErrorType.AUTHENTICATION_ERROR),
-          })
-          return
-        }
-
         const removeParams = () => {
           ;['state', 'openfortAuthProvider', 'email'].forEach((key) => {
             url.searchParams.delete(key)
@@ -146,31 +139,50 @@ export const useAuthCallback = ({
           window.history.replaceState({}, document.title, url.toString())
         }
 
-        logger.log('EmailVerification', state, email)
-
-        const options: OpenfortHookOptions<Omit<CallbackResult, 'type'>> = {
-          onSuccess: (data) => {
-            hookOptions.onSuccess?.({
-              ...data,
-              type: 'verifyEmail',
-            })
-          },
-          onSettled: (data, error) => {
-            hookOptions.onSettled?.(
-              {
+        if (state && email) {
+          // State present — verify client-side as well
+          const options: OpenfortHookOptions<Omit<CallbackResult, 'type'>> = {
+            onSuccess: (data) => {
+              hookOptions.onSuccess?.({
                 ...data,
                 type: 'verifyEmail',
-              },
-              error
-            )
-          },
-          onError: hookOptions.onError,
-          throwOnError: hookOptions.throwOnError,
-        }
+              })
+            },
+            onSettled: (data, error) => {
+              hookOptions.onSettled?.(
+                {
+                  ...data,
+                  type: 'verifyEmail',
+                },
+                error
+              )
+            },
+            onError: hookOptions.onError,
+            throwOnError: hookOptions.throwOnError,
+          }
 
-        await verifyEmail({ email, state, ...options })
-        setEmail(email)
-        removeParams()
+          await verifyEmail({ email, state, ...options })
+          setEmail(email)
+          removeParams()
+        } else if (email) {
+          // No state — backend already verified the email, just signal success
+          setEmail(email)
+          setAlreadyVerified(true)
+          hookOptions.onSuccess?.({
+            email,
+            type: 'verifyEmail',
+          })
+          hookOptions.onSettled?.({ email, type: 'verifyEmail' }, null)
+          removeParams()
+        } else {
+          logger.error('No email found in URL')
+          onError({
+            hookOptions,
+            options: {},
+            error: new OpenfortError('No email found in URL', OpenfortReactErrorType.AUTHENTICATION_ERROR),
+          })
+          return
+        }
       } else {
         const userId = url.searchParams.get('user_id')
         const token = url.searchParams.get('access_token')
@@ -240,7 +252,7 @@ export const useAuthCallback = ({
     storeCredentials,
     isLoading: isEmailLoading || isOAuthLoading,
     isError: isEmailError || isOAuthError,
-    isSuccess: isEmailSuccess || isOAuthSuccess,
+    isSuccess: isEmailSuccess || isOAuthSuccess || alreadyVerified,
     error: emailError || oAuthError,
   }
 }

@@ -354,7 +354,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const evmChainId =
     strategy?.chainType === ChainTypeEnum.EVM ? (bridge ? bridge.chainId : strategy?.getChainId()) : undefined
 
-  // Only init EVM provider when embeddedState is READY
+  // Init provider; only fetch accounts when READY (prevents list() before auth is stored)
   useEffect(() => {
     if (!openfort || !walletConfig || !strategy) return
     if (strategy.chainType === ChainTypeEnum.EVM && storeEmbeddedState !== EmbeddedState.READY) return
@@ -363,7 +363,11 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     strategy
       .initProvider(openfort, walletConfig, evmChainId)
       .then(() => {
-        if (!cancelled) fetchEmbeddedAccounts({ silent: true })
+        if (cancelled) return
+        // Only fetch accounts when authenticated — avoids SessionError on callback pages
+        if (store.getState().embeddedState === EmbeddedState.READY) {
+          fetchEmbeddedAccounts({ silent: true })
+        }
       })
       .catch((err) => {
         if (!cancelled) {
@@ -396,7 +400,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         break
 
       case EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED:
-        if (!userRef.current) updateUserRef.current(undefined, true)
+        // Always validate the token — this triggers the SDK's signer initialization
+        // pipeline which transitions the state to READY. Without this, mid-session
+        // auth (e.g. OAuth callback) gets stuck at EMBEDDED_SIGNER_NOT_CONFIGURED.
+        updateUserRef.current(undefined, !userRef.current)
 
         connectingRef.current = false
         setIsConnectedWithEmbeddedSigner(false)

@@ -16,10 +16,14 @@ const mockEthSetActive = vi.fn()
 const mockSolCreate = vi.fn()
 const mockSolSetActive = vi.fn()
 
+const mockSetEmbeddedAccounts = vi.fn()
+
 vi.mock('../openfort/useOpenfort', () => ({
   useOpenfortCore: () => ({
     client: mockClient,
     chainType: ChainTypeEnum.EVM,
+    setEmbeddedAccounts: mockSetEmbeddedAccounts,
+    embeddedState: 4, // EmbeddedState.READY
   }),
 }))
 

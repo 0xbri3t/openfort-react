@@ -1,6 +1,6 @@
 'use client'
 
-import { ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
@@ -53,7 +53,7 @@ export type CreateWalletPostAuthOptions = {
  * ```
  */
 export const useConnectToWalletPostAuth = () => {
-  const { chainType } = useOpenfortCore()
+  const { chainType, setEmbeddedAccounts, embeddedState } = useOpenfortCore()
   const { client } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
   const chainId = walletConfig?.ethereum?.chainId ?? 13337
@@ -89,6 +89,9 @@ export const useConnectToWalletPostAuth = () => {
         queryFn: () => client.embeddedWallet.list({ limit: 100 }),
       })
 
+      // Sync to Zustand store so useEthereumEmbeddedWallet/useSolanaEmbeddedWallet can find accounts for setActive
+      setEmbeddedAccounts(wallets)
+
       const chainWallets = wallets.filter((w) => w.chainType === chainType)
 
       if (chainWallets.length === 0) {
@@ -111,6 +114,21 @@ export const useConnectToWalletPostAuth = () => {
       const hasAutomaticOrPasskey = chainWallets.some(
         (w) => w.recoveryMethod === RecoveryMethod.AUTOMATIC || w.recoveryMethod === RecoveryMethod.PASSKEY
       )
+      // If the embedded signer isn't READY yet, skip setActive — the state machine in
+      // CoreOpenfortProvider will handle wallet connection once READY is reached.
+      // Calling setActive before READY fails with "Embedded wallet not found" because
+      // the hook's internal accounts list hasn't been populated via React re-render yet.
+      if (embeddedState !== EmbeddedState.READY) {
+        const first = chainWallets[0]
+        return {
+          wallet: first
+            ? chainType === ChainTypeEnum.SVM
+              ? embeddedAccountToSolanaUserWallet(first)
+              : embeddedAccountToUserWallet(first)
+            : undefined,
+        }
+      }
+
       if (hasAutomaticOrPasskey) {
         const first = chainWallets[0]
         if (first) {

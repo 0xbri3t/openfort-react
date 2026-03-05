@@ -586,7 +586,7 @@ export const useEmailAuth = (hookOptions: UseEmailHookOptions = {}) => {
           error,
         })
 
-        logger.log('Error verifying email', e)
+        logger.error('Error verifying email', e)
 
         return onError({
           hookOptions,
