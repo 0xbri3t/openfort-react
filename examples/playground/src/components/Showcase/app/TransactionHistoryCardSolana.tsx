@@ -106,7 +106,9 @@ export const TransactionHistoryCardSolana = ({ tooltip }: { tooltip?: { hook: st
   if (tooltip) {
     return (
       <Tooltip delayDuration={500}>
-        <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
+        <TooltipTrigger asChild>
+          <div>{cardContent}</div>
+        </TooltipTrigger>
         <TooltipContent side="top">
           <h3 className="text-base mb-1">{tooltip.hook}</h3>
           {tooltip.body}

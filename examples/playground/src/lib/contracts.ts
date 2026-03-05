@@ -6,7 +6,6 @@ const SUPPORTED_CHAIN_IDS = new Set(PLAYGROUND_EVM_CHAINS.map((c) => c.id))
 /** Fallback addresses when env vars are not set */
 const DEFAULT_POLYGON_MINT = '0xbabe0001489722187FbaF0689C47B2f5E97545C5'
 
-/** Contract type: Beam uses claim(amount), Polygon uses mint(address, amount) */
 type MintContractType = 'claim' | 'mint'
 
 export interface MintContractConfig {
@@ -30,9 +29,6 @@ export const BALANCE_ABI = [
  */
 export function getMintContractAddress(chainId: number | undefined): string | undefined {
   if (chainId == null) return undefined
-  if (chainId === 13337) {
-    return import.meta.env.VITE_BEAM_MINT_CONTRACT ?? undefined
-  }
   if (SUPPORTED_CHAIN_IDS.has(chainId)) {
     return import.meta.env.VITE_POLYGON_MINT_CONTRACT ?? DEFAULT_POLYGON_MINT
   }
@@ -46,6 +42,5 @@ export function getMintContractAddress(chainId: number | undefined): string | un
 export function getMintContractConfig(chainId: number | undefined): MintContractConfig | undefined {
   const address = getMintContractAddress(chainId)
   if (!address) return undefined
-  const type: MintContractType = chainId === 13337 ? 'claim' : 'mint'
-  return { address, type }
+  return { address, type: 'mint' }
 }

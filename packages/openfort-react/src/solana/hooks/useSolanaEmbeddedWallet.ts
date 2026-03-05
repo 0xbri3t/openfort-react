@@ -393,7 +393,8 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
       embeddedState !== EmbeddedState.READY ||
       state.status === 'connecting' ||
       state.status === 'reconnecting' ||
-      state.status === 'creating'
+      state.status === 'creating' ||
+      state.status === 'error'
     ) {
       return
     }

@@ -120,7 +120,7 @@ export const SendTransactionCardSolana = ({ tooltip }: { tooltip?: { hook: strin
             <span className="flex items-center gap-x-1.5">
               Address: <TruncatedText text={address} />
               <Tooltip delayDuration={300}>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <button
                     type="button"
                     onClick={copyAddress}

@@ -35,6 +35,7 @@ const passkeyAccount = createMockEmbeddedAccount({
   address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
   recoveryMethod: RecoveryMethod.PASSKEY,
   chainType: ChainTypeEnum.EVM,
+  recoveryMethodDetails: { passkeyId: 'pk_test_abc123' },
 })
 
 const mockEmbeddedAccounts = [automaticAccount, passwordAccount, passkeyAccount]
@@ -139,7 +140,7 @@ describe('useEthereumEmbeddedWallet – setActive', () => {
     expect(result.current.status).toBe('connected')
   })
 
-  it('recovers with PASSKEY by address', async () => {
+  it('recovers with PASSKEY by address (reads passkeyId from recoveryMethodDetails)', async () => {
     const { result } = renderHook(() => useEthereumEmbeddedWallet(), { wrapper: createTestWrapper() })
 
     await act(async () => {
@@ -151,6 +152,7 @@ describe('useEthereumEmbeddedWallet – setActive', () => {
         account: passkeyAccount.id,
         recoveryParams: expect.objectContaining({
           recoveryMethod: RecoveryMethod.PASSKEY,
+          passkeyInfo: { passkeyId: 'pk_test_abc123' },
         }),
       })
     )

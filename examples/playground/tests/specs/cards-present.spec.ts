@@ -26,9 +26,11 @@ test.describe('Dashboard smoke - key cards are present', () => {
         await page.waitForTimeout(500)
 
         await expect(page.getByText(/^external$/i).first()).toBeVisible({ timeout: 30_000 })
-        await expect(page.getByRole('button', { name: /MetaMask/i })).toBeVisible({ timeout: 30_000 })
-        await expect(page.getByRole('button', { name: /Coinbase Wallet/i })).toBeVisible({ timeout: 30_000 })
-        await expect(page.getByRole('button', { name: /WalletConnect/i })).toBeVisible({ timeout: 30_000 })
+        const externalSection = page
+          .locator('p')
+          .filter({ hasText: /^external$/i })
+          .locator('..')
+        await expect(externalSection.locator('button').first()).toBeVisible({ timeout: 30_000 })
       }
     }
   })

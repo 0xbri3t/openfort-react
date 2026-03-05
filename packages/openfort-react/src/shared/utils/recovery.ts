@@ -60,7 +60,7 @@ export async function buildRecoveryParams(
     case RecoveryMethod.PASSKEY:
       return {
         recoveryMethod: RecoveryMethod.PASSKEY,
-        ...(options?.passkeyId && { passkeyId: options.passkeyId }),
+        ...(options?.passkeyId && { passkeyInfo: { passkeyId: options.passkeyId } }),
       } as RecoveryParams
 
     default:

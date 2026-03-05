@@ -32,6 +32,7 @@ const passkeyAccount = createMockSolanaEmbeddedAccount({
   id: 'emb_sol_passkey_123',
   address: 'DJM3THsP5DiLjGqXHVR6XNNmTpFRcLkPBFv1sjFqMzCA',
   recoveryMethod: RecoveryMethod.PASSKEY,
+  recoveryMethodDetails: { passkeyId: 'pk_sol_test_abc123' },
 })
 
 const mockEmbeddedAccounts = [automaticAccount, passwordAccount, passkeyAccount]
@@ -150,7 +151,7 @@ describe('useSolanaEmbeddedWallet – setActive', () => {
     expect(result.current.status).toBe('connected')
   })
 
-  it('recovers with PASSKEY by address', async () => {
+  it('recovers with PASSKEY by address (reads passkeyId from recoveryMethodDetails)', async () => {
     const { result } = renderHook(() => useSolanaEmbeddedWallet(), { wrapper: createTestWrapper() })
 
     await act(async () => {
@@ -162,6 +163,7 @@ describe('useSolanaEmbeddedWallet – setActive', () => {
         account: passkeyAccount.id,
         recoveryParams: expect.objectContaining({
           recoveryMethod: RecoveryMethod.PASSKEY,
+          passkeyInfo: { passkeyId: 'pk_sol_test_abc123' },
         }),
       })
     )

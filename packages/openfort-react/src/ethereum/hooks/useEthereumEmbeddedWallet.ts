@@ -138,7 +138,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   const activeChainId = strategy?.getActiveChainId?.() ?? strategy?.getChainId()
   const setActiveChainId = strategy?.setActiveChainId ?? (() => {})
 
-  const creationChainId = options?.chainId ?? DEFAULT_CHAIN_ID
+  const creationChainId = options?.chainId ?? activeChainId ?? DEFAULT_CHAIN_ID
   const activeReturnChainId = activeChainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
@@ -306,9 +306,11 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           let recoveryParams = activeOptions.recoveryParams
           if (!recoveryParams && !hasExplicitRecovery) {
             if (account.recoveryMethod === RecoveryMethod.PASSKEY) {
-              recoveryParams = { recoveryMethod: RecoveryMethod.PASSKEY }
-              if (activeOptions.passkeyId)
-                (recoveryParams as typeof recoveryParams & { passkeyId?: string }).passkeyId = activeOptions.passkeyId
+              const passkeyId = activeOptions.passkeyId ?? account.recoveryMethodDetails?.passkeyId
+              recoveryParams = {
+                recoveryMethod: RecoveryMethod.PASSKEY,
+                ...(passkeyId && { passkeyInfo: { passkeyId } }),
+              }
             } else if (account.recoveryMethod === RecoveryMethod.PASSWORD) {
               setState((s) => ({ ...s, status: 'needs-recovery', error: null }))
               return
@@ -327,7 +329,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
               {
                 recoveryMethod:
                   activeOptions.recoveryMethod ?? (password != null ? RecoveryMethod.PASSWORD : undefined),
-                passkeyId: activeOptions.passkeyId,
+                passkeyId: activeOptions.passkeyId ?? account.recoveryMethodDetails?.passkeyId,
                 password,
                 otpCode: activeOptions.otpCode,
               },
@@ -440,7 +442,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       embeddedState !== EmbeddedState.READY ||
       state.status === 'connecting' ||
       state.status === 'reconnecting' ||
-      state.status === 'creating'
+      state.status === 'creating' ||
+      state.status === 'error'
     ) {
       return
     }

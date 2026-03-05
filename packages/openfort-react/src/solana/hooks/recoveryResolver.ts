@@ -6,7 +6,7 @@ import type { SetActiveSolanaWalletOptions } from '../types'
 type ResolveRecoveryResult = { needsRecovery: true } | { needsRecovery: false; recoveryParams: RecoveryParams }
 
 export async function resolveRecoveryForSetActive(
-  account: { recoveryMethod?: RecoveryMethod },
+  account: { recoveryMethod?: RecoveryMethod; recoveryMethodDetails?: { passkeyId?: string } },
   activeOptions: SetActiveSolanaWalletOptions,
   config: BuildRecoveryParamsConfig
 ): Promise<ResolveRecoveryResult> {
@@ -21,11 +21,12 @@ export async function resolveRecoveryForSetActive(
   if (!hasExplicitRecovery) {
     const method = account.recoveryMethod ?? RecoveryMethod.AUTOMATIC
     if (method === RecoveryMethod.PASSKEY) {
+      const passkeyId = activeOptions.passkeyId ?? account.recoveryMethodDetails?.passkeyId
       return {
         needsRecovery: false,
         recoveryParams: {
           recoveryMethod: RecoveryMethod.PASSKEY,
-          ...(activeOptions.passkeyId && { passkeyId: activeOptions.passkeyId }),
+          ...(passkeyId && { passkeyInfo: { passkeyId } }),
         } as RecoveryParams,
       }
     }
@@ -42,7 +43,7 @@ export async function resolveRecoveryForSetActive(
   const recoveryParams = await buildRecoveryParams(
     {
       recoveryMethod: activeOptions.recoveryMethod ?? (password != null ? RecoveryMethod.PASSWORD : undefined),
-      passkeyId: activeOptions.passkeyId,
+      passkeyId: activeOptions.passkeyId ?? account.recoveryMethodDetails?.passkeyId,
       password,
       otpCode: activeOptions.otpCode,
     },
