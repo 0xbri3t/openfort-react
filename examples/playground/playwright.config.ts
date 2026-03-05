@@ -62,6 +62,9 @@ export default defineConfig({
         /session-keys-multi-delete\.spec\.ts/, // EVM-only
         /refresh-persistence\.spec\.ts/, // EVM-only
         /create-wallet-and-switch-chain\.spec\.ts/, // EVM-only
+        /wallets-create-delegated\.spec\.ts/, // EVM-only (account type selection)
+        /wallets-create-eoa\.spec\.ts/, // EVM-only (account type selection)
+        /wallets-create-edge-cases\.spec\.ts/, // EVM-only (account type selection)
       ],
       testMatch: /.*\.spec\.ts/,
       use: {

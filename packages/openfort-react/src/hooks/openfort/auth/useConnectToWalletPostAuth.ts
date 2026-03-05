@@ -1,6 +1,7 @@
 'use client'
 
-import { ChainTypeEnum, EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import { ChainTypeEnum, type EmbeddedAccount, RecoveryMethod } from '@openfort/openfort-js'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
@@ -14,7 +15,6 @@ import {
   type SolanaUserWallet,
 } from '../walletTypes'
 import { useSignOut } from './useSignOut'
-import { useQueryClient } from '@tanstack/react-query'
 
 /**
  * Options that control the behaviour of {@link useConnectToWalletPostAuth} when attempting to

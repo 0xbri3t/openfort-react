@@ -59,6 +59,7 @@ export default [
   {
     input: './src/index.ts',
     external: sharedExternal,
+
     output: [
       {
         dir: './build',
@@ -74,6 +75,7 @@ export default [
   {
     input: './src/solana/index.ts',
     external: sharedExternal,
+
     output: [
       {
         file: packageJson.exports['./solana'].import,
@@ -87,6 +89,7 @@ export default [
   {
     input: './src/ethereum/index.ts',
     external: sharedExternal,
+
     output: [
       {
         file: packageJson.exports['./ethereum'].import,
@@ -100,6 +103,7 @@ export default [
   {
     input: './src/wagmi/index.ts',
     external: sharedExternal,
+
     output: [
       {
         file: packageJson.exports['./wagmi'].import,

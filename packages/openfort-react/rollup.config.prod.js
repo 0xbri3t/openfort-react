@@ -46,6 +46,7 @@ export default [
   {
     input: './src/index.ts',
     external: sharedExternal,
+
     output: {
       dir: 'build',
       format: 'esm',
@@ -59,6 +60,7 @@ export default [
   {
     input: './src/solana/index.ts',
     external: sharedExternal,
+
     output: {
       file: packageJson.exports['./solana'].import,
       format: 'esm',
@@ -82,6 +84,7 @@ export default [
   {
     input: './src/ethereum/index.ts',
     external: sharedExternal,
+
     output: {
       file: packageJson.exports['./ethereum'].import,
       format: 'esm',
@@ -105,6 +108,7 @@ export default [
   {
     input: './src/wagmi/index.ts',
     external: sharedExternal,
+
     output: {
       file: packageJson.exports['./wagmi'].import,
       format: 'esm',

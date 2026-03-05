@@ -8,7 +8,6 @@ import {
 } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { ConnectExternalWalletCard } from '@/components/Showcase/app/ConnectExternalWalletCard'
-import { CreateSessionKeyCardSolana } from '@/components/Showcase/app/CreateSessionKeyCardSolana'
 import { SendTransactionCardSolana } from '@/components/Showcase/app/SendTransactionCardSolana'
 import { SessionKeysCard } from '@/components/Showcase/app/SessionKeys'
 import { SessionKeysCardEVM } from '@/components/Showcase/app/SessionKeysCardEVM'
@@ -88,7 +87,6 @@ export const App = () => {
                 body: <>Fetches recent transactions via getSignaturesForAddress.</>,
               }}
             />
-            <CreateSessionKeyCardSolana />
             <SetActiveWalletsCardSolana />
           </>
         ) : hasWagmi ? (

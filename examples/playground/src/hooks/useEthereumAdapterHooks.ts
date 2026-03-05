@@ -1,6 +1,7 @@
-import { ChainTypeEnum, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { ChainTypeEnum, embeddedWalletId, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
 import { useCallback, useState } from 'react'
 import { type Abi, createPublicClient, encodeFunctionData, http } from 'viem'
+import { useAccount, useWalletClient } from 'wagmi'
 import { DEFAULT_EVM_CHAIN, getPlaygroundRpcUrl } from '@/lib/chains'
 import { toError } from '@/lib/errors'
 import { useAsyncData } from './useAsyncData'
@@ -57,7 +58,7 @@ export function useEthereumAccount(): UseAccountLike {
       (a) => a.chainType === ChainTypeEnum.EVM && a.address.toLowerCase() === fallbackAddress.toLowerCase()
     )
   const useFallback = !!evmAccount
-  const chainId = core.activeChainId ?? DEFAULT_EVM_CHAIN.id
+  const chainId = wallet.activeChainId ?? DEFAULT_EVM_CHAIN.id
 
   return {
     address: useFallback ? (evmAccount.address as `0x${string}`) : undefined,
@@ -106,12 +107,20 @@ export function useEthereumReadContractLocal(params: {
 type WriteParams = { address: `0x${string}`; abi: unknown[]; functionName: string; args?: unknown[] }
 
 /**
- * Write contract using embedded wallet provider. No wagmi.
+ * Write contract using the active wallet provider.
+ * Routes through wagmi wallet client for external wallets (MetaMask, etc.)
+ * and through embedded wallet provider for Openfort embedded wallets.
  */
 export function useEthereumWriteContractLocal(): UseWriteContractLike {
-  const { address } = useEthereumAccount()
+  const { address: wagmiAddress, isConnected, connector } = useAccount()
+  const { data: walletClient } = useWalletClient()
   const core = useOpenfort()
   const wallet = useEthereumEmbeddedWallet()
+
+  const useExternalWallet = isConnected && !!connector && connector.id !== embeddedWalletId
+  const address = useExternalWallet
+    ? wagmiAddress
+    : ((wallet.address as `0x${string}` | undefined) ?? (core.activeEmbeddedAddress as `0x${string}` | undefined))
 
   const [data, setData] = useState<`0x${string}` | undefined>(undefined)
   const [isPending, setIsPending] = useState(false)
@@ -134,21 +143,31 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
       setError(null)
 
       try {
-        const provider =
-          wallet.status === 'connected' && wallet.activeWallet
-            ? await wallet.activeWallet.getProvider()
-            : await core.client.embeddedWallet.getEthereumProvider()
-
         const dataEncoded = encodeFunctionData({
           abi: params.abi as Abi,
           functionName: params.functionName,
           args: params.args,
         })
 
-        const txHash = (await provider.request({
-          method: 'eth_sendTransaction',
-          params: [{ from: address, to: params.address, data: dataEncoded }],
-        })) as `0x${string}`
+        let txHash: `0x${string}`
+
+        if (useExternalWallet && walletClient) {
+          txHash = await walletClient.sendTransaction({
+            account: address,
+            to: params.address,
+            data: dataEncoded,
+          })
+        } else {
+          const provider =
+            wallet.status === 'connected' && wallet.activeWallet
+              ? await wallet.activeWallet.getProvider()
+              : await core.client.embeddedWallet.getEthereumProvider()
+
+          txHash = (await provider.request({
+            method: 'eth_sendTransaction',
+            params: [{ from: address, to: params.address, data: dataEncoded }],
+          })) as `0x${string}`
+        }
 
         setData(txHash)
         setIsSuccess(true)
@@ -162,7 +181,7 @@ export function useEthereumWriteContractLocal(): UseWriteContractLike {
         setIsPending(false)
       }
     },
-    [address, wallet.status, wallet.activeWallet, core.client]
+    [address, useExternalWallet, walletClient, wallet.status, wallet.activeWallet, core.client]
   )
 
   return {

@@ -1,9 +1,10 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Wallets - create Delegated Account wallet', () => {
-  test('creates Delegated Account with Automatic recovery', async ({ page, dashboardPage }) => {
+  test('creates Delegated Account with Automatic recovery', async ({ page, dashboardPage, mode }) => {
+    test.skip(mode === 'svm', 'Delegated accounts are EVM-only')
     test.setTimeout(180_000)
-    await dashboardPage.ensureReady()
+    await dashboardPage.ensureReady(mode)
 
     const walletsTitle = page
       .locator('[data-slot="card-title"]')
@@ -28,9 +29,10 @@ test.describe('Wallets - create Delegated Account wallet', () => {
     await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
   })
 
-  test('creates Delegated Account with Password recovery', async ({ page, dashboardPage }) => {
+  test('creates Delegated Account with Password recovery', async ({ page, dashboardPage, mode }) => {
+    test.skip(mode === 'svm', 'Delegated accounts are EVM-only')
     test.setTimeout(180_000)
-    await dashboardPage.ensureReady()
+    await dashboardPage.ensureReady(mode)
 
     const walletsTitle = page
       .locator('[data-slot="card-title"]')

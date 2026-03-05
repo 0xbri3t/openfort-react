@@ -1,21 +1,22 @@
 import type { EmbeddedAccount } from '@openfort/openfort-js'
-import { AccountTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
+import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import type { Hex } from 'viem'
 import type { Mock } from 'vitest'
 import { vi } from 'vitest'
 
 export const MOCK_ADDRESS = '0x1234567890abcdef1234567890abcdef12345678' as Hex
-export const MOCK_ADDRESS_2 = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as Hex
-export const MOCK_USER_ID = 'usr_test_123'
-export const MOCK_ACCESS_TOKEN = 'test-access-token'
+export const MOCK_SOLANA_ADDRESS = '7EYnhQoR9YM3N7UoaKRoA44Uy8JeaZV3qyouov87awMs'
+const MOCK_USER_ID = 'usr_test_123'
+const MOCK_ACCESS_TOKEN = 'test-access-token'
 export const MOCK_ENCRYPTION_SESSION = 'test-encryption-session'
-export const MOCK_CHAIN_ID = 80002
+const MOCK_CHAIN_ID = 80002
 
 export function createMockEmbeddedAccount(overrides: Partial<EmbeddedAccount> = {}): EmbeddedAccount {
   return {
     id: 'emb_test_123',
     address: MOCK_ADDRESS,
     chainId: MOCK_CHAIN_ID,
+    chainType: ChainTypeEnum.EVM,
     recoveryMethod: RecoveryMethod.AUTOMATIC,
     accountType: AccountTypeEnum.SMART_ACCOUNT,
     ownerAddress: MOCK_ADDRESS,
@@ -24,7 +25,19 @@ export function createMockEmbeddedAccount(overrides: Partial<EmbeddedAccount> = 
   } as EmbeddedAccount
 }
 
-export type MockClient = {
+export function createMockSolanaEmbeddedAccount(overrides: Partial<EmbeddedAccount> = {}): EmbeddedAccount {
+  return {
+    id: 'emb_sol_test_123',
+    address: MOCK_SOLANA_ADDRESS,
+    chainType: ChainTypeEnum.SVM,
+    recoveryMethod: RecoveryMethod.AUTOMATIC,
+    accountType: AccountTypeEnum.EOA,
+    createdAt: Date.now(),
+    ...overrides,
+  } as EmbeddedAccount
+}
+
+type MockClient = {
   embeddedWallet: {
     create: Mock
     list: Mock
@@ -32,6 +45,7 @@ export type MockClient = {
     get: Mock
     getEmbeddedState: Mock
     getEthereumProvider: Mock
+    signMessage: Mock
     setRecoveryMethod: Mock
     exportPrivateKey: Mock
   }
@@ -53,6 +67,7 @@ export function createMockClient(): MockClient {
       get: vi.fn().mockResolvedValue(createMockEmbeddedAccount()),
       getEmbeddedState: vi.fn().mockResolvedValue(EmbeddedState.READY),
       getEthereumProvider: vi.fn(),
+      signMessage: vi.fn().mockResolvedValue('mock-signature'),
       setRecoveryMethod: vi.fn().mockResolvedValue(undefined),
       exportPrivateKey: vi.fn().mockResolvedValue('0xprivatekey'),
     },
@@ -76,6 +91,9 @@ export function createMockWalletConfig(overrides: Record<string, unknown> = {}):
     createEncryptedSessionEndpoint: 'https://example.com/session',
     accountType: AccountTypeEnum.SMART_ACCOUNT,
     recoverWalletAutomaticallyAfterAuth: true,
+    ethereum: {
+      accountType: AccountTypeEnum.SMART_ACCOUNT,
+    },
     ...overrides,
   }
 }

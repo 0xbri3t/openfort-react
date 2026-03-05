@@ -1,7 +1,7 @@
 import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { act, renderHook } from '@testing-library/react'
 import { createElement, type PropsWithChildren } from 'react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StoreContext } from '../../openfort/context'
 import {
   selectActiveAddress,
@@ -24,6 +24,16 @@ function createStoreWrapper(overrides?: { chainType?: ChainTypeEnum }) {
 }
 
 describe('useOpenfortStore', () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore()
+  })
+
   it('throws when used outside provider', () => {
     expect(() => {
       renderHook(() => useOpenfortStore((s) => s.user))

@@ -81,6 +81,7 @@ export const useModeSwitchContext = () => useContext(ModeSwitchContext)
 
 const defaultConnectors = getDefaultConnectors({
   app: { name: 'Openfort demo' },
+  walletConnectProjectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
 })
 
 const wagmiChains = PLAYGROUND_EVM_CHAINS.map((c) => c.viemChain) as [
@@ -136,6 +137,7 @@ function WagmiProviders({ children }: { children: React.ReactNode }) {
 }
 
 function OpenfortOnlyProviders({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient())
   const { providerOptions } = useAppStore()
   const { mode } = usePlaygroundMode()
   const options = useMemo(
@@ -149,9 +151,11 @@ function OpenfortOnlyProviders({ children }: { children: React.ReactNode }) {
   )
   return (
     <ModeSwitchContext.Provider value={{}}>
-      <OpenfortProvider {...options}>
-        <EthereumAddressProviderEmbedded>{children}</EthereumAddressProviderEmbedded>
-      </OpenfortProvider>
+      <QueryClientProvider client={queryClient}>
+        <OpenfortProvider {...options}>
+          <EthereumAddressProviderEmbedded>{children}</EthereumAddressProviderEmbedded>
+        </OpenfortProvider>
+      </QueryClientProvider>
     </ModeSwitchContext.Provider>
   )
 }

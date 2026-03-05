@@ -1,15 +1,15 @@
+import { AccountTypeEnum, useEthereumEmbeddedWallet } from '@openfort/react'
 import type { ReactNode } from 'react'
 import { getAddress, parseAbi } from 'viem'
-import {
-  useEthereumAccount,
-  useEthereumReadContractLocal,
-  useEthereumWriteContractLocal,
-} from '@/hooks/useEthereumAdapterHooks'
+import { useConnectedEthereumAccount } from '@/hooks/useConnectedEthereumAccount'
+import { useEthereumReadContractLocal, useEthereumWriteContractLocal } from '@/hooks/useEthereumAdapterHooks'
 import { BALANCE_ABI, getMintContractConfig } from '@/lib/contracts'
 import { WriteContractLayout } from './write-contract-shared'
 
 export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { address, chainId } = useEthereumAccount()
+  const { address, chainId } = useConnectedEthereumAccount()
+  const ethereum = useEthereumEmbeddedWallet()
+  const isEoa = ethereum.status === 'connected' && ethereum.activeWallet?.accountType === AccountTypeEnum.EOA
   const { data: hash, writeContract, isPending, error } = useEthereumWriteContractLocal()
   const config = getMintContractConfig(chainId ?? undefined)
 
@@ -58,6 +58,7 @@ export const WriteContractCardEVM = ({ tooltip }: { tooltip?: { hook: string; bo
       isPending={isPending}
       error={error}
       onSubmit={submit}
+      disabledReason={isEoa ? 'Minting requires a Smart Account or Delegated Account (gas sponsorship)' : undefined}
     />
   )
 }

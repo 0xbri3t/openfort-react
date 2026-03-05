@@ -23,7 +23,7 @@ export const SignaturesCard = ({ tooltip }: { tooltip?: { hook: string; body: Re
   const [localError, setLocalError] = useState<Error | null>(null)
   const [localPending, setLocalPending] = useState(false)
 
-  const useWagmiSign = isConnected && connector?.id !== embeddedWalletId && embedded.status !== 'connected'
+  const useWagmiSign = isConnected && !!connector && connector.id !== embeddedWalletId
   const isPending = useWagmiSign ? wagmiPending : localPending
   const signature = useWagmiSign ? wagmiData : localSignature
   const error = useWagmiSign ? wagmiErrorObj : localError

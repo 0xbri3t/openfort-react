@@ -34,7 +34,15 @@ interface TransactionResult {
 }
 
 function deriveWssUrl(rpcUrl: string): string {
-  if (rpcUrl.includes('openfort.io')) return 'wss://api.devnet.solana.com'
+  try {
+    const parsed = new URL(rpcUrl)
+    const hostname = parsed.hostname
+    if (hostname === 'openfort.io' || hostname.endsWith('.openfort.io')) {
+      return 'wss://api.devnet.solana.com'
+    }
+  } catch {
+    // If rpcUrl is not a valid URL, fall back to the replacement logic below.
+  }
   return rpcUrl.replace(/^https?:\/\//, 'wss://')
 }
 

@@ -1,27 +1,25 @@
-import { RecoveryMethod } from '@openfort/openfort-js'
+import { ChainTypeEnum, RecoveryMethod } from '@openfort/openfort-js'
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  createMockClient,
-  createMockEmbeddedAccount,
-  createMockWalletConfig,
-  MOCK_ADDRESS,
-} from './mocks/openfort-client'
+import { createMockClient, createMockEmbeddedAccount, createMockWalletConfig } from './mocks/openfort-client'
 import { createTestWrapper } from './mocks/wrapper'
 
 // --- Module-level mocks ---
 
-const mockCreateWallet = vi.fn()
-const mockSetActiveWallet = vi.fn()
-const mockSignOut = vi.fn()
-const mockWalletConfig = createMockWalletConfig()
-const mockEnsureQueryData = vi.fn()
 const mockClient = createMockClient()
+const mockWalletConfig = createMockWalletConfig()
+const mockSignOut = vi.fn()
+const mockEnsureQueryData = vi.fn()
 
-vi.mock('../hooks/openfort/useWallets', () => ({
-  useWallets: () => ({
-    createWallet: mockCreateWallet,
-    setActiveWallet: mockSetActiveWallet,
+const mockEthCreate = vi.fn()
+const mockEthSetActive = vi.fn()
+const mockSolCreate = vi.fn()
+const mockSolSetActive = vi.fn()
+
+vi.mock('../openfort/useOpenfort', () => ({
+  useOpenfortCore: () => ({
+    client: mockClient,
+    chainType: ChainTypeEnum.EVM,
   }),
 }))
 
@@ -31,9 +29,23 @@ vi.mock('../components/Openfort/useOpenfort', () => ({
   }),
 }))
 
-vi.mock('../openfort/useOpenfort', () => ({
-  useOpenfortCore: () => ({
-    client: mockClient,
+vi.mock('../ethereum/hooks/useEthereumEmbeddedWallet', () => ({
+  useEthereumEmbeddedWallet: () => ({
+    create: mockEthCreate,
+    setActive: mockEthSetActive,
+    status: 'disconnected',
+    address: undefined,
+    wallets: [],
+  }),
+}))
+
+vi.mock('../solana/hooks/useSolanaEmbeddedWallet', () => ({
+  useSolanaEmbeddedWallet: () => ({
+    create: mockSolCreate,
+    setActive: mockSolSetActive,
+    status: 'disconnected',
+    address: undefined,
+    wallets: [],
   }),
 }))
 
@@ -41,6 +53,10 @@ vi.mock('../hooks/openfort/auth/useSignOut', () => ({
   useSignOut: () => ({
     signOut: mockSignOut,
   }),
+}))
+
+vi.mock('../utils/logger', () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {
@@ -63,13 +79,14 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
       createEncryptedSessionEndpoint: 'https://example.com/session',
       getEncryptionSession: undefined,
       recoverWalletAutomaticallyAfterAuth: true,
+      ethereum: { chainId: 13337 },
     })
   })
 
   it('creates a new wallet when no wallets exist', async () => {
-    const mockWallet = { address: MOCK_ADDRESS }
+    const account = createMockEmbeddedAccount()
     mockEnsureQueryData.mockResolvedValue([])
-    mockCreateWallet.mockResolvedValue({ wallet: mockWallet })
+    mockEthCreate.mockResolvedValue(account)
 
     const { result } = renderHook(() => useConnectToWalletPostAuth(), {
       wrapper: createTestWrapper(),
@@ -80,17 +97,18 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
       tryResult = await result.current.tryUseWallet({})
     })
 
-    expect(mockCreateWallet).toHaveBeenCalled()
-    expect(tryResult!.wallet).toBe(mockWallet)
+    expect(mockEthCreate).toHaveBeenCalled()
+    expect(tryResult!.wallet).toBeDefined()
+    expect(tryResult!.wallet!.address).toBe(account.address)
   })
 
   it('recovers wallet with AUTOMATIC recovery when wallet exists', async () => {
     const autoAccount = createMockEmbeddedAccount({
       recoveryMethod: RecoveryMethod.AUTOMATIC,
+      chainType: ChainTypeEnum.EVM,
     })
-    const mockWallet = { address: MOCK_ADDRESS }
     mockEnsureQueryData.mockResolvedValue([autoAccount])
-    mockSetActiveWallet.mockResolvedValue({ wallet: mockWallet })
+    mockEthSetActive.mockResolvedValue(undefined)
 
     const { result } = renderHook(() => useConnectToWalletPostAuth(), {
       wrapper: createTestWrapper(),
@@ -101,17 +119,17 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
       tryResult = await result.current.tryUseWallet({})
     })
 
-    expect(mockSetActiveWallet).toHaveBeenCalled()
-    expect(tryResult!.wallet).toBe(mockWallet)
+    expect(mockEthSetActive).toHaveBeenCalledWith(expect.objectContaining({ address: autoAccount.address }))
+    expect(tryResult!.wallet).toBeDefined()
   })
 
   it('recovers wallet with PASSKEY recovery when wallet exists', async () => {
     const passkeyAccount = createMockEmbeddedAccount({
       recoveryMethod: RecoveryMethod.PASSKEY,
+      chainType: ChainTypeEnum.EVM,
     })
-    const mockWallet = { address: MOCK_ADDRESS }
     mockEnsureQueryData.mockResolvedValue([passkeyAccount])
-    mockSetActiveWallet.mockResolvedValue({ wallet: mockWallet })
+    mockEthSetActive.mockResolvedValue(undefined)
 
     const { result } = renderHook(() => useConnectToWalletPostAuth(), {
       wrapper: createTestWrapper(),
@@ -122,13 +140,14 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
       tryResult = await result.current.tryUseWallet({})
     })
 
-    expect(mockSetActiveWallet).toHaveBeenCalled()
-    expect(tryResult!.wallet).toBe(mockWallet)
+    expect(mockEthSetActive).toHaveBeenCalled()
+    expect(tryResult!.wallet).toBeDefined()
   })
 
   it('returns passwordRequired when only PASSWORD wallets exist', async () => {
     const pwAccount = createMockEmbeddedAccount({
       recoveryMethod: RecoveryMethod.PASSWORD,
+      chainType: ChainTypeEnum.EVM,
     })
     mockEnsureQueryData.mockResolvedValue([pwAccount])
 
@@ -143,8 +162,8 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
 
     expect(tryResult!.passwordRequired).toBe(true)
     expect(tryResult!.wallet).toBeUndefined()
-    expect(mockCreateWallet).not.toHaveBeenCalled()
-    expect(mockSetActiveWallet).not.toHaveBeenCalled()
+    expect(mockEthCreate).not.toHaveBeenCalled()
+    expect(mockEthSetActive).not.toHaveBeenCalled()
   })
 
   it('returns empty when no encryption session config', async () => {
@@ -161,7 +180,7 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
     })
 
     expect(tryResult!).toEqual({})
-    expect(mockCreateWallet).not.toHaveBeenCalled()
+    expect(mockEthCreate).not.toHaveBeenCalled()
   })
 
   it('returns empty when recoverWalletAutomaticallyAfterAuth is false', async () => {
@@ -177,7 +196,7 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
     })
 
     expect(tryResult!).toEqual({})
-    expect(mockCreateWallet).not.toHaveBeenCalled()
+    expect(mockEthCreate).not.toHaveBeenCalled()
   })
 
   it('returns empty when recoverWalletAutomatically option is false', async () => {
@@ -193,12 +212,12 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
     })
 
     expect(tryResult!).toEqual({})
-    expect(mockCreateWallet).not.toHaveBeenCalled()
+    expect(mockEthCreate).not.toHaveBeenCalled()
   })
 
   it('calls signOut when createWallet fails and logoutOnError is true', async () => {
     mockEnsureQueryData.mockResolvedValue([])
-    mockCreateWallet.mockResolvedValue({ error: new Error('Creation failed') })
+    mockEthCreate.mockRejectedValue(new Error('Creation failed'))
 
     const { result } = renderHook(() => useConnectToWalletPostAuth(), {
       wrapper: createTestWrapper(),
@@ -213,7 +232,7 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
 
   it('does not call signOut when createWallet fails and logoutOnError is false', async () => {
     mockEnsureQueryData.mockResolvedValue([])
-    mockCreateWallet.mockResolvedValue({ error: new Error('Creation failed') })
+    mockEthCreate.mockRejectedValue(new Error('Creation failed'))
 
     const { result } = renderHook(() => useConnectToWalletPostAuth(), {
       wrapper: createTestWrapper(),
@@ -229,9 +248,10 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
   it('calls signOut when setActiveWallet fails and logoutOnError is true', async () => {
     const autoAccount = createMockEmbeddedAccount({
       recoveryMethod: RecoveryMethod.AUTOMATIC,
+      chainType: ChainTypeEnum.EVM,
     })
     mockEnsureQueryData.mockResolvedValue([autoAccount])
-    mockSetActiveWallet.mockResolvedValue({ error: new Error('Recovery failed') })
+    mockEthSetActive.mockRejectedValue(new Error('Recovery failed'))
 
     const { result } = renderHook(() => useConnectToWalletPostAuth(), {
       wrapper: createTestWrapper(),

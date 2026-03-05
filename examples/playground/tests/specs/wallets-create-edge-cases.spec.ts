@@ -1,9 +1,10 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Wallets - creation edge cases', () => {
-  test('shows creating state during wallet creation and clears on success', async ({ page, dashboardPage }) => {
+  test('shows creating state during wallet creation and clears on success', async ({ page, dashboardPage, mode }) => {
+    test.skip(mode === 'svm', 'Account type selection is EVM-only')
     test.setTimeout(180_000)
-    await dashboardPage.ensureReady()
+    await dashboardPage.ensureReady(mode)
 
     const walletsTitle = page
       .locator('[data-slot="card-title"]')
@@ -34,9 +35,10 @@ test.describe('Wallets - creation edge cases', () => {
     await expect(creatingText).not.toBeVisible({ timeout: 30_000 })
   })
 
-  test('creates two wallets sequentially with correct account type badges', async ({ page, dashboardPage }) => {
+  test('creates two wallets sequentially with correct account type badges', async ({ page, dashboardPage, mode }) => {
+    test.skip(mode === 'svm', 'Account type selection is EVM-only')
     test.setTimeout(300_000)
-    await dashboardPage.ensureReady()
+    await dashboardPage.ensureReady(mode)
 
     const walletsTitle = page
       .locator('[data-slot="card-title"]')

@@ -54,11 +54,19 @@ function StoreReader({ onValue }: { onValue: (v: any) => void }) {
 }
 
 describe('CoreOpenfortProvider', () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     mockClient = createMockOpenfortClient()
+    // Suppress React act() warnings caused by async provider effects (user polling, account fetching)
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+      const msg = typeof args[0] === 'string' ? args[0] : ''
+      if (msg.includes('was not wrapped in act')) return
+    })
   })
 
   afterEach(() => {
+    consoleErrorSpy.mockRestore()
     mockClient._test.reset()
   })
 
@@ -66,8 +74,10 @@ describe('CoreOpenfortProvider', () => {
     baseConfiguration: { publishableKey: 'pk_test_123' },
   }
 
-  it('calls watchEmbeddedState on mount', () => {
-    render(createElement(CoreOpenfortProvider, { openfortConfig }, createElement('div')))
+  it('calls watchEmbeddedState on mount', async () => {
+    await act(async () => {
+      render(createElement(CoreOpenfortProvider, { openfortConfig }, createElement('div')))
+    })
 
     expect(mockClient.embeddedWallet.watchEmbeddedState).toHaveBeenCalledOnce()
     expect(mockClient.embeddedWallet.watchEmbeddedState).toHaveBeenCalledWith({
@@ -76,49 +86,57 @@ describe('CoreOpenfortProvider', () => {
     })
   })
 
-  it('calls unwatch on unmount', () => {
-    const { unmount } = render(createElement(CoreOpenfortProvider, { openfortConfig }, createElement('div')))
+  it('calls unwatch on unmount', async () => {
+    let unmount: () => void
+    await act(async () => {
+      const result = render(createElement(CoreOpenfortProvider, { openfortConfig }, createElement('div')))
+      unmount = result.unmount
+    })
 
     expect(mockClient._test.unwatchFn).not.toHaveBeenCalled()
 
-    unmount()
+    unmount!()
 
     expect(mockClient._test.unwatchFn).toHaveBeenCalledOnce()
   })
 
-  it('provides embeddedState via store', () => {
+  it('provides embeddedState via store', async () => {
     let storeValue: any = null
 
-    render(
-      createElement(
-        CoreOpenfortProvider,
-        { openfortConfig },
-        createElement(StoreReader, {
-          onValue: (v: any) => {
-            storeValue = v
-          },
-        })
+    await act(async () => {
+      render(
+        createElement(
+          CoreOpenfortProvider,
+          { openfortConfig },
+          createElement(StoreReader, {
+            onValue: (v: any) => {
+              storeValue = v
+            },
+          })
+        )
       )
-    )
+    })
 
     expect(storeValue).not.toBeNull()
     expect(storeValue.embeddedState).toBe(EmbeddedState.NONE)
   })
 
-  it('updates store when watchEmbeddedState emits a state change', () => {
+  it('updates store when watchEmbeddedState emits a state change', async () => {
     let storeValue: any = null
 
-    render(
-      createElement(
-        CoreOpenfortProvider,
-        { openfortConfig },
-        createElement(StoreReader, {
-          onValue: (v: any) => {
-            storeValue = v
-          },
-        })
+    await act(async () => {
+      render(
+        createElement(
+          CoreOpenfortProvider,
+          { openfortConfig },
+          createElement(StoreReader, {
+            onValue: (v: any) => {
+              storeValue = v
+            },
+          })
+        )
       )
-    )
+    })
 
     expect(storeValue.embeddedState).toBe(EmbeddedState.NONE)
 
@@ -129,20 +147,22 @@ describe('CoreOpenfortProvider', () => {
     expect(storeValue.embeddedState).toBe(EmbeddedState.UNAUTHENTICATED)
   })
 
-  it('transitions through multiple states correctly', () => {
+  it('transitions through multiple states correctly', async () => {
     let storeValue: any = null
 
-    render(
-      createElement(
-        CoreOpenfortProvider,
-        { openfortConfig },
-        createElement(StoreReader, {
-          onValue: (v: any) => {
-            storeValue = v
-          },
-        })
+    await act(async () => {
+      render(
+        createElement(
+          CoreOpenfortProvider,
+          { openfortConfig },
+          createElement(StoreReader, {
+            onValue: (v: any) => {
+              storeValue = v
+            },
+          })
+        )
       )
-    )
+    })
 
     act(() => {
       mockClient._test.setEmbeddedState(EmbeddedState.UNAUTHENTICATED)
@@ -163,17 +183,19 @@ describe('CoreOpenfortProvider', () => {
   it('logout clears user and embedded accounts', async () => {
     let storeValue: any = null
 
-    render(
-      createElement(
-        CoreOpenfortProvider,
-        { openfortConfig },
-        createElement(StoreReader, {
-          onValue: (v: any) => {
-            storeValue = v
-          },
-        })
+    await act(async () => {
+      render(
+        createElement(
+          CoreOpenfortProvider,
+          { openfortConfig },
+          createElement(StoreReader, {
+            onValue: (v: any) => {
+              storeValue = v
+            },
+          })
+        )
       )
-    )
+    })
 
     await act(async () => {
       await storeValue.logout()
@@ -185,20 +207,22 @@ describe('CoreOpenfortProvider', () => {
     expect(storeValue.activeEmbeddedAddress).toBeUndefined()
   })
 
-  it('store contains correct initial state and chainType', () => {
+  it('store contains correct initial state and chainType', async () => {
     let storeValue: any = null
 
-    render(
-      createElement(
-        CoreOpenfortProvider,
-        { openfortConfig },
-        createElement(StoreReader, {
-          onValue: (v: any) => {
-            storeValue = v
-          },
-        })
+    await act(async () => {
+      render(
+        createElement(
+          CoreOpenfortProvider,
+          { openfortConfig },
+          createElement(StoreReader, {
+            onValue: (v: any) => {
+              storeValue = v
+            },
+          })
+        )
       )
-    )
+    })
 
     expect(storeValue.user).toBeNull()
     expect(storeValue.chainType).toBe(ChainTypeEnum.EVM)

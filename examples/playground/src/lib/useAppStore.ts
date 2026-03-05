@@ -5,9 +5,9 @@ import {
   type OpenfortWalletConfig,
   RecoveryMethod,
 } from '@openfort/react'
+import { polygonAmoy } from 'viem/chains'
 import { create } from 'zustand'
 import { DEFAULT_EVM_CHAIN, PLAYGROUND_EVM_CHAINS, RPC_URLS, SOLANA_CLUSTER, SOLANA_DEFAULT_RPC } from '@/lib/chains'
-import { polygonAmoy } from 'viem/chains'
 
 const defaultWalletConfig: OpenfortWalletConfig = {
   shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
@@ -37,7 +37,6 @@ const defaultWalletConfig: OpenfortWalletConfig = {
     import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT ||
     'https://create-next-app.openfort.io/api/protected-create-encryption-session',
   recoverWalletAutomaticallyAfterAuth: undefined,
-  accountType: undefined,
 
   requestWalletRecoverOTP: async ({ userId, email, phone }) => {
     await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {

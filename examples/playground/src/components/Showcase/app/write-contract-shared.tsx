@@ -21,6 +21,7 @@ interface WriteContractLayoutProps {
   isPending: boolean
   error: Error | null | undefined
   onSubmit: (amount: string) => void
+  disabledReason?: string
 }
 
 export function WriteContractLayout({
@@ -34,7 +35,9 @@ export function WriteContractLayout({
   isPending,
   error,
   onSubmit,
+  disabledReason,
 }: WriteContractLayoutProps) {
+  const isDisabled = isPending || !address || !config || !!disabledReason
   return (
     <Card>
       <CardHeader>
@@ -66,7 +69,7 @@ export function WriteContractLayout({
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>
                 <div className="w-full">
-                  <Button className="btn btn-accent w-full" disabled={isPending || !address || !config}>
+                  <Button className="btn btn-accent w-full" disabled={isDisabled}>
                     {isPending ? 'Minting...' : 'Mint Tokens'}
                   </Button>
                 </div>
@@ -77,10 +80,11 @@ export function WriteContractLayout({
               </TooltipContent>
             </Tooltip>
           ) : (
-            <Button className="btn btn-accent w-full" disabled={isPending || !address || !config}>
+            <Button className="btn btn-accent w-full" disabled={isDisabled}>
               {isPending ? 'Minting...' : 'Mint Tokens'}
             </Button>
           )}
+          <InputMessage message={disabledReason ?? ''} show={!!disabledReason} variant="error" />
           <InputMessage message={`Transaction hash: ${hash}`} show={!!hash} variant="success" />
           {hash && chainId && (
             <a

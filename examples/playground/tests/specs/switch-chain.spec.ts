@@ -19,7 +19,7 @@ test.describe('Switch chain', () => {
     await expect(currentChain).toBeVisible({ timeout: 30_000 })
 
     // Helper switch chain
-    const switchTo = async (chainName: 'Polygon Amoy' | 'Beam Testnet' | 'Base Sepolia') => {
+    const switchTo = async (chainName: 'Polygon Amoy' | 'Base Sepolia') => {
       const btn = chainCard.getByRole('button', {
         name: new RegExp(`^switch to\\s+${escapeRegExp(chainName)}$`, 'i'),
       })
@@ -44,9 +44,7 @@ test.describe('Switch chain', () => {
       await expect(btn).toBeDisabled({ timeout: 90_000 })
     }
 
-    // Cambios de chain
     await switchTo('Base Sepolia')
-    await switchTo('Beam Testnet')
     await switchTo('Polygon Amoy')
   })
 })

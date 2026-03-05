@@ -11,10 +11,10 @@ test.describe('Dashboard smoke - key cards are present', () => {
     await expect(page.getByPlaceholder(/enter a message to sign/i)).toBeVisible({ timeout: 60_000 })
 
     if (m === 'svm') {
-      // SVM layout: Signatures, Mint tokens, Session keys (coming soon), Wallets
+      // SVM layout: Signatures, Send SOL, Transaction History, Wallets
       await expect(page.getByText(/signatures/i).first()).toBeVisible({ timeout: 60_000 })
-      await expect(page.getByText(/mint.*tokens|mint tokens/i).first()).toBeVisible({ timeout: 60_000 })
-      await expect(page.getByText(/session key/i).first()).toBeVisible({ timeout: 60_000 })
+      await expect(page.getByText(/send sol/i).first()).toBeVisible({ timeout: 60_000 })
+      await expect(page.getByText(/transaction history/i).first()).toBeVisible({ timeout: 60_000 })
     } else {
       // EVM layout: Signatures, Write Contract, Switch chain, Session keys, Wallets
       await expect(page.getByText(/write contract/i).first()).toBeVisible({ timeout: 60_000 })

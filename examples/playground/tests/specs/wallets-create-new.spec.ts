@@ -68,9 +68,10 @@ test.describe('Wallets - create new wallet', () => {
     expect(finalCount).toBeGreaterThanOrEqual(2)
   })
 
-  test('creates Smart Account wallet with Automatic recovery', async ({ page, dashboardPage }) => {
+  test('creates Smart Account wallet with Automatic recovery', async ({ page, dashboardPage, mode }) => {
+    test.skip(mode === 'svm', 'Smart Account wallet type is EVM only')
     test.setTimeout(180_000)
-    await dashboardPage.ensureReady()
+    await dashboardPage.ensureReady(mode)
 
     const walletsTitle = page
       .locator('[data-slot="card-title"]')
