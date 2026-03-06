@@ -15,6 +15,11 @@ export type OpenfortStoreState = {
   chainType: ChainTypeEnum
   isLoading: boolean
   needsRecovery: boolean
+  /**
+   * Set when auto-recovery fails. Null on success or when cleared by a new auth session.
+   * Consumers can read this from `useOpenfortCore()` to show recovery error UI.
+   */
+  recoveryError: Error | null
 }
 
 export type OpenfortStoreActions = {
@@ -26,6 +31,7 @@ export type OpenfortStoreActions = {
   setActiveEmbeddedAddress: (address: string | undefined) => void
   setWalletStatus: (status: WalletFlowStatus) => void
   setChainType: (chainType: ChainTypeEnum) => void
+  setRecoveryError: (error: Error | null) => void
   /** Force-recompute isLoading from current state + bridge info. */
   recomputeIsLoading: () => void
 
@@ -83,6 +89,7 @@ export function createOpenfortStore(
     chainType: initialChainType,
     isLoading: true,
     needsRecovery: false,
+    recoveryError: null,
 
     setUser: (user) => {
       set({ user })
@@ -104,6 +111,9 @@ export function createOpenfortStore(
     },
     setWalletStatus: (walletStatus) => {
       set({ walletStatus })
+    },
+    setRecoveryError: (recoveryError) => {
+      set({ recoveryError })
     },
     setChainType: (chainType) => {
       set({ chainType })
@@ -143,6 +153,17 @@ export function createOpenfortStore(
       const needsRecovery = computeNeedsRecovery(state.embeddedState, state.embeddedAccounts)
       if (needsRecovery !== state.needsRecovery) {
         store.setState({ needsRecovery })
+      }
+    }
+
+    // Clear recoveryError when the session reaches a clean terminal state.
+    // Avoids stale errors from a previous recovery attempt being visible after
+    // the user has successfully recovered or logged out.
+    if (embeddedStateChanged && state.recoveryError !== null) {
+      const isClearState =
+        state.embeddedState === EmbeddedState.READY || state.embeddedState === EmbeddedState.UNAUTHENTICATED
+      if (isClearState) {
+        store.setState({ recoveryError: null })
       }
     }
   })

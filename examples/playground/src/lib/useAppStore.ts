@@ -36,6 +36,11 @@ const defaultWalletConfig: OpenfortWalletConfig = {
   createEncryptedSessionEndpoint:
     import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT ||
     'https://create-next-app.openfort.io/api/protected-create-encryption-session',
+  // Do NOT auto-create wallets on chain switch or after auth.
+  // When switching EVM↔SVM the provider tree remounts; auto-creation here creates wallets
+  // without the right session key config and with no user confirmation. Use the explicit
+  // "Create wallet" UI instead.
+  autoCreateWalletAfterAuth: false,
   recoverWalletAutomaticallyAfterAuth: undefined,
 
   requestWalletRecoverOTP: async ({ userId, email, phone }) => {

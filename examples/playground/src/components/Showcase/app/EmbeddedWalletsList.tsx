@@ -12,7 +12,15 @@ import {
 } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
-import { ChevronLeftIcon, CornerDownRightIcon, EyeIcon, EyeOffIcon, RefreshCwIcon, WalletIcon } from 'lucide-react'
+import {
+  ChevronLeftIcon,
+  CornerDownRightIcon,
+  EyeIcon,
+  EyeOffIcon,
+  Loader2,
+  RefreshCwIcon,
+  WalletIcon,
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { WalletRecoveryIcon } from '@/components/Showcase/app/WalletRecoveryIcon'
@@ -100,8 +108,8 @@ const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => 
                 onClick={() => setStep('choose-account-type')}
                 disabled={isCreating}
               >
-                <span className="mr-2">+</span>
-                Create new wallet
+                {isCreating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <span className="mr-2">+</span>}
+                {isCreating ? `Creating${creatingMethod ? ` (${creatingMethod})` : ''}…` : 'Create new wallet'}
               </button>
             )}
             {step === 'choose-account-type' && (

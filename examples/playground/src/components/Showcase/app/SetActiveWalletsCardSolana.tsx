@@ -1,7 +1,7 @@
 import { RecoveryMethod, useSolanaEmbeddedWallet } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
-import { EyeIcon, EyeOffIcon } from 'lucide-react'
+import { EyeIcon, EyeOffIcon, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { WalletRecoveryIcon } from '@/components/Showcase/app/WalletRecoveryIcon'
@@ -87,12 +87,12 @@ const CreateWalletButton = ({ solana }: { solana: ReturnType<typeof useSolanaEmb
                 type="button"
                 className="btn btn-accent w-full flex"
                 onClick={() => {
-                  setChooseCreateMethodOpen(true)
+                  if (!isCreating) setChooseCreateMethodOpen(true)
                 }}
                 disabled={isCreating}
               >
-                <span className="mr-2">+</span>
-                Create new wallet
+                {isCreating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <span className="mr-2">+</span>}
+                {isCreating ? `Creating${creatingMethod ? ` (${creatingMethod})` : ''}…` : 'Create new wallet'}
               </button>
             )}
           </div>

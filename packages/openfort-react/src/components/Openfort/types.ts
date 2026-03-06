@@ -161,6 +161,16 @@ type CommonWalletConfig = {
   shieldPublishableKey: string
   recoverWalletAutomaticallyAfterAuth?: boolean
   /**
+   * Whether to automatically create a new embedded wallet after authentication when none
+   * exists for the current chain. Defaults to `true` for backward compatibility.
+   *
+   * Set to `false` to prevent silent wallet creation on chain switch or during auth flows.
+   * In that case, call `wallet.create()` explicitly after checking `wallet.wallets.length === 0`.
+   *
+   * @defaultValue true
+   */
+  autoCreateWalletAfterAuth?: boolean
+  /**
    * The display name shown next to the passkey credential in the browser's passkey dialog
    * (e.g. "My Wallet" or "Trading Account"). Defaults to "Openfort - Embedded Wallet".
    */

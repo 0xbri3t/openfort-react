@@ -399,8 +399,10 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
       embeddedState !== EmbeddedState.READY ||
       state.status === 'connecting' ||
       state.status === 'reconnecting' ||
-      state.status === 'creating' ||
-      state.status === 'error'
+      state.status === 'creating'
+      // NOTE: 'error' is intentionally NOT blocked here — mirrors EVM hook behaviour.
+      // If setActive failed but embeddedState is READY, the sync can self-heal by
+      // rebuilding the provider directly (no recover() call needed).
     ) {
       return
     }
@@ -434,12 +436,15 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
 
     // activeEmbeddedAddress is from other chain (e.g. EVM); auto-activate first SVM wallet.
     // Only when on SVM view to prevent ping-pong with Ethereum hook.
+    // Also runs from 'error' state: if setActive failed (e.g. recover() threw) but the
+    // address still points to an EVM wallet, we need to re-point to the SVM wallet so
+    // the sync effect above can self-heal via createProviderForAccount.
     if (
       chainType === ChainTypeEnum.SVM &&
       !accountByAddress &&
       activeEmbeddedAddress &&
       solanaAccounts.length > 0 &&
-      state.status === 'disconnected'
+      (state.status === 'disconnected' || state.status === 'error')
     ) {
       setActiveEmbeddedAddress(solanaAccounts[0].address)
     }

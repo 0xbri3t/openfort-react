@@ -94,6 +94,13 @@ export const useConnectToWalletPostAuth = () => {
       const chainWallets = wallets.filter((w) => w.chainType === chainType)
 
       if (chainWallets.length === 0) {
+        // Skip auto-creation when disabled in walletConfig.
+        // This prevents silent wallet creation on chain switch — callers should check
+        // wallet.wallets.length === 0 and call wallet.create() explicitly.
+        if (walletConfig?.autoCreateWalletAfterAuth === false) {
+          logger.log('tryUseWallet: no wallet for chain, autoCreateWalletAfterAuth=false, skipping creation')
+          return {}
+        }
         try {
           const account =
             chainType === ChainTypeEnum.SVM ? await embeddedWallet.create() : await embeddedWallet.create({ chainId })

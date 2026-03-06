@@ -510,12 +510,14 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       }
     }
 
-    // activeEmbeddedAddress is from another chain (e.g. SVM); auto-activate first EVM wallet
+    // activeEmbeddedAddress is from another chain (e.g. SVM); auto-activate first EVM wallet.
+    // Also fires from 'error': if setActive failed and address still points to a SVM wallet,
+    // re-point to the EVM wallet so the sync can self-heal.
     if (
       chainType === ChainTypeEnum.EVM &&
       activeEmbeddedAddress &&
       ethereumAccounts.length > 0 &&
-      s.status === 'disconnected'
+      (s.status === 'disconnected' || s.status === 'error')
     ) {
       setActiveEmbeddedAddress(ethereumAccounts[0].address)
     }
