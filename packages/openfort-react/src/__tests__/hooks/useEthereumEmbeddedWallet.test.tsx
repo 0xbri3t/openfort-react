@@ -90,7 +90,7 @@ describe('useEthereumEmbeddedWallet', () => {
 
   it('syncs to connected when activeEmbeddedAddress matches an EVM account', async () => {
     const mockClient = createMockOpenfortClient()
-    mockClient.embeddedWallet.getEthereumProvider.mockResolvedValue({} as any)
+    mockClient.embeddedWallet.getEthereumProvider.mockResolvedValue({ request: vi.fn().mockResolvedValue([]) } as any)
 
     const evmAccount = {
       id: 'acc_evm1',

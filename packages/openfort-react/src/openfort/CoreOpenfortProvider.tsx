@@ -1,6 +1,13 @@
 'use client'
 
-import { ChainTypeEnum, EmbeddedState, type Openfort, type User } from '@openfort/openfort-js'
+import {
+  AccountTypeEnum,
+  ChainTypeEnum,
+  EmbeddedState,
+  type Openfort,
+  RecoveryMethod,
+  type User,
+} from '@openfort/openfort-js'
 import type React from 'react'
 import {
   createElement,
@@ -13,8 +20,8 @@ import {
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
 } from 'react'
+import { useStore } from 'zustand'
 import { routes } from '../components/Openfort/types'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../constants/openfort'
@@ -25,6 +32,8 @@ import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbed
 import { firstEmbeddedAddress } from '../core/strategyUtils'
 import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridgeContext'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
+import { usePersistedChainId } from '../hooks/usePersistedChainId'
+import { buildRecoveryParams } from '../shared/utils/recovery'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
 import { mapBridgeConnectorsToWalletProps } from '../wallets/useExternalConnectors'
@@ -133,29 +142,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     store.getState().recomputeIsLoading()
   }, [store, address])
 
-  const ACTIVE_CHAIN_ID_KEY = 'openfort_active_chain_id'
-  const [activeChainId, setActiveChainIdState] = useState<number | undefined>(undefined)
-  const activeChainIdRef = useRef<number | undefined>(undefined)
-  activeChainIdRef.current = activeChainId
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const s = window.localStorage.getItem(ACTIVE_CHAIN_ID_KEY)
-    if (s == null) return
-    const n = parseInt(s, 10)
-    if (Number.isNaN(n)) return
-    if (n === DEFAULT_DEV_CHAIN_ID) {
-      window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
-      return
-    }
-    setActiveChainIdState(n)
-  }, [])
-  const setActiveChainId = useCallback((chainId: number | undefined) => {
-    setActiveChainIdState(chainId)
-    if (typeof window !== 'undefined') {
-      if (chainId == null) window.localStorage.removeItem(ACTIVE_CHAIN_ID_KEY)
-      else window.localStorage.setItem(ACTIVE_CHAIN_ID_KEY, String(chainId))
-    }
-  }, [])
+  const { activeChainId, activeChainIdRef, setActiveChainId } = usePersistedChainId()
 
   const strategy = useMemo(() => {
     const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
@@ -286,93 +273,127 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   }, [strategy, walletConfig?.ethereum, activeChainId, setActiveChainId])
 
   // Subscribe to store state for effects
-  const storeEmbeddedState = useSyncExternalStore(
-    store.subscribe,
-    () => store.getState().embeddedState,
-    () => store.getState().embeddedState
-  )
-  const storeEmbeddedAccounts = useSyncExternalStore(
-    store.subscribe,
-    () => store.getState().embeddedAccounts,
-    () => store.getState().embeddedAccounts
-  )
-  const storeActiveEmbeddedAddress = useSyncExternalStore(
-    store.subscribe,
-    () => store.getState().activeEmbeddedAddress,
-    () => store.getState().activeEmbeddedAddress
-  )
-  const storeUser = useSyncExternalStore(
-    store.subscribe,
-    () => store.getState().user,
-    () => store.getState().user
-  )
+  const storeEmbeddedState = useStore(store, (s) => s.embeddedState)
+  const storeEmbeddedAccounts = useStore(store, (s) => s.embeddedAccounts)
+  const storeActiveEmbeddedAddress = useStore(store, (s) => s.activeEmbeddedAddress)
+  const storeUser = useStore(store, (s) => s.user)
 
-  // Sync active embedded address from SDK on load only
+  // Sync active embedded address: clear on logout, resolve from SDK, fallback to first account.
   useEffect(() => {
+    // No accounts → clear address
     if (!openfort || !storeEmbeddedAccounts?.length) {
-      if (!storeEmbeddedAccounts?.length) store.getState().setActiveEmbeddedAddress(undefined)
+      if (!storeEmbeddedAccounts?.length) {
+        store.getState().setActiveEmbeddedAddress(undefined)
+      }
       return
     }
+
+    // Terminal non-READY states: clear only on genuine logout (no user).
+    // During OAuth the state passes through UNAUTHENTICATED → EMBEDDED_SIGNER_NOT_CONFIGURED → READY
+    // while accounts and address are already set. Clearing here would undo that.
+    if (storeEmbeddedState === EmbeddedState.UNAUTHENTICATED || storeEmbeddedState === EmbeddedState.NONE) {
+      if (!store.getState().user) {
+        store.getState().setActiveEmbeddedAddress(undefined)
+      }
+      return
+    }
+
+    // Only resolve address when READY
     if (storeEmbeddedState !== EmbeddedState.READY) {
-      store.getState().setActiveEmbeddedAddress(undefined)
       return
     }
+
+    // Already have an address — nothing to resolve
+    if (storeActiveEmbeddedAddress !== undefined) return
+
+    // Priority 1: ask the SDK for its active wallet
     let cancelled = false
     openfort.embeddedWallet
       .get()
       .then((active) => {
-        if (cancelled || !active) return
-        const addr = active.address
-        if (!addr) return
-        const current = store.getState().activeEmbeddedAddress
-        if (current === undefined) {
+        if (cancelled) return
+        const addr = active?.address
+        if (addr) {
           store.getState().setActiveEmbeddedAddress(addr)
+          return
         }
+        // Priority 2: fallback to first account for current chain
+        const first = firstEmbeddedAddress(storeEmbeddedAccounts, chainType)
+
+        if (first) store.getState().setActiveEmbeddedAddress(first)
       })
-      .catch((err) => {
-        if (!cancelled) logger.warn('Failed to get active embedded wallet', err)
+      .catch((_err) => {
+        if (cancelled) return
+
+        const first = firstEmbeddedAddress(storeEmbeddedAccounts, chainType)
+        if (first) store.getState().setActiveEmbeddedAddress(first)
       })
     return () => {
       cancelled = true
     }
-  }, [openfort, storeEmbeddedAccounts?.length, storeEmbeddedState, store])
-
-  // Bootstrap active address when uninitialized
-  useEffect(() => {
-    if (
-      !storeEmbeddedAccounts?.length ||
-      storeEmbeddedState !== EmbeddedState.READY ||
-      storeActiveEmbeddedAddress !== undefined
-    ) {
-      return
-    }
-    const first = firstEmbeddedAddress(storeEmbeddedAccounts, chainType)
-    if (first) store.getState().setActiveEmbeddedAddress(first)
-  }, [storeEmbeddedAccounts, storeEmbeddedState, chainType, storeActiveEmbeddedAddress, store])
+  }, [openfort, storeEmbeddedAccounts, storeEmbeddedState, storeActiveEmbeddedAddress, chainType, store])
 
   // Current chain for EVM provider reconfiguration
   const evmChainId =
     strategy?.chainType === ChainTypeEnum.EVM ? (bridge ? bridge.chainId : strategy?.getChainId()) : undefined
 
+  // Track what we last initialized to avoid redundant initProvider calls when
+  // the strategy object is recreated but nothing meaningful changed.
+  const lastInitRef = useRef<{ kind: string; chainType: ChainTypeEnum; evmChainId: number | undefined } | null>(null)
+  const initInProgressRef = useRef(false)
+
   // Init provider; only fetch accounts when READY (prevents list() before auth is stored)
   useEffect(() => {
     if (!openfort || !walletConfig || !strategy) return
-    if (strategy.chainType === ChainTypeEnum.EVM && storeEmbeddedState !== EmbeddedState.READY) return
+    // EVM: only run at READY — auto-recover handles EMBEDDED_SIGNER_NOT_CONFIGURED → READY.
+    // Running getEthereumProvider() concurrently with recover() causes a race condition.
+    // SVM: initProvider is a no-op, safe to run anytime.
+    if (storeEmbeddedState !== EmbeddedState.READY) {
+      if (
+        strategy.chainType === ChainTypeEnum.EVM ||
+        storeEmbeddedState !== EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED
+      ) {
+        return
+      }
+    }
 
+    // Skip if we already initialized with the same parameters
+    const initKey = { kind: strategy.kind, chainType: strategy.chainType, evmChainId }
+    const prev = lastInitRef.current
+    if (
+      prev &&
+      prev.kind === initKey.kind &&
+      prev.chainType === initKey.chainType &&
+      prev.evmChainId === initKey.evmChainId
+    ) {
+      return
+    }
+
+    // Prevent concurrent initProvider calls
+    if (initInProgressRef.current) {
+      return
+    }
+
+    initInProgressRef.current = true
     let cancelled = false
     strategy
       .initProvider(openfort, walletConfig, evmChainId)
       .then(() => {
         if (cancelled) return
+        lastInitRef.current = initKey
+
         // Only fetch accounts when authenticated — avoids SessionError on callback pages
         if (store.getState().embeddedState === EmbeddedState.READY) {
           return fetchEmbeddedAccounts({ silent: true })
         }
+        logger.log(
+          '[CoreProvider] initProvider: not fetching accounts, state is',
+          EmbeddedState[store.getState().embeddedState]
+        )
       })
-      .catch((err) => {
-        if (!cancelled) {
-          logger.error('Strategy initProvider failed', err)
-        }
+      .catch((_err) => {})
+      .finally(() => {
+        initInProgressRef.current = false
       })
     return () => {
       cancelled = true
@@ -399,30 +420,34 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         store.getState().setUser(null)
         break
 
-      case EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED:
-        // Always validate the token — this triggers the SDK's signer initialization
-        // pipeline which transitions the state to READY. Without this, mid-session
-        // auth (e.g. OAuth callback) gets stuck at EMBEDDED_SIGNER_NOT_CONFIGURED.
-        updateUserRef.current(undefined, !userRef.current)
-
+      case EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED: {
         connectingRef.current = false
         setIsConnectedWithEmbeddedSigner(false)
-        fetchEmbeddedAccountsRef.current().catch((err) => {
-          if (!cancelled) logger.error('Failed to fetch embedded accounts (SIGNER_NOT_CONFIGURED)', err)
-        })
 
+        // Validate token and fetch accounts. Auto-recovery is handled by the
+        // dedicated useEffect below (keyed on storeActiveEmbeddedAddress).
+        const doFetch = async () => {
+          updateUserRef.current(undefined, !userRef.current)
+          await fetchEmbeddedAccountsRef.current()
+        }
+        doFetch().catch((err) => {
+          if (!cancelled) {
+            logger.error('EMBEDDED_SIGNER_NOT_CONFIGURED flow failed', err)
+          }
+        })
         break
+      }
       case EmbeddedState.READY: {
         const pollUserUntilReady = async () => {
           for (let i = 0; i < 5; i++) {
             if (cancelled) return
-            logger.log('Trying to update user...', i)
+
             try {
               const user = await updateUserRef.current(undefined, true)
-              if (user) break
-            } catch (err) {
-              logger.error('Error updating user, retrying...', err)
-            }
+              if (user) {
+                break
+              }
+            } catch (_err) {}
             await new Promise((resolve) => setTimeout(resolve, 250))
           }
         }
@@ -438,23 +463,97 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [storeEmbeddedState, openfort, store])
 
+  // Auto-recover: when we have a deferred activeEmbeddedAddress and the SDK reaches
+  // EMBEDDED_SIGNER_NOT_CONFIGURED, call recover() to configure the signer → READY.
+  // Reads embeddedAccounts from the store imperatively (not as a dep) so that
+  // fetchEmbeddedAccounts updating the store mid-recovery doesn't re-trigger
+  // the effect, cancel the closure, and bail before recover() runs.
+  const autoRecoverInProgressRef = useRef(false)
+  useEffect(() => {
+    if (storeEmbeddedState !== EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) return
+    if (!storeActiveEmbeddedAddress) return
+    if (!openfort || !walletConfig) return
+    if (autoRecoverInProgressRef.current) return
+
+    const accounts = store.getState().embeddedAccounts
+    if (!accounts?.length) return
+
+    const normalizedTarget = storeActiveEmbeddedAddress.toLowerCase()
+    const account = accounts.find((a) => a.address.toLowerCase() === normalizedTarget)
+    if (!account) return
+    if (account.recoveryMethod === RecoveryMethod.PASSWORD) return
+
+    logger.log('auto-recover starting', { address: account.address, recoveryMethod: account.recoveryMethod })
+    autoRecoverInProgressRef.current = true
+
+    const doRecover = async () => {
+      const recoveryParams = await buildRecoveryParams(
+        {
+          recoveryMethod: account.recoveryMethod === RecoveryMethod.PASSKEY ? RecoveryMethod.PASSKEY : undefined,
+          passkeyId:
+            account.recoveryMethod === RecoveryMethod.PASSKEY ? account.recoveryMethodDetails?.passkeyId : undefined,
+        },
+        {
+          walletConfig,
+          getAccessToken: () => openfort.getAccessToken(),
+          getUserId: async () => (await openfort.user.get())?.id,
+        }
+      )
+      try {
+        await openfort.embeddedWallet.recover({
+          account: account.id,
+          recoveryParams,
+        })
+        logger.log('auto-recover succeeded')
+      } catch (recoverErr) {
+        // Recovery failed — account may not exist on this signer (new device / cleared storage).
+        // Create a fresh wallet using the same recovery params.
+        logger.log('recover failed, creating new wallet', recoverErr)
+        const newAccount = await openfort.embeddedWallet.create({
+          chainType,
+          ...(chainType === ChainTypeEnum.EVM && { chainId: walletConfig?.ethereum?.chainId ?? 84532 }),
+          recoveryParams,
+          accountType: embeddedAccountsAccountType ?? AccountTypeEnum.SMART_ACCOUNT,
+        })
+        store.getState().setActiveEmbeddedAddress(newAccount.address)
+        await fetchEmbeddedAccountsRef.current()
+        logger.log('new wallet created', { address: newAccount.address })
+      }
+    }
+
+    doRecover()
+      .catch((err) => {
+        logger.error('auto-recover/create failed', err)
+      })
+      .finally(() => {
+        autoRecoverInProgressRef.current = false
+      })
+  }, [storeEmbeddedState, storeActiveEmbeddedAddress, openfort, walletConfig, store])
+
   useEffect(() => {
     if (!bridge || address || !storeUser) return
     if (chainType !== ChainTypeEnum.EVM) return
-    if (isConnectedWithEmbeddedSigner) return
+    if (isConnectedWithEmbeddedSigner) {
+      return
+    }
     if (connectingRef.current) return
-    if (storeEmbeddedState !== EmbeddedState.READY) return
-    if (bridge.account.connector && bridge.account.connector.id !== embeddedWalletId) return
+    if (storeEmbeddedState !== EmbeddedState.READY) {
+      return
+    }
+    if (bridge?.account.connector && bridge.account.connector.id !== embeddedWalletId) {
+      return
+    }
     const routeRoute = typeof route === 'object' && route && 'route' in route ? route.route : route
     if (open && routeRoute === routes.CONNECT && connector?.id && connector.id !== embeddedWalletId) return
 
-    const openfortConnector = bridge.connectors.find((c) => c.name === 'Openfort')
-    if (!openfortConnector) return
+    const openfortConnector = bridge?.connectors.find((c) => c.name === 'Openfort')
+    if (!openfortConnector) {
+      return
+    }
 
-    logger.log('Connecting to wagmi with Openfort')
     connectingRef.current = true
     setIsConnectedWithEmbeddedSigner(true)
-    bridge.connect({ connector: openfortConnector })
+    bridge?.connect({ connector: openfortConnector })
   }, [bridge, address, storeUser, chainType, storeEmbeddedState, isConnectedWithEmbeddedSigner, open, route, connector])
 
   // ---- Auth functions ----
@@ -468,6 +567,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     store.getState().setWalletStatus({ status: 'idle' })
     connectingRef.current = false
     setIsConnectedWithEmbeddedSigner(false)
+    lastInitRef.current = null
     logger.log('Logging out...')
     await openfort.auth.logout()
     if (bridge) {

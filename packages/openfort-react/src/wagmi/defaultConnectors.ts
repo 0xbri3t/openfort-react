@@ -1,4 +1,4 @@
-import { type CoinbaseWalletParameters, coinbaseWallet, injected, safe, walletConnect } from '@wagmi/connectors'
+import { type CoinbaseWalletParameters, coinbaseWallet, safe, walletConnect } from '@wagmi/connectors'
 import type { CreateConnectorFn } from 'wagmi'
 
 type DefaultConnectorsProps = {
@@ -31,8 +31,6 @@ const defaultConnectors = ({
   }
 
   connectors.push(
-    injected({ target: 'metaMask' }),
-    injected({ target: 'phantom' }),
     coinbaseWallet({
       appName: app.name,
       appLogoUrl: app.icon,

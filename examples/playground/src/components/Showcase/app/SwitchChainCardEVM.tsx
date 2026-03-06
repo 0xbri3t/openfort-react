@@ -13,13 +13,12 @@ import { toError } from '@/lib/errors'
 export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
   const embedded = useEthereumEmbeddedWallet()
   const { chainId: accountChainId, isConnected: hasAccount } = useEthereumAccount()
-  const { setActiveChainId, ...core } = useOpenfort()
+  const core = useOpenfort()
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const [data, setData] = useState<{ id: number; name: string } | null>(null)
 
-  const currentChainId =
-    embedded.status === 'connected' ? embedded.chainId : (accountChainId ?? core.activeChainId ?? undefined)
+  const currentChainId = embedded.status === 'connected' ? embedded.chainId : (accountChainId ?? undefined)
   const canSwitch = hasAccount || embedded.status === 'connected' || !!core.activeEmbeddedAddress
 
   const switchChain = async (targetChainId: number) => {
@@ -39,10 +38,9 @@ export const SwitchChainCardEVM = ({ tooltip }: { tooltip?: { hook: string; body
           : await core.client.embeddedWallet.getEthereumProvider()
       await provider.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: numberToHex(targetChainId) }],
+        params: [{ account: embedded.activeWallet?.accountId, chainId: numberToHex(targetChainId) }],
       })
 
-      setActiveChainId(targetChainId)
       const chain = PLAYGROUND_EVM_CHAINS.find((c) => c.id === targetChainId)
       setData(chain ? { id: chain.id, name: chain.name } : { id: targetChainId, name: `Chain ${targetChainId}` })
     } catch (err) {

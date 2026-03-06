@@ -93,7 +93,7 @@ const SendConfirmation = () => {
   const nativeBalance = useBalance({
     address: address ?? '',
     chainType: chainType,
-    chainId: chainId ?? 13337,
+    chainId: chainId ?? 84532,
     cluster: chainType === ChainTypeEnum.SVM ? 'devnet' : undefined,
     enabled: !!address && !isErc20,
   })

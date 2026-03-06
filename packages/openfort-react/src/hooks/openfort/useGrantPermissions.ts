@@ -166,10 +166,18 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
         let grantPermissionsResult: GrantPermissionsReturnType
 
         if (bridge?.getWalletClient) {
-          const walletClient = (await bridge.getWalletClient())?.extend(erc7715Actions())
-          if (!walletClient) {
+          // Wagmi connector may still be connecting after auto-recover → READY transition.
+          // Poll briefly before giving up.
+          let rawClient = await bridge.getWalletClient()
+          for (let attempt = 0; !rawClient && attempt < 4; attempt++) {
+            await new Promise((r) => setTimeout(r, 300))
+            rawClient = await bridge.getWalletClient()
+            if (rawClient) break
+          }
+          if (!rawClient) {
             throw new OpenfortError('Wallet client not available', OpenfortReactErrorType.WALLET_ERROR)
           }
+          const walletClient = rawClient.extend(erc7715Actions())
           const [addr] = await walletClient.getAddresses()
           if (!addr) throw new OpenfortError('No account on wallet client', OpenfortReactErrorType.WALLET_ERROR)
           account = addr
@@ -180,6 +188,7 @@ export const useGrantPermissions = (hookOptions: GrantPermissionsHookOptions = {
             provider = await ethereum.activeWallet.getProvider()
           } else {
             provider = (await client.embeddedWallet.getEthereumProvider()) as OpenfortEmbeddedEthereumWalletProvider
+            await provider.request({ method: 'eth_requestAccounts' })
           }
           const walletClient = await getEmbeddedWalletClientWithErc7715(provider, chain)
           const [addr] = await walletClient.getAddresses()

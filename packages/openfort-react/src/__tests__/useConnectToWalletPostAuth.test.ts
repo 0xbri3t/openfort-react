@@ -83,7 +83,7 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
       createEncryptedSessionEndpoint: 'https://example.com/session',
       getEncryptionSession: undefined,
       recoverWalletAutomaticallyAfterAuth: true,
-      ethereum: { chainId: 13337 },
+      ethereum: { chainId: 84532 },
     })
   })
 

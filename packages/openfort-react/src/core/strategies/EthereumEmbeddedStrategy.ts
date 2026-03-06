@@ -5,6 +5,9 @@ import type { ConnectionStrategy, ConnectionStrategyState } from '../ConnectionS
 import { DEFAULT_DEV_CHAIN_ID } from '../ConnectionStrategy'
 import { firstEmbeddedAddress, resolveEthereumPolicy } from '../strategyUtils'
 
+/** Module-level: survives strategy recreation via useMemo. Reset on disconnect. */
+let lastInitChainId_embedded: number | undefined
+
 function hasEmbeddedEthereum(state: ConnectionStrategyState): boolean {
   if (!state.user || !state.activeEmbeddedAddress || state.embeddedState !== EmbeddedState.READY) return false
   return (
@@ -70,24 +73,32 @@ export function createEthereumEmbeddedStrategy(
       const chainId = chainIdOverride ?? ethereum?.chainId ?? DEFAULT_DEV_CHAIN_ID
       const rpcUrls = ethereum?.rpcUrls ?? {}
       const policyObj = resolveEthereumPolicy(config, chainId)
+
       const provider = await openfort.embeddedWallet.getEthereumProvider({
         ...policyObj,
         chains: rpcUrls,
       })
       // Tell the provider which chain is active (EIP-1193). Without this, the provider
       // stays on its initial chain (e.g. 80002) while policy resolution is per-chain.
-      // Non-fatal: switch-chain can 422 (e.g. validation failed).
-      try {
-        await provider.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: `0x${chainId.toString(16)}` }],
-        })
-      } catch (switchErr) {
-        logger.log('Embedded wallet switch chain failed (non-fatal)', switchErr)
+      // Skip if the chain hasn't changed since last init to avoid spurious 422s.
+      // Also skip if there are no accounts yet — switch-chain requires an initialized account.
+      if (chainId !== lastInitChainId_embedded) {
+        const accounts = (await provider.request({ method: 'eth_accounts' })) as string[]
+
+        if (accounts.length > 0) {
+          try {
+            await provider.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: `0x${chainId.toString(16)}` }],
+            })
+            lastInitChainId_embedded = chainId
+          } catch (_switchErr) {}
+        }
       }
     },
 
     async disconnect(openfort: Openfort) {
+      lastInitChainId_embedded = undefined
       await openfort.auth.logout()
     },
   }

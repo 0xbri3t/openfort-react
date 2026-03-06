@@ -84,7 +84,7 @@ export function WriteContractLayout({
               {isPending ? 'Minting...' : 'Mint Tokens'}
             </Button>
           )}
-          <InputMessage message={disabledReason ?? ''} show={!!disabledReason} variant="error" />
+          <InputMessage message={disabledReason ?? ''} show={!!disabledReason} variant="default" />
           <InputMessage message={`Transaction hash: ${hash}`} show={!!hash} variant="success" />
           {hash && chainId && (
             <a

@@ -38,14 +38,19 @@ function RouteComponent() {
         <EmailLoginButton />
       </SampleTooltipLink>
 
-      {isWagmi && (
-        <SampleTooltipLink href="/auth/useWalletAuth" hook="useWalletAuth" fn="connectWallet">
+      <SampleTooltipLink href="/auth/useWalletAuth" hook="useWalletAuth" fn="connectWallet">
+        {isWagmi ? (
           <Link className="btn btn-accent" to="/showcase/auth/connect-wallet">
             <WalletIcon className="w-4.5 h-4.5" />
             Continue with wallet
           </Link>
-        </SampleTooltipLink>
-      )}
+        ) : (
+          <button type="button" className="btn btn-accent w-full" disabled>
+            <WalletIcon className="w-4.5 h-4.5" />
+            Continue with wallet (EVM only)
+          </button>
+        )}
+      </SampleTooltipLink>
       <SampleTooltipLink href="/auth/useOauth" hook="useOAuth" fn="initOAuth">
         <SocialLogin provider={AuthProvider.GOOGLE} />
       </SampleTooltipLink>

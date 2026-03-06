@@ -8,10 +8,11 @@ import {
   type ConnectedEmbeddedEthereumWallet,
   type EthereumWalletState,
   RecoveryMethod,
+  useOpenfort,
 } from '@openfort/react'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
-import { ChevronLeftIcon, CornerDownRightIcon, EyeIcon, EyeOffIcon, WalletIcon } from 'lucide-react'
+import { ChevronLeftIcon, CornerDownRightIcon, EyeIcon, EyeOffIcon, RefreshCwIcon, WalletIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { MP } from '@/components/motion/motion'
 import { WalletRecoveryIcon } from '@/components/Showcase/app/WalletRecoveryIcon'
@@ -382,6 +383,17 @@ export function EmbeddedWalletsList({
   setActive,
   isExternalActive,
 }: EmbeddedWalletsListProps) {
+  const { updateEmbeddedAccounts } = useOpenfort()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await updateEmbeddedAccounts()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   const wallets = ethereum.wallets
   const { topLevel, childrenByOwner } = useMemo(() => {
     const ownerAddresses = new Set(wallets.map((w) => w.address.toLowerCase()))
@@ -437,7 +449,24 @@ export function EmbeddedWalletsList({
           </div>
         )
       })}
-      <CreateWalletButton ethereum={ethereum} />
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <CreateWalletButton ethereum={ethereum} />
+        </div>
+        <Tooltip delayDuration={200}>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm px-2 self-start"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCwIcon className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Refresh wallets</TooltipContent>
+        </Tooltip>
+      </div>
     </div>
   )
 }

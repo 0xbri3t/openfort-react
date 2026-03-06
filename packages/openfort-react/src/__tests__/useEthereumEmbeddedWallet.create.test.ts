@@ -154,7 +154,7 @@ describe('useEthereumEmbeddedWallet – create', () => {
   })
 
   describe('SMART_ACCOUNT', () => {
-    it('creates with AUTOMATIC recovery – includes chainId 13337', async () => {
+    it('creates with AUTOMATIC recovery – includes chainId 84532', async () => {
       const account = createMockEmbeddedAccount({ accountType: AccountTypeEnum.SMART_ACCOUNT })
       mockClient.embeddedWallet.create.mockResolvedValueOnce(account)
 
@@ -168,7 +168,7 @@ describe('useEthereumEmbeddedWallet – create', () => {
         expect.objectContaining({
           chainType: ChainTypeEnum.EVM,
           accountType: AccountTypeEnum.SMART_ACCOUNT,
-          chainId: 13337,
+          chainId: 84532,
         })
       )
     })
@@ -189,7 +189,7 @@ describe('useEthereumEmbeddedWallet – create', () => {
 
       expect(mockClient.embeddedWallet.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          chainId: 13337,
+          chainId: 84532,
           recoveryParams: expect.objectContaining({
             recoveryMethod: RecoveryMethod.PASSWORD,
             password: 'test-password',
@@ -213,7 +213,7 @@ describe('useEthereumEmbeddedWallet – create', () => {
 
       expect(mockClient.embeddedWallet.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          chainId: 13337,
+          chainId: 84532,
           recoveryParams: expect.objectContaining({
             recoveryMethod: RecoveryMethod.PASSKEY,
           }),
@@ -237,7 +237,7 @@ describe('useEthereumEmbeddedWallet – create', () => {
         expect.objectContaining({
           chainType: ChainTypeEnum.EVM,
           accountType: AccountTypeEnum.DELEGATED_ACCOUNT,
-          chainId: 13337,
+          chainId: 84532,
         })
       )
     })
@@ -258,7 +258,7 @@ describe('useEthereumEmbeddedWallet – create', () => {
 
       expect(mockClient.embeddedWallet.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          chainId: 13337,
+          chainId: 84532,
           recoveryParams: expect.objectContaining({
             recoveryMethod: RecoveryMethod.PASSWORD,
             password: 'test-password',
@@ -282,7 +282,7 @@ describe('useEthereumEmbeddedWallet – create', () => {
 
       expect(mockClient.embeddedWallet.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          chainId: 13337,
+          chainId: 84532,
           recoveryParams: expect.objectContaining({
             recoveryMethod: RecoveryMethod.PASSKEY,
           }),

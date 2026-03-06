@@ -66,7 +66,7 @@ export function createMockClient(): MockClient {
       recover: vi.fn().mockResolvedValue(createMockEmbeddedAccount()),
       get: vi.fn().mockResolvedValue(createMockEmbeddedAccount()),
       getEmbeddedState: vi.fn().mockResolvedValue(EmbeddedState.READY),
-      getEthereumProvider: vi.fn(),
+      getEthereumProvider: vi.fn().mockResolvedValue({ request: vi.fn().mockResolvedValue([]) }),
       signMessage: vi.fn().mockResolvedValue('mock-signature'),
       setRecoveryMethod: vi.fn().mockResolvedValue(undefined),
       exportPrivateKey: vi.fn().mockResolvedValue('0xprivatekey'),

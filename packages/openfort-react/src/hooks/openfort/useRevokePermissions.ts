@@ -100,6 +100,7 @@ export const useRevokePermissions = (hookOptions: RevokePermissionsHookOptions =
           provider = await ethereum.activeWallet.getProvider()
         } else {
           provider = (await client.embeddedWallet.getEthereumProvider()) as OpenfortEmbeddedEthereumWalletProvider
+          await provider.request({ method: 'eth_requestAccounts' })
         }
         const walletClient = await getEmbeddedWalletClient(provider, chain)
         const revokePermissionsResult: SessionResponse = await walletClient.request<{

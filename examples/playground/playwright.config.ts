@@ -40,7 +40,16 @@ export default defineConfig({
     {
       name: 'chromium-evm',
       dependencies: ['setup'],
-      testIgnore: [/auth\.spec\.ts/, /wallet-entry\.spec\.ts/, /refresh-persistence\.spec\.ts/],
+      testIgnore: [
+        /auth\.spec\.ts/,
+        /wallet-entry\.spec\.ts/,
+        /refresh-persistence\.spec\.ts/,
+        // Individual EVM tests replaced by evm-integration.spec.ts (storageState loses IndexedDB)
+        /switch-chain-and-sign\.spec\.ts/,
+        /write-contract\.spec\.ts/,
+        /wallets-create-new\.spec\.ts/,
+        /session-keys-multi-delete\.spec\.ts/,
+      ],
       testMatch: /.*\.spec\.ts/,
       timeout: 180_000,
       use: {
@@ -58,6 +67,7 @@ export default defineConfig({
         /write-contract\.spec\.ts/,
         /session-keys-multi-delete\.spec\.ts/,
         /refresh-persistence\.spec\.ts/,
+        /evm-integration\.spec\.ts/,
       ],
       testMatch: /.*\.spec\.ts/,
       use: {

@@ -18,7 +18,7 @@ test.describe('Dashboard integration - chain + signatures', () => {
       .first()
     await expect(currentChain).toBeVisible({ timeout: 30_000 })
 
-    const target = 'Base Sepolia'
+    const target = 'Polygon Amoy'
 
     const btn = chainCard.getByRole('button', { name: new RegExp(`^switch to\\s+${escapeRegExp(target)}$`, 'i') })
     if (!(await btn.isDisabled().catch(() => false))) {
@@ -35,7 +35,7 @@ test.describe('Dashboard integration - chain + signatures', () => {
     await new Promise((r) => setTimeout(r, DELAY_BEFORE_SIGN))
     await dashboardPage.signMessage(msg, m)
 
-    await expect(currentChain).toContainText(/base sepolia/i, { timeout: 30_000 })
+    await expect(currentChain).toContainText(/polygon amoy/i, { timeout: 30_000 })
   })
 })
 

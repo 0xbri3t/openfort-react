@@ -6,7 +6,9 @@ export function firstEmbeddedAddress(
   chainType: ChainTypeEnum
 ): string | undefined {
   if (!accounts?.length) return undefined
+
   const acc = accounts.find((a) => a.chainType === chainType)
+
   return acc?.address
 }
 

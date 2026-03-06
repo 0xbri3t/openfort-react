@@ -34,10 +34,11 @@ const ProviderButtonBase: React.FC<{
   onClick: () => void
   icon?: React.ReactNode
   children?: React.ReactNode
-}> = ({ children, icon, onClick }) => {
+  disabled?: boolean
+}> = ({ children, icon, onClick, disabled }) => {
   return (
     <ProvidersButtonStyle>
-      <Button onClick={onClick}>
+      <Button onClick={onClick} disabled={disabled}>
         <ProviderLabel>{children}</ProviderLabel>
         <ProviderIcon>{icon}</ProviderIcon>
       </Button>
@@ -59,13 +60,14 @@ const GuestButton: React.FC = () => {
   )
 }
 
-const WalletButton: React.FC = () => {
+const WalletButton: React.FC<{ disabled?: boolean }> = ({ disabled }) => {
   const { setRoute } = useOpenfort()
   const { user } = useOpenfortCore()
   return (
     <ProviderButtonBase
       onClick={() => setRoute({ route: routes.CONNECTORS, connectType: user ? 'link' : 'connect' })}
       icon={<Logos.OtherWallets />}
+      disabled={disabled}
     >
       Wallet
     </ProviderButtonBase>
@@ -275,7 +277,7 @@ const AuthProviderButton: React.FC<{ provider: OAuthProvider; title?: string; ic
 
 const authProviderToOAuthProviderMap: Record<UIAuthProvider, React.ReactNode> = {
   guest: <GuestButton />,
-  wallet: <WalletButton />,
+  wallet: null,
   emailPassword: <EmailPasswordButton />,
   emailOtp: <EmailOTPButton />,
   phone: <PhoneButton />,
@@ -305,9 +307,12 @@ const authProviderToOAuthProviderMap: Record<UIAuthProvider, React.ReactNode> = 
 }
 
 export const ProviderButton: React.FC<{ provider: UIAuthProvider }> = ({ provider }) => {
-  const { user } = useOpenfortCore()
+  const { user, chainType } = useOpenfortCore()
   if (user && (provider === UIAuthProvider.EMAIL_OTP || provider === UIAuthProvider.EMAIL_PASSWORD)) {
     return <EmailPasswordButton />
+  }
+  if (provider === UIAuthProvider.WALLET) {
+    return <WalletButton disabled={chainType === ChainTypeEnum.SVM} />
   }
   return authProviderToOAuthProviderMap[provider] || null
 }

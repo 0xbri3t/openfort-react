@@ -69,7 +69,7 @@ export const Balance: React.FC<BalanceProps> = ({ hideIcon, hideSymbol }) => {
   const balance = useBalance({
     address: address ?? '',
     chainType: chainType,
-    chainId: chainId ?? 13337,
+    chainId: chainId ?? 84532,
     cluster,
     enabled: isConnected && !!address,
     refetchInterval: 30_000, // Replaces blockNumber-based invalidation

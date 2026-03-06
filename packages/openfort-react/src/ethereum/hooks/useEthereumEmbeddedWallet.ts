@@ -76,7 +76,7 @@ function toConnectedStateProperties(
   }
 }
 
-const DEFAULT_CHAIN_ID = 13337
+const DEFAULT_CHAIN_ID = 84532
 
 function buildConnectedWallet(
   acc: EmbeddedAccount,
@@ -157,6 +157,11 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
 
   const getEmbeddedEthereumProvider = useCallback(async (): Promise<OpenfortEmbeddedEthereumWalletProvider> => {
     const provider = await client.embeddedWallet.getEthereumProvider()
+    // Ensure the current account is authorized on the provider.
+    // Without this, signing after password recovery can fail with
+    // "Unauthorized - call eth_requestAccounts first" because the provider
+    // was obtained before initProvider ran with proper config.
+    await provider.request({ method: 'eth_requestAccounts' })
     return provider as OpenfortEmbeddedEthereumWalletProvider
   }, [client])
 
@@ -427,72 +432,92 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     [create, wallets, setActive, setRecovery, exportPrivateKey, activeChainId, setActiveChainId]
   )
 
-  // Clear local state when core clears activeEmbeddedAddress (e.g. logout).
-  useEffect(() => {
-    if (!activeEmbeddedAddress && (state.status === 'connected' || state.status === 'needs-recovery')) {
-      setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
-    }
-  }, [activeEmbeddedAddress, state.status])
+  // Use refs for values that should NOT re-trigger the sync effect.
+  const stateRef = useRef(state)
+  stateRef.current = state
+
+  // Prevents the sync effect from firing multiple async getProvider calls concurrently.
+  const syncInProgressRef = useRef<string | null>(null)
 
   // Sync local state from core's activeEmbeddedAddress (single source of truth).
+  // Only re-runs when the three meaningful inputs change: activeEmbeddedAddress, embeddedState, accounts list.
   useEffect(() => {
-    if (
-      isLoadingAccounts ||
-      ethereumAccounts.length === 0 ||
-      embeddedState !== EmbeddedState.READY ||
-      state.status === 'connecting' ||
-      state.status === 'reconnecting' ||
-      state.status === 'creating' ||
-      state.status === 'error'
-    ) {
+    const s = stateRef.current
+
+    // Not ready to sync yet
+    if (isLoadingAccounts || ethereumAccounts.length === 0 || embeddedState !== EmbeddedState.READY) {
+      // Clear state if address was removed (logout) while we're in a connected state
+      if (!activeEmbeddedAddress && (s.status === 'connected' || s.status === 'needs-recovery')) {
+        setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
+      }
       return
     }
+
+    // Don't interrupt in-progress operations
+    if (s.status === 'connecting' || s.status === 'reconnecting' || s.status === 'creating') {
+      return
+    }
+
+    // Logout / address cleared
+    if (!activeEmbeddedAddress && s.status === 'connected') {
+      setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
+      return
+    }
+
+    // Find matching account
     const accountByAddress = activeEmbeddedAddress
       ? ethereumAccounts.find((acc) => acc.address.toLowerCase() === activeEmbeddedAddress.toLowerCase())
       : undefined
-    const currentMatches =
-      state.status === 'connected' && state.activeWallet?.address.toLowerCase() === activeEmbeddedAddress?.toLowerCase()
 
-    if (!activeEmbeddedAddress && state.status === 'connected') {
-      setState({ status: 'disconnected', activeWallet: null, provider: null, error: null })
+    // Already synced to the right address
+    if (s.status === 'connected' && s.activeWallet?.address.toLowerCase() === activeEmbeddedAddress?.toLowerCase()) {
       return
     }
 
-    if (accountByAddress && !currentMatches) {
+    // Activate the matching account
+    if (accountByAddress) {
+      // Already syncing this address — skip duplicate async work
+      if (syncInProgressRef.current === accountByAddress.address.toLowerCase()) {
+        return
+      }
+
+      syncInProgressRef.current = accountByAddress.address.toLowerCase()
       let cancelled = false
-      getEmbeddedEthereumProvider().then((provider) => {
-        if (cancelled) return
-        const connectedWallet = buildConnectedWallet(
-          accountByAddress,
-          ethereumAccounts.indexOf(accountByAddress),
-          async () => provider,
-          { isActive: true, isConnecting: false }
-        )
-        setState({ status: 'connected', activeWallet: connectedWallet, provider, error: null })
-      })
+      getEmbeddedEthereumProvider()
+        .then((provider) => {
+          if (cancelled) return
+
+          const connectedWallet = buildConnectedWallet(
+            accountByAddress,
+            ethereumAccounts.indexOf(accountByAddress),
+            async () => provider,
+            { isActive: true, isConnecting: false }
+          )
+          setState({ status: 'connected', activeWallet: connectedWallet, provider, error: null })
+        })
+        .finally(() => {
+          if (!cancelled) syncInProgressRef.current = null
+        })
       return () => {
         cancelled = true
+        syncInProgressRef.current = null
       }
     }
 
-    // activeEmbeddedAddress is from other chain (e.g. SVM); auto-activate first EVM wallet.
-    // Only when on EVM view to prevent ping-pong with Solana hook.
+    // activeEmbeddedAddress is from another chain (e.g. SVM); auto-activate first EVM wallet
     if (
       chainType === ChainTypeEnum.EVM &&
-      !accountByAddress &&
       activeEmbeddedAddress &&
       ethereumAccounts.length > 0 &&
-      state.status === 'disconnected'
+      s.status === 'disconnected'
     ) {
       setActiveEmbeddedAddress(ethereumAccounts[0].address)
     }
   }, [
-    isLoadingAccounts,
-    state.status,
-    state.activeWallet?.address,
-    ethereumAccounts,
-    embeddedState,
     activeEmbeddedAddress,
+    embeddedState,
+    ethereumAccounts,
+    isLoadingAccounts,
     chainType,
     getEmbeddedEthereumProvider,
     setActiveEmbeddedAddress,

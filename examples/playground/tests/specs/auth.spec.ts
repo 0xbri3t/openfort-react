@@ -11,7 +11,9 @@ test.describe('auth screen renders correctly', () => {
     await expect(page.getByText(/openfort/i).first()).toBeVisible({ timeout: 20_000 })
     await expect(clickableByText(page, /continue as guest|guest/i)).toBeVisible({ timeout: 20_000 })
     await expect(clickableByText(page, /continue with email/i)).toBeVisible({ timeout: 20_000 })
-    await expect(clickableByText(page, /continue with wallet/i)).not.toBeVisible()
+    const walletBtn = clickableByText(page, /continue with wallet/i)
+    await expect(walletBtn).toBeVisible({ timeout: 20_000 })
+    await expect(walletBtn).toBeDisabled()
   })
 
   test('evm: guest + email + wallet visible', async ({ page }) => {

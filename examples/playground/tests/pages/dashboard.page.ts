@@ -43,7 +43,6 @@ export class DashboardPage {
     const signOut = this.signOutButton()
     const isOnDashboard = await signOut.isVisible().catch(() => false)
     if (!isOnDashboard) {
-      // Wait a bit for SDK to recover, then check if we're stuck on auth
       await this.page.waitForTimeout(5_000)
       if (this.page.url().includes('/auth')) {
         await this.page.goto('/', { waitUntil: 'domcontentloaded' })

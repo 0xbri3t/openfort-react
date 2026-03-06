@@ -1,10 +1,12 @@
 import { ChainTypeEnum, type Openfort } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import type { OpenfortEthereumBridgeValue } from '../../ethereum/OpenfortEthereumBridgeContext'
-import { logger } from '../../utils/logger'
 import type { ExternalConnectorProps } from '../../wallets/useExternalConnectors'
 import type { ConnectionStrategy } from '../ConnectionStrategy'
 import { resolveEthereumPolicy } from '../strategyUtils'
+
+/** Module-level: survives strategy recreation via useMemo. Reset on disconnect. */
+let lastInitChainId_bridge: number | undefined
 
 /**
  * Creates the EVM strategy when wagmi bridge is present.
@@ -65,20 +67,25 @@ export function createEthereumBridgeStrategy(
         },
       })
       // Tell the provider which chain is active (EIP-1193). Keeps provider in sync with wagmi.
-      // Non-fatal: switch-chain can 422 (e.g. guest with no embedded wallet on that chain).
-      if (chainId != null) {
-        try {
-          await provider.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${chainId.toString(16)}` }],
-          })
-        } catch (switchErr) {
-          logger.log('Embedded wallet switch chain failed (non-fatal)', switchErr)
+      // Skip if the chain hasn't changed since last init to avoid spurious 422s.
+      // Also skip if there are no accounts yet — switch-chain requires an initialized account.
+      if (chainId != null && chainId !== lastInitChainId_bridge) {
+        const accounts = (await provider.request({ method: 'eth_accounts' })) as string[]
+
+        if (accounts.length > 0) {
+          try {
+            await provider.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: `0x${chainId.toString(16)}` }],
+            })
+            lastInitChainId_bridge = chainId
+          } catch (_switchErr) {}
         }
       }
     },
 
     async disconnect(openfort: Openfort) {
+      lastInitChainId_bridge = undefined
       await bridge.disconnect()
       await openfort.auth.logout()
     },

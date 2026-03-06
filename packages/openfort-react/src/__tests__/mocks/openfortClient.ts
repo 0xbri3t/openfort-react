@@ -29,7 +29,7 @@ export function createMockOpenfortClient() {
       get: vi.fn(async () => null),
       create: vi.fn(),
       recover: vi.fn(),
-      getEthereumProvider: vi.fn(async () => ({})),
+      getEthereumProvider: vi.fn(async () => ({ request: vi.fn().mockResolvedValue([]) })),
       signMessage: vi.fn(),
       exportPrivateKey: vi.fn(),
       setRecoveryMethod: vi.fn(),
