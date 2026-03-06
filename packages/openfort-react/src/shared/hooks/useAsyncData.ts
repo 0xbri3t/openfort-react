@@ -35,6 +35,10 @@ export function useAsyncData<T>({
   const queryFnRef = useRef(queryFn)
   queryFnRef.current = queryFn
 
+  // Serialize queryKey to a stable string so the effect only re-runs when values change,
+  // not when array/object references change.
+  const queryKeyStr = JSON.stringify(queryKey)
+
   const fetchData = useCallback(async (): Promise<T | undefined> => {
     if (!enabled) return undefined
     setIsLoading(true)
@@ -56,7 +60,7 @@ export function useAsyncData<T>({
   useEffect(() => {
     if (!enabled) return
     fetchData().catch(() => {})
-  }, [enabled, ...queryKey])
+  }, [enabled, queryKeyStr])
 
   useEffect(() => {
     if (!enabled || !refetchInterval || refetchInterval <= 0) return

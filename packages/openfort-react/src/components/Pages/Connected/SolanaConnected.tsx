@@ -42,11 +42,12 @@ const SolanaConnected: React.FC = () => {
   const isAddressLoading = wallet.status === 'connected' && !wallet.address
   const address = wallet.status === 'connected' && wallet.address ? wallet.address : undefined
 
+  const { triggerResize } = context
   // When the address becomes available, trigger a modal resize so the modal
   // height (measured via offsetHeight) reflects the full connected layout.
   useEffect(() => {
-    if (address) context.triggerResize()
-  }, [address])
+    if (address) triggerResize()
+  }, [address, triggerResize])
 
   const balanceResult = useAsyncData({
     queryKey: ['solana-balance', address, rpcUrl],
@@ -76,8 +77,8 @@ const SolanaConnected: React.FC = () => {
 
   // Re-measure when balance loads so the modal expands to fit balance + actions.
   useEffect(() => {
-    if (!isBalanceLoading) context.triggerResize()
-  }, [isBalanceLoading])
+    if (!isBalanceLoading) triggerResize()
+  }, [isBalanceLoading, triggerResize])
 
   useEffect(() => {
     if (!address) {

@@ -259,21 +259,19 @@ export const OpenfortProvider = ({
     }
   }, [hasWagmi, injectedConnector, bridge])
 
-  const typedSetRoute = useCallback(
-    (options: SetRouteOptions) => {
-      const routeObj = typeof options === 'string' ? { route: options } : options
-      const { route } = routeObj
-      const lastRoute = routeHistory.length > 0 ? routeHistory[routeHistory.length - 1] : null
+  const typedSetRoute = useCallback((options: SetRouteOptions) => {
+    const routeObj = typeof options === 'string' ? { route: options } : options
+    const { route } = routeObj
 
-      setRoute(routeObj)
+    setRoute(routeObj)
 
-      if (lastRoute && lastRoute.route === route) return
-      if (!notStoredInHistoryRoutes.includes(route)) {
-        setRouteHistory((prev) => [...prev, routeObj])
-      }
-    },
-    [routeHistory]
-  )
+    setRouteHistory((prev) => {
+      const lastRoute = prev.length > 0 ? prev[prev.length - 1] : null
+      if (lastRoute && lastRoute.route === route) return prev
+      if (notStoredInHistoryRoutes.includes(route)) return prev
+      return [...prev, routeObj]
+    })
+  }, [])
 
   const setPreviousRoute = useCallback(() => {
     setRouteHistory((prev) => {

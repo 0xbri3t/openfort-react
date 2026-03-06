@@ -2,7 +2,7 @@
 
 import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
 import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
@@ -58,9 +58,15 @@ export const useConnectToWalletPostAuth = () => {
   const chainId = walletConfig?.ethereum?.chainId ?? 84532
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
-  const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
   const { signOut } = useSignOut()
   const queryClient = useQueryClient()
+
+  // Refs for wallet objects — these are new objects every render, so we avoid them as deps
+  const ethereumWalletRef = useRef(ethereumWallet)
+  ethereumWalletRef.current = ethereumWallet
+  const solanaWalletRef = useRef(solanaWallet)
+  solanaWalletRef.current = solanaWallet
+
   const tryUseWallet = useCallback(
     async ({
       logoutOnError: signOutOnError = true,
@@ -102,8 +108,8 @@ export const useConnectToWalletPostAuth = () => {
           return {}
         }
         try {
-          const account =
-            chainType === ChainTypeEnum.SVM ? await embeddedWallet.create() : await embeddedWallet.create({ chainId })
+          const wallet = chainType === ChainTypeEnum.SVM ? solanaWalletRef.current : ethereumWalletRef.current
+          const account = chainType === ChainTypeEnum.SVM ? await wallet.create() : await wallet.create({ chainId })
 
           return {
             wallet:
@@ -139,12 +145,13 @@ export const useConnectToWalletPostAuth = () => {
           }
         }
 
+        const currentWallet = chainType === ChainTypeEnum.SVM ? solanaWalletRef.current : ethereumWalletRef.current
         const alreadyActive =
-          embeddedWallet.status === 'connected' &&
-          embeddedWallet.address &&
+          currentWallet.status === 'connected' &&
+          currentWallet.address &&
           (chainType === ChainTypeEnum.SVM
-            ? embeddedWallet.address === autoRecoverableWallet.address
-            : (embeddedWallet.address as string).toLowerCase() === autoRecoverableWallet.address.toLowerCase())
+            ? currentWallet.address === autoRecoverableWallet.address
+            : (currentWallet.address as string).toLowerCase() === autoRecoverableWallet.address.toLowerCase())
         if (alreadyActive) {
           return {
             wallet:
@@ -155,9 +162,9 @@ export const useConnectToWalletPostAuth = () => {
         }
         try {
           if (chainType === ChainTypeEnum.SVM) {
-            await (solanaWallet as typeof solanaWallet).setActive({ address: autoRecoverableWallet.address })
+            await solanaWalletRef.current.setActive({ address: autoRecoverableWallet.address })
           } else {
-            await (ethereumWallet as typeof ethereumWallet).setActive({
+            await ethereumWalletRef.current.setActive({
               address: autoRecoverableWallet.address as `0x${string}`,
               chainId,
             })
@@ -189,18 +196,7 @@ export const useConnectToWalletPostAuth = () => {
           : undefined,
       }
     },
-    [
-      chainType,
-      client,
-      walletConfig,
-      chainId,
-      ethereumWallet,
-      solanaWallet,
-      signOut,
-      queryClient,
-      embeddedState,
-      setActiveEmbeddedAddress,
-    ]
+    [chainType, client, walletConfig, chainId, signOut, queryClient, embeddedState, setActiveEmbeddedAddress]
   )
 
   return {

@@ -112,6 +112,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
   const { walletConfig, chainType } = useOpenfort()
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
+  const solanaAccountsRef = useRef<EmbeddedAccount[]>([])
 
   const [state, setState] = useState<InternalState>({
     status: 'disconnected',
@@ -124,6 +125,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
     if (!embeddedAccounts) return []
     return embeddedAccounts.filter((acc) => acc.chainType === ChainTypeEnum.SVM)
   }, [embeddedAccounts])
+  solanaAccountsRef.current = solanaAccounts
 
   const createProviderForAccount = useCallback(
     (account: EmbeddedAccount): OpenfortEmbeddedSolanaWalletProvider => {
@@ -184,7 +186,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
     } else {
       setWalletStatus({ status: 'idle' })
     }
-  }, [state.status, state.activeWallet, setWalletStatus])
+  }, [state.status, state.activeWallet?.address, setWalletStatus])
 
   const create = useCallback(
     async (createOptions?: CreateEmbeddedWalletOptions): Promise<EmbeddedAccount> => {
@@ -259,7 +261,8 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
   const setActive = useCallback(
     async (activeOptions: SetActiveSolanaWalletOptions): Promise<void> => {
       const run = async (): Promise<void> => {
-        const account = solanaAccounts.find((acc) => acc.address === activeOptions.address)
+        const accounts = solanaAccountsRef.current
+        const account = accounts.find((acc) => acc.address === activeOptions.address)
 
         if (!account) {
           throw new OpenfortError('Embedded wallet not found', OpenfortReactErrorType.WALLET_ERROR, {
@@ -271,7 +274,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
           id: account.id,
           address: account.address,
           chainType: ChainTypeEnum.SVM,
-          walletIndex: solanaAccounts.indexOf(account),
+          walletIndex: accounts.indexOf(account),
           recoveryMethod: account.recoveryMethod,
           getProvider: async () => {
             throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
@@ -304,7 +307,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
             id: account.id,
             address: account.address,
             chainType: ChainTypeEnum.SVM,
-            walletIndex: solanaAccounts.indexOf(account),
+            walletIndex: accounts.indexOf(account),
             recoveryMethod: account.recoveryMethod,
             getProvider: async () => provider,
           }
@@ -350,7 +353,7 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
         if (setActiveInProgressRef.current === promise) setActiveInProgressRef.current = null
       }
     },
-    [client, walletConfig, solanaAccounts, createProviderForAccount, setActiveEmbeddedAddress]
+    [client, walletConfig, createProviderForAccount, setActiveEmbeddedAddress]
   )
 
   const setRecovery = useCallback(

@@ -142,6 +142,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   const activeReturnChainId = activeChainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
+  const ethereumAccountsRef = useRef<EmbeddedAccount[]>([])
 
   const [state, setState] = useState<InternalState>({
     status: 'disconnected',
@@ -154,6 +155,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     if (!embeddedAccounts) return []
     return embeddedAccounts.filter((acc) => acc.chainType === ChainTypeEnum.EVM)
   }, [embeddedAccounts])
+  ethereumAccountsRef.current = ethereumAccounts
 
   const getEmbeddedEthereumProvider = useCallback(async (): Promise<OpenfortEmbeddedEthereumWalletProvider> => {
     const provider = await client.embeddedWallet.getEthereumProvider()
@@ -193,7 +195,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
     } else {
       setWalletStatus({ status: 'idle' })
     }
-  }, [state.status, state.activeWallet, setWalletStatus])
+  }, [state.status, state.activeWallet?.address, setWalletStatus])
 
   const create = useCallback(
     async (createOptions?: CreateEmbeddedWalletOptions): Promise<EmbeddedAccount> => {
@@ -279,9 +281,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   const setActive = useCallback(
     async (activeOptions: SetActiveEthereumWalletOptions): Promise<void> => {
       const run = async (): Promise<void> => {
-        const account = ethereumAccounts.find(
-          (acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase()
-        )
+        const accounts = ethereumAccountsRef.current
+        const account = accounts.find((acc) => acc.address.toLowerCase() === activeOptions.address.toLowerCase())
 
         if (!account) {
           throw new OpenfortError('Embedded wallet not found', OpenfortReactErrorType.WALLET_ERROR, {
@@ -289,18 +290,13 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           })
         }
 
-        const connectingStub = buildConnectedWallet(
-          account,
-          ethereumAccounts.indexOf(account),
-          getEmbeddedEthereumProvider,
-          {
-            isActive: false,
-            isConnecting: true,
-            getProvider: async () => {
-              throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
-            },
-          }
-        )
+        const connectingStub = buildConnectedWallet(account, accounts.indexOf(account), getEmbeddedEthereumProvider, {
+          isActive: false,
+          isConnecting: true,
+          getProvider: async () => {
+            throw new OpenfortError('Provider not ready yet', OpenfortReactErrorType.WALLET_ERROR)
+          },
+        })
         setState((s) => ({ ...s, status: 'connecting', activeWallet: connectingStub, error: null }))
 
         try {
@@ -354,12 +350,10 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           }
 
           const provider = await getEmbeddedEthereumProvider()
-          const connectedWallet = buildConnectedWallet(
-            account,
-            ethereumAccounts.indexOf(account),
-            async () => provider,
-            { isActive: true, isConnecting: false }
-          )
+          const connectedWallet = buildConnectedWallet(account, accounts.indexOf(account), async () => provider, {
+            isActive: true,
+            isConnecting: false,
+          })
 
           setState({
             status: 'connected',
@@ -402,7 +396,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         if (setActiveInProgressRef.current === promise) setActiveInProgressRef.current = null
       }
     },
-    [client, walletConfig, ethereumAccounts, getEmbeddedEthereumProvider, setActiveEmbeddedAddress]
+    [client, walletConfig, getEmbeddedEthereumProvider, setActiveEmbeddedAddress]
   )
 
   const setRecovery = useCallback(

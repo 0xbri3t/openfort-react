@@ -83,7 +83,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     return () => {
       cancelled = true
     }
-  }, [walletConfig?.solana, walletConfig])
+  }, [walletConfig])
 
   // ---- Zustand store + Openfort client ----
   const bridgeRef = useRef(bridge)
@@ -548,31 +548,46 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [storeEmbeddedState, storeActiveEmbeddedAddress, openfort, walletConfig, store])
 
+  // Refs for UI state that the bridge-connect guard reads but should NOT trigger re-runs.
+  const openRef = useRef(open)
+  const routeRef = useRef(route)
+  const connectorRef = useRef(connector)
+  useLayoutEffect(() => {
+    openRef.current = open
+  }, [open])
+  useLayoutEffect(() => {
+    routeRef.current = route
+  }, [route])
+  useLayoutEffect(() => {
+    connectorRef.current = connector
+  }, [connector])
+
   useEffect(() => {
     if (!bridge || address || !storeUser) return
     if (chainType !== ChainTypeEnum.EVM) return
-    if (isConnectedWithEmbeddedSigner) {
-      return
-    }
+    if (isConnectedWithEmbeddedSigner) return
     if (connectingRef.current) return
-    if (storeEmbeddedState !== EmbeddedState.READY) {
-      return
-    }
-    if (bridge?.account.connector && bridge.account.connector.id !== embeddedWalletId) {
-      return
-    }
-    const routeRoute = typeof route === 'object' && route && 'route' in route ? route.route : route
-    if (open && routeRoute === routes.CONNECT && connector?.id && connector.id !== embeddedWalletId) return
+    if (storeEmbeddedState !== EmbeddedState.READY) return
+    if (bridge.account.connector && bridge.account.connector.id !== embeddedWalletId) return
 
-    const openfortConnector = bridge?.connectors.find((c) => c.name === 'Openfort')
-    if (!openfortConnector) {
+    const currentRoute = routeRef.current
+    const routeRoute =
+      typeof currentRoute === 'object' && currentRoute && 'route' in currentRoute ? currentRoute.route : currentRoute
+    if (
+      openRef.current &&
+      routeRoute === routes.CONNECT &&
+      connectorRef.current?.id &&
+      connectorRef.current.id !== embeddedWalletId
+    )
       return
-    }
+
+    const openfortConnector = bridge.connectors.find((c) => c.name === 'Openfort')
+    if (!openfortConnector) return
 
     connectingRef.current = true
     setIsConnectedWithEmbeddedSigner(true)
-    bridge?.connect({ connector: openfortConnector })
-  }, [bridge, address, storeUser, chainType, storeEmbeddedState, isConnectedWithEmbeddedSigner, open, route, connector])
+    bridge.connect({ connector: openfortConnector })
+  }, [bridge, address, storeUser, chainType, storeEmbeddedState, isConnectedWithEmbeddedSigner])
 
   // ---- Auth functions ----
 

@@ -102,7 +102,7 @@ const EthereumConnected: React.FC = () => {
       }, 2000)
       return () => clearTimeout(timer)
     }
-  }, [showTestnetMessage])
+  }, [showTestnetMessage, context.triggerResize])
 
   const handleBuyClick = (e: React.MouseEvent) => {
     if (!chain || isTestnet) {
