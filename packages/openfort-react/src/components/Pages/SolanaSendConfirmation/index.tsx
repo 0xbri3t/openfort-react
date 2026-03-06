@@ -25,7 +25,7 @@ import { TickIcon } from '../../../assets/icons'
 import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import { invalidateBalance } from '../../../hooks/useBalance'
 import { getExplorerUrl } from '../../../shared/utils/explorer'
-import { FEE_LAMPORTS } from '../../../solana/constants'
+import { BASE_FEE_LAMPORTS } from '../../../solana/constants'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { formatSol, solToLamports } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
@@ -189,7 +189,7 @@ export default function SolanaSendConfirmation() {
     setTimeout(triggerResize, 10)
   }, [txStatus, errorMessage, triggerResize])
 
-  const feeDisplay = isSponsored ? 'Sponsored' : `~${formatSol(FEE_LAMPORTS, 6)} SOL`
+  const feeDisplay = isSponsored ? 'Sponsored' : `~${formatSol(BASE_FEE_LAMPORTS, 6)} SOL`
 
   const explorerUrl =
     txSignature && cluster ? getExplorerUrl(ChainTypeEnum.SVM, { txHash: txSignature, cluster }) : undefined

@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 import { fetchSolanaBalance } from '../../../hooks/useBalance'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
-import { FEE_LAMPORTS, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
+import { BASE_FEE_LAMPORTS, RENT_EXEMPT_MINIMUM_LAMPORTS } from '../../../solana/constants'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { formatSol, solToLamports } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
@@ -19,7 +19,7 @@ import { PageContent } from '../../PageContent'
 import { AmountInputWrapper, ErrorText, Field, FieldLabel, Form, HelperText, MaxButton } from './styles'
 import { sanitizeAmountInput, sanitizeForParsing } from './utils'
 
-const RENT_EXEMPT_LAMPORTS = BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
+const RENT_EXEMPT_LAMPORTS = RENT_EXEMPT_MINIMUM_LAMPORTS
 
 export function SolanaSend() {
   const { rpcUrl } = useSolanaContext()
@@ -62,7 +62,8 @@ export function SolanaSend() {
   const hasAmount = amountLamports !== null && amountLamports > BigInt(0)
   const amountValid = hasAmount && !insufficientBalance && !belowRentExempt
 
-  const maxLamports = balanceLamports > FEE_LAMPORTS ? balanceLamports - FEE_LAMPORTS - RENT_EXEMPT_LAMPORTS : BigInt(0)
+  const maxLamports =
+    balanceLamports > BASE_FEE_LAMPORTS ? balanceLamports - BASE_FEE_LAMPORTS - RENT_EXEMPT_LAMPORTS : BigInt(0)
   const maxLamportsSafe = maxLamports > BigInt(0) ? maxLamports : BigInt(0)
 
   const canProceed = recipientValid && amountValid && !!provider
