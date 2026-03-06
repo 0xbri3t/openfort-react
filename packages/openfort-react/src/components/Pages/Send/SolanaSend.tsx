@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 import { fetchSolanaBalance } from '../../../hooks/useBalance'
 import { useAsyncData } from '../../../shared/hooks/useAsyncData'
 import { isValidSolanaAddress } from '../../../shared/utils/validation'
-import { FEE_LAMPORTS, RENT_EXEMPT_MINIMUM_SOL } from '../../../solana/constants'
+import { FEE_LAMPORTS, RENT_EXEMPT_LAMPORTS } from '../../../solana/constants'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import { formatSol, solToLamports } from '../../../solana/hooks/utils'
 import { useSolanaContext } from '../../../solana/SolanaContext'
@@ -18,8 +18,6 @@ import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { AmountInputWrapper, ErrorText, Field, FieldLabel, Form, HelperText, MaxButton } from './styles'
 import { sanitizeAmountInput, sanitizeForParsing } from './utils'
-
-const RENT_EXEMPT_LAMPORTS = BigInt(Math.ceil(RENT_EXEMPT_MINIMUM_SOL * 1e9))
 
 export function SolanaSend() {
   const { rpcUrl } = useSolanaContext()
