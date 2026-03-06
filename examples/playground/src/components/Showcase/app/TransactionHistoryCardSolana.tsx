@@ -12,12 +12,13 @@ import { getTransactionHistory } from '@/lib/solana'
 const COLLAPSED_COUNT = 4
 
 export const TransactionHistoryCardSolana = ({ tooltip }: { tooltip?: { hook: string; body: ReactNode } }) => {
-  const { address, cluster } = useSolanaEmbeddedWallet()
+  const { address, cluster, rpcUrl } = useSolanaEmbeddedWallet()
   const [showAll, setShowAll] = useState(false)
+  const rpc = rpcUrl ?? 'https://api.devnet.solana.com'
 
   const historyResult = useAsyncData({
-    queryKey: ['solana-tx-history', address],
-    queryFn: () => (address ? getTransactionHistory(address, 20) : Promise.resolve([])),
+    queryKey: ['solana-tx-history', address, rpc],
+    queryFn: () => (address ? getTransactionHistory(address, 20, rpc) : Promise.resolve([])),
     enabled: Boolean(address),
   })
 

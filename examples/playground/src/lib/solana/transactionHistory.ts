@@ -6,13 +6,18 @@ interface TransactionHistoryItem {
   memo: string | null
 }
 
-const RPC_URL = 'https://api.devnet.solana.com'
+const DEFAULT_RPC = 'https://api.devnet.solana.com'
 
 /**
  * Fetches tx history via raw JSON-RPC (avoids @solana/kit transport issues in browser).
  */
-export async function getTransactionHistory(address: string, limit = 10): Promise<TransactionHistoryItem[]> {
-  const res = await fetch(RPC_URL, {
+export async function getTransactionHistory(
+  address: string,
+  limit = 10,
+  rpcUrl?: string
+): Promise<TransactionHistoryItem[]> {
+  const rpc = rpcUrl ?? DEFAULT_RPC
+  const res = await fetch(rpc, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

@@ -61,7 +61,7 @@ export const SendTransactionCardSolana = ({ tooltip }: { tooltip?: { hook: strin
           setError('VITE_OPENFORT_PUBLISHABLE_KEY is not set')
           return
         }
-        const result = await sendGaslessSolTransaction({
+        const { signature } = await sendGaslessSolTransaction({
           from: address as Address,
           to: recipient as Address,
           amountInSol,
@@ -71,30 +71,19 @@ export const SendTransactionCardSolana = ({ tooltip }: { tooltip?: { hook: strin
             apiKey: `Bearer ${projectKey}`,
           },
         })
-
-        if (result.success && result.signature) {
-          setTxSignature(result.signature)
-          invalidateBalance()
-          balanceResult.refetch()
-        } else {
-          setError(result.error ?? 'Gasless transaction failed')
-        }
+        setTxSignature(signature)
       } else {
-        const result = await sendSolTransaction({
+        const { signature } = await sendSolTransaction({
           from: address as Address,
           to: recipient as Address,
           amountInSol,
           provider,
           rpcUrl: rpc,
         })
-        if (result.success) {
-          setTxSignature(result.signature)
-          invalidateBalance()
-          balanceResult.refetch()
-        } else {
-          setError(result.error ?? 'Transaction failed')
-        }
+        setTxSignature(signature)
       }
+      invalidateBalance()
+      balanceResult.refetch()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Transaction failed')
     } finally {

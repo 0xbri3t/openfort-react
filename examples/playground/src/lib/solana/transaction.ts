@@ -16,8 +16,12 @@ import {
   signTransactionMessageWithSigners,
   type TransactionSigner,
 } from '@solana/kit'
+import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from '@solana-program/compute-budget'
 import { getTransferSolInstruction } from '@solana-program/system'
 import { Base58 } from 'ox'
+
+const COMPUTE_UNIT_LIMIT = 200_000
+const COMPUTE_UNIT_PRICE = 50_000n // microlamports
 
 interface SendTransactionParams {
   from: Address
@@ -29,8 +33,31 @@ interface SendTransactionParams {
 
 interface TransactionResult {
   signature: string
-  success: boolean
-  error?: string
+}
+
+/** Convert a decimal amount to the smallest unit (e.g. SOL to lamports) without floating-point loss */
+function toSmallestUnit(amount: number, decimals: number): bigint {
+  const str = amount.toString()
+  const [whole, frac = ''] = str.split('.')
+  const padded = (frac + '0'.repeat(decimals)).slice(0, decimals)
+  return BigInt(whole + padded)
+}
+
+/** Validate that the signature is a 64-byte Ed25519 signature */
+function validateEd25519Signature(raw: Uint8Array): Uint8Array {
+  if (raw.length !== 64) {
+    throw new Error(`Invalid Ed25519 signature: expected 64 bytes, got ${raw.length}`)
+  }
+  return raw
+}
+
+/** Extract the fee payer's signature from the signed transaction */
+function getTransactionSignature(signatures: Record<string, SignatureBytes | null>, feePayer: Address): string {
+  const sig = signatures[feePayer]
+  if (!sig) {
+    throw new Error(`Fee payer signature not found for address: ${feePayer}`)
+  }
+  return Base58.fromBytes(sig)
 }
 
 function deriveWssUrl(rpcUrl: string): string {
@@ -41,7 +68,7 @@ function deriveWssUrl(rpcUrl: string): string {
       return 'wss://api.devnet.solana.com'
     }
   } catch {
-    // If rpcUrl is not a valid URL, fall back to the replacement logic below.
+    // fall through
   }
   return rpcUrl.replace(/^https?:\/\//, 'wss://')
 }
@@ -58,14 +85,7 @@ function createProviderSigner(
           const result = await provider.signTransaction({
             messageBytes: new Uint8Array(transaction.messageBytes),
           })
-          let signatureBytes = Base58.toBytes(result.signature)
-          if (signatureBytes.length === 65) {
-            signatureBytes = signatureBytes.slice(0, 64)
-          } else if (signatureBytes.length !== 64) {
-            throw new Error(
-              `Invalid signature length: expected 64 bytes for Ed25519, got ${signatureBytes.length} bytes`
-            )
-          }
+          const signatureBytes = validateEd25519Signature(Base58.toBytes(result.signature))
           return Object.freeze({
             [signerAddress]: signatureBytes as SignatureBytes,
           })
@@ -86,42 +106,41 @@ export async function sendSolTransaction({
   const rpc = createSolanaRpc(httpUrl)
   const rpcSubscriptions = createSolanaRpcSubscriptions(deriveWssUrl(httpUrl))
 
+  const signer = createProviderSigner(from, provider)
+  const { value: latestBlockhash } = await rpc.getLatestBlockhash().send()
+
+  const transactionMessage = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayer(from, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) => appendTransactionMessageInstruction(getSetComputeUnitLimitInstruction({ units: COMPUTE_UNIT_LIMIT }), tx),
+    (tx) =>
+      appendTransactionMessageInstruction(getSetComputeUnitPriceInstruction({ microLamports: COMPUTE_UNIT_PRICE }), tx),
+    (tx) =>
+      appendTransactionMessageInstruction(
+        getTransferSolInstruction({
+          source: signer,
+          destination: to,
+          amount: lamports(toSmallestUnit(amountInSol, 9)),
+        }),
+        tx
+      )
+  )
+
+  const signedTransaction = await signTransactionMessageWithSigners(transactionMessage)
+  assertIsTransactionWithBlockhashLifetime(signedTransaction)
+
+  const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions })
+  const abortController = new AbortController()
+  const timeout = setTimeout(() => abortController.abort(), 60_000)
   try {
-    const signer = createProviderSigner(from, provider)
-    const { value: latestBlockhash } = await rpc.getLatestBlockhash().send()
-
-    const transactionMessage = pipe(
-      createTransactionMessage({ version: 0 }),
-      (tx) => setTransactionMessageFeePayer(from, tx),
-      (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-      (tx) =>
-        appendTransactionMessageInstruction(
-          getTransferSolInstruction({
-            source: signer,
-            destination: to,
-            amount: lamports(BigInt(Math.floor(amountInSol * 1_000_000_000))),
-          }),
-          tx
-        )
-    )
-
-    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage)
-    assertIsTransactionWithBlockhashLifetime(signedTransaction)
-
-    const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
-      rpc,
-      rpcSubscriptions,
+    await sendAndConfirmTransaction(signedTransaction, {
+      commitment: 'confirmed',
+      abortSignal: abortController.signal,
     })
-    await sendAndConfirmTransaction(signedTransaction, { commitment: 'confirmed' })
-
-    const sigBytes = Object.values(signedTransaction.signatures)[0]
-    const signature = sigBytes ? Base58.fromBytes(sigBytes) : ''
-    return { signature, success: true }
-  } catch (error) {
-    return {
-      signature: '',
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }
+  } finally {
+    clearTimeout(timeout)
   }
+
+  return { signature: getTransactionSignature(signedTransaction.signatures, from) }
 }
