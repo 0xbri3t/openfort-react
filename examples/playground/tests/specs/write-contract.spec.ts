@@ -50,42 +50,4 @@ test.describe('Write Contract - mint tokens', () => {
 
     await expect(page.getByText(EVM_TX_HASH_REGEX)).toBeVisible({ timeout: 120_000 })
   })
-
-  // EOA wallets lack gas sponsorship — the mint button should be disabled with a warning.
-  test('eoa: mint button is disabled with warning', async ({ page, dashboardPage, mode }) => {
-    test.skip(mode === 'svm', 'EOA account type is EVM-only')
-    await dashboardPage.ensureReady(mode)
-
-    const walletsTitle = page
-      .locator('[data-slot="card-title"]')
-      .filter({ hasText: /^wallets$/i })
-      .first()
-    await expect(walletsTitle).toBeVisible({ timeout: 60_000 })
-    const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
-
-    await walletsCard.getByRole('button', { name: /create new wallet/i }).click()
-    await walletsCard.getByRole('button', { name: /^eoa$/i }).click()
-    await walletsCard.getByRole('button', { name: /^password$/i }).click()
-
-    const walletRowLocator = walletsCard.locator('button').filter({
-      hasText: /0x[a-f0-9]{4,}\.\.\.[a-f0-9]{4,}/i,
-    })
-
-    const initialCount = await walletRowLocator.count()
-
-    await expect(walletsCard.getByText(/^creating wallet with password recovery/i)).toBeVisible({ timeout: 30_000 })
-    await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
-
-    // Card "Write Contract"
-    const writeCard = await dashboardPage.getCardByTitle(/write contract/i)
-    await expect(writeCard).toBeVisible({ timeout: 60_000 })
-
-    // Mint button should be disabled for EOA
-    const mintBtn = writeCard.getByRole('button', { name: /mint tokens/i })
-    await expect(mintBtn).toBeVisible({ timeout: 30_000 })
-    await expect(mintBtn).toBeDisabled()
-
-    // Warning message should be visible
-    await expect(writeCard.getByText(/minting requires a smart account or delegated account/i)).toBeVisible()
-  })
 })

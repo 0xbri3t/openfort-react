@@ -43,7 +43,9 @@ export class AuthPage {
       await guestBtn.click({ timeout: 30_000 })
     }
 
-    const connectedRegex = mode === 'svm' ? /Connected with/i : /Connected with 0x/i
+    // SVM addresses are base58 (start with 1-9 or A-H etc.), EVM addresses start with 0x.
+    // Avoid matching the placeholder "Connected with ..." which appears before the wallet connects.
+    const connectedRegex = mode === 'svm' ? /Connected with [1-9A-HJ-NP-Za-km-z]/i : /Connected with 0x/i
     const connectTimeout = 120_000
     await expect(this.page.getByText(connectedRegex)).toBeVisible({ timeout: connectTimeout })
   }

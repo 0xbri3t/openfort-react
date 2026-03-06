@@ -6,7 +6,7 @@ import { getModeFromProjectName, type PlaygroundMode, setPlaygroundMode } from '
 type Fixtures = {
   authPage: AuthPage
   dashboardPage: DashboardPage
-  /** Runs inline guest login for evm (wagmi state is in-memory, cannot use storageState). */
+  /** Sets playground mode. Auth state comes from storageState (setup projects). */
   evmLogin: undefined
   mode: PlaygroundMode
 }
@@ -23,12 +23,6 @@ export const test = base.extend<Fixtures>({
   evmLogin: async ({ page, mode }, use) => {
     if (mode === 'evm') {
       await setPlaygroundMode(page, 'evm')
-      const auth = new AuthPage(page)
-      const dash = new DashboardPage(page)
-      await auth.goto()
-      await auth.openConnectModalFromNavbar()
-      await auth.continueAsGuest('evm')
-      await dash.expectLoaded('evm')
     }
     await use(undefined)
   },

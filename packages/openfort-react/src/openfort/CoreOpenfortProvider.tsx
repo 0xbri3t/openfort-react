@@ -366,7 +366,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         if (cancelled) return
         // Only fetch accounts when authenticated — avoids SessionError on callback pages
         if (store.getState().embeddedState === EmbeddedState.READY) {
-          fetchEmbeddedAccounts({ silent: true })
+          return fetchEmbeddedAccounts({ silent: true })
         }
       })
       .catch((err) => {
@@ -407,7 +407,9 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
         connectingRef.current = false
         setIsConnectedWithEmbeddedSigner(false)
-        fetchEmbeddedAccountsRef.current()
+        fetchEmbeddedAccountsRef.current().catch((err) => {
+          if (!cancelled) logger.error('Failed to fetch embedded accounts (SIGNER_NOT_CONFIGURED)', err)
+        })
 
         break
       case EmbeddedState.READY: {

@@ -53,8 +53,7 @@ export type CreateWalletPostAuthOptions = {
  * ```
  */
 export const useConnectToWalletPostAuth = () => {
-  const { chainType, setEmbeddedAccounts, embeddedState } = useOpenfortCore()
-  const { client } = useOpenfortCore()
+  const { chainType, setEmbeddedAccounts, embeddedState, client } = useOpenfortCore()
   const { walletConfig } = useOpenfort()
   const chainId = walletConfig?.ethereum?.chainId ?? 13337
   const ethereumWallet = useEthereumEmbeddedWallet()
@@ -114,24 +113,23 @@ export const useConnectToWalletPostAuth = () => {
       const hasAutomaticOrPasskey = chainWallets.some(
         (w) => w.recoveryMethod === RecoveryMethod.AUTOMATIC || w.recoveryMethod === RecoveryMethod.PASSKEY
       )
-      // If the embedded signer isn't READY yet, skip setActive — the state machine in
-      // CoreOpenfortProvider will handle wallet connection once READY is reached.
-      // Calling setActive before READY fails with "Embedded wallet not found" because
-      // the hook's internal accounts list hasn't been populated via React re-render yet.
-      if (embeddedState !== EmbeddedState.READY) {
-        const first = chainWallets[0]
-        return {
-          wallet: first
-            ? chainType === ChainTypeEnum.SVM
-              ? embeddedAccountToSolanaUserWallet(first)
-              : embeddedAccountToUserWallet(first)
-            : undefined,
-        }
-      }
 
       if (hasAutomaticOrPasskey) {
         const first = chainWallets[0]
         if (first) {
+          // If the embedded signer isn't READY yet, skip setActive — the state machine in
+          // CoreOpenfortProvider will handle wallet connection once READY is reached.
+          // Calling setActive before READY fails with "Embedded wallet not found" because
+          // the hook's internal accounts list hasn't been populated via React re-render yet.
+          if (embeddedState !== EmbeddedState.READY) {
+            return {
+              wallet:
+                chainType === ChainTypeEnum.SVM
+                  ? embeddedAccountToSolanaUserWallet(first)
+                  : embeddedAccountToUserWallet(first),
+            }
+          }
+
           const alreadyActive =
             embeddedWallet.status === 'connected' &&
             embeddedWallet.address &&
@@ -164,6 +162,7 @@ export const useConnectToWalletPostAuth = () => {
           } catch (err) {
             logger.error('Error recovering wallet:', err)
             if (signOutOnError) await signOut()
+            return {}
           }
         }
       }
@@ -182,7 +181,7 @@ export const useConnectToWalletPostAuth = () => {
           : undefined,
       }
     },
-    [chainType, client, walletConfig, chainId, ethereumWallet, solanaWallet, signOut, queryClient]
+    [chainType, client, walletConfig, chainId, ethereumWallet, solanaWallet, signOut, queryClient, embeddedState]
   )
 
   return {

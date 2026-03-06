@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
-import { AUTH_STATE_SOLANA, ROOT_OUT, TEST_RESULTS_DIR } from './tests/utils/constants'
+import { AUTH_STATE_EVM, AUTH_STATE_SOLANA, ROOT_OUT, TEST_RESULTS_DIR } from './tests/utils/constants'
 
 const PORT = Number(process.env.PLAYGROUND_PORT ?? 5173)
 const BASE_URL = process.env.PLAYGROUND_BASE_URL ?? `http://localhost:${PORT}`
@@ -33,38 +33,31 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'setup-solana',
-      testMatch: /auth\.setup\.solana\.ts/,
+      name: 'setup',
+      testMatch: /.*\.setup\..+\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'chromium-evm',
-      testIgnore: [
-        /auth\.spec\.ts/, // needs unauthenticated
-        /wallet-entry\.spec\.ts/, // needs unauthenticated
-        /solana-mint\.spec\.ts/, // Solana-only
-        /refresh-persistence\.spec\.ts/, // wagmi state is in-memory; reload loses connection
-      ],
+      dependencies: ['setup'],
+      testIgnore: [/auth\.spec\.ts/, /wallet-entry\.spec\.ts/, /refresh-persistence\.spec\.ts/],
       testMatch: /.*\.spec\.ts/,
       timeout: 180_000,
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: AUTH_STATE_EVM,
+      },
     },
     {
       name: 'chromium-solana',
-      dependencies: ['setup-solana'],
+      dependencies: ['setup'],
       testIgnore: [
-        /auth\.spec\.ts/, // needs unauthenticated
-        /wallet-entry\.spec\.ts/, // needs unauthenticated
-        /switch-chain\.spec\.ts/, // EVM-only
-        /switch-chain-and-sign\.spec\.ts/, // EVM-only
-        /write-contract\.spec\.ts/, // EVM-only
-        /mint-without-ammount\.spec\.ts/, // EVM-only
-        /session-keys-multi-delete\.spec\.ts/, // EVM-only
-        /refresh-persistence\.spec\.ts/, // EVM-only
-        /create-wallet-and-switch-chain\.spec\.ts/, // EVM-only
-        /wallets-create-delegated\.spec\.ts/, // EVM-only (account type selection)
-        /wallets-create-eoa\.spec\.ts/, // EVM-only (account type selection)
-        /wallets-create-edge-cases\.spec\.ts/, // EVM-only (account type selection)
+        /auth\.spec\.ts/,
+        /wallet-entry\.spec\.ts/,
+        /switch-chain-and-sign\.spec\.ts/,
+        /write-contract\.spec\.ts/,
+        /session-keys-multi-delete\.spec\.ts/,
+        /refresh-persistence\.spec\.ts/,
       ],
       testMatch: /.*\.spec\.ts/,
       use: {

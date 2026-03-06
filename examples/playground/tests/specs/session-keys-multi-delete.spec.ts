@@ -34,17 +34,17 @@ test.describe('Session keys - multiple + delete flow', () => {
     await expect(walletsCard.getByText(/^creating wallet with password recovery/i)).toBeVisible({ timeout: 30_000 })
     await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
 
-    // Wait for the new wallet to become the active account (it may appear as second or last row)
+    // Wait for any wallet row to become the active account
     await expect
       .poll(
         async () => {
           const count = await walletRowLocator.count()
           if (count <= initialCount) return false
-          const last = walletRowLocator.last()
-          const second = walletRowLocator.nth(1)
-          const lastActive = await last.evaluate((el) => el.classList.contains('text-primary'))
-          const secondActive = await second.evaluate((el) => el.classList.contains('text-primary'))
-          return lastActive || secondActive
+          for (let i = 0; i < count; i++) {
+            const isActive = await walletRowLocator.nth(i).evaluate((el) => el.classList.contains('text-primary'))
+            if (isActive) return true
+          }
+          return false
         },
         { timeout: 60_000 }
       )

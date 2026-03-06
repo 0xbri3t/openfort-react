@@ -127,7 +127,8 @@
       "packages/create-openfort/.github/**",
       "packages/create-openfort/template/**",
       "examples/playground/tests/auth/auth.setup.ts",
-      "examples/playground/tests/auth/auth.setup.solana.ts"
+      "examples/playground/tests/auth/auth.setup.solana.ts",
+      "examples/playground/tests/auth/auth.setup.evm.ts"
     ],
     "ignoreDependencies": [
       "rollup-plugin-peer-deps-external",
