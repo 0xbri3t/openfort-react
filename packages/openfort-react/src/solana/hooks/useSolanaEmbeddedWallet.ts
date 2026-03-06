@@ -335,7 +335,13 @@ export function useSolanaEmbeddedWallet(options?: UseEmbeddedSolanaWalletOptions
       }
 
       const prev = setActiveInProgressRef.current
-      if (prev) await prev
+      if (prev) {
+        try {
+          await prev
+        } catch {
+          /* ignore previous operation's error */
+        }
+      }
       const promise = run()
       setActiveInProgressRef.current = promise
       try {

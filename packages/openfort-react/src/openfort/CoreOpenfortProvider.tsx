@@ -485,6 +485,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
     logger.log('auto-recover starting', { address: account.address, recoveryMethod: account.recoveryMethod })
     autoRecoverInProgressRef.current = true
+    let cancelled = false
 
     const doRecover = async () => {
       const recoveryParams = await buildRecoveryParams(
@@ -499,6 +500,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
           getUserId: async () => (await openfort.user.get())?.id,
         }
       )
+      if (cancelled) return
       try {
         await openfort.embeddedWallet.recover({
           account: account.id,
@@ -506,6 +508,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         })
         logger.log('auto-recover succeeded')
       } catch (recoverErr) {
+        if (cancelled) return
         // Recovery failed — account may not exist on this signer (new device / cleared storage).
         // Create a fresh wallet using the same recovery params.
         logger.log('recover failed, creating new wallet', recoverErr)
@@ -515,6 +518,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
           recoveryParams,
           accountType: embeddedAccountsAccountType ?? AccountTypeEnum.SMART_ACCOUNT,
         })
+        if (cancelled) return
         store.getState().setActiveEmbeddedAddress(newAccount.address)
         await fetchEmbeddedAccountsRef.current()
         logger.log('new wallet created', { address: newAccount.address })
@@ -523,11 +527,15 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
     doRecover()
       .catch((err) => {
-        logger.error('auto-recover/create failed', err)
+        if (!cancelled) logger.error('auto-recover/create failed', err)
       })
       .finally(() => {
         autoRecoverInProgressRef.current = false
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [storeEmbeddedState, storeActiveEmbeddedAddress, openfort, walletConfig, store])
 
   useEffect(() => {

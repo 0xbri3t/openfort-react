@@ -28,8 +28,7 @@ import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
  * ```
  */
 export function useUser() {
-  const { user, client, embeddedState, linkedAccounts } = useOpenfortCore()
-  const { chainType } = useOpenfortCore()
+  const { user, client, embeddedState, linkedAccounts, chainType } = useOpenfortCore()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
 

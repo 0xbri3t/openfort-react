@@ -5,9 +5,6 @@ import type { ConnectionStrategy, ConnectionStrategyState } from '../ConnectionS
 import { DEFAULT_DEV_CHAIN_ID } from '../ConnectionStrategy'
 import { firstEmbeddedAddress, resolveEthereumPolicy } from '../strategyUtils'
 
-/** Module-level: survives strategy recreation via useMemo. Reset on disconnect. */
-let lastInitChainId_embedded: number | undefined
-
 function hasEmbeddedEthereum(state: ConnectionStrategyState): boolean {
   if (!state.user || !state.activeEmbeddedAddress || state.embeddedState !== EmbeddedState.READY) return false
   return (
@@ -30,6 +27,10 @@ export function createEthereumEmbeddedStrategy(
   getActiveChainId?: () => number | undefined,
   setActiveChainId?: (chainId: number | undefined) => void
 ): ConnectionStrategy {
+  // Closure-level: survives strategy recreation via useMemo but is instance-scoped.
+  // Module-level vars would leak across multiple CoreOpenfortProvider instances (e.g. tests).
+  let lastInitChainId: number | undefined
+
   const chainId = walletConfig?.ethereum?.chainId
   const effectiveChainId =
     chainId ??
@@ -82,7 +83,7 @@ export function createEthereumEmbeddedStrategy(
       // stays on its initial chain (e.g. 80002) while policy resolution is per-chain.
       // Skip if the chain hasn't changed since last init to avoid spurious 422s.
       // Also skip if there are no accounts yet — switch-chain requires an initialized account.
-      if (chainId !== lastInitChainId_embedded) {
+      if (chainId !== lastInitChainId) {
         const accounts = (await provider.request({ method: 'eth_accounts' })) as string[]
 
         if (accounts.length > 0) {
@@ -91,14 +92,19 @@ export function createEthereumEmbeddedStrategy(
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: `0x${chainId.toString(16)}` }],
             })
-            lastInitChainId_embedded = chainId
-          } catch (_switchErr) {}
+            lastInitChainId = chainId
+          } catch (switchErr) {
+            logger.warn(
+              '[@openfort/react] wallet_switchEthereumChain failed — provider may be on wrong chain',
+              switchErr
+            )
+          }
         }
       }
     },
 
     async disconnect(openfort: Openfort) {
-      lastInitChainId_embedded = undefined
+      lastInitChainId = undefined
       await openfort.auth.logout()
     },
   }

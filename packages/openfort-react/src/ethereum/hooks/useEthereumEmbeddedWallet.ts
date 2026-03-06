@@ -387,7 +387,13 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       }
 
       const prev = setActiveInProgressRef.current
-      if (prev) await prev
+      if (prev) {
+        try {
+          await prev
+        } catch {
+          /* ignore previous operation's error */
+        }
+      }
       const promise = run()
       setActiveInProgressRef.current = promise
       try {
