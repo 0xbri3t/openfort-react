@@ -1,3 +1,4 @@
+/** System Program's Transfer instruction index (SystemInstruction enum variant 2). */
 export const TRANSFER_INSTRUCTION_INDEX = 2
 export const LAMPORTS_PER_SOL = BigInt(1_000_000_000)
 /**

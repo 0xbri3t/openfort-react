@@ -1,4 +1,4 @@
-import { address } from '@solana/kit'
+import { AccountRole, address } from '@solana/kit'
 import { TRANSFER_INSTRUCTION_INDEX } from '../constants'
 
 const SYSTEM_PROGRAM_ADDRESS = address('11111111111111111111111111111111')
@@ -10,7 +10,7 @@ export function createTransferSolInstruction(
 ): {
   programAddress: ReturnType<typeof address>
   data: Uint8Array
-  accounts: Array<{ address: ReturnType<typeof address>; role: number }>
+  accounts: Array<{ address: ReturnType<typeof address>; role: AccountRole }>
 } {
   const data = new Uint8Array(12)
   const view = new DataView(data.buffer)
@@ -20,8 +20,8 @@ export function createTransferSolInstruction(
     programAddress: SYSTEM_PROGRAM_ADDRESS,
     data,
     accounts: [
-      { address: address(from), role: 3 },
-      { address: address(to), role: 1 },
+      { address: address(from), role: AccountRole.WRITABLE_SIGNER },
+      { address: address(to), role: AccountRole.WRITABLE },
     ],
   }
 }
