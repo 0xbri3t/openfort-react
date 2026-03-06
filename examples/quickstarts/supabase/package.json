@@ -13,7 +13,6 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@openfort/react": "workspace:^",
-    "@solana/kit": "^5.4.0",
     "@supabase/supabase-js": "^2.75.1",
     "@tanstack/react-query": "^5.90.2",
     "react": "^18.2.0",

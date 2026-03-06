@@ -27,7 +27,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
               ethereum: {
                 ethereumProviderPolicyId: import.meta.env.VITE_POLICY_ID, // The policy ID for sponsoring transactions
               },
-              solana: { cluster: 'devnet' },
               // If you want to use AUTOMATIC embedded wallet recovery, an encryption session is required.
               // See: https://www.openfort.io/docs/products/embedded-wallet/react-native/quickstart/automatic
               // For backend setup, check: https://github.com/openfort-xyz/openfort-backend-quickstart
