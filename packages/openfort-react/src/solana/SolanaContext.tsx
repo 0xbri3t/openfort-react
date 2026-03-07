@@ -8,6 +8,7 @@
  */
 
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { OpenfortError, OpenfortReactErrorType } from '../core/errors'
 import type { SolanaCluster, SolanaCommitment, SolanaConfig } from './types'
 
 /**
@@ -31,7 +32,14 @@ const DEFAULT_RPC_URLS: Partial<Record<SolanaCluster, string>> = {
 }
 
 function getDefaultRpcUrl(cluster: SolanaCluster): string {
-  return DEFAULT_RPC_URLS[cluster] ?? DEFAULT_RPC_URLS.devnet!
+  const url = DEFAULT_RPC_URLS[cluster]
+  if (!url) {
+    throw new OpenfortError(
+      `Unknown Solana cluster "${cluster}". Provide rpcUrls in walletConfig.solana.`,
+      OpenfortReactErrorType.CONFIGURATION_ERROR
+    )
+  }
+  return url
 }
 
 interface SolanaContextProviderProps {

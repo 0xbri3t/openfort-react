@@ -49,7 +49,7 @@ export async function buildRecoveryParams(
 
     case RecoveryMethod.PASSWORD: {
       if (!options?.password) {
-        throw new OpenfortError('Password is required', OpenfortReactErrorType.UNEXPECTED_ERROR)
+        throw new OpenfortError('Password is required', OpenfortReactErrorType.CONFIGURATION_ERROR)
       }
       return {
         recoveryMethod: RecoveryMethod.PASSWORD,
@@ -83,7 +83,11 @@ async function getEncryptionSession(params: {
   }
 
   if (walletConfig.getEncryptionSession) {
-    return await walletConfig.getEncryptionSession({ accessToken, userId, otpCode })
+    const session = await walletConfig.getEncryptionSession({ accessToken, userId, otpCode })
+    if (typeof session !== 'string' || session.length === 0) {
+      throw new OpenfortError('getEncryptionSession returned invalid session', OpenfortReactErrorType.WALLET_ERROR)
+    }
+    return session
   }
 
   if (walletConfig.createEncryptedSessionEndpoint) {
@@ -96,7 +100,7 @@ async function getEncryptionSession(params: {
     const data = await response.json()
     if (!response.ok) {
       if (data.error === 'OTP_REQUIRED') {
-        throw new OpenfortError('OTP verification required', OpenfortReactErrorType.UNEXPECTED_ERROR)
+        throw new OpenfortError('OTP verification required', OpenfortReactErrorType.AUTHENTICATION_ERROR)
       }
       const errMsg =
         typeof (data.error ?? data.message) === 'string'
@@ -107,7 +111,11 @@ async function getEncryptionSession(params: {
       })
     }
 
-    return data.session
+    const session = data.session
+    if (typeof session !== 'string' || session.length === 0) {
+      throw new OpenfortError('Invalid encryption session response', OpenfortReactErrorType.WALLET_ERROR)
+    }
+    return session
   }
 
   throw new OpenfortError(

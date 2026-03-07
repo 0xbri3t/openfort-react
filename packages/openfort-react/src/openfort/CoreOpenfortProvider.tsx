@@ -96,19 +96,16 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     if (!openfortConfig.baseConfiguration.publishableKey)
       throw Error('CoreOpenfortProvider requires a publishableKey to be set in the baseConfiguration.')
 
-    if (
-      openfortConfig.shieldConfiguration &&
-      !openfortConfig.shieldConfiguration?.passkeyRpId &&
-      typeof window !== 'undefined'
-    ) {
-      openfortConfig.shieldConfiguration = {
+    let resolvedShieldConfig = openfortConfig.shieldConfiguration
+    if (resolvedShieldConfig && !resolvedShieldConfig.passkeyRpId && typeof window !== 'undefined') {
+      resolvedShieldConfig = {
         passkeyRpId: window.location.hostname,
         passkeyRpName: document.title || 'Openfort app',
-        ...openfortConfig.shieldConfiguration,
+        ...resolvedShieldConfig,
       }
     }
 
-    const newClient = createOpenfortClient(openfortConfig)
+    const newClient = createOpenfortClient({ ...openfortConfig, shieldConfiguration: resolvedShieldConfig })
 
     setDefaultClient(newClient)
     return newClient
@@ -207,8 +204,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
 
   const [silentRefetchInProgress, setSilentRefetchInProgress] = useState(false)
 
-  const embeddedAccountsAccountType = undefined
-
   const [isAccountsPending, setAccountsPending] = useState(false)
   const fetchSeqRef = useRef(0)
 
@@ -220,7 +215,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       try {
         const accounts = await openfort.embeddedWallet.list({
           limit: 100,
-          accountType: embeddedAccountsAccountType,
         })
         if (seq === fetchSeqRef.current) {
           store.getState().setEmbeddedAccounts(accounts)
@@ -236,7 +230,7 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
         }
       }
     },
-    [openfort, embeddedAccountsAccountType, store]
+    [openfort, store]
   )
 
   const isLoadingAccounts = isAccountsPending && !silentRefetchInProgress
