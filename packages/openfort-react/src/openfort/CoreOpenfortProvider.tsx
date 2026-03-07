@@ -18,14 +18,14 @@ import { useStore } from 'zustand'
 import { routes } from '../components/Openfort/types'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../constants/openfort'
-import { type ConnectionStrategy, DEFAULT_DEV_CHAIN_ID } from '../core/ConnectionStrategy'
+import type { ConnectionStrategy } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
 import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
 import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
 import { firstEmbeddedAddress } from '../core/strategyUtils'
 import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridgeContext'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
-import { usePersistedChainId } from '../hooks/usePersistedChainId'
+
 import { buildRecoveryParams } from '../shared/utils/recovery'
 import { logger } from '../utils/logger'
 import { handleOAuthConfigError } from '../utils/oauthErrorHandler'
@@ -132,17 +132,15 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     store.getState().recomputeIsLoading()
   }, [store, address])
 
-  const { activeChainId, activeChainIdRef, setActiveChainId } = usePersistedChainId()
-
   const strategy = useMemo(() => {
     const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
       [ChainTypeEnum.SVM]: solanaStrategy,
       [ChainTypeEnum.EVM]: bridge
         ? createEthereumBridgeStrategy(bridge, bridgeConnectors)
-        : createEthereumEmbeddedStrategy(walletConfig, () => activeChainIdRef.current, setActiveChainId),
+        : createEthereumEmbeddedStrategy(walletConfig),
     }
     return strategyByChain[chainType] ?? null
-  }, [bridge, chainType, walletConfig, bridgeConnectors, solanaStrategy, setActiveChainId])
+  }, [bridge, chainType, walletConfig, bridgeConnectors, solanaStrategy])
 
   // ---- Embedded state ----
   useEffect(() => {
@@ -244,20 +242,6 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     updateUserRef.current = updateUser
     fetchEmbeddedAccountsRef.current = fetchEmbeddedAccounts
   }, [updateUser, fetchEmbeddedAccounts])
-
-  // Validate activeChainId against configured EVM chains
-  useEffect(() => {
-    if (!strategy || strategy.kind !== 'embedded' || !walletConfig?.ethereum) return
-    const ethereum = walletConfig.ethereum
-    const configuredChainIds = new Set<number>([
-      ...(ethereum.chainId != null ? [ethereum.chainId] : []),
-      ...(ethereum.rpcUrls ? Object.keys(ethereum.rpcUrls).map(Number) : []),
-    ])
-    if (activeChainId != null && configuredChainIds.size > 0 && !configuredChainIds.has(activeChainId)) {
-      const defaultChainId = ethereum.chainId ?? DEFAULT_DEV_CHAIN_ID
-      setActiveChainId(defaultChainId)
-    }
-  }, [strategy, walletConfig?.ethereum, activeChainId, setActiveChainId])
 
   // Subscribe to store state for effects
   const storeEmbeddedState = useStore(store, (s) => s.embeddedState)

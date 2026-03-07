@@ -34,25 +34,6 @@ describe('Phase 0 regressions', () => {
         }
       }).not.toThrow()
     })
-
-    it('handles null localStorage gracefully', () => {
-      // openfort_active_chain_id parsing guard
-      const raw = localStorage.getItem('openfort_active_chain_id')
-      expect(raw).toBeNull()
-
-      // parseInt on null doesn't throw, returns NaN — guard must check
-      if (raw == null) return
-      const n = parseInt(raw, 10)
-      expect(Number.isNaN(n)).toBe(true)
-    })
-
-    it('rejects non-numeric openfort_active_chain_id', () => {
-      localStorage.setItem('openfort_active_chain_id', 'not-a-number')
-      const raw = localStorage.getItem('openfort_active_chain_id')!
-      const n = parseInt(raw, 10)
-
-      expect(Number.isNaN(n)).toBe(true)
-    })
   })
 
   describe('callback URL origin validation', () => {

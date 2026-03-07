@@ -6,7 +6,6 @@ import type { Hex } from 'viem'
 import { useUser } from '../../../hooks/openfort/useUser'
 import { useResolvedIdentity } from '../../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import type { UserAccount } from '../../../openfortCustomTypes'
 import styled from '../../../styles/styled'
 import { truncateEthAddress } from '../../../utils'
 import Button from '../../Common/Button'
@@ -17,6 +16,7 @@ import { getProviderName } from '../../Common/Providers/getProviderName'
 import { ProviderHeader } from '../../Common/Providers/ProviderHeader'
 import { ProviderIcon } from '../../Common/Providers/ProviderIcon'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
+import type { LinkedAccount } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 
@@ -46,8 +46,8 @@ const ProviderIconInner = styled.div`
   justify-content: center;
 `
 
-const SiweContent = ({ provider }: { provider: UserAccount }) => {
-  const address = provider.accountId as Hex
+const SiweContent = ({ account }: { account: LinkedAccount }) => {
+  const address = account.accountId as Hex
   const context = useOpenfort()
   const { chainType } = useOpenfortCore()
   const themeContext = useThemeContext()
@@ -70,26 +70,22 @@ const SiweContent = ({ provider }: { provider: UserAccount }) => {
       </ModalH1>
       <div style={{ marginTop: '16px' }}>
         Linked via Sign-In with Ethereum (SIWE)
-        <Button onClick={() => context.setRoute({ route: 'removeLinkedProvider', provider })}>
-          Remove this wallet
-        </Button>
+        <Button onClick={() => context.setRoute({ route: 'removeLinkedProvider', account })}>Remove this wallet</Button>
       </div>
     </>
   )
 }
 
-const OAuthContent = ({ provider }: { provider: UserAccount }) => {
+const OAuthContent = ({ account }: { account: LinkedAccount }) => {
   const { user } = useUser()
   const { setRoute } = useOpenfort()
 
   return (
     <>
-      <ModalH1>{provider.provider.charAt(0).toUpperCase() + provider.provider.slice(1)}</ModalH1>
+      <ModalH1>{account.provider.charAt(0).toUpperCase() + account.provider.slice(1)}</ModalH1>
       <div style={{ marginTop: '16px' }}>
         {user?.email}
-        <Button onClick={() => setRoute({ route: 'removeLinkedProvider', provider })}>
-          Remove {provider.provider}
-        </Button>
+        <Button onClick={() => setRoute({ route: 'removeLinkedProvider', account })}>Remove {account.provider}</Button>
       </div>
     </>
   )
@@ -98,31 +94,31 @@ const OAuthContent = ({ provider }: { provider: UserAccount }) => {
 const LinkedProvider: React.FC = () => {
   const { route } = useOpenfort()
 
-  const provider = useMemo(() => {
+  const account = useMemo(() => {
     if (route.route === 'linkedProvider') {
-      return route.provider
+      return route.account
     }
-    throw new Error('No provider found in route')
+    throw new Error('No account found in route')
   }, [])
 
-  const getProviderDetails = (provider: UserAccount) => {
-    switch (provider.provider) {
+  const getProviderDetails = (account: LinkedAccount) => {
+    switch (account.provider) {
       case 'siwe':
-        return <SiweContent provider={provider} />
+        return <SiweContent account={account} />
       case 'google':
       case 'facebook':
       case 'twitter':
-        return <OAuthContent provider={provider} />
+        return <OAuthContent account={account} />
       default:
         return (
           <div
             style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', flexDirection: 'column' }}
           >
             <div>
-              Authentication method: <b>{getProviderName(provider.provider)}</b>
+              Authentication method: <b>{getProviderName(account.provider)}</b>
             </div>
             <FitText>
-              <ProviderHeader provider={provider} />
+              <ProviderHeader account={account} />
             </FitText>
           </div>
         )
@@ -131,16 +127,16 @@ const LinkedProvider: React.FC = () => {
 
   return (
     <PageContent>
-      <ModalHeading>{getProviderName(provider.provider)}</ModalHeading>
+      <ModalHeading>{getProviderName(account.provider)}</ModalHeading>
       <ModalContent style={{ paddingBottom: 0 }}>
         <ProviderIconContainer>
           <ProviderIconWrapper>
             <ProviderIconInner>
-              <ProviderIcon provider={provider} />
+              <ProviderIcon account={account} />
             </ProviderIconInner>
           </ProviderIconWrapper>
         </ProviderIconContainer>
-        <ModalBody>{getProviderDetails(provider)}</ModalBody>
+        <ModalBody>{getProviderDetails(account)}</ModalBody>
       </ModalContent>
     </PageContent>
   )

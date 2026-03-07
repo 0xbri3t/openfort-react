@@ -61,7 +61,7 @@ const RemoveLinkedProvider: React.FC = () => {
 
   const provider = useMemo(() => {
     if (route.route === 'removeLinkedProvider') {
-      return route.provider
+      return route.account
     }
     throw new Error('No provider found in route')
   }, [])
@@ -95,7 +95,7 @@ const RemoveLinkedProvider: React.FC = () => {
       try {
         const result = await client.auth.unlinkWallet({
           address: provider.accountId as Hex,
-          chainId: provider.chainId!,
+          chainId: Number(provider.chainId!),
         })
         if (!result.success) {
           setError('Failed to remove linked provider. Please try again.')
@@ -134,7 +134,7 @@ const RemoveLinkedProvider: React.FC = () => {
         <ProviderIconContainer style={{ marginBottom: '16px' }}>
           <ProviderIconWrapper>
             <ProviderIconInner>
-              <ProviderIcon provider={provider} />
+              <ProviderIcon account={provider} />
             </ProviderIconInner>
           </ProviderIconWrapper>
         </ProviderIconContainer>

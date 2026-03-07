@@ -148,15 +148,6 @@ export const useAuthCallback = ({
                 type: 'verifyEmail',
               })
             },
-            onSettled: (data, error) => {
-              hookOptions.onSettled?.(
-                {
-                  ...data,
-                  type: 'verifyEmail',
-                },
-                error
-              )
-            },
             onError: hookOptions.onError,
             throwOnError: hookOptions.throwOnError,
           }
@@ -172,7 +163,6 @@ export const useAuthCallback = ({
             email,
             type: 'verifyEmail',
           })
-          hookOptions.onSettled?.({ email, type: 'verifyEmail' }, null)
           removeParams()
         } else {
           logger.error('No email found in URL')
@@ -219,15 +209,6 @@ export const useAuthCallback = ({
               ...data,
               type: 'storeCredentials',
             })
-          },
-          onSettled: (data, error) => {
-            hookOptions.onSettled?.(
-              {
-                ...data,
-                type: 'storeCredentials',
-              },
-              error
-            )
           },
           onError: hookOptions.onError,
           throwOnError: hookOptions.throwOnError,

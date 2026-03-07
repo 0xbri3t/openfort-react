@@ -9,7 +9,7 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { createPublicClient, http } from 'viem'
 import { mainnet } from 'viem/chains'
 import { normalize } from 'viem/ens'
-import { useCoreContext } from '../core/CoreContext'
+import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { useAsyncData } from '../shared/hooks/useAsyncData'
 import { getDefaultEthereumRpcUrl } from '../utils/rpc'
 
@@ -85,8 +85,8 @@ async function resolveEthereumIdentity(
 export function useResolvedIdentity(options: UseResolvedIdentityOptions): ResolvedIdentity {
   const { address, chainType = ChainTypeEnum.EVM, ensChainId = 0, enabled = true } = options
 
-  const { config } = useCoreContext()
-  const rpcUrl = config.rpcUrls?.ethereum?.[ensChainId] ?? getDefaultEthereumRpcUrl(ensChainId)
+  const { walletConfig } = useOpenfort()
+  const rpcUrl = walletConfig?.ethereum?.rpcUrls?.[ensChainId] ?? getDefaultEthereumRpcUrl(ensChainId)
 
   const isEnabled = enabled && !!address && address.length > 0 && ensChainId === 1 && !!rpcUrl
 

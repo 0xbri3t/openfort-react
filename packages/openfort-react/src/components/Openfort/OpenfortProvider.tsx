@@ -10,7 +10,7 @@ import { Buffer } from 'buffer'
 import type React from 'react'
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { DEFAULT_DEV_CHAIN_ID } from '../../core/ConnectionStrategy'
-import { CoreProvider } from '../../core/CoreContext'
+
 import { OpenfortEthereumBridgeContext } from '../../ethereum/OpenfortEthereumBridgeContext'
 import { useThemeFont } from '../../hooks/useGoogleFont'
 import { CoreOpenfortProvider } from '../../openfort/CoreOpenfortProvider'
@@ -406,28 +406,6 @@ export const OpenfortProvider = ({
     ]
   )
 
-  const coreProviderConfig = useMemo(
-    () => ({
-      publishableKey,
-      shieldPublishableKey: walletConfig?.shieldPublishableKey,
-      debug: debugModeOptions.openfortCoreDebugMode,
-      rpcUrls:
-        walletConfig?.ethereum?.rpcUrls || walletConfig?.solana?.rpcUrls
-          ? {
-              ...(walletConfig?.ethereum?.rpcUrls && { ethereum: walletConfig.ethereum.rpcUrls }),
-              ...(walletConfig?.solana?.rpcUrls && { solana: walletConfig.solana.rpcUrls }),
-            }
-          : undefined,
-    }),
-    [
-      publishableKey,
-      walletConfig?.shieldPublishableKey,
-      walletConfig?.ethereum?.rpcUrls,
-      walletConfig?.solana?.rpcUrls,
-      debugModeOptions.openfortCoreDebugMode,
-    ]
-  )
-
   const innerChildren = (
     <>
       {debugModeOptions.debugRoutes && (
@@ -471,35 +449,33 @@ export const OpenfortProvider = ({
   return (
     <UIContext.Provider value={connectUIValue}>
       <OpenfortContext.Provider value={value}>
-        <CoreProvider {...coreProviderConfig}>
-          <CoreOpenfortProvider
-            openfortConfig={{
-              baseConfiguration: { publishableKey },
-              shieldConfiguration: walletConfig
-                ? {
-                    shieldPublishableKey: walletConfig.shieldPublishableKey,
-                    debug: debugModeOptions.shieldDebugMode,
-                    ...(walletConfig.passkeyDisplayName && {
-                      passkeyRpName: walletConfig.passkeyDisplayName,
-                    }),
-                  }
-                : undefined,
-              debug: debugModeOptions.openfortCoreDebugMode,
-              overrides,
-              thirdPartyAuth,
-            }}
-            onConnect={onConnect}
-            onDisconnect={onDisconnect}
-          >
-            {hasSolana ? (
-              <Suspense fallback={null}>
-                <SolanaContextProvider config={walletConfig!.solana!}>{innerChildren}</SolanaContextProvider>
-              </Suspense>
-            ) : (
-              innerChildren
-            )}
-          </CoreOpenfortProvider>
-        </CoreProvider>
+        <CoreOpenfortProvider
+          openfortConfig={{
+            baseConfiguration: { publishableKey },
+            shieldConfiguration: walletConfig
+              ? {
+                  shieldPublishableKey: walletConfig.shieldPublishableKey,
+                  debug: debugModeOptions.shieldDebugMode,
+                  ...(walletConfig.passkeyDisplayName && {
+                    passkeyRpName: walletConfig.passkeyDisplayName,
+                  }),
+                }
+              : undefined,
+            debug: debugModeOptions.openfortCoreDebugMode,
+            overrides,
+            thirdPartyAuth,
+          }}
+          onConnect={onConnect}
+          onDisconnect={onDisconnect}
+        >
+          {hasSolana ? (
+            <Suspense fallback={null}>
+              <SolanaContextProvider config={walletConfig!.solana!}>{innerChildren}</SolanaContextProvider>
+            </Suspense>
+          ) : (
+            innerChildren
+          )}
+        </CoreOpenfortProvider>
       </OpenfortContext.Provider>
     </UIContext.Provider>
   )

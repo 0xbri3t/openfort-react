@@ -107,7 +107,7 @@ async function getEncryptionSession(params: {
           ? `Failed to create encryption session: ${data.error ?? data.message}`
           : 'Failed to create encryption session'
       throw new OpenfortError(errMsg, OpenfortReactErrorType.WALLET_ERROR, {
-        error: data.error instanceof Error ? data.error : undefined,
+        error: data.error != null ? new Error(String(data.error)) : undefined,
       })
     }
 

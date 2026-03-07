@@ -1,10 +1,8 @@
 'use client'
 
-import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
+import { EmbeddedState } from '@openfort/openfort-js'
 import { useCallback } from 'react'
-import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
 
 /**
@@ -28,15 +26,10 @@ import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
  * ```
  */
 export function useUser() {
-  const { user, client, embeddedState, linkedAccounts, chainType } = useOpenfortCore()
-  const ethereumWallet = useEthereumEmbeddedWallet()
-  const solanaWallet = useSolanaEmbeddedWallet()
-
-  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+  const { user, client, embeddedState, linkedAccounts, activeEmbeddedAddress } = useOpenfortCore()
 
   const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
-  const isWalletReady = wallet.isConnected
-  const isConnected = isAuthenticated && isWalletReady
+  const isConnected = embeddedState === EmbeddedState.READY && !!activeEmbeddedAddress
 
   const getAccessTokenAndUpdate = useCallback(async () => {
     try {

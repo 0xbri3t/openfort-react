@@ -16,17 +16,10 @@ function hasEmbeddedEthereum(state: ConnectionStrategyState): boolean {
 
 /**
  * Creates the EVM embedded strategy for SDK-only mode (no wagmi).
- * When getActiveChainId/setActiveChainId are provided, getChainId() returns the active chain for multi-chain.
  *
  * @param walletConfig - Wallet config with ethereum.chainId and rpcUrls
- * @param getActiveChainId - Optional getter for user-selected chain (from provider state)
- * @param setActiveChainId - Optional setter to persist user-selected chain
  */
-export function createEthereumEmbeddedStrategy(
-  walletConfig: OpenfortWalletConfig | undefined,
-  getActiveChainId?: () => number | undefined,
-  setActiveChainId?: (chainId: number | undefined) => void
-): ConnectionStrategy {
+export function createEthereumEmbeddedStrategy(walletConfig: OpenfortWalletConfig | undefined): ConnectionStrategy {
   // Closure-level: survives strategy recreation via useMemo but is instance-scoped.
   // Module-level vars would leak across multiple CoreOpenfortProvider instances (e.g. tests).
   let lastInitChainId: number | undefined
@@ -50,11 +43,8 @@ export function createEthereumEmbeddedStrategy(
     },
 
     getChainId() {
-      return getActiveChainId?.() ?? effectiveChainId
+      return effectiveChainId
     },
-
-    getActiveChainId,
-    setActiveChainId,
 
     getAddress(state) {
       if (state.activeEmbeddedAddress) return state.activeEmbeddedAddress

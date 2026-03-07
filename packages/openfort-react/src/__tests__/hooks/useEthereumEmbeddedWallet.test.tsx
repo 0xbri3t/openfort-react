@@ -20,8 +20,6 @@ vi.mock('../../core/ConnectionStrategyContext', () => ({
     kind: 'embedded',
     chainType: ChainTypeEnum.EVM,
     getChainId: () => 80002,
-    getActiveChainId: () => 80002,
-    setActiveChainId: () => {},
     initProvider: async () => {},
   }),
   ConnectionStrategyProvider: ({ children }: PropsWithChildren) => children,

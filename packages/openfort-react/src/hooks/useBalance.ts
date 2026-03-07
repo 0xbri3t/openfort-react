@@ -4,8 +4,8 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import { address, createSolanaRpc } from '@solana/kit'
 import { useEffect } from 'react'
 import { createPublicClient, formatEther, http } from 'viem'
+import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { DEFAULT_TESTNET_CHAIN_ID } from '../core/ConnectionStrategy'
-import { useCoreContext } from '../core/CoreContext'
 import { useAsyncData } from '../shared/hooks/useAsyncData'
 import { formatSol } from '../solana/hooks/utils'
 import type { SolanaCluster } from '../solana/types'
@@ -80,11 +80,11 @@ export function useBalance(options: UseBalanceOptions): BalanceState {
     refetchInterval = 30_000,
   } = options
 
-  const { config } = useCoreContext()
+  const { walletConfig } = useOpenfort()
   const rpcUrl =
     chainType === ChainTypeEnum.EVM
-      ? (config.rpcUrls?.ethereum?.[chainId] ?? getDefaultEthereumRpcUrl(chainId))
-      : (config.rpcUrls?.solana?.[cluster] ?? getDefaultSolanaRpcUrl(cluster))
+      ? (walletConfig?.ethereum?.rpcUrls?.[chainId] ?? getDefaultEthereumRpcUrl(chainId))
+      : (walletConfig?.solana?.rpcUrls?.[cluster] ?? getDefaultSolanaRpcUrl(cluster))
 
   const isEnabled = enabled && !!address && address.length > 0
 

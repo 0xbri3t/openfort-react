@@ -6,7 +6,6 @@ import type { Hex } from 'viem'
 import type { getAssets } from 'viem/experimental/erc7811'
 import type { EthereumConfig } from '../../ethereum/types'
 import type { EthereumUserWallet, SolanaUserWallet } from '../../hooks/openfort/walletTypes'
-import type { UserAccount } from '../../openfortCustomTypes'
 import type { SolanaConfig } from '../../solana/types'
 
 import type { CustomAvatarProps, CustomTheme, Languages, Mode, Theme } from '../../types'
@@ -102,13 +101,20 @@ type ConnectOptions =
       wallet: EthereumUserWallet | SolanaUserWallet
     }
 
+export type LinkedAccount = {
+  provider: string
+  accountId?: string
+  chainId?: number | string
+  walletClientType?: string
+}
+
 type RoutesWithOptions =
   | ({ route: typeof routes.CONNECTORS } & ConnectOptions)
   | ({ route: typeof routes.CONNECT } & ConnectOptions)
   | { route: typeof routes.RECOVER_WALLET; wallet: EthereumUserWallet }
   | { route: typeof routes.SOL_RECOVER_WALLET; wallet: SolanaUserWallet }
-  | { route: typeof routes.LINKED_PROVIDER; provider: UserAccount }
-  | { route: typeof routes.REMOVE_LINKED_PROVIDER; provider: UserAccount }
+  | { route: typeof routes.LINKED_PROVIDER; account: LinkedAccount }
+  | { route: typeof routes.REMOVE_LINKED_PROVIDER; account: LinkedAccount }
 
 export type RoutesWithoutOptions = {
   route: Exclude<AllRoutes, RoutesWithOptions['route']>

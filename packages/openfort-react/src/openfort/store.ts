@@ -1,8 +1,7 @@
-import type { EmbeddedAccount, Openfort, User } from '@openfort/openfort-js'
+import type { EmbeddedAccount, Openfort, User, UserAccount } from '@openfort/openfort-js'
 import { type ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { WalletFlowStatus } from '../hooks/openfort/walletTypes'
-import type { UserAccount } from '../openfortCustomTypes'
 
 export type OpenfortStoreState = {
   user: User | null

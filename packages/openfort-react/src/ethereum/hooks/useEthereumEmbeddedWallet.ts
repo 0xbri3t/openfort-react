@@ -135,11 +135,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   const { walletConfig, chainType } = useOpenfort()
   const strategy = useConnectionStrategy()
 
-  const activeChainId = strategy?.getActiveChainId?.() ?? strategy?.getChainId()
-  const setActiveChainId = strategy?.setActiveChainId ?? (() => {})
-
-  const creationChainId = options?.chainId ?? activeChainId ?? DEFAULT_CHAIN_ID
-  const activeReturnChainId = activeChainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
+  const creationChainId = options?.chainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
+  const activeReturnChainId = strategy?.getChainId() ?? DEFAULT_CHAIN_ID
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
   const ethereumAccountsRef = useRef<EmbeddedAccount[]>([])
@@ -426,10 +423,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
       setActive,
       setRecovery,
       exportPrivateKey,
-      activeChainId,
-      setActiveChainId,
     }),
-    [create, wallets, setActive, setRecovery, exportPrivateKey, activeChainId, setActiveChainId]
+    [create, wallets, setActive, setRecovery, exportPrivateKey]
   )
 
   // Use refs for values that should NOT re-trigger the sync effect.
