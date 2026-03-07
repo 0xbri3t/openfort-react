@@ -75,17 +75,12 @@ export const useConnectToWalletPostAuth = () => {
       wallet?: EthereumUserWallet | SolanaUserWallet
       passwordRequired?: boolean
     }> => {
-      if (walletConfig?.recoverWalletAutomaticallyAfterAuth === false && recoverWalletAutomatically === undefined) {
-        return {}
-      }
+      const connectOnLogin = walletConfig?.connectOnLogin ?? true
+      const shouldRecover = recoverWalletAutomatically ?? connectOnLogin
+      const shouldCreate = connectOnLogin
 
-      if (recoverWalletAutomatically === undefined) {
-        recoverWalletAutomatically = true
-      }
-      if (
-        (!walletConfig?.createEncryptedSessionEndpoint && !walletConfig?.getEncryptionSession) ||
-        !recoverWalletAutomatically
-      ) {
+      if (!shouldRecover) return {}
+      if (!walletConfig?.createEncryptedSessionEndpoint && !walletConfig?.getEncryptionSession) {
         return {}
       }
 
@@ -100,11 +95,8 @@ export const useConnectToWalletPostAuth = () => {
       const chainWallets = wallets.filter((w) => w.chainType === chainType)
 
       if (chainWallets.length === 0) {
-        // Skip auto-creation when disabled in walletConfig.
-        // This prevents silent wallet creation on chain switch — callers should check
-        // wallet.wallets.length === 0 and call wallet.create() explicitly.
-        if (walletConfig?.autoCreateWalletAfterAuth === false) {
-          logger.log('tryUseWallet: no wallet for chain, autoCreateWalletAfterAuth=false, skipping creation')
+        if (!shouldCreate) {
+          logger.log('tryUseWallet: no wallet for chain, connectOnLogin=false, skipping creation')
           return {}
         }
         try {

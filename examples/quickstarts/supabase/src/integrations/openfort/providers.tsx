@@ -35,7 +35,7 @@ export function OpenfortProviders({ children }: { children: React.ReactNode }) {
               createEncryptedSessionEndpoint:
                 import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_BASE_URL +
                 import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT,
-              recoverWalletAutomaticallyAfterAuth: true, // Wallet creation handled manually after auth
+              connectOnLogin: true,
             }}
             thirdPartyAuth={{
               getAccessToken: async () => {

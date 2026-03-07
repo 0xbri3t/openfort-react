@@ -159,17 +159,15 @@ export enum LinkWalletOnSignUpOption {
 type CommonWalletConfig = {
   /** Publishable key for the Shield API. */
   shieldPublishableKey: string
-  recoverWalletAutomaticallyAfterAuth?: boolean
   /**
-   * Whether to automatically create a new embedded wallet after authentication when none
-   * exists for the current chain. Defaults to `true` for backward compatibility.
+   * Whether to automatically recover or create an embedded wallet after authentication.
    *
-   * Set to `false` to prevent silent wallet creation on chain switch or during auth flows.
-   * In that case, call `wallet.create()` explicitly after checking `wallet.wallets.length === 0`.
+   * - `true` (default): recover an existing wallet and create a new one if none exists.
+   * - `false`: do nothing after auth — call `wallet.create()` / `wallet.setActive()` explicitly.
    *
    * @defaultValue true
    */
-  autoCreateWalletAfterAuth?: boolean
+  connectOnLogin?: boolean
   /**
    * The display name shown next to the passkey credential in the browser's passkey dialog
    * (e.g. "My Wallet" or "Trading Account"). Defaults to "Openfort - Embedded Wallet".

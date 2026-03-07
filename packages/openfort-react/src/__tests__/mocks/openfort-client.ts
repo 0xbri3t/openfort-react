@@ -90,7 +90,7 @@ export function createMockWalletConfig(overrides: Record<string, unknown> = {}):
   return {
     createEncryptedSessionEndpoint: 'https://example.com/session',
     accountType: AccountTypeEnum.SMART_ACCOUNT,
-    recoverWalletAutomaticallyAfterAuth: true,
+    connectOnLogin: true,
     ethereum: {
       accountType: AccountTypeEnum.SMART_ACCOUNT,
     },

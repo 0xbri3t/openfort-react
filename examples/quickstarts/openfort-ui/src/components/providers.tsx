@@ -33,7 +33,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               // For backend setup, check: https://github.com/openfort-xyz/openfort-backend-quickstart
               createEncryptedSessionEndpoint: import.meta.env
                 .VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT,
-              recoverWalletAutomaticallyAfterAuth: false, // We will manually call create/setActive wallet after auth
+              connectOnLogin: false, // We will manually call create/setActive wallet after auth
             }}
             uiConfig={{
               theme: import.meta.env.VITE_OPENFORT_THEME as Theme,

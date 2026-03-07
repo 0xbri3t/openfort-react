@@ -10,7 +10,7 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import type React from 'react'
 import { useEffect } from 'react'
-import { ReceiveIcon, SendIcon, UserRoundIcon } from '../../../assets/icons'
+import { ReceiveIcon, UserRoundIcon } from '../../../assets/icons'
 import { BALANCE_INVALIDATE_EVENT, fetchSolanaBalance } from '../../../hooks/useBalance'
 import useLocales from '../../../hooks/useLocales'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
@@ -24,7 +24,7 @@ import Avatar from '../../Common/Avatar'
 import Button from '../../Common/Button'
 import { CopyText } from '../../Common/CopyToClipboard/CopyText'
 import { useThemeContext } from '../../ConnectKitThemeProvider/ConnectKitThemeProvider'
-import { defaultSendFormState, routes } from '../../Openfort/types'
+import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 import { ConnectedPageLayout } from './ConnectedPageLayout'
@@ -32,7 +32,7 @@ import { ActionButton, Balance, LinkedProvidersToggle } from './styles'
 
 const SolanaConnected: React.FC = () => {
   const context = useOpenfort()
-  const { setHeaderLeftSlot, setRoute, setSendForm } = context
+  const { setHeaderLeftSlot, setRoute } = context
   const locales = useLocales()
 
   const wallet = useSolanaEmbeddedWallet()
@@ -132,20 +132,9 @@ const SolanaConnected: React.FC = () => {
         avatar={avatar}
         balance={balanceNode}
         actions={
-          <>
-            <ActionButton
-              icon={<SendIcon />}
-              onClick={() => {
-                setSendForm({ ...defaultSendFormState, asset: { type: 'native', balance: BigInt(0) } })
-                setRoute(routes.SOL_SEND)
-              }}
-            >
-              Send
-            </ActionButton>
-            <ActionButton icon={<ReceiveIcon />} onClick={() => context.setRoute(routes.SOL_RECEIVE)}>
-              Get
-            </ActionButton>
-          </>
+          <ActionButton icon={<ReceiveIcon />} onClick={() => context.setRoute(routes.SOL_RECEIVE)}>
+            Get
+          </ActionButton>
         }
         hideBalance={context?.uiConfig.hideBalance}
         isBalanceLoading={isBalanceLoading}

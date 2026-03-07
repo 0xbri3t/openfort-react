@@ -325,7 +325,7 @@ describe('useEthereumEmbeddedWallet – create', () => {
   it('throws when no encryption session config is available', async () => {
     const mockOpenfortUI = await import('../components/Openfort/useOpenfort')
     const spy = vi.spyOn(mockOpenfortUI, 'useOpenfortUIContext').mockReturnValue({
-      walletConfig: { recoverWalletAutomaticallyAfterAuth: true },
+      walletConfig: { connectOnLogin: true },
       chainType: ChainTypeEnum.EVM,
     } as ReturnType<typeof mockOpenfortUI.useOpenfortUIContext>)
 

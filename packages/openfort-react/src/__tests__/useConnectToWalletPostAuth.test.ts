@@ -82,7 +82,7 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
     Object.assign(mockWalletConfig, {
       createEncryptedSessionEndpoint: 'https://example.com/session',
       getEncryptionSession: undefined,
-      recoverWalletAutomaticallyAfterAuth: true,
+      connectOnLogin: true,
       ethereum: { chainId: 84532 },
     })
   })
@@ -187,8 +187,8 @@ describe('useConnectToWalletPostAuth — tryUseWallet', () => {
     expect(mockEthCreate).not.toHaveBeenCalled()
   })
 
-  it('returns empty when recoverWalletAutomaticallyAfterAuth is false', async () => {
-    mockWalletConfig.recoverWalletAutomaticallyAfterAuth = false
+  it('returns empty when connectOnLogin is false', async () => {
+    mockWalletConfig.connectOnLogin = false
 
     const { result } = renderHook(() => useConnectToWalletPostAuth(), {
       wrapper: createTestWrapper(),
