@@ -1,3 +1,4 @@
+import type { Openfort } from '@openfort/openfort-js'
 import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { act, renderHook } from '@testing-library/react'
 import { createElement, type PropsWithChildren } from 'react'
@@ -14,9 +15,13 @@ import {
 } from '../../openfort/selectors'
 import { createOpenfortStore } from '../../openfort/store'
 import { useOpenfortStore } from '../../openfort/useOpenfortStore'
+import { createMockOpenfortClient } from '../mocks/openfortClient'
 
 function createStoreWrapper(overrides?: { chainType?: ChainTypeEnum }) {
-  const store = createOpenfortStore(overrides?.chainType ?? ChainTypeEnum.EVM)
+  const store = createOpenfortStore(
+    overrides?.chainType ?? ChainTypeEnum.EVM,
+    createMockOpenfortClient() as unknown as Openfort
+  )
   function Wrapper({ children }: PropsWithChildren) {
     return createElement(StoreContext.Provider, { value: store }, children)
   }

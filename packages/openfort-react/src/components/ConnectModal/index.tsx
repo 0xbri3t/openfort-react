@@ -1,7 +1,7 @@
 'use client'
 
 import { ChainTypeEnum, OAuthProvider } from '@openfort/openfort-js'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 
 type ValueOf<T> = T[keyof T]
 
@@ -156,6 +156,18 @@ const ConnectModal: React.FC<{
   const isConnected = strategy?.isConnected(state) ?? false
   const chainId = strategy?.getChainId()
   const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
+
+  // Auto-close when the user goes from not-connected → connected while the modal is open.
+  // Using a ref to track the previous value so we only react to the false → true transition,
+  // not when the modal is opened while already connected (e.g. user opens profile).
+  const prevIsConnectedRef = useRef(isConnected)
+  useEffect(() => {
+    const wasConnected = prevIsConnectedRef.current
+    prevIsConnectedRef.current = isConnected
+    if (!wasConnected && isConnected && context.open) {
+      context.setOpen(false)
+    }
+  }, [isConnected])
 
   //if chain is unsupported we enforce a "switch chain" prompt
   const closeable = !(context.uiConfig.enforceSupportedChains && isConnected && !chainIsSupported)

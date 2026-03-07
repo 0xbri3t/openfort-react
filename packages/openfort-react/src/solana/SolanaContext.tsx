@@ -4,10 +4,10 @@
  * Solana Context Provider
  *
  * Provides Solana configuration (cluster, RPC URL, commitment) to descendant components.
- * Cluster is stateful (can be changed via setCluster) but not persisted across reloads.
+ * Cluster is fixed at config time and cannot be changed at runtime.
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, type ReactNode, useContext, useMemo } from 'react'
 import { OpenfortError, OpenfortReactErrorType } from '../core/errors'
 import type { SolanaCluster, SolanaCommitment, SolanaConfig } from './types'
 
@@ -21,8 +21,6 @@ interface SolanaContextValue {
   rpcUrl: string
   /** Transaction commitment level */
   commitment: SolanaCommitment
-  /** Set active cluster (in-memory only; resets on reload) */
-  setCluster: (cluster: SolanaCluster) => void
 }
 
 const DEFAULT_RPC_URLS: Partial<Record<SolanaCluster, string>> = {
@@ -83,25 +81,17 @@ function resolveRpcUrl(cluster: SolanaCluster, config: SolanaConfig): string {
 const DEFAULT_CLUSTER: SolanaCluster = 'devnet'
 
 export function SolanaContextProvider({ config, children }: SolanaContextProviderProps) {
-  const [cluster, setClusterState] = useState<SolanaCluster>(() => {
-    const fromConfig = config.cluster
-    return fromConfig ?? DEFAULT_CLUSTER
-  })
+  const cluster: SolanaCluster = config.cluster ?? DEFAULT_CLUSTER
 
   const rpcUrl = useMemo(() => resolveRpcUrl(cluster, config), [cluster, config])
-
-  const setCluster = useCallback((newCluster: SolanaCluster) => {
-    setClusterState(newCluster)
-  }, [])
 
   const value = useMemo<SolanaContextValue>(
     () => ({
       cluster,
       rpcUrl,
       commitment: config.commitment ?? 'confirmed',
-      setCluster,
     }),
-    [cluster, rpcUrl, config.commitment, setCluster]
+    [cluster, rpcUrl, config.commitment]
   )
 
   return <SolanaContext.Provider value={value}>{children}</SolanaContext.Provider>

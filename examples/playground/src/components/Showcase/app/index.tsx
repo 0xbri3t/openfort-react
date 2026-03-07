@@ -11,7 +11,6 @@ import { SetActiveWalletsCardSolana } from '@/components/Showcase/app/SetActiveW
 import { SignaturesCard } from '@/components/Showcase/app/Signatures'
 import { SignaturesCardEVM } from '@/components/Showcase/app/SignaturesCardEVM'
 import { SignaturesCardSolana } from '@/components/Showcase/app/SignaturesCardSolana'
-import { SwitchChainCard } from '@/components/Showcase/app/SwitchChain'
 import { SwitchChainCardEVM } from '@/components/Showcase/app/SwitchChainCardEVM'
 import { TransactionHistoryCardSolana } from '@/components/Showcase/app/TransactionHistoryCardSolana'
 import { WriteContractCard } from '@/components/Showcase/app/WriteContract'
@@ -98,7 +97,7 @@ export const App = () => {
                 body: <>Uses useWriteContract (wagmi) for minting tokens.</>,
               }}
             />
-            <SwitchChainCard
+            <SwitchChainCardEVM
               tooltip={{
                 hook: 'useSwitchChain',
                 body: (

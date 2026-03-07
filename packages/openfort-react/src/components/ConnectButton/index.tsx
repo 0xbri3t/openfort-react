@@ -1,15 +1,15 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import type React from 'react'
-import { useEthereumEmbeddedWallet } from '../../ethereum/hooks/useEthereumEmbeddedWallet'
+import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { useUI } from '../../hooks/openfort/useUI'
 import useIsMounted from '../../hooks/useIsMounted'
 import useLocales from '../../hooks/useLocales'
 import { useResolvedIdentity } from '../../hooks/useResolvedIdentity'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { useSolanaEmbeddedWallet } from '../../solana/hooks/useSolanaEmbeddedWallet'
 import { ResetContainer } from '../../styles'
 import type { CustomTheme, Mode, Theme } from '../../types'
+import { formatAddress } from '../../utils/format'
 import { logger } from '../../utils/logger'
 import { Balance } from '../BalanceButton'
 import Avatar from '../Common/Avatar'
@@ -114,14 +114,13 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
   const context = useOpenfort()
   const { open, close, isOpen } = useUI()
 
-  const { chainType } = useOpenfortCore()
-  const ethereumWallet = useEthereumEmbeddedWallet()
-  const solanaWallet = useSolanaEmbeddedWallet()
-  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+  const { user, chainType, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
+  const strategy = useConnectionStrategy()
+  const strategyState = { user, embeddedAccounts, activeEmbeddedAddress, embeddedState, chainType }
 
-  const isConnected = wallet.status === 'connected'
-  const address = isConnected ? (wallet.address as Hash) : undefined
-  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
+  const isConnected = strategy?.isConnected(strategyState) ?? false
+  const address = isConnected ? (strategy?.getAddress(strategyState) as Hash | undefined) : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? strategy?.getChainId() : undefined
 
   const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
 
@@ -154,7 +153,7 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
         isConnected: isConnected,
         isConnecting: isOpen,
         address: address,
-        truncatedAddress: isConnected ? wallet.displayAddress : undefined,
+        truncatedAddress: address ? formatAddress(address, chainType) : undefined,
         ensName: ensName ?? undefined,
         chainId,
       })}
@@ -165,28 +164,22 @@ const ConnectButtonRenderer: React.FC<ConnectButtonRendererProps> = ({ children 
 ConnectButtonRenderer.displayName = 'OpenfortButton.Custom'
 
 const ConnectedLabel = ({ separator }: { separator?: string }) => {
-  const { user } = useOpenfortCore()
-  const { chainType } = useOpenfortCore()
-  const ethereumWallet = useEthereumEmbeddedWallet()
-  const solanaWallet = useSolanaEmbeddedWallet()
-  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+  const { user, chainType, embeddedAccounts, activeEmbeddedAddress, embeddedState, isLoadingAccounts, walletStatus } =
+    useOpenfortCore()
+  const strategy = useConnectionStrategy()
+  const strategyState = { user, embeddedAccounts, activeEmbeddedAddress, embeddedState, chainType }
 
-  switch (wallet.status) {
-    case 'fetching-wallets':
-    case 'creating':
-    case 'connecting':
-      return 'Loading...'
-    case 'disconnected':
-      if (!user) return 'Loading user...'
-      return 'Not connected'
-    case 'connected': {
-      if (!wallet.address) return 'Loading...'
-      const formatted = separator
-        ? `${wallet.address.slice(0, 6)}${separator}${wallet.address.slice(-4)}`
-        : wallet.displayAddress
-      return formatted
-    }
+  const isLoading = isLoadingAccounts || walletStatus.status === 'creating' || walletStatus.status === 'connecting'
+  const isConnected = strategy?.isConnected(strategyState) ?? false
+  const address = strategy?.getAddress(strategyState)
+
+  if (isLoading) return 'Loading...'
+  if (!isConnected || !address) {
+    if (!user) return 'Loading user...'
+    return 'Not connected'
   }
+
+  return separator ? `${address.slice(0, 6)}${separator}${address.slice(-4)}` : formatAddress(address, chainType)
 }
 
 function OpenfortButtonInner({
@@ -199,17 +192,14 @@ function OpenfortButtonInner({
   separator?: string
 }) {
   const locales = useLocales({})
-  const { user } = useOpenfortCore()
+  const { user, chainType, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
   const context = useOpenfort()
+  const strategy = useConnectionStrategy()
+  const strategyState = { user, embeddedAccounts, activeEmbeddedAddress, embeddedState, chainType }
 
-  const { chainType } = useOpenfortCore()
-  const ethereumWallet = useEthereumEmbeddedWallet()
-  const solanaWallet = useSolanaEmbeddedWallet()
-  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-
-  const isConnected = wallet.status === 'connected'
-  const address = isConnected ? wallet.address : undefined
-  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
+  const isConnected = strategy?.isConnected(strategyState) ?? false
+  const address = isConnected ? strategy?.getAddress(strategyState) : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? strategy?.getChainId() : undefined
 
   const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
   const showUnsupportedWarning = chainType === ChainTypeEnum.EVM && !chainIsSupported
@@ -226,7 +216,7 @@ function OpenfortButtonInner({
 
   return (
     <AnimatePresence initial={false}>
-      {user || (isConnected && wallet.address) ? (
+      {user || (isConnected && address) ? (
         <TextContainer
           key={'connectedText'}
           initial={'initial'}
@@ -339,15 +329,12 @@ export function OpenfortButton({
   const isMounted = useIsMounted()
   const context = useOpenfort()
   const { open } = useUI()
-  const { chainType } = useOpenfortCore()
+  const { user, chainType, embeddedAccounts, activeEmbeddedAddress, embeddedState } = useOpenfortCore()
+  const strategy = useConnectionStrategy()
+  const strategyState = { user, embeddedAccounts, activeEmbeddedAddress, embeddedState, chainType }
 
-  // Use chain-specific hooks
-  const ethereumWallet = useEthereumEmbeddedWallet()
-  const solanaWallet = useSolanaEmbeddedWallet()
-  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
-
-  const isConnected = wallet.status === 'connected'
-  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
+  const isConnected = strategy?.isConnected(strategyState) ?? false
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? strategy?.getChainId() : undefined
 
   const chainIsSupported = chainId != null && context.chains.some((c) => c.id === chainId)
 
@@ -368,9 +355,8 @@ export function OpenfortButton({
         onClick={() => {
           logger.log('OpenfortButton click', {
             chainType,
-            evm: { status: ethereumWallet.status, address: ethereumWallet.address },
-            solana: { status: solanaWallet.status, address: solanaWallet.address },
-            active: { isConnected, address: wallet.address, displayAddress: wallet.displayAddress },
+            isConnected,
+            address: strategy?.getAddress(strategyState),
           })
           if (onClick) {
             onClick(() => open())

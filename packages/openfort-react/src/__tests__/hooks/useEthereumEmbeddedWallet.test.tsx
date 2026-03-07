@@ -29,7 +29,7 @@ const { useEthereumEmbeddedWallet } = await import('../../ethereum/hooks/useEthe
 
 function createWrapper(overrides: Partial<Parameters<typeof buildContextValue>[0]> = {}) {
   const defaults = buildContextValue(overrides)
-  const store = createOpenfortStore(defaults.chainType)
+  const store = createOpenfortStore(defaults.chainType, defaults.client)
   const s = store.getState()
   s.setUser(defaults.user)
   s.setLinkedAccounts(defaults.linkedAccounts)

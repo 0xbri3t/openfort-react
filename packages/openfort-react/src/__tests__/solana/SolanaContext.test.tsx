@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { SolanaContextProvider, useSolanaContext } from '../../solana/SolanaContext'
 import type { SolanaConfig } from '../../solana/types'
 
@@ -53,11 +53,17 @@ describe('SolanaContext — resolveRpcUrl', () => {
   })
 
   it('throws CONFIGURATION_ERROR for an unknown cluster with no custom RPC', () => {
-    expect(() =>
-      renderHook(() => useSolanaContext(), {
-        wrapper: makeWrapper({ cluster: 'unknown-cluster' as never }),
-      })
-    ).toThrow()
+    // Suppress React's console.error — the throw is expected and React logs it as noise.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      expect(() =>
+        renderHook(() => useSolanaContext(), {
+          wrapper: makeWrapper({ cluster: 'unknown-cluster' as never }),
+        })
+      ).toThrow()
+    } finally {
+      spy.mockRestore()
+    }
   })
 
   it('uses custom rpcUrl for an unknown cluster when provided', () => {

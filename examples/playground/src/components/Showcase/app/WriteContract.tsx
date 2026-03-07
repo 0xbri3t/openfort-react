@@ -49,7 +49,7 @@ export const WriteContractCard = ({ tooltip }: { tooltip?: { hook: string; body:
   const isExternalWallet = !!connector && connector.id !== embeddedWalletId
   const isEoa =
     !isExternalWallet && embedded.status === 'connected' && embedded.activeWallet?.accountType === AccountTypeEnum.EOA
-  const useWagmiWrite = isConnected && connector?.id !== embeddedWalletId && embedded.status !== 'connected'
+  const useWagmiWrite = isConnected && connector?.id !== embeddedWalletId
   const hash = useWagmiWrite ? wagmiHash : (localHash ?? undefined)
   const isPending = useWagmiWrite ? wagmiPending : localPending
   const error = useWagmiWrite ? wagmiError : localError

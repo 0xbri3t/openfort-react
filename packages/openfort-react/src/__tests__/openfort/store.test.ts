@@ -1,9 +1,14 @@
+import type { Openfort } from '@openfort/openfort-js'
 import { ChainTypeEnum, EmbeddedState } from '@openfort/openfort-js'
 import { describe, expect, it } from 'vitest'
 import { createOpenfortStore } from '../../openfort/store'
+import { createMockOpenfortClient } from '../mocks/openfortClient'
 
 function makeStore(hasBridge = false, bridgeAddress?: string) {
-  return createOpenfortStore(ChainTypeEnum.EVM, () => ({ hasBridge, address: bridgeAddress }))
+  return createOpenfortStore(ChainTypeEnum.EVM, createMockOpenfortClient() as unknown as Openfort, () => ({
+    hasBridge,
+    address: bridgeAddress,
+  }))
 }
 
 describe('store — computeIsLoading', () => {

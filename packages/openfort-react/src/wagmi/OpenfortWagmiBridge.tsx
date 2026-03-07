@@ -53,9 +53,9 @@ export const OpenfortWagmiBridge: React.FC<PropsWithChildren> = ({ children }) =
   const { signMessageAsync } = useSignMessage()
   const { data: walletClient } = useWalletClient()
 
-  const accountAddress = (walletClient?.account?.address ?? address) as `0x${string}`
+  const accountAddress: `0x${string}` | undefined = walletClient?.account?.address ?? address
 
-  const { data: ensName } = useEnsName({ address: accountAddress ?? undefined, chainId: 1 })
+  const { data: ensName } = useEnsName({ address: accountAddress, chainId: 1 })
   const { data: ensAvatar } = useEnsAvatar({ name: ensName ? normalize(ensName) : undefined, chainId: 1 })
 
   const connectorKey = connectors.map((c) => c.id).join(',')

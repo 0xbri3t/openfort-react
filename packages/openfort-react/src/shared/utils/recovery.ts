@@ -97,7 +97,13 @@ async function getEncryptionSession(params: {
       body: JSON.stringify({ user_id: userId, otp_code: otpCode }),
     })
 
-    const data = await response.json()
+    type SessionResponse = { error?: string; message?: string; session?: string }
+    let data: SessionResponse
+    try {
+      data = (await response.json()) as SessionResponse
+    } catch {
+      data = {}
+    }
     if (!response.ok) {
       if (data.error === 'OTP_REQUIRED') {
         throw new OpenfortError('OTP verification required', OpenfortReactErrorType.AUTHENTICATION_ERROR)

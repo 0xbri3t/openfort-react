@@ -71,10 +71,9 @@ function computeNeedsRecovery(embeddedState: EmbeddedState, embeddedAccounts: Em
   return embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED && (embeddedAccounts?.length ?? 0) > 0
 }
 
-const noop = async () => undefined as any
-
 export function createOpenfortStore(
   initialChainType: ChainTypeEnum,
+  client: Openfort,
   getBridgeInfo?: () => { hasBridge: boolean; address: string | undefined }
 ): StoreApi<OpenfortStore> {
   const store = createStore<OpenfortStore>((set) => ({
@@ -126,12 +125,12 @@ export function createOpenfortStore(
       }
     },
 
-    // Injected by CoreOpenfortProvider after creation
-    logout: noop,
-    signUpGuest: noop,
-    updateUser: noop,
-    updateEmbeddedAccounts: noop,
-    client: null as unknown as Openfort,
+    // Injected by CoreOpenfortProvider after mount (depend on bridge / external refs)
+    logout: async () => {},
+    signUpGuest: async () => {},
+    updateUser: async () => null,
+    updateEmbeddedAccounts: async () => undefined,
+    client,
   }))
 
   // Recompute derived state when dependencies change

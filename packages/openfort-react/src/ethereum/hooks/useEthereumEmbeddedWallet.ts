@@ -16,6 +16,7 @@ import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
+import { buildRecoveryParams } from '../../shared/utils/recovery'
 import { formatAddress } from '../../utils/format'
 import type {
   ConnectedEmbeddedEthereumWallet,
@@ -24,7 +25,6 @@ import type {
   SetActiveEthereumWalletOptions,
   UseEmbeddedEthereumWalletOptions,
 } from '../types'
-import { buildRecoveryParams } from './utils'
 
 type InternalState = {
   status: WalletStatus

@@ -20,10 +20,10 @@ const { useSolanaEmbeddedWallet } = await import('../../solana/hooks/useSolanaEm
 
 function createWrapper(
   coreOverrides: Partial<Parameters<typeof buildContextValue>[0]> = {},
-  solanaCtx?: { cluster: string; rpcUrl: string; commitment: string; setCluster: (c: string) => void }
+  solanaCtx?: { cluster: string; rpcUrl: string; commitment: string }
 ) {
   const defaults = buildContextValue({ chainType: ChainTypeEnum.SVM, ...coreOverrides })
-  const store = createOpenfortStore(defaults.chainType)
+  const store = createOpenfortStore(defaults.chainType, defaults.client)
   const s = store.getState()
   s.setUser(defaults.user)
   s.setLinkedAccounts(defaults.linkedAccounts)
@@ -92,7 +92,7 @@ describe('useSolanaEmbeddedWallet', () => {
         embeddedState: EmbeddedState.READY,
         isLoadingAccounts: false,
       },
-      { cluster: 'devnet', rpcUrl: 'https://api.devnet.solana.com', commitment: 'confirmed', setCluster: () => {} }
+      { cluster: 'devnet', rpcUrl: 'https://api.devnet.solana.com', commitment: 'confirmed' }
     )
 
     const { result } = renderHook(() => useSolanaEmbeddedWallet(), { wrapper })
@@ -108,7 +108,7 @@ describe('useSolanaEmbeddedWallet', () => {
         embeddedState: EmbeddedState.READY,
         isLoadingAccounts: false,
       },
-      { cluster: 'devnet', rpcUrl: 'https://api.devnet.solana.com', commitment: 'confirmed', setCluster: () => {} }
+      { cluster: 'devnet', rpcUrl: 'https://api.devnet.solana.com', commitment: 'confirmed' }
     )
 
     const { result } = renderHook(() => useSolanaEmbeddedWallet({ cluster: 'mainnet-beta' as any }), { wrapper })

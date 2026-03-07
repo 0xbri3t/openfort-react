@@ -45,7 +45,7 @@ export function buildContextValue(overrides: Partial<OpenfortCoreContextValue> =
  */
 function createTestStore(overrides: Partial<OpenfortCoreContextValue> = {}) {
   const defaults = buildContextValue(overrides)
-  const store = createOpenfortStore(defaults.chainType)
+  const store = createOpenfortStore(defaults.chainType, defaults.client)
   const s = store.getState()
   s.setUser(defaults.user)
   s.setLinkedAccounts(defaults.linkedAccounts)
@@ -54,7 +54,7 @@ function createTestStore(overrides: Partial<OpenfortCoreContextValue> = {}) {
   s.setIsLoadingAccounts(defaults.isLoadingAccounts)
   s.setActiveEmbeddedAddress(defaults.activeEmbeddedAddress)
   s.setWalletStatus(defaults.walletStatus)
-  // Inject functions
+  // Inject functions that depend on bridge / external refs
   store.setState({
     logout: defaults.logout,
     signUpGuest: defaults.signUpGuest,

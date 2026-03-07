@@ -1,15 +1,13 @@
 'use client'
 
-import { useContext, useEffect, useRef } from 'react'
-import { OpenfortContext } from '../components/Openfort/context'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { ConnectionStrategy } from '../core/ConnectionStrategy'
 import type { ConnectCallbackProps } from '../openfort/connectCallbackTypes'
 import { useOpenfortStore } from '../openfort/useOpenfortStore'
 
 /**
  * Standalone hook: subscribes to connection lifecycle and fires onConnect/onDisconnect
- * when strategy.isConnected(state) changes. Must be used inside OpenfortProvider and
- * CoreOpenfortProvider (so both OpenfortContext and OpenfortCoreContext are available).
+ * when strategy.isConnected(state) changes. Must be used inside CoreOpenfortProvider.
  */
 export function useConnectLifecycle(
   strategy: ConnectionStrategy | null,
@@ -20,34 +18,31 @@ export function useConnectLifecycle(
   const embeddedAccounts = useOpenfortStore((s) => s.embeddedAccounts)
   const activeEmbeddedAddress = useOpenfortStore((s) => s.activeEmbeddedAddress)
   const embeddedState = useOpenfortStore((s) => s.embeddedState)
-  const ui = useContext(OpenfortContext)
+  const chainType = useOpenfortStore((s) => s.chainType)
   const prevConnected = useRef(false)
 
-  useEffect(() => {
-    if (!strategy || !ui) return
+  const onConnectRef = useRef(onConnect)
+  const onDisconnectRef = useRef(onDisconnect)
+  useLayoutEffect(() => {
+    onConnectRef.current = onConnect
+    onDisconnectRef.current = onDisconnect
+  }, [onConnect, onDisconnect])
 
-    const state = {
-      user,
-      embeddedAccounts,
-      chainType: ui.chainType,
-      activeEmbeddedAddress,
-      embeddedState,
-    }
+  useEffect(() => {
+    if (!strategy) return
+
+    const state = { user, embeddedAccounts, chainType, activeEmbeddedAddress, embeddedState }
     const connected = strategy.isConnected(state)
 
     if (connected && !prevConnected.current) {
       prevConnected.current = true
       const address = strategy.getAddress(state)
-      onConnect?.({
-        address: address ?? undefined,
-        connectorId: undefined,
-        user: state.user ?? undefined,
-      })
+      onConnectRef.current?.({ address: address ?? undefined, connectorId: undefined, user: state.user ?? undefined })
     } else if (!connected && prevConnected.current) {
       prevConnected.current = false
-      onDisconnect?.()
+      onDisconnectRef.current?.()
     } else {
       prevConnected.current = connected
     }
-  }, [strategy, user, embeddedAccounts, activeEmbeddedAddress, embeddedState, ui, onConnect, onDisconnect])
+  }, [strategy, user, embeddedAccounts, activeEmbeddedAddress, embeddedState, chainType])
 }

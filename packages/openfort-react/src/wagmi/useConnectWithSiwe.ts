@@ -1,7 +1,6 @@
 'use client'
 
 import { OpenfortError } from '@openfort/openfort-js'
-import { AxiosError } from 'axios'
 import { useCallback } from 'react'
 import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 import { useOpenfortCore } from '../openfort/useOpenfort'
@@ -107,7 +106,7 @@ export function useConnectWithSiwe() {
       } catch (err) {
         logger.log('Failed to connect with SIWE', {
           error: err,
-          status: err instanceof AxiosError ? err.request.status : 'unknown',
+          status: (err as { response?: { status?: number } })?.response?.status ?? 'unknown',
         })
         if (!onError) return
 
