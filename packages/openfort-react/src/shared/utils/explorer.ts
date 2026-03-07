@@ -1,4 +1,18 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
+import {
+  arbitrum,
+  arbitrumSepolia,
+  base,
+  baseSepolia,
+  beamTestnet,
+  bsc,
+  mainnet,
+  optimism,
+  optimismSepolia,
+  polygon,
+  polygonAmoy,
+  sepolia,
+} from 'viem/chains'
 import type { SolanaCluster } from '../../solana/types'
 import { logger } from '../../utils/logger'
 
@@ -12,20 +26,20 @@ type ExplorerUrlOptions = {
 
 const SOLANA_EXPLORER_BASE = 'https://explorer.solana.com'
 
-const EVM_EXPLORER_BY_CHAIN_ID: Record<number, string> = {
-  1: 'https://etherscan.io',
-  10: 'https://optimistic.etherscan.io',
-  137: 'https://polygonscan.com',
-  8453: 'https://basescan.org',
-  42161: 'https://arbiscan.io',
-  56: 'https://bscscan.com',
-  43114: 'https://snowtrace.io',
-  80002: 'https://amoy.polygonscan.com',
-  84532: 'https://sepolia.basescan.org',
-  13337: 'https://subnets-test.avax.network/beam',
-  11155111: 'https://sepolia.etherscan.io',
-  11155420: 'https://sepolia-optimism.etherscan.io',
-  421614: 'https://sepolia.arbiscan.io',
+/** Known EVM chains with block explorers — sourced from viem/chains. */
+const EVM_CHAINS_BY_ID = {
+  [mainnet.id]: mainnet,
+  [optimism.id]: optimism,
+  [polygon.id]: polygon,
+  [base.id]: base,
+  [arbitrum.id]: arbitrum,
+  [bsc.id]: bsc,
+  [polygonAmoy.id]: polygonAmoy,
+  [baseSepolia.id]: baseSepolia,
+  [beamTestnet.id]: beamTestnet,
+  [sepolia.id]: sepolia,
+  [optimismSepolia.id]: optimismSepolia,
+  [arbitrumSepolia.id]: arbitrumSepolia,
 }
 
 function appendPath(base: string, options: { address?: string; txHash?: string }, queryParams?: string): string {
@@ -43,16 +57,17 @@ const explorerRegistry: Record<ChainTypeEnum, ExplorerUrlBuilder> = {
       logger.warn(
         'No chain ID provided. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.'
       )
-      return 'https://amoy.polygonscan.com'
+      return polygonAmoy.blockExplorers.default.url
     }
-    if (!EVM_EXPLORER_BY_CHAIN_ID[options.chainId]) {
+    const chain = EVM_CHAINS_BY_ID[options.chainId as keyof typeof EVM_CHAINS_BY_ID]
+    const explorerUrl = chain?.blockExplorers?.default.url
+    if (!explorerUrl) {
       logger.warn(
         `No explorer URL found for chain ${options.chainId}. Configure explorerUrls in OpenfortProvider for better reliability and rate limits.`
       )
-      return 'https://amoy.polygonscan.com'
+      return polygonAmoy.blockExplorers.default.url
     }
-    const base = EVM_EXPLORER_BY_CHAIN_ID[options.chainId]
-    return appendPath(base, options)
+    return appendPath(explorerUrl, options)
   },
   [ChainTypeEnum.SVM]: (options) => {
     if (!options.cluster) {

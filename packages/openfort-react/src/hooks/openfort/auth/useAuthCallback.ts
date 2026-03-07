@@ -116,7 +116,7 @@ export const useAuthCallback = ({
 
     ;(async () => {
       // redirectUrl is not working with query params OF-1013
-      const fixedUrl = window.location.href.replace('?state=', '&state=') // redirectUrl is not working with query params
+      const fixedUrl = window.location.href.replace('?state=', '&state=')
       const url = new URL(fixedUrl)
       const openfortAuthProvider = url.searchParams.get('openfortAuthProvider')
 

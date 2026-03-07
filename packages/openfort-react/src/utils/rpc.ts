@@ -1,25 +1,24 @@
 /**
  * RPC Utilities
  *
- * Default RPC URLs and chain metadata.
+ * Default RPC URLs and chain metadata — sourced from viem/chains where possible.
+ * Production apps must provide their own RPCs via walletConfig.ethereum.rpcUrls.
  */
 
 import type { Chain } from 'viem'
 import { defineChain } from 'viem'
+import { arbitrumSepolia, baseSepolia, beamTestnet, optimismSepolia, polygonAmoy, sepolia } from 'viem/chains'
 import type { SolanaCluster } from '../solana/types'
 import { logger } from './logger'
 
-/**
- * Default Ethereum RPC URLs by chain ID — testnets only.
- * Production apps must provide their own RPCs via walletConfig.ethereum.rpcUrls.
- */
-const DEFAULT_ETHEREUM_RPC_URLS: Record<number, string> = {
-  80002: 'https://rpc-amoy.polygon.technology',
-  84532: 'https://sepolia.base.org',
-  13337: 'https://build.onbeam.com/rpc/testnet',
-  11155111: 'https://rpc.sepolia.org',
-  11155420: 'https://sepolia.optimism.io',
-  421614: 'https://sepolia-rollup.arbitrum.io/rpc',
+/** Known chains sourced from viem/chains — authoritative metadata (name, nativeCurrency, rpcUrls, blockExplorers). */
+const KNOWN_CHAINS: Record<number, Chain> = {
+  [polygonAmoy.id]: polygonAmoy,
+  [baseSepolia.id]: baseSepolia,
+  [beamTestnet.id]: beamTestnet,
+  [sepolia.id]: sepolia,
+  [optimismSepolia.id]: optimismSepolia,
+  [arbitrumSepolia.id]: arbitrumSepolia,
 }
 
 /**
@@ -34,16 +33,18 @@ const DEFAULT_SOLANA_RPC_URLS: Partial<Record<SolanaCluster, string>> = {
 
 /**
  * Get default Ethereum RPC URL for a chain ID.
- * Returns undefined when chain is not in the testnet map.
+ * Returns the viem/chains default RPC when known, falls back to Sepolia.
  */
 export function getDefaultEthereumRpcUrl(chainId: number): string {
-  if (!DEFAULT_ETHEREUM_RPC_URLS[chainId]) {
+  const chain = KNOWN_CHAINS[chainId]
+  const rpcUrl = chain?.rpcUrls.default.http[0]
+  if (!rpcUrl) {
     logger.warn(
       `No default Ethereum RPC URL found for chain ${chainId}. Configure rpcUrls in OpenfortProvider for better reliability and rate limits.`
     )
-    return 'https://rpc.sepolia.org'
+    return sepolia.rpcUrls.default.http[0]
   }
-  return DEFAULT_ETHEREUM_RPC_URLS[chainId]
+  return rpcUrl
 }
 
 /**
@@ -60,91 +61,43 @@ export function getDefaultSolanaRpcUrl(cluster: SolanaCluster): string {
 }
 
 /**
- * Chain names by chain ID
- */
-const CHAIN_NAMES: Record<number, string> = {
-  80002: 'Polygon Amoy',
-  84532: 'Base Sepolia',
-  13337: 'Beam Testnet',
-  11155111: 'Sepolia',
-  11155420: 'Optimism Sepolia',
-  421614: 'Arbitrum Sepolia',
-}
-
-/**
- * Native currency configuration
- */
-interface NativeCurrency {
-  name: string
-  symbol: string
-  decimals: number
-}
-
-/**
- * Native currencies by chain ID
- */
-const NATIVE_CURRENCIES: Record<number, NativeCurrency> = {
-  80002: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-  84532: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  13337: { name: 'BEAM', symbol: 'BEAM', decimals: 18 },
-  11155111: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  11155420: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-  421614: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-}
-
-/**
- * Default native currency (ETH on mainnet)
- */
-const DEFAULT_NATIVE_CURRENCY: NativeCurrency = { name: 'Ether', symbol: 'ETH', decimals: 18 }
-
-/**
- * Get chain name by chain ID
+ * Get chain name by chain ID.
  */
 export function getChainName(chainId: number): string {
-  return CHAIN_NAMES[chainId] ?? `Chain ${chainId}`
+  return KNOWN_CHAINS[chainId]?.name ?? `Chain ${chainId}`
 }
 
 /**
- * Get native currency configuration for a chain
+ * Get native currency configuration for a chain.
  */
-export function getNativeCurrency(chainId: number): NativeCurrency {
-  return NATIVE_CURRENCIES[chainId] ?? DEFAULT_NATIVE_CURRENCY
-}
-
-/**
- * Block explorer URLs by chain ID
- */
-const BLOCK_EXPLORERS: Record<number, string> = {
-  80002: 'https://amoy.polygonscan.com',
-  84532: 'https://sepolia.basescan.org',
-  13337: 'https://subnets-test.avax.network/beam',
-  11155111: 'https://sepolia.etherscan.io',
-  11155420: 'https://sepolia-optimism.etherscan.io',
-  421614: 'https://sepolia.arbiscan.io',
-}
-
-/**
- * Get block explorer URL for a chain
- */
-function getBlockExplorerUrl(chainId: number): string | undefined {
-  return BLOCK_EXPLORERS[chainId]
+export function getNativeCurrency(chainId: number): { name: string; symbol: string; decimals: number } {
+  return KNOWN_CHAINS[chainId]?.nativeCurrency ?? { name: 'Ether', symbol: 'ETH', decimals: 18 }
 }
 
 /**
  * Build a viem Chain from chainId and optional rpcUrls (e.g. from walletConfig.ethereum.rpcUrls).
- * Used when no bridge is present (embedded strategy) so chains from context and viem clients have a Chain.
+ * Returns the viem/chains object directly when the chain is known and no custom RPC is provided.
  */
 export function buildChainFromConfig(chainId: number, rpcUrls?: Record<number, string>): Chain {
-  const rpcUrl = rpcUrls?.[chainId] ?? getDefaultEthereumRpcUrl(chainId)
+  const customRpcUrl = rpcUrls?.[chainId]
+  const knownChain = KNOWN_CHAINS[chainId]
+
+  if (knownChain && !customRpcUrl) {
+    return knownChain
+  }
+
+  const rpcUrl = customRpcUrl ?? knownChain?.rpcUrls.default.http[0]
   if (!rpcUrl) {
     throw new Error(`No RPC URL configured for chain ${chainId}. Provide walletConfig.ethereum.rpcUrls[${chainId}].`)
   }
-  const native = getNativeCurrency(chainId)
-  const explorerUrl = getBlockExplorerUrl(chainId)
+
+  const native = knownChain?.nativeCurrency ?? { name: 'Ether', symbol: 'ETH', decimals: 18 }
+  const explorerUrl = knownChain?.blockExplorers?.default.url
+
   return defineChain({
     id: chainId,
-    name: getChainName(chainId),
-    nativeCurrency: { decimals: native.decimals, name: native.name, symbol: native.symbol },
+    name: knownChain?.name ?? `Chain ${chainId}`,
+    nativeCurrency: native,
     rpcUrls: { default: { http: [rpcUrl] } },
     ...(explorerUrl && { blockExplorers: { default: { name: 'Explorer', url: explorerUrl } } }),
   })

@@ -1,4 +1,5 @@
-import { ChainTypeEnum, embeddedWalletId, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { ChainTypeEnum, embeddedWalletId, useOpenfort } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 import { useCallback, useState } from 'react'
 import { type Abi, createPublicClient, encodeFunctionData, http } from 'viem'
 import { useAccount, useWalletClient } from 'wagmi'

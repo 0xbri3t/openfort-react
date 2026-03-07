@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
-import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import styled from '../../styles/styled'
 import { isAndroid } from '../../utils'
 import { useOnUserReturn } from '../../utils/useOnUserReturn'
+import { useConnectWithSiwe } from '../../wagmi/useConnectWithSiwe'
 import { useExternalConnector } from '../../wallets/useExternalConnectors'
 import { walletConfigs } from '../../wallets/walletConfigs'
 import Button from '../Common/Button'

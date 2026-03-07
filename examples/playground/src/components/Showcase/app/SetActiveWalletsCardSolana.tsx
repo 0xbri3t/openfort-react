@@ -1,4 +1,5 @@
-import { RecoveryMethod, useSolanaEmbeddedWallet } from '@openfort/react'
+import { RecoveryMethod } from '@openfort/react'
+import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
 import { Link } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
 import { EyeIcon, EyeOffIcon, Loader2 } from 'lucide-react'

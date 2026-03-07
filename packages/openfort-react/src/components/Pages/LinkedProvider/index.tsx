@@ -20,14 +20,14 @@ import type { LinkedAccount } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 
-const ProviderIconContainer = styled.div`
+export const ProviderIconContainer = styled.div`
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 `
 
-const ProviderIconWrapper = styled.div`
+export const ProviderIconWrapper = styled.div`
   width: 54px;
   height: 54px;
   flex-shrink: 0;
@@ -37,7 +37,8 @@ const ProviderIconWrapper = styled.div`
   background-color: var(--ck-body-background-secondary);
   border-radius: 28px;
 `
-const ProviderIconInner = styled.div`
+
+export const ProviderIconInner = styled.div`
   width: 32px;
   height: 32px;
   flex-shrink: 0;
@@ -99,7 +100,7 @@ const LinkedProvider: React.FC = () => {
       return route.account
     }
     throw new Error('No account found in route')
-  }, [])
+  }, [route])
 
   const getProviderDetails = (account: LinkedAccount) => {
     switch (account.provider) {

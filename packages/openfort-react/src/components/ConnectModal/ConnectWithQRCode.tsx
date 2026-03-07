@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
-import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
 import { useWalletConnectModal } from '../../hooks/useWalletConnectModal'
 import { truncateEthAddress } from '../../utils'
+import { useConnectWithSiwe } from '../../wagmi/useConnectWithSiwe'
 import { useExternalConnector } from '../../wallets/useExternalConnectors'
 import { CopyText } from '../Common/CopyToClipboard/CopyText'
 import Loader from '../Common/Loading'

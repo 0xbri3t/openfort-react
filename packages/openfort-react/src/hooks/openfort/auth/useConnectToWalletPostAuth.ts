@@ -1,12 +1,10 @@
 'use client'
 
-import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
-import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useRef } from 'react'
+import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
+import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
-import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
+import { buildRecoveryParams } from '../../../shared/utils/recovery'
 import { logger } from '../../../utils/logger'
 import {
   type EthereumUserWallet,
@@ -53,19 +51,11 @@ export type CreateWalletPostAuthOptions = {
  * ```
  */
 export const useConnectToWalletPostAuth = () => {
-  const { chainType, setEmbeddedAccounts, setActiveEmbeddedAddress, embeddedState, client } = useOpenfortCore()
+  const { chainType, setActiveEmbeddedAddress, embeddedState, client, activeEmbeddedAddress, updateEmbeddedAccounts } =
+    useOpenfortCore()
   const { walletConfig } = useOpenfort()
   const chainId = walletConfig?.ethereum?.chainId ?? 84532
-  const ethereumWallet = useEthereumEmbeddedWallet()
-  const solanaWallet = useSolanaEmbeddedWallet()
   const { signOut } = useSignOut()
-  const queryClient = useQueryClient()
-
-  // Refs for wallet objects — these are new objects every render, so we avoid them as deps
-  const ethereumWalletRef = useRef(ethereumWallet)
-  ethereumWalletRef.current = ethereumWallet
-  const solanaWalletRef = useRef(solanaWallet)
-  solanaWalletRef.current = solanaWallet
 
   const tryUseWallet = useCallback(
     async ({
@@ -84,13 +74,9 @@ export const useConnectToWalletPostAuth = () => {
         return {}
       }
 
-      const wallets = await queryClient.ensureQueryData<EmbeddedAccount[]>({
-        queryKey: ['openfortEmbeddedAccountsList'],
-        queryFn: () => client.embeddedWallet.list({ limit: 100 }),
-      })
-
-      // Sync to Zustand store so useEthereumEmbeddedWallet/useSolanaEmbeddedWallet can find accounts for setActive
-      setEmbeddedAccounts(wallets)
+      // Fetch + sync accounts directly via the store — no TanStack Query peer dep needed
+      const wallets = await updateEmbeddedAccounts()
+      if (!wallets) return {}
 
       const chainWallets = wallets.filter((w) => w.chainType === chainType)
 
@@ -100,9 +86,23 @@ export const useConnectToWalletPostAuth = () => {
           return {}
         }
         try {
-          const wallet = chainType === ChainTypeEnum.SVM ? solanaWalletRef.current : ethereumWalletRef.current
-          const account = chainType === ChainTypeEnum.SVM ? await wallet.create() : await wallet.create({ chainId })
-
+          const recoveryParams = await buildRecoveryParams(
+            { recoveryMethod: undefined },
+            {
+              walletConfig,
+              getAccessToken: () => client.getAccessToken(),
+              getUserId: async () => (await client.user.get())?.id,
+            }
+          )
+          const accountType = walletConfig?.ethereum?.accountType ?? AccountTypeEnum.SMART_ACCOUNT
+          const account = await client.embeddedWallet.create({
+            chainType,
+            accountType: chainType === ChainTypeEnum.EVM ? accountType : AccountTypeEnum.EOA,
+            ...(chainType === ChainTypeEnum.EVM && accountType !== AccountTypeEnum.EOA && { chainId }),
+            recoveryParams,
+          })
+          await updateEmbeddedAccounts({ silent: true })
+          setActiveEmbeddedAddress(account.address)
           return {
             wallet:
               chainType === ChainTypeEnum.SVM
@@ -122,10 +122,9 @@ export const useConnectToWalletPostAuth = () => {
         chainWallets.find((w) => w.recoveryMethod === RecoveryMethod.PASSKEY)
 
       if (autoRecoverableWallet) {
-        // If the embedded signer isn't READY yet, skip setActive — the state machine in
+        // If the embedded signer isn't READY yet, skip recover() — the state machine in
         // CoreOpenfortProvider will handle wallet connection once READY is reached.
-        // Calling setActive before READY fails with "Embedded wallet not found" because
-        // the hook's internal accounts list hasn't been populated via React re-render yet.
+        // Calling recover() before READY races against the state machine's own recovery.
         if (embeddedState !== EmbeddedState.READY) {
           // Store the intended address so the state machine activates it when READY
           setActiveEmbeddedAddress(autoRecoverableWallet.address)
@@ -137,13 +136,12 @@ export const useConnectToWalletPostAuth = () => {
           }
         }
 
-        const currentWallet = chainType === ChainTypeEnum.SVM ? solanaWalletRef.current : ethereumWalletRef.current
+        // Check already-active using store state — no chain-specific wallet hook needed
         const alreadyActive =
-          currentWallet.status === 'connected' &&
-          currentWallet.address &&
+          activeEmbeddedAddress != null &&
           (chainType === ChainTypeEnum.SVM
-            ? currentWallet.address === autoRecoverableWallet.address
-            : (currentWallet.address as string).toLowerCase() === autoRecoverableWallet.address.toLowerCase())
+            ? activeEmbeddedAddress === autoRecoverableWallet.address
+            : activeEmbeddedAddress.toLowerCase() === autoRecoverableWallet.address.toLowerCase())
         if (alreadyActive) {
           return {
             wallet:
@@ -152,16 +150,26 @@ export const useConnectToWalletPostAuth = () => {
                 : embeddedAccountToUserWallet(autoRecoverableWallet),
           }
         }
-        try {
-          if (chainType === ChainTypeEnum.SVM) {
-            await solanaWalletRef.current.setActive({ address: autoRecoverableWallet.address })
-          } else {
-            await ethereumWalletRef.current.setActive({
-              address: autoRecoverableWallet.address as `0x${string}`,
-              chainId,
-            })
-          }
 
+        try {
+          // Configure signer directly — no chain-specific wallet hook import needed
+          const recoveryParams = await buildRecoveryParams(
+            {
+              recoveryMethod:
+                autoRecoverableWallet.recoveryMethod === RecoveryMethod.PASSKEY ? RecoveryMethod.PASSKEY : undefined,
+              passkeyId:
+                autoRecoverableWallet.recoveryMethod === RecoveryMethod.PASSKEY
+                  ? autoRecoverableWallet.recoveryMethodDetails?.passkeyId
+                  : undefined,
+            },
+            {
+              walletConfig,
+              getAccessToken: () => client.getAccessToken(),
+              getUserId: async () => (await client.user.get())?.id,
+            }
+          )
+          await client.embeddedWallet.recover({ account: autoRecoverableWallet.id, recoveryParams })
+          setActiveEmbeddedAddress(autoRecoverableWallet.address)
           return {
             wallet:
               chainType === ChainTypeEnum.SVM
@@ -188,7 +196,17 @@ export const useConnectToWalletPostAuth = () => {
           : undefined,
       }
     },
-    [chainType, client, walletConfig, chainId, signOut, queryClient, embeddedState, setActiveEmbeddedAddress]
+    [
+      chainType,
+      client,
+      walletConfig,
+      chainId,
+      signOut,
+      embeddedState,
+      setActiveEmbeddedAddress,
+      updateEmbeddedAccounts,
+      activeEmbeddedAddress,
+    ]
   )
 
   return {

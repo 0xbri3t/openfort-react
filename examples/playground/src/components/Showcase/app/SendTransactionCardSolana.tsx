@@ -1,4 +1,5 @@
-import { ChainTypeEnum, invalidateBalance, useSolanaEmbeddedWallet } from '@openfort/react'
+import { ChainTypeEnum, invalidateBalance } from '@openfort/react'
+import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
 import type { Address } from '@solana/kit'
 import { Check, Copy } from 'lucide-react'
 import type { ReactNode } from 'react'

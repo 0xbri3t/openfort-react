@@ -3,7 +3,7 @@
  * Returns { data, signMessage, isPending, error }. Not part of SDK.
  */
 
-import { useSolanaEmbeddedWallet } from '@openfort/react'
+import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
 import { useCallback, useState } from 'react'
 import { toError } from '@/lib/errors'
 

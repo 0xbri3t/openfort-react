@@ -1,10 +1,6 @@
-import {
-  ChainTypeEnum,
-  useEthereumEmbeddedWallet,
-  useOpenfort,
-  useSolanaEmbeddedWallet,
-  useUser,
-} from '@openfort/react'
+import { ChainTypeEnum, useOpenfort, useUser } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
+import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { ArrowUpRight } from 'lucide-react'
 import type { PropsWithChildren } from 'react'

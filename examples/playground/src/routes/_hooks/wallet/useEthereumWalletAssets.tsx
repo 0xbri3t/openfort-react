@@ -1,4 +1,4 @@
-import { useEthereumWalletAssets } from '@openfort/react'
+import { useEthereumWalletAssets } from '@openfort/react/ethereum'
 import { createFileRoute } from '@tanstack/react-router'
 import { HookVariable } from '@/components/Variable/HookVariable'
 import { Layout } from '../../../components/Layout'

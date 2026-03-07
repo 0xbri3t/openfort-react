@@ -1,4 +1,5 @@
-import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { useOpenfort } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { createWalletClient, custom } from 'viem'

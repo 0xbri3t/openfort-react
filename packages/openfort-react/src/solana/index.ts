@@ -7,6 +7,7 @@
  * @packageDocumentation
  */
 
+export type { SolanaUserWallet } from '../hooks/openfort/walletTypes'
 export type {
   CreateEmbeddedWalletOptions,
   CreateEmbeddedWalletResult,

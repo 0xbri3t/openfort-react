@@ -6,5 +6,6 @@ export {
 export { OpenfortWagmiBridge } from './OpenfortWagmiBridge'
 export { useChainIsSupported } from './useChainIsSupported'
 export { useChains } from './useChains'
+export { useConnectWithSiwe } from './useConnectWithSiwe'
 export type { AvailableWallet } from './useWalletAuth'
 export { useWalletAuth } from './useWalletAuth'

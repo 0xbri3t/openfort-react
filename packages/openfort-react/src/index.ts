@@ -30,14 +30,15 @@
  * |------|-----|
  * | Auth user (isAuthenticated, user, linkedAccounts) | `useUser()` |
  * | Am I connected? (auth + wallet ready) | `useUser().isConnected` |
- * | EVM wallet (address, chainId, status, create, export) | `useEthereumEmbeddedWallet()` |
- * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` |
+ * | EVM wallet (address, chainId, status, create, export) | `useEthereumEmbeddedWallet()` from `@openfort/react/ethereum` |
+ * | Solana wallet (address, cluster, status, create) | `useSolanaEmbeddedWallet()` from `@openfort/react/solana` |
  * | Send ETH / write contract / get balance (EVM) | Use `wagmi` or `viem` directly |
  * | Get SOL balance / sign message / send SOL (Solana) | Use `@solana/kit` with embedded wallet provider |
  * | Connect/link wallet (SIWE) + list wallets | `useWalletAuth()` (from `@openfort/react/wagmi`) |
  * | Grant session key permissions | `useGrantPermissions()` |
  * | Revoke session key permissions | `useRevokePermissions()` |
  */
+// ── SDK re-exports ──────────────────────────────────────────────────────────
 export {
   AccountTypeEnum,
   AuthInitPayload,
@@ -53,35 +54,25 @@ export {
   User,
 } from '@openfort/openfort-js'
 export type { CountrySelectorProps } from 'react-international-phone'
+// ── Provider + UI components ─────────────────────────────────────────────────
 export { default as Avatar } from './components/Common/Avatar'
 export { default as ChainIcon } from './components/Common/Chain'
 export { OpenfortButton } from './components/ConnectButton'
 export { OpenfortProvider } from './components/Openfort/OpenfortProvider'
 export type { CustomizableRoutes } from './components/Openfort/types'
 export { LinkWalletOnSignUpOption, UIAuthProvider as AuthProvider } from './components/Openfort/types'
-// ── Internal exports for sub-path bundles (wagmi, ethereum, solana) ──
-// These are consumed by @openfort/react/wagmi, @openfort/react/ethereum, @openfort/react/solana
-// via the rewriteToMainBundle Rollup plugin. Not intended for direct consumer use.
-export { useOpenfortUIContext } from './components/Openfort/useOpenfort'
 export { embeddedWalletId } from './constants/openfort'
-export { useConnectionStrategy } from './core/ConnectionStrategyContext'
 export {
   OpenfortError,
   OpenfortReactErrorType,
   OpenfortReactErrorType as OpenfortErrorType,
 } from './core/errors'
-// Ethereum
-export { useEthereumEmbeddedWallet } from './ethereum/hooks/useEthereumEmbeddedWallet'
-export { useEthereumWalletAssets } from './ethereum/hooks/useEthereumWalletAssets'
-export { OpenfortEthereumBridgeContext, useEthereumBridge } from './ethereum/OpenfortEthereumBridgeContext'
 export type {
   ConnectedEmbeddedEthereumWallet,
   EthereumWalletState,
   SetActiveEthereumWalletOptions,
   UseEmbeddedEthereumWalletOptions,
 } from './ethereum/types'
-export { mapStatus } from './hooks/openfort/auth/status'
-// ── Auth ──
 export { useAuthCallback } from './hooks/openfort/auth/useAuthCallback'
 export type { EmailVerificationResult } from './hooks/openfort/auth/useEmailAuth'
 export { useEmailAuth } from './hooks/openfort/auth/useEmailAuth'
@@ -91,22 +82,19 @@ export type { StoreCredentialsResult } from './hooks/openfort/auth/useOAuth'
 export { useOAuth } from './hooks/openfort/auth/useOAuth'
 export { usePhoneOtpAuth } from './hooks/openfort/auth/usePhoneOtpAuth'
 export { useSignOut } from './hooks/openfort/auth/useSignOut'
-export { onError, onSuccess } from './hooks/openfort/hookConsistency'
 export {
   type SignAuthorizationParameters,
   type SignAuthorizationReturnType,
   use7702Authorization,
 } from './hooks/openfort/use7702Authorization'
-export { useConnectWithSiwe } from './hooks/openfort/useConnectWithSiwe'
 export { useGrantPermissions } from './hooks/openfort/useGrantPermissions'
 export { useRevokePermissions } from './hooks/openfort/useRevokePermissions'
 export { useUI } from './hooks/openfort/useUI'
 export { useUser } from './hooks/openfort/useUser'
-export type {
-  SolanaUserWallet,
-  UserWallet,
-} from './hooks/openfort/walletTypes'
+export type { UserWallet } from './hooks/openfort/walletTypes'
 export { invalidateBalance } from './hooks/useBalance'
+export { StoreContext } from './openfort/context'
+// ── Store / selectors ────────────────────────────────────────────────────────
 export {
   selectActiveAddress,
   selectChainType,
@@ -118,20 +106,14 @@ export {
 } from './openfort/selectors'
 export type { OpenfortStore, OpenfortStoreState } from './openfort/store'
 export { useOpenfortCore as useOpenfort, useOpenfortCore } from './openfort/useOpenfort'
-export { useOpenfortStore } from './openfort/useOpenfortStore'
 export { getEmbeddedAccountsQueryOptions, getUserQueryOptions, openfortKeys } from './query'
-export { useAsyncData } from './shared/hooks/useAsyncData'
-// Bridge types/context are internal
 export type {
   CreateEmbeddedWalletOptions,
   CreateEmbeddedWalletResult,
   SetRecoveryOptions,
 } from './shared/types'
-export { buildEmbeddedWalletStatusResult } from './shared/utils/embeddedWalletStatusMapper'
-export { buildRecoveryParams } from './shared/utils/recovery'
+// ── Utilities ────────────────────────────────────────────────────────────────
 export { createSIWEMessage } from './siwe/create-siwe-message'
-export { useSolanaEmbeddedWallet } from './solana/hooks/useSolanaEmbeddedWallet'
-// Solana
 export type {
   ConnectedEmbeddedSolanaWallet,
   SetActiveSolanaWalletOptions,

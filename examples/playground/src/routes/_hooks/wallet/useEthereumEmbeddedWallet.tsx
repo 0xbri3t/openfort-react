@@ -1,4 +1,6 @@
-import { RecoveryMethod, useEthereumEmbeddedWallet, useSolanaEmbeddedWallet } from '@openfort/react'
+import { RecoveryMethod } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
+import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
 import { createFileRoute } from '@tanstack/react-router'
 import { Layout } from '@/components/Layout'
 import { onSettledOptions } from '@/components/Variable/commonVariables'

@@ -1,4 +1,5 @@
-import { AccountTypeEnum, embeddedWalletId, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { AccountTypeEnum, embeddedWalletId, useOpenfort } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { encodeFunctionData, getAddress, parseAbi } from 'viem'

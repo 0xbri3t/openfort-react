@@ -1,7 +1,5 @@
 import { AccountRole, address } from '@solana/kit'
-import { TRANSFER_INSTRUCTION_INDEX } from '../constants'
-
-const SYSTEM_PROGRAM_ADDRESS = address('11111111111111111111111111111111')
+import { SYSTEM_PROGRAM_ADDRESS, TRANSFER_INSTRUCTION_INDEX } from '../constants'
 
 export function createTransferSolInstruction(
   from: string,
@@ -17,7 +15,7 @@ export function createTransferSolInstruction(
   view.setUint32(0, TRANSFER_INSTRUCTION_INDEX, true)
   view.setBigUint64(4, lamports, true)
   return {
-    programAddress: SYSTEM_PROGRAM_ADDRESS,
+    programAddress: address(SYSTEM_PROGRAM_ADDRESS),
     data,
     accounts: [
       { address: address(from), role: AccountRole.WRITABLE_SIGNER },

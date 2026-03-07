@@ -4,7 +4,8 @@
  * - svm: no Ethereum address (Solana only)
  */
 
-import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { useOpenfort } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 import type React from 'react'
 import { createContext, useContext } from 'react'
 import { useAccount } from 'wagmi'

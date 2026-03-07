@@ -3,10 +3,10 @@
 import { OpenfortError } from '@openfort/openfort-js'
 import { AxiosError } from 'axios'
 import { useCallback } from 'react'
-import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
-import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { createSIWEMessage } from '../../siwe/create-siwe-message'
-import { logger } from '../../utils/logger'
+import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
+import { useOpenfortCore } from '../openfort/useOpenfort'
+import { createSIWEMessage } from '../siwe/create-siwe-message'
+import { logger } from '../utils/logger'
 
 /**
  * Returns connectWithSiwe for linking external wallets via SIWE.

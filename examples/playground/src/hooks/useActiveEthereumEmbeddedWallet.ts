@@ -7,7 +7,8 @@
  * state instances exist and the connecting status won't propagate.
  */
 
-import { type EthereumWalletState, useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { type EthereumWalletState, useOpenfort } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 
 type EmbeddedWallet = EthereumWalletState['wallets'][number]
 

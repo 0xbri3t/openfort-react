@@ -1,4 +1,4 @@
-import { useConnectWithSiwe } from '@openfort/react'
+import { useConnectWithSiwe } from '@openfort/react/wagmi'
 import { createFileRoute } from '@tanstack/react-router'
 import { HookVariable } from '@/components/Variable/HookVariable'
 import { Layout } from '../../../components/Layout'

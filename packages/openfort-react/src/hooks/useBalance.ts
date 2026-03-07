@@ -32,7 +32,7 @@ interface UseBalanceOptions {
   address: string
   /** Chain type */
   chainType: ChainTypeEnum
-  /** Ethereum chain ID (default: 80002 Polygon Amoy) */
+  /** Ethereum chain ID (default: 84532 Base Sepolia) */
   chainId?: number
   /** Solana cluster (default: devnet) */
   cluster?: SolanaCluster

@@ -1,11 +1,6 @@
-import {
-  ChainTypeEnum,
-  useEthereumEmbeddedWallet,
-  useOpenfort,
-  useSignOut,
-  useSolanaEmbeddedWallet,
-  useUser,
-} from '@openfort/react'
+import { ChainTypeEnum, useOpenfort, useSignOut, useUser } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
+import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
 import { Link } from '@tanstack/react-router'
 import { ConnectExternalWalletCard } from '@/components/Showcase/app/ConnectExternalWalletCard'
 import { SendTransactionCardSolana } from '@/components/Showcase/app/SendTransactionCardSolana'

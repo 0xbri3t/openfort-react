@@ -15,32 +15,7 @@ import { ProviderIcon } from '../../Common/Providers/ProviderIcon'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
-
-const ProviderIconContainer = styled.div`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
-
-const ProviderIconWrapper = styled.div`
-  width: 54px;
-  height: 54px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--ck-body-background-secondary);
-  border-radius: 28px;
-`
-const ProviderIconInner = styled.div`
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`
+import { ProviderIconContainer, ProviderIconInner, ProviderIconWrapper } from '../LinkedProvider'
 
 const ButtonWrapper = styled.div`
   display: flex;
@@ -64,7 +39,7 @@ const RemoveLinkedProvider: React.FC = () => {
       return route.account
     }
     throw new Error('No provider found in route')
-  }, [])
+  }, [route])
 
   useEffect(() => {
     if (error) triggerResize()

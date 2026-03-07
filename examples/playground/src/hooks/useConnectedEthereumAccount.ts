@@ -7,7 +7,8 @@
  *   Uses wagmi hooks (useChainId, useSwitchChain) – same source as modal.
  */
 
-import { useEthereumEmbeddedWallet, useOpenfort } from '@openfort/react'
+import { useOpenfort } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 import { useAccount, useChainId } from 'wagmi'
 import { useEthereumAddressContext } from '@/contexts/EthereumAddressContext'
 import { DEFAULT_EVM_CHAIN } from '@/lib/chains'

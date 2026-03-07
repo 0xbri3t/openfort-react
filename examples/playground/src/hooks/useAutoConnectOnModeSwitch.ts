@@ -7,14 +7,9 @@
  * Retries if accounts were empty on first load (waits for them to populate).
  */
 
-import {
-  ChainTypeEnum,
-  RecoveryMethod,
-  useEthereumEmbeddedWallet,
-  useOpenfort,
-  useSolanaEmbeddedWallet,
-  useUser,
-} from '@openfort/react'
+import { ChainTypeEnum, RecoveryMethod, useOpenfort, useUser } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
+import { useSolanaEmbeddedWallet } from '@openfort/react/solana'
 import { useEffect, useRef } from 'react'
 import type { OpenfortPlaygroundMode } from '@/providers'
 

@@ -1,4 +1,5 @@
-import { AccountTypeEnum, useEthereumEmbeddedWallet } from '@openfort/react'
+import { AccountTypeEnum } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 
 /**
  * Session keys are only supported for Smart Accounts.

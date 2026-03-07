@@ -18,10 +18,6 @@ import {
   ProviderIconWrapper,
 } from './styles'
 
-type LinkedProvidersProps = {
-  showHeader?: boolean
-}
-
 const LinkedProvider: React.FC<{ account: LinkedAccount }> = ({ account }) => {
   const { setRoute } = useOpenfort()
   return (
@@ -49,7 +45,7 @@ const AddLinkedProviderButton: React.FC = () => {
   )
 }
 
-const LinkedProvidersGroup: React.FC<LinkedProvidersProps> = () => {
+const LinkedProvidersGroup: React.FC = () => {
   const { linkedAccounts, user, isLoading } = useOpenfortCore()
   const { triggerResize } = useOpenfort()
 

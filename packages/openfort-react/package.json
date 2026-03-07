@@ -13,19 +13,19 @@
   "exports": {
     ".": {
       "types": "./build/index.d.ts",
-      "import": "./build/index.es.js"
+      "import": "./build/index.js"
     },
     "./solana": {
       "types": "./build/solana/index.d.ts",
-      "import": "./build/solana/index.es.js"
+      "import": "./build/solana/index.js"
     },
     "./ethereum": {
       "types": "./build/ethereum/index.d.ts",
-      "import": "./build/ethereum/index.es.js"
+      "import": "./build/ethereum/index.js"
     },
     "./wagmi": {
       "types": "./build/wagmi/index.d.ts",
-      "import": "./build/wagmi/index.es.js"
+      "import": "./build/wagmi/index.js"
     }
   },
   "types": "./build/index.d.ts",

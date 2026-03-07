@@ -8,6 +8,7 @@ import {
   RecoveryMethod,
 } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { baseSepolia } from 'viem/chains'
 import { useOpenfortUIContext as useOpenfort } from '../../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../../constants/openfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
@@ -76,7 +77,8 @@ function toConnectedStateProperties(
   }
 }
 
-const DEFAULT_CHAIN_ID = 84532
+/** Base Sepolia — fallback chain when no strategy or config provides a chain ID. */
+const DEFAULT_TESTNET_CHAIN_ID = baseSepolia.id
 
 function buildConnectedWallet(
   acc: EmbeddedAccount,
@@ -135,8 +137,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   const { walletConfig, chainType } = useOpenfort()
   const strategy = useConnectionStrategy()
 
-  const creationChainId = options?.chainId ?? strategy?.getChainId() ?? DEFAULT_CHAIN_ID
-  const activeReturnChainId = strategy?.getChainId() ?? DEFAULT_CHAIN_ID
+  const creationChainId = options?.chainId ?? strategy?.getChainId() ?? DEFAULT_TESTNET_CHAIN_ID
+  const activeReturnChainId = strategy?.getChainId() ?? DEFAULT_TESTNET_CHAIN_ID
 
   const setActiveInProgressRef = useRef<Promise<void> | null>(null)
   const ethereumAccountsRef = useRef<EmbeddedAccount[]>([])

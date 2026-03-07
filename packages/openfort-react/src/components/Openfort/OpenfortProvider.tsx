@@ -91,33 +91,24 @@ export const OpenfortProvider = ({
   }
 
   const debugModeOptions: Required<DebugModeOptions & { debugRoutes?: boolean }> = useMemo(() => {
-    const getDebugMode = () => {
-      if (typeof debugMode === 'undefined') {
-        return {
-          shieldDebugMode: false,
-          openfortCoreDebugMode: false,
-          openfortReactDebugMode: false,
-          debugRoutes: false,
-        }
-      } else if (typeof debugMode === 'boolean') {
-        return {
-          shieldDebugMode: debugMode,
-          openfortCoreDebugMode: debugMode,
-          openfortReactDebugMode: debugMode,
-          debugRoutes: false,
-        }
-      } else {
-        return {
-          shieldDebugMode: debugMode.shieldDebugMode ?? false,
-          openfortCoreDebugMode: debugMode.openfortCoreDebugMode ?? false,
-          openfortReactDebugMode: debugMode.openfortReactDebugMode ?? false,
-          debugRoutes: debugMode.debugRoutes ?? false,
-        }
-      }
-    }
-    const debugModeOptions = getDebugMode()
-    logger.enabled = debugModeOptions.openfortReactDebugMode
-    return debugModeOptions
+    const result =
+      typeof debugMode === 'undefined'
+        ? { shieldDebugMode: false, openfortCoreDebugMode: false, openfortReactDebugMode: false, debugRoutes: false }
+        : typeof debugMode === 'boolean'
+          ? {
+              shieldDebugMode: debugMode,
+              openfortCoreDebugMode: debugMode,
+              openfortReactDebugMode: debugMode,
+              debugRoutes: false,
+            }
+          : {
+              shieldDebugMode: debugMode.shieldDebugMode ?? false,
+              openfortCoreDebugMode: debugMode.openfortCoreDebugMode ?? false,
+              openfortReactDebugMode: debugMode.openfortReactDebugMode ?? false,
+              debugRoutes: debugMode.debugRoutes ?? false,
+            }
+    logger.enabled = result.openfortReactDebugMode
+    return result
   }, [debugMode])
 
   const injectedConnector = bridge?.connectors?.find((c) => c.id === 'injected')

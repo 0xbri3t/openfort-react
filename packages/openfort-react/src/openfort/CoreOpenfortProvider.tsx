@@ -20,8 +20,6 @@ import { useOpenfort } from '../components/Openfort/useOpenfort'
 import { embeddedWalletId } from '../constants/openfort'
 import type { ConnectionStrategy } from '../core/ConnectionStrategy'
 import { ConnectionStrategyProvider, useConnectionStrategy } from '../core/ConnectionStrategyContext'
-import { createEthereumBridgeStrategy } from '../core/strategies/EthereumBridgeStrategy'
-import { createEthereumEmbeddedStrategy } from '../core/strategies/EthereumEmbeddedStrategy'
 import { firstEmbeddedAddress } from '../core/strategyUtils'
 import { OpenfortEthereumBridgeContext } from '../ethereum/OpenfortEthereumBridgeContext'
 import { useConnectLifecycle } from '../hooks/useConnectLifecycle'
@@ -85,6 +83,27 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }
   }, [walletConfig])
 
+  const [evmStrategy, setEvmStrategy] = useState<ConnectionStrategy | null>(null)
+  useEffect(() => {
+    if (!walletConfig?.ethereum && !bridge) {
+      setEvmStrategy(null)
+      return
+    }
+    let cancelled = false
+    if (bridge) {
+      import('../core/strategies/EthereumBridgeStrategy').then((m) => {
+        if (!cancelled) setEvmStrategy(m.createEthereumBridgeStrategy(bridge, bridgeConnectors))
+      })
+    } else {
+      import('../core/strategies/EthereumEmbeddedStrategy').then((m) => {
+        if (!cancelled) setEvmStrategy(m.createEthereumEmbeddedStrategy(walletConfig))
+      })
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [bridge, bridgeConnectors, walletConfig])
+
   // ---- Zustand store + Openfort client ----
   const bridgeRef = useRef(bridge)
   bridgeRef.current = bridge
@@ -135,12 +154,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
   const strategy = useMemo(() => {
     const strategyByChain: Partial<Record<ChainTypeEnum, ConnectionStrategy | null>> = {
       [ChainTypeEnum.SVM]: solanaStrategy,
-      [ChainTypeEnum.EVM]: bridge
-        ? createEthereumBridgeStrategy(bridge, bridgeConnectors)
-        : createEthereumEmbeddedStrategy(walletConfig),
+      [ChainTypeEnum.EVM]: evmStrategy,
     }
     return strategyByChain[chainType] ?? null
-  }, [bridge, chainType, walletConfig, bridgeConnectors, solanaStrategy])
+  }, [chainType, solanaStrategy, evmStrategy])
 
   // ---- Embedded state ----
   useEffect(() => {

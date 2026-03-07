@@ -1,12 +1,13 @@
 import type { ChainTypeEnum, EmbeddedAccount, EmbeddedState, Openfort, User } from '@openfort/openfort-js'
+import { baseSepolia, sepolia } from 'viem/chains'
 import type { OpenfortWalletConfig } from '../components/Openfort/types'
 import type { ExternalConnectorProps } from '../wallets/useExternalConnectors'
 
 /** Default chain when EVM without Wagmi and walletConfig.ethereum.chainId is missing. Sepolia. */
-export const DEFAULT_DEV_CHAIN_ID = 11155111
+export const DEFAULT_DEV_CHAIN_ID = sepolia.id
 
-/** Default testnet chain for balance/hooks when no chain context. Polygon Amoy. */
-export const DEFAULT_TESTNET_CHAIN_ID = 84532
+/** Default testnet chain for balance/hooks when no chain context. Base Sepolia. */
+export const DEFAULT_TESTNET_CHAIN_ID = baseSepolia.id
 
 export interface ConnectionStrategyState {
   user: User | null

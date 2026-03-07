@@ -146,8 +146,6 @@ export enum UIAuthProvider {
   GUEST = 'guest',
 }
 
-type _ErrorMessage = string | React.ReactNode | null
-
 export const socialProviders = [
   UIAuthProvider.GOOGLE,
   UIAuthProvider.TWITTER,
