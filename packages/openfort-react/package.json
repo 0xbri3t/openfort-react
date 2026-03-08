@@ -113,6 +113,9 @@
     "wagmi": "^2.18.2"
   },
   "peerDependenciesMeta": {
+    "@solana/kit": {
+      "optional": true
+    },
     "wagmi": {
       "optional": true
     },

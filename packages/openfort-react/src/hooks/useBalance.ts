@@ -1,7 +1,6 @@
 'use client'
 
 import { ChainTypeEnum } from '@openfort/openfort-js'
-import { address, createSolanaRpc } from '@solana/kit'
 import { useEffect } from 'react'
 import { createPublicClient, formatEther, http } from 'viem'
 import { useOpenfort } from '../components/Openfort/useOpenfort'
@@ -58,6 +57,7 @@ export async function fetchSolanaBalance(
   rpcUrl: string,
   commitment: 'processed' | 'confirmed' | 'finalized'
 ): Promise<BalanceResult> {
+  const { address, createSolanaRpc } = await import('@solana/kit')
   const rpc = createSolanaRpc(rpcUrl)
   const { value: lamports } = await rpc.getBalance(address(addressStr), { commitment }).send()
   return {
