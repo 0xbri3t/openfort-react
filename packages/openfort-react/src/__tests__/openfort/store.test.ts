@@ -137,3 +137,19 @@ describe('store — recoveryError auto-clear', () => {
     expect(store.getState().recoveryError).not.toBeNull()
   })
 })
+
+describe('store — construction', () => {
+  it('exposes client immediately at construction time', () => {
+    const client = createMockOpenfortClient() as unknown as Openfort
+    const store = createOpenfortStore(ChainTypeEnum.EVM, client)
+    expect(store.getState().client).toBe(client)
+  })
+
+  it('default action no-ops resolve without throwing', async () => {
+    const store = makeStore()
+    await expect(store.getState().logout()).resolves.toBeUndefined()
+    await expect(store.getState().signUpGuest()).resolves.toBeUndefined()
+    await expect(store.getState().updateUser()).resolves.toBeNull()
+    await expect(store.getState().updateEmbeddedAccounts()).resolves.toBeUndefined()
+  })
+})
