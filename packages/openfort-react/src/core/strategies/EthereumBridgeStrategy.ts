@@ -4,7 +4,7 @@ import type { OpenfortEthereumBridgeValue } from '../../ethereum/OpenfortEthereu
 import { logger } from '../../utils/logger'
 import type { ExternalConnectorProps } from '../../wallets/useExternalConnectors'
 import type { ConnectionStrategy } from '../ConnectionStrategy'
-import { resolveEthereumPolicy } from '../strategyUtils'
+import { resolveEthereumFeeSponsorship } from '../strategyUtils'
 
 /**
  * Creates the EVM strategy when wagmi bridge is present.
@@ -47,7 +47,7 @@ export function createEthereumBridgeStrategy(
 
     async initProvider(openfort: Openfort, walletConfig: OpenfortWalletConfig, chainIdOverride?: number) {
       const chainId = chainIdOverride ?? bridge.chainId
-      const policyObj = chainId != null ? resolveEthereumPolicy(walletConfig, chainId) : undefined
+      const feeSponsorshipObj = chainId != null ? resolveEthereumFeeSponsorship(walletConfig, chainId) : undefined
 
       const rpcUrls = bridge.config.chains.reduce(
         (acc, ch) => {
@@ -59,7 +59,7 @@ export function createEthereumBridgeStrategy(
       )
 
       const provider = await openfort.embeddedWallet.getEthereumProvider({
-        ...policyObj,
+        ...feeSponsorshipObj,
         chains: rpcUrls,
         announceProvider: true,
         providerInfo: {

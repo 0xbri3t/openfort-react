@@ -4,7 +4,7 @@ import { EVM_TX_HASH_REGEX } from '../utils/mode'
 test.describe('Write Contract - mint tokens', () => {
   test.describe.configure({ retries: 1 })
 
-  // Minting requires a Smart Account (or Delegated) for gas sponsorship via policy.
+  // Minting requires a Smart Account (or Delegated) for gas sponsorship via fee sponsorship.
   test('smart account: mint shows transaction hash', async ({ page, dashboardPage, mode }) => {
     const m = mode
     await dashboardPage.ensureReady(m)

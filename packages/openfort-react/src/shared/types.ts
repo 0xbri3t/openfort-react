@@ -74,6 +74,6 @@ export type CreateEmbeddedWalletOptions = {
   otpCode?: string
   /** Account type (EOA, Smart Account, or Delegated Account) */
   accountType?: AccountTypeEnum
-  /** Policy ID for gas sponsorship */
-  policyId?: string
+  /** Fee sponsorship ID for gas sponsorship */
+  feeSponsorshipId?: string
 } & OpenfortHookOptions<CreateEmbeddedWalletResult>

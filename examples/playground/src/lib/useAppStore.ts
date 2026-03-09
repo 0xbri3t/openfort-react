@@ -15,8 +15,8 @@ const defaultWalletConfig: OpenfortWalletConfig = {
   ethereum: {
     chainId: DEFAULT_EVM_CHAIN.id,
     rpcUrls: RPC_URLS,
-    ethereumProviderPolicyId: Object.fromEntries(
-      PLAYGROUND_EVM_CHAINS.map((c) => [c.id, import.meta.env.VITE_POLICY_ID!])
+    ethereumFeeSponsorshipId: Object.fromEntries(
+      PLAYGROUND_EVM_CHAINS.map((c) => [c.id, import.meta.env.VITE_FEE_SPONSORSHIP_ID!])
     ),
     assets: {
       [polygonAmoy.id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],

@@ -33,7 +33,7 @@ export interface ConnectionStrategy {
   /** External wallet connectors; only when wagmi/bridge exists. Otherwise []. */
   getConnectors(): ExternalConnectorProps[]
 
-  /** @param chainId - Current chain for EVM; when provided, uses this for policy/rpc instead of config default. */
+  /** @param chainId - Current chain for EVM; when provided, uses this for fee sponsorship/rpc instead of config default. */
   initProvider(openfort: Openfort, walletConfig: OpenfortWalletConfig, chainId?: number): Promise<void>
   disconnect(openfort: Openfort): Promise<void>
 }

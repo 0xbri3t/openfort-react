@@ -20,15 +20,15 @@ export function firstEmbeddedAddress(
   return forChain[0].address
 }
 
-export function resolveEthereumPolicy(
+export function resolveEthereumFeeSponsorship(
   config: OpenfortWalletConfig | undefined,
   chainId: number
 ): { policy: string } | undefined {
-  const policy = config?.ethereum?.ethereumProviderPolicyId
-  if (!policy) return undefined
-  if (typeof policy === 'string') return { policy }
-  if (typeof policy === 'object' && chainId in policy) {
-    return { policy: (policy as Record<number, string>)[chainId] }
+  const feeSponsorship = config?.ethereum?.ethereumFeeSponsorshipId
+  if (!feeSponsorship) return undefined
+  if (typeof feeSponsorship === 'string') return { policy: feeSponsorship }
+  if (typeof feeSponsorship === 'object' && chainId in feeSponsorship) {
+    return { policy: (feeSponsorship as Record<number, string>)[chainId] }
   }
   return undefined
 }

@@ -367,11 +367,11 @@ const SendConfirmation = () => {
   }, [errorDetails, insufficientBalance, receipt?.transactionHash, isLoading, triggerResize])
 
   const isSponsored = useMemo(() => {
-    const policy = walletConfig?.ethereum?.ethereumProviderPolicyId
-    if (!policy) return false
-    if (typeof policy === 'string') return true
-    return policy[chainId ?? 0] !== undefined
-  }, [walletConfig?.ethereum?.ethereumProviderPolicyId, chainId])
+    const feeSponsorship = walletConfig?.ethereum?.ethereumFeeSponsorshipId
+    if (!feeSponsorship) return false
+    if (typeof feeSponsorship === 'string') return true
+    return feeSponsorship[chainId ?? 0] !== undefined
+  }, [walletConfig?.ethereum?.ethereumFeeSponsorshipId, chainId])
 
   if (isSuccess) {
     const successAmount = normalisedAmount || '0'

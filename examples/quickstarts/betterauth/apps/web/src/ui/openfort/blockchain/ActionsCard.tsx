@@ -117,7 +117,7 @@ const MintContract = () => {
 }
 
 export const ActionsCard = () => {
-  const hasSponsorPolicy = useMemo(() => !!import.meta.env.VITE_POLICY_ID, [])
+  const hasFeeSponsorship = useMemo(() => !!import.meta.env.VITE_FEE_SPONSORSHIP_ID, [])
   const chains = useChains()
   return (
     <div className="flex flex-col w-full">
@@ -125,7 +125,7 @@ export const ActionsCard = () => {
       <span className="mb-4 text-zinc-400 text-sm">
         Interact with smart contracts on the blockchain.
       </span>
-      {!hasSponsorPolicy && (
+      {!hasFeeSponsorship && (
         <div className="mb-3 p-3 bg-red-800 text-white rounded text-sm">
           <strong>Warning: Transactions are not sponsored.</strong> Minting may
           fail because transactions are not being sponsored. To sponsor
@@ -138,9 +138,9 @@ export const ActionsCard = () => {
           >
             Openfort Dashboard
           </a>{' '}
-          and <b>create a policy</b> sponsoring transactions in{' '}
-          <b>{chains[0].name}</b>. Set the <code>VITE_POLICY_ID</code>{' '}
-          environment variable with the policy ID.
+          and <b>create a fee sponsorship</b> for transactions in{' '}
+          <b>{chains[0].name}</b>. Set the <code>VITE_FEE_SPONSORSHIP_ID</code>{' '}
+          environment variable with the fee sponsorship ID.
         </div>
       )}
       <MintContract />

@@ -17,8 +17,8 @@ export type {
   EthereumConfig,
   EthereumWalletActions,
   EthereumWalletState,
+  FeeSponsorshipConfig,
   OpenfortEmbeddedEthereumWalletProvider,
-  PolicyConfig,
   SetActiveEthereumWalletOptions,
   UseEmbeddedEthereumWalletOptions,
 } from './types'

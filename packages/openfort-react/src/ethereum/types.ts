@@ -20,7 +20,7 @@ import type {
   WalletDerived,
 } from '../shared/types'
 
-export type PolicyConfig = string | Record<number, string>
+export type FeeSponsorshipConfig = string | Record<number, string>
 
 export type EthereumConfig = {
   /** Initial chain ID for the embedded wallet provider.
@@ -28,8 +28,8 @@ export type EthereumConfig = {
    * Required for SDK-only (no wagmi) mode; defaults to Sepolia if omitted. */
   chainId?: number
   rpcUrls?: Record<number, string>
-  /** Policy ID (pol_...) for gas sponsorship / embedded signer */
-  ethereumProviderPolicyId?: PolicyConfig
+  /** Fee sponsorship ID for gas sponsorship / embedded signer */
+  ethereumFeeSponsorshipId?: FeeSponsorshipConfig
   accountType?: AccountTypeEnum
   /** Token addresses for asset inventory (chainId -> Hex[]) */
   assets?: Record<number, Hex[]>

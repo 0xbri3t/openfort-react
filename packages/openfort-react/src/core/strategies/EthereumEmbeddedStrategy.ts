@@ -3,7 +3,7 @@ import type { OpenfortWalletConfig } from '../../components/Openfort/types'
 import { logger } from '../../utils/logger'
 import type { ConnectionStrategy, ConnectionStrategyState } from '../ConnectionStrategy'
 import { DEFAULT_DEV_CHAIN_ID } from '../ConnectionStrategy'
-import { firstEmbeddedAddress, resolveEthereumPolicy } from '../strategyUtils'
+import { firstEmbeddedAddress, resolveEthereumFeeSponsorship } from '../strategyUtils'
 
 function hasEmbeddedEthereum(state: ConnectionStrategyState): boolean {
   if (!state.user || !state.activeEmbeddedAddress || state.embeddedState !== EmbeddedState.READY) return false
@@ -63,14 +63,14 @@ export function createEthereumEmbeddedStrategy(walletConfig: OpenfortWalletConfi
       const ethereum = config?.ethereum
       const chainId = chainIdOverride ?? ethereum?.chainId ?? DEFAULT_DEV_CHAIN_ID
       const rpcUrls = ethereum?.rpcUrls ?? {}
-      const policyObj = resolveEthereumPolicy(config, chainId)
+      const feeSponsorshipObj = resolveEthereumFeeSponsorship(config, chainId)
 
       const provider = await openfort.embeddedWallet.getEthereumProvider({
-        ...policyObj,
+        ...feeSponsorshipObj,
         chains: rpcUrls,
       })
       // Tell the provider which chain is active (EIP-1193). Without this, the provider
-      // stays on its initial chain (e.g. 80002) while policy resolution is per-chain.
+      // stays on its initial chain (e.g. 80002) while fee sponsorship resolution is per-chain.
       // Skip if the chain hasn't changed since last init to avoid spurious 422s.
       // Also skip if there are no accounts yet — switch-chain requires an initialized account.
       if (chainId !== lastInitChainId) {
