@@ -8,11 +8,10 @@ import { ChainTypeEnum } from '@openfort/openfort-js'
 import type React from 'react'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { EthereumSend } from './EthereumSend'
-import { SolanaSend } from './SolanaSend'
 
 const SEND_REGISTRY: Partial<Record<ChainTypeEnum, React.FC>> = {
   [ChainTypeEnum.EVM]: EthereumSend,
-  [ChainTypeEnum.SVM]: SolanaSend,
+  // [ChainTypeEnum.SVM]: SolanaSend,
 }
 
 const Send: React.FC = () => {
