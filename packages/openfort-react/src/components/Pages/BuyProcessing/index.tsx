@@ -99,7 +99,8 @@ const BuyProcessing = () => {
           return
         }
 
-        // TODO: remove this? it fails if is set to EUR in coinbase
+        // Coinbase onramp rejects requests when fiatCurrency is set to a non-USD currency (e.g. EUR).
+        // Strip the param so it uses the user's default currency instead.
         const url = new URL(onrampUrl)
         url.searchParams.delete('fiatCurrency')
         const sanitizedProviderUrl = url.toString()

@@ -3,12 +3,12 @@
 import { AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, EmbeddedState } from '@openfort/openfort-js'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useOpenfortUIContext as useOpenfort } from '../../components/Openfort/useOpenfort'
-import { embeddedWalletId } from '../../constants/openfort'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { type BuildRecoveryParamsConfig, buildRecoveryParams } from '../../shared/utils/recovery'
+import { toConnectedStateProperties } from '../../shared/utils/walletStatusProps'
 import { formatAddress } from '../../utils/format'
 import { getDefaultSolanaRpcUrl } from '../../utils/rpc'
 import { getTransactionBytes } from '../operations'
@@ -31,56 +31,6 @@ type InternalState = {
   activeWallet: ConnectedEmbeddedSolanaWallet | null
   provider: OpenfortEmbeddedSolanaWalletProvider | null
   error: string | null
-}
-
-function toConnectedStateProperties(status: WalletStatus, activeWallet: ConnectedEmbeddedSolanaWallet | null) {
-  if (status === 'creating' || status === 'fetching-wallets') {
-    return {
-      embeddedWalletId: undefined,
-      isConnected: false,
-      isConnecting: true,
-      isDisconnected: false,
-      isReconnecting: false,
-    }
-  }
-
-  if (status === 'connecting') {
-    return {
-      embeddedWalletId,
-      isConnected: false,
-      isConnecting: true,
-      isDisconnected: false,
-      isReconnecting: false,
-    }
-  }
-
-  if (status === 'reconnecting') {
-    return {
-      embeddedWalletId,
-      isConnected: false,
-      isConnecting: true,
-      isDisconnected: false,
-      isReconnecting: true,
-    }
-  }
-
-  if ((status === 'connected' || status === 'needs-recovery') && activeWallet) {
-    return {
-      embeddedWalletId,
-      isConnected: status === 'connected',
-      isConnecting: false,
-      isDisconnected: false,
-      isReconnecting: false,
-    }
-  }
-
-  return {
-    embeddedWalletId: undefined,
-    isConnected: false,
-    isConnecting: false,
-    isDisconnected: true,
-    isReconnecting: false,
-  }
 }
 
 /**

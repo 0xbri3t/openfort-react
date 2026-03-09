@@ -1,6 +1,6 @@
 import { ChainTypeEnum } from '@openfort/openfort-js'
 import { PlusIcon } from '../../../assets/icons'
-import { toSolanaUserWallet } from '../../../hooks/openfort/walletConverters'
+import { toSolanaUserWallet } from '../../../hooks/openfort/walletTypes'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import type { ConnectedEmbeddedSolanaWallet } from '../../../solana/types'

@@ -66,38 +66,35 @@ const RemoveLinkedProvider: React.FC = () => {
   }, [isSuccess])
 
   const handleRemove = async () => {
-    if (provider.provider === 'siwe' || provider.provider === 'wallet')
+    const errorMsg = 'Failed to remove linked provider. Please try again.'
+    if (provider.provider === 'siwe' || provider.provider === 'wallet') {
       try {
         const result = await client.auth.unlinkWallet({
           address: provider.accountId as Hex,
-          chainId: Number(provider.chainId!),
+          chainId: Number(provider.chainId ?? 0),
         })
         if (!result.success) {
-          setError('Failed to remove linked provider. Please try again.')
-          return
+          setError(errorMsg)
         } else {
           setIsSuccess(true)
         }
       } catch (e) {
         logger.error('Unexpected error removing linked provider:', e)
-        setError('Failed to remove linked provider. Please try again.')
-        return
+        setError(errorMsg)
       }
-    else {
+    } else {
       try {
         const result = await client.auth.unlinkOAuth({
           provider: provider.provider as OAuthProvider,
         })
         if (!result.status) {
-          setError('Failed to remove linked provider. Please try again.')
-          return
+          setError(errorMsg)
         } else {
           setIsSuccess(true)
         }
       } catch (e) {
         logger.error('Unexpected error removing linked provider:', e)
-        setError('Failed to remove linked provider. Please try again.')
-        return
+        setError(errorMsg)
       }
     }
   }

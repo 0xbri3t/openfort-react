@@ -5,7 +5,6 @@ import type { UIAuthProvider } from '../../../components/Openfort/types'
 import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import type { OpenfortHookOptions } from '../../../types'
 import { logger } from '../../../utils/logger'
-import { onError } from '../hookConsistency'
 import type { CreateWalletPostAuthOptions } from './useConnectToWalletPostAuth'
 import { type EmailVerificationResult, useEmailAuth } from './useEmailAuth'
 import { type StoreCredentialsResult, useOAuth } from './useOAuth'
@@ -165,12 +164,10 @@ export const useAuthCallback = ({
           })
           removeParams()
         } else {
+          const err = new OpenfortError('No email found in URL', OpenfortReactErrorType.AUTHENTICATION_ERROR)
           logger.error('No email found in URL')
-          onError({
-            hookOptions,
-            options: {},
-            error: new OpenfortError('No email found in URL', OpenfortReactErrorType.AUTHENTICATION_ERROR),
-          })
+          hookOptions.onError?.(err)
+          if (hookOptions.throwOnError) throw err
           return
         }
       } else {
@@ -182,14 +179,12 @@ export const useAuthCallback = ({
             hasUserId: !!userId,
             hasToken: !!token,
           })
-          onError({
-            hookOptions,
-            options: {},
-            error: new OpenfortError(
-              'Missing player id or access token or refresh token',
-              OpenfortReactErrorType.AUTHENTICATION_ERROR
-            ),
-          })
+          const err = new OpenfortError(
+            'Missing player id or access token or refresh token',
+            OpenfortReactErrorType.AUTHENTICATION_ERROR
+          )
+          hookOptions.onError?.(err)
+          if (hookOptions.throwOnError) throw err
 
           return
         }
@@ -224,7 +219,7 @@ export const useAuthCallback = ({
         removeParams()
       }
     })()
-  }, [])
+  }, []) // intentionally empty — runs once on mount to process the URL callback
 
   return {
     email,

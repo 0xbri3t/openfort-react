@@ -10,13 +10,13 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { baseSepolia } from 'viem/chains'
 import { useOpenfortUIContext as useOpenfort } from '../../components/Openfort/useOpenfort'
-import { embeddedWalletId } from '../../constants/openfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
 import type { CreateEmbeddedWalletOptions, SetRecoveryOptions, WalletStatus } from '../../shared/types'
 import { buildEmbeddedWalletStatusResult } from '../../shared/utils/embeddedWalletStatusMapper'
 import { buildRecoveryParams } from '../../shared/utils/recovery'
+import { toConnectedStateProperties } from '../../shared/utils/walletStatusProps'
 import { formatAddress } from '../../utils/format'
 import type {
   ConnectedEmbeddedEthereumWallet,
@@ -31,50 +31,6 @@ type InternalState = {
   activeWallet: ConnectedEmbeddedEthereumWallet | null
   provider: OpenfortEmbeddedEthereumWalletProvider | null
   error: string | null
-}
-
-function toConnectedStateProperties(
-  status: WalletStatus,
-  activeWallet: ConnectedEmbeddedEthereumWallet | null,
-  _chainId: number | undefined
-) {
-  if (status === 'creating' || status === 'fetching-wallets') {
-    return {
-      embeddedWalletId: undefined,
-      isConnected: false,
-      isConnecting: true,
-      isDisconnected: false,
-      isReconnecting: false,
-    }
-  }
-
-  if (status === 'connecting' || status === 'reconnecting') {
-    return {
-      embeddedWalletId,
-      isConnected: false,
-      isConnecting: true,
-      isDisconnected: false,
-      isReconnecting: status === 'reconnecting',
-    }
-  }
-
-  if ((status === 'connected' || status === 'needs-recovery') && activeWallet) {
-    return {
-      embeddedWalletId,
-      isConnected: status === 'connected',
-      isConnecting: false,
-      isDisconnected: false,
-      isReconnecting: false,
-    }
-  }
-
-  return {
-    embeddedWalletId: undefined,
-    isConnected: false,
-    isConnecting: false,
-    isDisconnected: true,
-    isReconnecting: false,
-  }
 }
 
 /** Base Sepolia — fallback chain when no strategy or config provides a chain ID. */
@@ -536,13 +492,8 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
   )
 
   const connectedStateProps = useMemo(
-    () =>
-      toConnectedStateProperties(
-        state.status,
-        state.activeWallet,
-        state.activeWallet?.address ? activeReturnChainId : undefined
-      ),
-    [state.status, state.activeWallet, activeReturnChainId]
+    () => toConnectedStateProperties(state.status, state.activeWallet),
+    [state.status, state.activeWallet]
   )
 
   // Compute displayAddress when connected

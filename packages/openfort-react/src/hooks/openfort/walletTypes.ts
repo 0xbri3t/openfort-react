@@ -1,6 +1,7 @@
 import { type AccountTypeEnum, ChainTypeEnum, type EmbeddedAccount, type RecoveryMethod } from '@openfort/openfort-js'
 import type { Hex } from 'viem'
 import type { ConnectedEmbeddedEthereumWallet } from '../../ethereum/types'
+import type { ConnectedEmbeddedSolanaWallet } from '../../solana/types'
 import type { BaseFlowState } from './auth/status'
 
 export type EthereumUserWallet = ConnectedEmbeddedEthereumWallet
@@ -51,6 +52,18 @@ export function embeddedAccountToUserWallet(account: EmbeddedAccount): EthereumU
     accountType: account.accountType,
     createdAt: account.createdAt,
     salt: account.salt,
+  }
+}
+
+/** Build SolanaUserWallet from a ConnectedEmbeddedSolanaWallet (e.g. for route navigation). */
+export function toSolanaUserWallet(w: ConnectedEmbeddedSolanaWallet): SolanaUserWallet {
+  return {
+    id: w.id,
+    address: w.address,
+    chainType: ChainTypeEnum.SVM,
+    isAvailable: true,
+    accounts: [{ id: w.id }],
+    recoveryMethod: w.recoveryMethod,
   }
 }
 

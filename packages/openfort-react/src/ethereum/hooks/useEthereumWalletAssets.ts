@@ -147,30 +147,39 @@ export const useEthereumWalletAssets = ({
       const defaultAssets = defaultAssetsRaw[chainId].map<Asset>((a) => {
         let asset: Asset
         if (a.type === 'erc20') {
+          // The ERC-7811 metadata type does not include `fiat`; it is a non-standard
+          // extension returned by Openfort's RPC proxy.
+          type ExtendedMeta = {
+            name?: string
+            symbol?: string
+            decimals?: number
+            fiat?: Asset['metadata'] extends { fiat?: infer F } ? F : never
+          }
+          const meta = a.metadata as ExtendedMeta | undefined
           asset = {
             type: 'erc20' as const,
             address: a.address,
             balance: a.balance,
             metadata: {
-              name: a.metadata?.name || 'Unknown Token',
-              symbol: a.metadata?.symbol || 'UNKNOWN',
-              decimals: a.metadata?.decimals,
-              fiat: (a.metadata as any)?.fiat,
+              name: meta?.name || 'Unknown Token',
+              symbol: meta?.symbol || 'UNKNOWN',
+              decimals: meta?.decimals,
+              fiat: meta?.fiat,
             },
             raw: a,
           }
         } else if (a.type === 'native') {
-          const notStandardMetadata = a.metadata as any
+          // The native asset metadata type does not include `fiat` or `name` in the
+          // standard ERC-7811 spec; Openfort's proxy extends it with a `fiat` field.
+          // The Asset type requires fiat to be present when metadata exists, so we
+          // omit metadata entirely when fiat is unavailable.
+          type ExtendedNativeMeta = { symbol?: string; decimals?: number; fiat?: { value: number; currency: string } }
+          const meta = a.metadata as ExtendedNativeMeta | undefined
           asset = {
             type: 'native' as const,
             address: 'native',
             balance: a.balance,
-            metadata: {
-              name: notStandardMetadata?.name,
-              symbol: notStandardMetadata?.symbol,
-              decimals: notStandardMetadata?.decimals,
-              fiat: notStandardMetadata?.fiat,
-            },
+            metadata: meta?.fiat ? { symbol: meta.symbol ?? '', decimals: meta.decimals, fiat: meta.fiat } : undefined,
             raw: a,
           }
         } else {
@@ -180,23 +189,25 @@ export const useEthereumWalletAssets = ({
       })
 
       const mergedAssets = [...defaultAssets]
-      const customAssetsForChain: Asset[] = customAssets[chainId].map((asset: getAssets.Asset<false>) => {
-        if (asset.type !== 'erc20') return { ...asset, raw: asset } as unknown as Asset
-        if (!walletConfig?.ethereum?.assets) return { ...asset, raw: asset }
+      const customAssetsForChain: Asset[] = customAssets[chainId].flatMap((asset: getAssets.Asset<false>) => {
+        // Custom assets are explicitly requested as erc20; skip if the API returns something unexpected.
+        if (asset.type !== 'erc20') return []
+        if (!walletConfig?.ethereum?.assets) return [{ ...asset, raw: asset }]
 
         const configAsset = walletConfig.ethereum.assets[chainId]?.find(
           (a) => a.toLowerCase() === asset.address.toLowerCase()
         )
-        if (!configAsset) return { ...asset, raw: asset }
+        if (!configAsset) return [{ ...asset, raw: asset }]
 
-        const safeAsset: Asset = {
-          type: 'erc20' as const,
-          address: asset.address,
-          balance: asset.balance,
-          metadata: asset.metadata,
-          raw: asset,
-        }
-        return safeAsset
+        return [
+          {
+            type: 'erc20' as const,
+            address: asset.address,
+            balance: asset.balance,
+            metadata: asset.metadata,
+            raw: asset,
+          } satisfies Asset,
+        ]
       })
 
       customAssetsForChain.forEach((asset) => {
