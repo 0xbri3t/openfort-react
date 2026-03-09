@@ -61,10 +61,9 @@ export class DashboardPage {
     const messageInput = this.page.getByPlaceholder(/enter a message to sign/i)
     await expect(messageInput).toBeVisible({ timeout: 60_000 })
     await messageInput.fill(message)
-    await new Promise((r) => setTimeout(r, 500))
 
     const signBtn = this.page.getByRole('button', { name: /sign a message/i })
-    await expect(signBtn).toBeVisible({ timeout: 60_000 })
+    await expect(signBtn).toBeEnabled({ timeout: 90_000 })
     await signBtn.click()
 
     const signedRegex = mode === 'svm' ? SOLANA_SIGNED_REGEX : EVM_SIGNED_REGEX
