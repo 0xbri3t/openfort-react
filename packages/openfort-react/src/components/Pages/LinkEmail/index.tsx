@@ -38,7 +38,7 @@ const textVariants: Variants = {
 
 const LinkEmail: React.FC = () => {
   const { setRoute, triggerResize, emailInput: email, setEmailInput: setEmail } = useOpenfort()
-  const { client, updateUser } = useOpenfortCore()
+  const { client } = useOpenfortCore()
 
   const [loginLoading, setLoginLoading] = React.useState(false)
   const [loginError, setLoginError] = React.useState<false | string>(false)
@@ -51,10 +51,7 @@ const LinkEmail: React.FC = () => {
     try {
       await linkEmail({ email })
 
-      await updateUser()
-
-      setEmail('')
-      setRoute(routes.CONNECTED)
+      setRoute(routes.EMAIL_VERIFICATION)
     } catch (e) {
       logger.log('Link error:', e)
       setLoginError('Could not link email. Please try again.')

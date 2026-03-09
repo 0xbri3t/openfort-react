@@ -47,7 +47,7 @@ const AddLinkedProviderButton: React.FC = () => {
 
 const LinkedProvidersGroup: React.FC = () => {
   const { linkedAccounts, user, isLoading } = useOpenfortCore()
-  const { triggerResize } = useOpenfort()
+  const { triggerResize, emailInput: pendingEmail } = useOpenfort()
 
   useEffect(() => {
     if (!isLoading) triggerResize()
@@ -94,6 +94,19 @@ const LinkedProvidersGroup: React.FC = () => {
             key={`phone-${user.phoneNumber}`}
             account={{ provider: 'phone', accountId: user.phoneNumber }}
           />
+        )}
+        {pendingEmail && (
+          <LinkedProviderButtonContainer>
+            <LinkedProviderButtonWrapper style={{ padding: '12px 20px', opacity: 0.6 }}>
+              <ProviderIconWrapper>
+                <ProviderIcon account={{ provider: 'credential', accountId: pendingEmail }} />
+              </ProviderIconWrapper>
+              <ProviderHeader account={{ provider: 'credential', accountId: pendingEmail }} />
+              <ModalBody style={{ fontSize: 11, marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+                Awaiting validation
+              </ModalBody>
+            </LinkedProviderButtonWrapper>
+          </LinkedProviderButtonContainer>
         )}
       </LinkedProvidersGroupWrapper>
       <AddLinkedProviderButton />
