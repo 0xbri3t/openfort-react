@@ -448,6 +448,7 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
           )
           setState({ status: 'connected', activeWallet: connectedWallet, provider, error: null })
         })
+        .catch(() => {})
         .finally(() => {
           if (!cancelled) syncInProgressRef.current = null
         })

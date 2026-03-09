@@ -48,7 +48,19 @@ export function useActiveAddressSync({
       return
     }
 
-    if (storeEmbeddedState !== EmbeddedState.READY) return
+    // Bootstrap recovery: when signer is not yet configured and no address is set,
+    // seed the active address so useAutoRecovery can trigger and drive state → READY.
+    if (storeEmbeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) {
+      if (storeActiveEmbeddedAddress === undefined) {
+        const first = firstEmbeddedAddress(storeEmbeddedAccounts, chainType)
+        if (first) store.getState().setActiveEmbeddedAddress(first)
+      }
+      return
+    }
+
+    if (storeEmbeddedState !== EmbeddedState.READY) {
+      return
+    }
 
     // Already have an address — nothing to resolve
     if (storeActiveEmbeddedAddress !== undefined) return

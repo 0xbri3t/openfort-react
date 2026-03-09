@@ -1,4 +1,5 @@
 import type { ChainTypeEnum, EmbeddedAccount } from '@openfort/openfort-js'
+import { RecoveryMethod } from '@openfort/openfort-js'
 import type { OpenfortWalletConfig } from '../components/Openfort/types'
 
 export function firstEmbeddedAddress(
@@ -7,9 +8,16 @@ export function firstEmbeddedAddress(
 ): string | undefined {
   if (!accounts?.length) return undefined
 
-  const acc = accounts.find((a) => a.chainType === chainType)
+  const forChain = accounts.filter((a) => a.chainType === chainType)
+  if (!forChain.length) return undefined
 
-  return acc?.address
+  const automatic = forChain.find((a) => a.recoveryMethod === RecoveryMethod.AUTOMATIC)
+  if (automatic) return automatic.address
+
+  const passkey = forChain.find((a) => a.recoveryMethod === RecoveryMethod.PASSKEY)
+  if (passkey) return passkey.address
+
+  return forChain[0].address
 }
 
 export function resolveEthereumPolicy(

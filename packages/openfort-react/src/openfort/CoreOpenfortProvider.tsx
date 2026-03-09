@@ -339,8 +339,20 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
       })
     return () => {
       cancelled = true
+      lastInitRef.current = null
+      initInProgressRef.current = false
     }
   }, [openfort, walletConfig, strategy, evmChainId, storeEmbeddedState])
+
+  // On refresh, embeddedState reaches READY before the user is loaded, so
+  // fetchEmbeddedAccounts (called inside initProvider) returns empty. Re-fetch
+  // once the user becomes available while still in READY state.
+  // returns empty. Re-fetch once user becomes available while already READY.
+  useEffect(() => {
+    if (!storeUser || storeEmbeddedState !== EmbeddedState.READY) return
+    if (store.getState().embeddedAccounts?.length) return
+    fetchEmbeddedAccounts({ silent: true }).catch(() => {})
+  }, [storeUser, storeEmbeddedState, store, fetchEmbeddedAccounts])
 
   const { isConnectedWithEmbeddedSigner, setIsConnectedWithEmbeddedSigner, connectingRef } = useEmbeddedStateMachine({
     openfort,

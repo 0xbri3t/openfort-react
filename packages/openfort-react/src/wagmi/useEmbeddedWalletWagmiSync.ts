@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { embeddedWalletId } from '../constants/openfort'
 import { useEthereumEmbeddedWallet } from '../ethereum/hooks/useEthereumEmbeddedWallet'
 import { setEmbeddedWalletProvider } from './embeddedConnector'
 
-/** Null component — call inside CoreOpenfortProvider + WagmiProvider to sync embedded wallet into wagmi. */
+/** Null component — rendered inside CoreOpenfortProvider + WagmiProvider to sync embedded wallet into wagmi. */
 export function EmbeddedWalletWagmiSync(): null {
   useEmbeddedWalletWagmiSync()
   return null
@@ -14,43 +14,43 @@ export function EmbeddedWalletWagmiSync(): null {
 
 function useEmbeddedWalletWagmiSync() {
   const wallet = useEthereumEmbeddedWallet()
-  const { connector: activeConnector } = useAccount()
+  const { connector: activeConnector, status: wagmiStatus } = useAccount()
   const { connectAsync, connectors } = useConnect()
   const { disconnectAsync } = useDisconnect()
-  const isSyncingRef = useRef(false)
 
   const status = wallet.status
   const provider = status === 'connected' ? wallet.provider : null
 
+  // Keep the module-level provider slot in sync — clear on disconnect
   useEffect(() => {
     if (status === 'connected' && provider) {
-      if (isSyncingRef.current) return
-      isSyncingRef.current = true
       setEmbeddedWalletProvider(provider)
-      const embeddedConnector = connectors.find((c) => c.id === embeddedWalletId)
-      if (embeddedConnector && activeConnector?.id !== embeddedWalletId) {
-        connectAsync({ connector: embeddedConnector })
-          .catch(() => {
-            // provider may not be ready yet — sync will retry on next status change
-          })
-          .finally(() => {
-            isSyncingRef.current = false
-          })
-      } else {
-        isSyncingRef.current = false
+      return () => {
+        setEmbeddedWalletProvider(null)
       }
     }
+  }, [status, provider])
 
-    if (status === 'disconnected') {
-      setEmbeddedWalletProvider(null)
-      if (activeConnector?.id === embeddedWalletId) {
-        // Pass the specific connector so only the embedded one is disconnected,
-        // leaving any external wallet connections untouched.
-        const embeddedConnector = connectors.find((c) => c.id === embeddedWalletId)
-        if (embeddedConnector) {
-          disconnectAsync({ connector: embeddedConnector })
-        }
-      }
+  // Connect wagmi once the embedded wallet is ready AND wagmi has settled (not mid-reconnect)
+  useEffect(() => {
+    if (status !== 'connected' || !provider) return
+    if (wagmiStatus === 'connecting' || wagmiStatus === 'reconnecting') return
+    if (activeConnector?.id === embeddedWalletId) return
+
+    const embeddedConnector = connectors.find((c) => c.id === embeddedWalletId)
+    if (!embeddedConnector) return
+
+    connectAsync({ connector: embeddedConnector }).catch(() => {})
+  }, [status, provider, wagmiStatus, activeConnector, connectors, connectAsync])
+
+  // Disconnect embedded connector from wagmi when the embedded wallet logs out
+  useEffect(() => {
+    if (status !== 'disconnected') return
+    if (activeConnector?.id !== embeddedWalletId) return
+
+    const embeddedConnector = connectors.find((c) => c.id === embeddedWalletId)
+    if (embeddedConnector) {
+      disconnectAsync({ connector: embeddedConnector }).catch(() => {})
     }
-  }, [status, provider, connectors, activeConnector, connectAsync, disconnectAsync])
+  }, [status, activeConnector, connectors, disconnectAsync])
 }
