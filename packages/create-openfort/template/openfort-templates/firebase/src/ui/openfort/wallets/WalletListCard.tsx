@@ -96,28 +96,28 @@ export function WalletListCard() {
       <div className="space-y-4 pb-4">
         <h2>Your Wallets</h2>
         <div className="flex flex-col space-y-2">
-          {wallets.map((wallet) => {
+          {wallets.map((wallet: ConnectedEmbeddedEthereumWallet) => {
             const isActive =
               activeWallet?.address.toLowerCase() === wallet.address.toLowerCase()
             return (
-              <button
-                key={wallet.id + wallet.address}
-                className="px-4 py-3 border data-[active=true]:border-zinc-300 border-zinc-700 rounded data-[active=false]:cursor-pointer data-[active=false]:hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1 text-sm"
-                onClick={() => handleWalletClick(wallet)}
-                data-active={isActive}
-                disabled={isActive || isConnecting}
-              >
-                {isConnecting && isActive ? (
-                  <p>Connecting...</p>
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <p className="font-medium mr-2">
-                      {`${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`}
-                    </p>
-                    <WalletRecoveryBadge wallet={wallet} />
-                  </div>
-                )}
-              </button>
+            <button
+              key={wallet.id + wallet.address}
+              className="px-4 py-3 border data-[active=true]:border-zinc-300 border-zinc-700 rounded data-[active=false]:cursor-pointer data-[active=false]:hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1 text-sm"
+              onClick={() => handleWalletClick(wallet)}
+              data-active={isActive}
+              disabled={isActive || isConnecting}
+            >
+              {isConnecting && isActive ? (
+                <p>Connecting...</p>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <p className="font-medium mr-2">
+                    {`${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`}
+                  </p>
+                  <WalletRecoveryBadge wallet={wallet} />
+                </div>
+              )}
+            </button>
             )
           })}
 

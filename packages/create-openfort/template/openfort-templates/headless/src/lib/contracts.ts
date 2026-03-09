@@ -3,17 +3,22 @@ const BEAM_CHAIN_ID = 13337
 const POLYGON_CHAIN_ID = 80002
 const BASE_SEPOLIA_CHAIN_ID = 84532
 
+/** Fallback addresses when env vars are not set */
 const DEFAULT_POLYGON_MINT = '0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'
 const DEFAULT_BEAM_MINT = '0x45238AB60ACA6862a70fe996D1A8baDb71Af5A8f'
 
-export type MintContractType = 'claim' | 'mint'
+type MintContractType = 'claim' | 'mint'
 
-export interface MintContractConfig {
+interface MintContractConfig {
   address: string
   type: MintContractType
 }
 
-export function getMintContractAddress(chainId: number | undefined): string | undefined {
+/**
+ * Returns the mint contract address for the given chainId.
+ * Uses VITE_BEAM_MINT_CONTRACT and VITE_POLYGON_MINT_CONTRACT when set.
+ */
+function getMintContractAddress(chainId: number | undefined): string | undefined {
   if (chainId == null) return undefined
   if (chainId === BEAM_CHAIN_ID) {
     return import.meta.env.VITE_BEAM_MINT_CONTRACT ?? DEFAULT_BEAM_MINT
@@ -24,6 +29,10 @@ export function getMintContractAddress(chainId: number | undefined): string | un
   return import.meta.env.VITE_POLYGON_MINT_CONTRACT ?? DEFAULT_POLYGON_MINT
 }
 
+/**
+ * Returns MintContractConfig for the given chainId.
+ * Beam uses claim(amount), Polygon uses mint(address, amount).
+ */
 export function getMintContractConfig(chainId: number | undefined): MintContractConfig | undefined {
   const address = getMintContractAddress(chainId)
   if (!address) return undefined
