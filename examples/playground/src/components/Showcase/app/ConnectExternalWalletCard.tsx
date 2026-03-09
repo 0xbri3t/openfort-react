@@ -1,5 +1,5 @@
 import type { RecoveryMethod } from '@openfort/react'
-import { embeddedWalletId, useOpenfort } from '@openfort/react'
+import { embeddedWalletId, useOpenfort, useUser } from '@openfort/react'
 import { useWalletAuth } from '@openfort/react/wagmi'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -84,6 +84,9 @@ export const ConnectExternalWalletCard = () => {
   const { setActiveEmbeddedAddress } = useOpenfort()
   const { ethereum, activeWallet, connectingAddress } = useActiveEthereumEmbeddedWallet()
   const { availableWallets: externalConnectors } = useWalletAuth()
+  const { linkedAccounts } = useUser()
+
+  const signedInWithWallet = linkedAccounts.some((a) => a.provider === 'wallet' || a.provider === 'siwe')
 
   const openfortConnector = connectors.find((c) => c.id === embeddedWalletId || c.name === 'Openfort')
   const isOpenfortActive = ethereum.status === 'connected' && (connector?.id === embeddedWalletId || !connector)
@@ -109,77 +112,83 @@ export const ConnectExternalWalletCard = () => {
     <Card>
       <CardHeader>
         <CardTitle>Wallets</CardTitle>
-        <CardDescription>Switch between external and embedded wallets.</CardDescription>
+        <CardDescription>
+          {signedInWithWallet ? 'Switch between external wallets.' : 'Manage your embedded wallets.'}
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* ── External (left) ── */}
-          <div
-            className={cn(
-              'rounded-md border p-3 transition-colors',
-              isExternalActive ? 'border-base-300' : 'border-base-200 opacity-90'
-            )}
-          >
-            <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">External</p>
-            <div className="flex flex-col gap-0.5">
-              {externalConnectors.map((c) => {
-                const isActive = isExternalActive && connector?.id === c.id
-                const iconSrc = typeof c.icon === 'string' ? c.icon : undefined
-                const iconNode =
-                  (typeof c.icon !== 'string' && c.icon != null ? c.icon : null) ??
-                  FALLBACK_CONNECTOR_ICONS[c.id] ??
-                  null
-
-                return (
-                  <SimpleWalletButton
-                    key={c.id}
-                    isActive={!!isActive}
-                    disabled={!!isActive || isBusy}
-                    onClick={() => handleSelectExternal(c.id)}
-                  >
-                    {iconSrc ? (
-                      <span className="h-5 w-5 flex shrink-0">
-                        <img src={iconSrc} alt="" className="h-full w-full object-contain" />
-                      </span>
-                    ) : iconNode ? (
-                      <span className="h-5 w-5 flex shrink-0 [&>svg]:h-full [&>svg]:w-full [&>img]:h-full [&>img]:w-full [&>img]:object-contain">
-                        {iconNode}
-                      </span>
-                    ) : (
-                      <span className="h-5 w-5 rounded bg-base-300 flex items-center justify-center text-[10px] font-medium">
-                        {c.name?.[0] ?? c.id?.[0] ?? '?'}
-                      </span>
-                    )}
-                    <span>{c.name ?? c.id}</span>
-                    {isActive && <span className="ml-auto h-2 w-2 rounded-full bg-green-500" />}
-                  </SimpleWalletButton>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* ── Embedded (right) ── */}
-          <div
-            className={cn(
-              'rounded-md border p-3 transition-colors',
-              isOpenfortActive ? 'border-base-300' : 'border-base-200 opacity-90'
-            )}
-          >
-            <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Embedded</p>
-            <div className="flex flex-col gap-0.5">
-              {ethereum.status === 'fetching-wallets' ? (
-                <p className="text-xs text-muted-foreground py-2 px-3">Loading wallets...</p>
-              ) : (
-                <EmbeddedWalletsList
-                  ethereum={ethereum}
-                  activeWallet={activeWallet}
-                  connectingAddress={connectingAddress}
-                  setActive={setActive}
-                  isExternalActive={isExternalActive}
-                />
+        <div className="grid grid-cols-1 gap-4">
+          {/* ── External (only when signed in with wallet) ── */}
+          {signedInWithWallet && (
+            <div
+              className={cn(
+                'rounded-md border p-3 transition-colors',
+                isExternalActive ? 'border-base-300' : 'border-base-200 opacity-90'
               )}
+            >
+              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">External</p>
+              <div className="flex flex-col gap-0.5">
+                {externalConnectors.map((c) => {
+                  const isActive = isExternalActive && connector?.id === c.id
+                  const iconSrc = typeof c.icon === 'string' ? c.icon : undefined
+                  const iconNode =
+                    (typeof c.icon !== 'string' && c.icon != null ? c.icon : null) ??
+                    FALLBACK_CONNECTOR_ICONS[c.id] ??
+                    null
+
+                  return (
+                    <SimpleWalletButton
+                      key={c.id}
+                      isActive={!!isActive}
+                      disabled={!!isActive || isBusy}
+                      onClick={() => handleSelectExternal(c.id)}
+                    >
+                      {iconSrc ? (
+                        <span className="h-5 w-5 flex shrink-0">
+                          <img src={iconSrc} alt="" className="h-full w-full object-contain" />
+                        </span>
+                      ) : iconNode ? (
+                        <span className="h-5 w-5 flex shrink-0 [&>svg]:h-full [&>svg]:w-full [&>img]:h-full [&>img]:w-full [&>img]:object-contain">
+                          {iconNode}
+                        </span>
+                      ) : (
+                        <span className="h-5 w-5 rounded bg-base-300 flex items-center justify-center text-[10px] font-medium">
+                          {c.name?.[0] ?? c.id?.[0] ?? '?'}
+                        </span>
+                      )}
+                      <span>{c.name ?? c.id}</span>
+                      {isActive && <span className="ml-auto h-2 w-2 rounded-full bg-green-500" />}
+                    </SimpleWalletButton>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* ── Embedded (only when NOT signed in with wallet) ── */}
+          {!signedInWithWallet && (
+            <div
+              className={cn(
+                'rounded-md border p-3 transition-colors',
+                isOpenfortActive ? 'border-base-300' : 'border-base-200 opacity-90'
+              )}
+            >
+              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Embedded</p>
+              <div className="flex flex-col gap-0.5">
+                {ethereum.status === 'fetching-wallets' ? (
+                  <p className="text-xs text-muted-foreground py-2 px-3">Loading wallets...</p>
+                ) : (
+                  <EmbeddedWalletsList
+                    ethereum={ethereum}
+                    activeWallet={activeWallet}
+                    connectingAddress={connectingAddress}
+                    setActive={setActive}
+                    isExternalActive={isExternalActive}
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Status feedback */}

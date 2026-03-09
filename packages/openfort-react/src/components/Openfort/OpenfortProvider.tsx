@@ -20,6 +20,7 @@ import { logger } from '../../utils/logger'
 import { buildChainFromConfig } from '../../utils/rpc'
 import { isFamily } from '../../utils/wallets'
 
+import { EmbeddedWalletWagmiSync } from '../../wagmi/useEmbeddedWalletWagmiSync'
 import { type ContextValue, OpenfortContext, UIContext, type UIContextValue } from './context'
 import {
   type BuyFormState,
@@ -399,6 +400,7 @@ export const OpenfortProvider = ({
 
   const innerChildren = (
     <>
+      {hasWagmi && <EmbeddedWalletWagmiSync />}
       {debugModeOptions.debugRoutes && (
         <pre
           style={{

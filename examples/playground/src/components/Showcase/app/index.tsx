@@ -118,7 +118,7 @@ export const App = () => {
                   body: <>Uses useGrantPermissions to create session keys.</>,
                 }}
               />
-              <div className="min-w-[60%] flex-1">
+              <div className="min-w-[40%]">
                 <ConnectExternalWalletCard />
               </div>
             </div>
