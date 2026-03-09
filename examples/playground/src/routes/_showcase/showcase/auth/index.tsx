@@ -8,6 +8,7 @@ import { GuestLogin } from '@/components/Showcase/auth/GuestLogin'
 import { SampleTooltipLink } from '@/components/Showcase/auth/SampleTooltipLink'
 import { SocialLogin } from '@/components/Showcase/auth/SocialLogin'
 import { Logo } from '@/components/ui/logo'
+import { usePlaygroundMode } from '@/providers'
 
 export const Route = createFileRoute('/_showcase/showcase/auth/')({
   component: RouteComponent,
@@ -20,6 +21,8 @@ const StyledDiv = styled.div`
 `
 
 function RouteComponent() {
+  const { mode } = usePlaygroundMode()
+  const isWagmi = mode === 'evm'
   return (
     <DialogLayout>
       <StyledDiv>
@@ -36,12 +39,18 @@ function RouteComponent() {
       </SampleTooltipLink>
 
       <SampleTooltipLink href="/auth/useWalletAuth" hook="useWalletAuth" fn="connectWallet">
-        <Link className="btn btn-accent" to="/showcase/auth/connect-wallet">
-          <WalletIcon className="w-4.5 h-4.5" />
-          Continue with wallet
-        </Link>
+        {isWagmi ? (
+          <Link className="btn btn-accent" to="/showcase/auth/connect-wallet">
+            <WalletIcon className="w-4.5 h-4.5" />
+            Continue with wallet
+          </Link>
+        ) : (
+          <button type="button" className="btn btn-accent w-full" disabled>
+            <WalletIcon className="w-4.5 h-4.5" />
+            Continue with wallet (EVM only)
+          </button>
+        )}
       </SampleTooltipLink>
-
       <SampleTooltipLink href="/auth/useOauth" hook="useOAuth" fn="initOAuth">
         <SocialLogin provider={AuthProvider.GOOGLE} />
       </SampleTooltipLink>

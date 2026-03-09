@@ -6,6 +6,8 @@ import { commonVariables, onSettledInputs } from '@/components/Variable/commonVa
 import { BaseVariable, type HookInput } from '@/components/Variable/Variable'
 import { cn } from '@/lib/cn'
 
+const EMPTY_OPTIONS = {} as any
+
 export const HookVariable = <TOptions extends object, TResult extends object>({
   hook,
   name,
@@ -13,21 +15,26 @@ export const HookVariable = <TOptions extends object, TResult extends object>({
   variables = {},
   defaultExpanded = 0,
   maxDepth = 3,
-  defaultOptions = {} as TOptions,
+  defaultOptions = EMPTY_OPTIONS as TOptions,
   optionsVariables,
+  importPath = '@openfort/react',
 }: {
   hook: (opts?: TOptions) => TResult
   name: string
   description?: string
-  variables?: Record<string, HookInput>
+  variables?: Record<string, HookInput> | ((values: TResult) => Record<string, HookInput>)
   defaultExpanded?: number
   maxDepth?: number
   defaultOptions?: TOptions
   optionsVariables?: Record<string, HookInput>
+  /** Import path for sample code (default: @openfort/react). Use e.g. @openfort/react/wagmi for wagmi hooks. */
+  importPath?: string
 }) => {
   const [opts, setOpts] = useState<TOptions>(defaultOptions)
 
   const values = hook(opts)
+  const resolvedVariables =
+    typeof variables === 'function' ? variables(values) : (variables as Record<string, HookInput>)
 
   const sample = useMemo(() => {
     let base = `${JSON.stringify(Object.keys(defaultOptions), null, 2)}`
@@ -41,7 +48,7 @@ export const HookVariable = <TOptions extends object, TResult extends object>({
     base = base.replace(/,/g, '')
     base = base.replace(
       '[',
-      `import { ${name} } from "@openfort/react"
+      `import { ${name} } from "${importPath}"
 
 function SampleComponent() {
   const {
@@ -51,7 +58,7 @@ function SampleComponent() {
     )
 
     for (const val in values) {
-      const replaced = variables?.[val]?.description || commonVariables[val as string]?.description
+      const replaced = resolvedVariables?.[val]?.description || commonVariables[val as string]?.description
       base = base.replace(`--${val}`, `${val},${replaced ? ` // ${replaced}` : ''}`)
     }
 
@@ -63,25 +70,23 @@ function SampleComponent() {
     base = base.replace('{  }', '')
 
     return base
-  }, [defaultOptions, name, optionsVariables, values, variables])
+  }, [defaultOptions, importPath, name, optionsVariables, values, resolvedVariables])
 
   const params = useSearch({ strict: false })
   const navigate = useNavigate()
   useEffect(() => {
-    if (params.focus) {
-      return clearTimeout(
-        setTimeout(() => {
-          navigate({
-            to: '.',
-            search: (prev) => {
-              const { focus, ...rest } = prev
-              return rest
-            },
-            replace: true,
-          })
-        }, 2000)
-      )
-    }
+    if (!params.focus) return
+    const id = setTimeout(() => {
+      navigate({
+        to: '.',
+        search: (prev) => {
+          const { focus, ...rest } = prev
+          return rest
+        },
+        replace: true,
+      })
+    }, 2000)
+    return () => clearTimeout(id)
   }, [params.focus, navigate])
 
   const [copied, setCopied] = useState(false)
@@ -164,20 +169,6 @@ function SampleComponent() {
           <div className="flex flex-col gap-2 group">
             {Object.entries(values)
               .sort()
-              // .sort(([a], [b]) => {
-              //   const typeA = typeof values[a]
-              //   const typeB = typeof values[b];
-              //   if (typeA === typeB) {
-              //     return a.localeCompare(b);
-              //   }
-              //   if (typeA === "function" || typeB === "function") {
-              //     return typeA === "function" ? 1 : -1; // Functions last
-              //   }
-              //   if (typeA === "object" || typeB === "object") {
-              //     return typeA === "object" ? 1 : -1; // Objects last
-              //   }
-              //   return a.localeCompare(b);
-              // })
               .map(([key, value], i) => (
                 <BaseVariable
                   // biome-ignore lint/suspicious/noArrayIndexKey: allowed for simplicity
@@ -186,7 +177,7 @@ function SampleComponent() {
                   value={value}
                   depth={0}
                   maxDepth={maxDepth}
-                  variables={variables}
+                  variables={resolvedVariables}
                   defaultExpanded={defaultExpanded}
                   focusedVariable={params.focus}
                 />

@@ -52,22 +52,20 @@ const getObjectKeys = (obj: unknown): string[] => {
     keys.add(sym.toString())
   })
 
-  return Array.from(keys)
-    .sort((a, b) => {
-      const typeA = typeof obj[a]
-      const typeB = typeof obj[b]
-      if (typeA === typeB) {
-        return a.localeCompare(b)
-      }
-      if (typeA === 'function' || typeB === 'function') {
-        return typeA === 'function' ? 1 : -1 // Functions last
-      }
-      if (typeA === 'object' || typeB === 'object') {
-        return typeA === 'object' ? 1 : -1 // Objects last
-      }
+  return Array.from(keys).sort((a, b) => {
+    const typeA = typeof obj[a]
+    const typeB = typeof obj[b]
+    if (typeA === typeB) {
       return a.localeCompare(b)
-    })
-    .sort()
+    }
+    if (typeA === 'function' || typeB === 'function') {
+      return typeA === 'function' ? 1 : -1 // Functions last
+    }
+    if (typeA === 'object' || typeB === 'object') {
+      return typeA === 'object' ? 1 : -1 // Objects last
+    }
+    return a.localeCompare(b)
+  })
 }
 
 const formatValue = (val: any, valueType: string, _name: string) => {
@@ -396,20 +394,6 @@ export const Variable = ({
         <div className="flex flex-col gap-2 group">
           {Object.entries(values)
             .sort()
-            // .sort(([a], [b]) => {
-            //   const typeA = typeof values[a]
-            //   const typeB = typeof values[b];
-            //   if (typeA === typeB) {
-            //     return a.localeCompare(b);
-            //   }
-            //   if (typeA === "function" || typeB === "function") {
-            //     return typeA === "function" ? 1 : -1; // Functions last
-            //   }
-            //   if (typeA === "object" || typeB === "object") {
-            //     return typeA === "object" ? 1 : -1; // Objects last
-            //   }
-            //   return a.localeCompare(b);
-            // })
             .map(([key, value]) => (
               <BaseVariable
                 key={key}

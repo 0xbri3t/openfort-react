@@ -61,7 +61,6 @@ function RouteComponent() {
     if (!state || !email) {
       return
     }
-    // console.log("Logging in with:", data)
     await resetPassword({
       password: data.password,
       email,

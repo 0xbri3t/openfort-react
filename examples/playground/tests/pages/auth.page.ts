@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test'
+import type { PlaygroundMode } from '../utils/mode'
 import { safeClick } from '../utils/ui'
 
 export class AuthPage {
@@ -26,21 +27,26 @@ export class AuthPage {
     await expect(this.page.getByPlaceholder('Enter your email')).toBeVisible({ timeout: 30_000 })
   }
 
-  // Continue as guest and wait for the flow to advance
-  async continueAsGuest() {
+  /**
+   * Continue as guest and wait for the flow to advance.
+   * @param mode - EVM modes expect 0x address; Solana expects base58.
+   */
+  async continueAsGuest(mode: PlaygroundMode) {
     const modal = this.connectModal()
     const hasModal = (await modal.count().catch(() => 0)) > 0
     const root: Page | Locator = hasModal ? modal : this.page
 
     const guestBtn = root.getByRole('button', { name: /^guest$/i })
 
-    // Click on Guest if available
     if (await guestBtn.isVisible().catch(() => false)) {
       await expect(guestBtn).toBeEnabled({ timeout: 30_000 })
       await guestBtn.click({ timeout: 30_000 })
     }
 
-    const connectedText = this.page.getByText(/Connected with 0x/i)
-    await expect(connectedText).toBeVisible({ timeout: 30_000 })
+    // SVM addresses are base58 (start with 1-9 or A-H etc.), EVM addresses start with 0x.
+    // Avoid matching the placeholder "Connected with ..." which appears before the wallet connects.
+    const connectedRegex = mode === 'svm' ? /Connected with [1-9A-HJ-NP-Za-km-z]/i : /Connected with 0x/i
+    const connectTimeout = 120_000
+    await expect(this.page.getByText(connectedRegex)).toBeVisible({ timeout: connectTimeout })
   }
 }

@@ -5,10 +5,10 @@ import {
 } from '@heroicons/react/24/outline'
 import {
   RecoveryMethod,
-  type UserWallet,
+  type ConnectedEmbeddedEthereumWallet,
+  useEthereumEmbeddedWallet,
   useSignOut,
   useUser,
-  useWallets,
 } from '@openfort/react'
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
@@ -18,23 +18,24 @@ import { WalletRecoverPasswordSheet } from '../passwordRecovery'
 export const Wallets = () => {
   const {
     wallets,
-    isLoadingWallets,
-    availableWallets,
-    setActiveWallet,
-    isConnecting,
-  } = useWallets()
+    status,
+    activeWallet,
+    setActive,
+  } = useEthereumEmbeddedWallet()
+  const isLoadingWallets = status === 'fetching-wallets'
+  const isConnecting = status === 'connecting'
+
   const { user, isAuthenticated } = useUser()
   const { isConnected } = useAccount()
   const [createWalletSheetOpen, setCreateWalletSheetOpen] = useState(false)
-  const [walletToRecover, setWalletToRecover] = useState<UserWallet | null>(
-    null,
-  )
+  const [walletToRecover, setWalletToRecover] =
+    useState<ConnectedEmbeddedEthereumWallet | null>(null)
   const { signOut } = useSignOut()
 
   if (isLoadingWallets || (!user && isAuthenticated)) {
     return <div>Loading wallets...</div>
   }
-  if (availableWallets.length === 0) {
+  if (wallets.length === 0) {
     return (
       <div className="flex gap-2 flex-col w-full">
         <h1>Create a wallet</h1>
@@ -44,7 +45,7 @@ export const Wallets = () => {
     )
   }
 
-  const renderWalletRecovery = (wallet: UserWallet) => {
+  const renderWalletRecovery = (wallet: ConnectedEmbeddedEthereumWallet) => {
     let Icon = LockClosedIcon
     let text = 'Unknown'
     const method = wallet.recoveryMethod
@@ -72,16 +73,15 @@ export const Wallets = () => {
     )
   }
 
-  const handleWalletClick = (wallet: UserWallet) => {
-    if (wallet.isActive || isConnecting) return
+  const handleWalletClick = (wallet: ConnectedEmbeddedEthereumWallet) => {
+    const isActive =
+      activeWallet?.address.toLowerCase() === wallet.address.toLowerCase()
+    if (isActive || isConnecting) return
     const method = wallet.recoveryMethod
     if (method === RecoveryMethod.PASSWORD) {
       setWalletToRecover(wallet)
     } else {
-      setActiveWallet({
-        walletId: 'xyz.openfort',
-        address: wallet.address,
-      })
+      setActive({ address: wallet.address })
     }
   }
 
@@ -94,26 +94,30 @@ export const Wallets = () => {
       <div className="space-y-4 pb-4">
         <h2>Your Wallets</h2>
         <div className="flex flex-col space-y-2">
-          {wallets.map((wallet) => (
-            <button
-              key={wallet.id + wallet.address}
-              className="px-4 py-3 border data-[active=true]:border-zinc-300 border-zinc-700 rounded data-[active=false]:cursor-pointer data-[active=false]:hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1 text-sm"
-              onClick={() => handleWalletClick(wallet)}
-              data-active={wallet.isActive}
-              disabled={wallet.isActive || isConnecting}
-            >
-              {wallet.isConnecting ? (
-                <p>Connecting...</p>
-              ) : (
-                <div className="flex justify-between items-center">
-                  <p className="font-medium mr-2">
-                    {`${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`}
-                  </p>
-                  {renderWalletRecovery(wallet)}
-                </div>
-              )}
-            </button>
-          ))}
+          {wallets.map((wallet) => {
+            const isActive =
+              activeWallet?.address.toLowerCase() === wallet.address.toLowerCase()
+            return (
+              <button
+                key={wallet.id + wallet.address}
+                className="px-4 py-3 border data-[active=true]:border-zinc-300 border-zinc-700 rounded data-[active=false]:cursor-pointer data-[active=false]:hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1 text-sm"
+                onClick={() => handleWalletClick(wallet)}
+                data-active={isActive}
+                disabled={isActive || isConnecting}
+              >
+                {isConnecting && isActive ? (
+                  <p>Connecting...</p>
+                ) : (
+                  <div className="flex justify-between items-center">
+                    <p className="font-medium mr-2">
+                      {`${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`}
+                    </p>
+                    {renderWalletRecovery(wallet)}
+                  </div>
+                )}
+              </button>
+            )
+          })}
 
           <button
             className="p-3 border border-zinc-700 rounded cursor-pointer hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1"

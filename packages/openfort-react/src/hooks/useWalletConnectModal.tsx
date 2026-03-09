@@ -1,20 +1,19 @@
-import { useState } from 'react'
-import type { Connector } from 'wagmi'
+'use client'
 
+import { useState } from 'react'
+import { useEthereumBridge } from '../ethereum/OpenfortEthereumBridgeContext'
 import { isWalletConnectConnector } from '../utils'
 import { logger } from '../utils/logger'
-import { useConnect } from './useConnect'
 
 export function useWalletConnectModal() {
-  const { connectAsync, connectors } = useConnect()
+  const bridge = useEthereumBridge()
   const [isOpen, setIsOpen] = useState(false)
 
   return {
     isOpen,
     open: async () => {
-      // add modal styling because wagmi does not let you add styling to the modal
       const w3mcss = document.createElement('style')
-      w3mcss.innerHTML = `w3m-modal, wcm-modal{ --wcm-z-index: 2147483647; --w3m-z-index:2147483647; }`
+      w3mcss.textContent = `w3m-modal, wcm-modal{ --wcm-z-index: 2147483647; --w3m-z-index:2147483647; }`
       document.head.appendChild(w3mcss)
 
       const removeChild = () => {
@@ -23,13 +22,14 @@ export function useWalletConnectModal() {
         }
       }
 
-      const clientConnector: Connector | undefined = connectors.find((c) => isWalletConnectConnector(c.id))
+      const connectors = bridge?.connectors ?? []
+      const clientConnector = connectors.find((c) => isWalletConnectConnector(c.id))
 
-      if (clientConnector) {
+      if (clientConnector && bridge?.connectAsync) {
         try {
           setIsOpen(true)
           try {
-            await connectAsync({ connector: clientConnector })
+            await bridge.connectAsync({ connector: clientConnector })
           } catch (err) {
             logger.log('WalletConnect', err)
             return {

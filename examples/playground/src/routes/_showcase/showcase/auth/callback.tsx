@@ -1,5 +1,6 @@
 import { useAuthCallback } from '@openfort/react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { DialogLayout } from '@/components/Showcase/auth/DialogLayout'
 import { useCommonEmail } from '@/components/Showcase/auth/useCommonEmail'
 import { Header } from '@/components/Showcase/ui/Header'
@@ -18,6 +19,13 @@ function RouteComponent() {
   })
 
   const nav = useNavigate()
+
+  // Auto-redirect to home after OAuth success (email verification goes to login)
+  useEffect(() => {
+    if (isSuccess && provider && provider !== 'email') {
+      nav({ to: '/' })
+    }
+  }, [isSuccess, provider, nav])
   return (
     <DialogLayout>
       <Header title="Auth Callback" onBack={() => nav({ to: '/' })} />

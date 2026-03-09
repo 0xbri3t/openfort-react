@@ -21,8 +21,14 @@ export const navRoutes: NavRoute[] = [
         label: 'useAuthCallback',
       },
       {
+        href: '/auth/useConnectWithSiwe',
+        label: 'useConnectWithSiwe',
+        evmOnly: true,
+      },
+      {
         href: '/auth/useWalletAuth',
         label: 'useWalletAuth',
+        evmOnly: true,
       },
       {
         href: '/auth/useSignOut',
@@ -38,12 +44,16 @@ export const navRoutes: NavRoute[] = [
     label: 'Wallet hooks',
     children: [
       {
-        href: '/wallet/useWallets',
-        label: 'useWallets',
+        href: '/wallet/useSolanaEmbeddedWallet',
+        label: 'useSolanaEmbeddedWallet',
       },
       {
-        href: '/wallet/useWalletAssets',
-        label: 'useWalletAssets',
+        href: '/wallet/useEthereumEmbeddedWallet',
+        label: 'useEthereumEmbeddedWallet',
+      },
+      {
+        href: '/wallet/useEthereumWalletAssets',
+        label: 'useEthereumWalletAssets',
       },
     ],
   },

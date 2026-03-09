@@ -1,10 +1,12 @@
+'use client'
+
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
-import { useConnectWithSiwe } from '../../hooks/openfort/useConnectWithSiwe'
+import { useEthereumBridge } from '../../ethereum/OpenfortEthereumBridgeContext'
 import styled from '../../styles/styled'
 import { isAndroid } from '../../utils'
 import { useOnUserReturn } from '../../utils/useOnUserReturn'
-import { useWallet } from '../../wallets/useWagmiWallets'
+import { useConnectWithSiwe } from '../../wagmi/useConnectWithSiwe'
+import { useExternalConnector } from '../../wallets/useExternalConnectors'
 import { walletConfigs } from '../../wallets/walletConfigs'
 import Button from '../Common/Button'
 import FitText from '../Common/FitText'
@@ -37,15 +39,16 @@ const ConnectWithMobile: React.FC = () => {
         .indexOf(connector.id) !== -1
   )
 
-  const wallet = useWallet(connector.id) || (walletId && walletConfigs[walletId]) || {}
-  const { isConnected } = useAccount()
+  const wallet = useExternalConnector(connector.id) || (walletId && walletConfigs[walletId]) || {}
+  const bridge = useEthereumBridge()
+  const isConnected = bridge?.account?.isConnected ?? false
 
   const [status, setStatus] = useState(isConnected ? states.INIT : states.CONNECTING)
   const [description, setDescription] = useState<string | undefined>(undefined)
 
   const [hasReturned, setHasReturned] = useState(false)
 
-  const siwe = useConnectWithSiwe()
+  const { connectWithSiwe } = useConnectWithSiwe()
 
   const openApp = () => {
     const uri = wallet?.getWalletConnectDeeplink?.('')
@@ -81,14 +84,12 @@ const ConnectWithMobile: React.FC = () => {
         break
       case states.CONNECTING:
         setDescription('Requesting signature to verify wallet...')
-        siwe({
+        connectWithSiwe({
           walletClientType: walletId,
-          onConnect: () => {
-            setRoute(routes.CONNECTED)
-          },
-          onError: (error) => {
+          onConnect: () => setRoute(routes.CONNECTED),
+          onError: (err) => {
             setStatus(states.ERROR)
-            setDescription(error || 'Connection failed')
+            setDescription(err || 'Connection failed')
           },
         })
         break

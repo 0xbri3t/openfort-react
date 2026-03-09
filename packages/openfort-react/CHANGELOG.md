@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3
+
+### Patch Changes
+
+- [#193](https://github.com/openfort-xyz/openfort-react/pull/193) [`becf0c9`](https://github.com/openfort-xyz/openfort-react/commit/becf0c9bdc12f691a9bef7c6fc0991e8db39f228) Thanks [@isardmart](https://github.com/isardmart)! - added tests for account types, improved wallet-auth code
+
 ## 0.3.2
 
 ### Patch Changes
