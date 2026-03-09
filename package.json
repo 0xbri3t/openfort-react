@@ -110,23 +110,10 @@
     }
   },
   "knip": {
-    "ignoreFiles": [
-      "packages/openfort-react/src/wagmi/**"
-    ],
     "ignore": [
-      ".github/**",
-      "**/build/**",
-      "**/dist/**",
-      "**/.next/**",
-      "**/coverage/**",
-      "**/node_modules/**",
       "packages/openfort-react/rollup.config.dev.js",
       "packages/openfort-react/rollup.config.prod.js",
-      "**/*.gen.ts",
-      "examples/playground/src/api/**",
-      "packages/create-openfort/.github/**",
       "packages/create-openfort/template/**",
-      "examples/playground/tests/auth/auth.setup.ts",
       "examples/playground/tests/auth/auth.setup.solana.ts",
       "examples/playground/tests/auth/auth.setup.evm.ts"
     ],
@@ -137,8 +124,6 @@
       "typescript-plugin-styled-components",
       "buffer",
       "wagmi",
-      "@wagmi/connectors",
-      "@wagmi/core",
       "styled-components",
       "@babel/core",
       "@testing-library/react-hooks"
