@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- [#198](https://github.com/openfort-xyz/openfort-react/pull/198) [`33aea2a`](https://github.com/openfort-xyz/openfort-react/commit/33aea2ace4de11ed182e9e5994827048e7a9c1ba) Thanks [@isardmart](https://github.com/isardmart)! - solana kit treeshakeable bug
+
 ## 1.0.0
 
 ### Major Changes
