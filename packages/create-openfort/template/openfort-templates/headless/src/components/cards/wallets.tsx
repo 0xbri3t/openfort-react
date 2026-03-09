@@ -170,6 +170,7 @@ export const Wallets = () => {
           <button
             className="p-3 border border-zinc-700 rounded cursor-pointer hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1"
             onClick={() => setCreateWalletSheetOpen(true)}
+            type="button"
           >
             + Create Wallet
           </button>

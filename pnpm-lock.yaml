@@ -587,11 +587,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0(react@18.3.1)
       '@openfort/react':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../../../openfort-react
-      '@solana/kit':
-        specifier: ^5.4.0
-        version: 5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@tanstack/react-query':
         specifier: '>=5.45.1'
         version: 5.90.21(react@18.3.1)
@@ -642,11 +639,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0(react@18.3.1)
       '@openfort/react':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../../../openfort-react
-      '@solana/kit':
-        specifier: ^5.4.0
-        version: 5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@tanstack/react-query':
         specifier: '>=5.45.1'
         version: 5.90.21(react@18.3.1)
@@ -694,11 +688,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0(react@18.3.1)
       '@openfort/react':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../../../openfort-react
-      '@solana/kit':
-        specifier: ^5.4.0
-        version: 5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
       '@tanstack/react-query':
         specifier: '>=5.45.1'
         version: 5.90.21(react@18.3.1)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- [#172](https://github.com/openfort-xyz/openfort-react/pull/172) [`62359d1`](https://github.com/openfort-xyz/openfort-react/commit/62359d14d16ab3923eecc43595d52517ba63d83b) Thanks [@isardmart](https://github.com/isardmart)! - added svm, tree shakeable, wagmi subpath
+
 ## 0.3.3
 
 ### Patch Changes
