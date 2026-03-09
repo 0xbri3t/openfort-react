@@ -140,11 +140,18 @@ export const useEthereumWalletAssets = ({
                 })),
               },
             })
-          : Promise.resolve({ [chainId]: [] as getAssets.Asset<false>[] })
+          : Promise.resolve({ [hexChainId]: [] as getAssets.Asset<false>[] })
 
       const [defaultAssetsRaw, customAssets] = await Promise.all([defaultAssetsPromise, customAssetsPromise])
 
-      const defaultAssets = defaultAssetsRaw[chainId].map<Asset>((a) => {
+      // ERC-7811 response keys may be hex (e.g. "0x14a34") or numeric depending on the RPC
+      const rawByChain = defaultAssetsRaw as unknown as Record<string, getAssets.Asset<false>[]>
+      const customByChain = customAssets as unknown as Record<string, getAssets.Asset<false>[]>
+
+      const rawChainAssets = rawByChain[hexChainId] ?? rawByChain[String(chainId)] ?? []
+      const customChainAssets = customByChain[hexChainId] ?? customByChain[String(chainId)] ?? []
+
+      const defaultAssets = rawChainAssets.map<Asset>((a) => {
         let asset: Asset
         if (a.type === 'erc20') {
           // The ERC-7811 metadata type does not include `fiat`; it is a non-standard
@@ -189,7 +196,7 @@ export const useEthereumWalletAssets = ({
       })
 
       const mergedAssets = [...defaultAssets]
-      const customAssetsForChain: Asset[] = customAssets[chainId].flatMap((asset: getAssets.Asset<false>) => {
+      const customAssetsForChain: Asset[] = customChainAssets.flatMap((asset: getAssets.Asset<false>) => {
         // Custom assets are explicitly requested as erc20; skip if the API returns something unexpected.
         if (asset.type !== 'erc20') return []
         if (!walletConfig?.ethereum?.assets) return [{ ...asset, raw: asset }]

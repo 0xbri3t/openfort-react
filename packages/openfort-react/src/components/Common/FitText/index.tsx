@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import useFitText from '../../../hooks/useFitText'
 
 const FitText = ({
@@ -15,12 +15,13 @@ const FitText = ({
   justifyContent?: 'center' | 'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly'
 }) => {
   const [ready, setReady] = React.useState(false)
+  const handleReady = useCallback(() => setReady(true), [])
   const { fontSize, ref: textRef } = useFitText({
     logLevel: 'none',
     maxFontSize,
     minFontSize,
-    onStart: () => setReady(true),
-    onFinish: () => setReady(true),
+    onStart: handleReady,
+    onFinish: handleReady,
   })
   return (
     <div

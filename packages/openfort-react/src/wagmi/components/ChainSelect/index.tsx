@@ -126,7 +126,7 @@ const ChevronDown = ({ ...props }) => (
 )
 
 const ChainSelector: React.FC = () => {
-  const context = useOpenfort()
+  const { open, triggerResize, setRoute } = useOpenfort()
   const [isOpen, setIsOpen] = useState(false)
   const chainId = useChainId()
   const { chains } = useSwitchChain()
@@ -140,12 +140,12 @@ const ChainSelector: React.FC = () => {
   const mobile = isMobile() || (typeof window !== 'undefined' && window?.innerWidth < defaultTheme.mobileWidth)
 
   useEffect(() => {
-    if (!context.open) setIsOpen(false)
-  }, [context.open])
+    if (!open) setIsOpen(false)
+  }, [open])
 
   useEffect(() => {
-    context.triggerResize()
-  }, [chainId, context])
+    triggerResize()
+  }, [chainId, triggerResize])
 
   const disabled = chains.length <= 1
 
@@ -158,7 +158,7 @@ const ChainSelector: React.FC = () => {
             disabled={disabled}
             onClick={() => {
               if (mobile) {
-                context.setRoute(routes.ETH_SWITCH_NETWORK)
+                setRoute(routes.ETH_SWITCH_NETWORK)
               } else {
                 setIsOpen(!isOpen)
               }
