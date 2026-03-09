@@ -8,7 +8,7 @@ const styledComponentsTransformer = createStyledComponentsTransformer({
 
 export default {
   input: ['./src/index.ts', './src/ethereum/index.ts', './src/solana/index.ts', './src/wagmi/index.ts'],
-  external: ['react', 'react-dom', 'framer-motion'],
+  external: ['react', 'react-dom', 'framer-motion', 'styled-components'],
   output: {
     dir: 'build',
     format: 'esm',
