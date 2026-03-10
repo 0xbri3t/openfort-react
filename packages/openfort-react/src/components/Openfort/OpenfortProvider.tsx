@@ -147,8 +147,8 @@ export const OpenfortProvider = ({
         defaultMethod: allowAutomaticRecovery ? RecoveryMethod.AUTOMATIC : RecoveryMethod.PASSWORD,
       },
       authProviders: hasWagmi
-        ? [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP, UIAuthProvider.WALLET]
-        : [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP],
+        ? [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP, UIAuthProvider.WALLET, UIAuthProvider.GOOGLE]
+        : [UIAuthProvider.GUEST, UIAuthProvider.EMAIL_OTP, UIAuthProvider.GOOGLE],
     }),
     [allowAutomaticRecovery, hasWagmi]
   )
