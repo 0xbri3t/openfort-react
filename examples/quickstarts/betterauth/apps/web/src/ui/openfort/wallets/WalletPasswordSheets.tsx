@@ -4,7 +4,7 @@ import {
   RecoveryMethod,
   type ConnectedEmbeddedEthereumWallet,
 } from '@openfort/react'
-import type { EmbeddedAccount } from '@openfort/openfort-js'
+import type { EmbeddedAccount } from '@openfort/react'
 import { useState } from 'react'
 
 import { Sheet } from '../../../components/ui/Sheet'
