@@ -82,7 +82,7 @@ export function OpenfortProviders({ children }: { children: React.ReactNode }) {
                   return null
                 }
               },
-              connectOnLogin: true, // Wallet creation handled manually after auth
+              connectOnLogin: true,
             }}
             thirdPartyAuth={{
               getAccessToken: async () => {
