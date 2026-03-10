@@ -1,5 +1,4 @@
 import { OpenfortProvider, type Theme } from '@openfort/react'
-import { OpenfortModal } from '@openfort/react'
 import { getDefaultConfig, OpenfortWagmiBridge } from '@openfort/react/wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -39,7 +38,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
               theme: import.meta.env.VITE_OPENFORT_THEME as Theme,
             }}
           >
-            <OpenfortModal />
             {children}
           </OpenfortProvider>
         </OpenfortWagmiBridge>
