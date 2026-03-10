@@ -1,8 +1,9 @@
 'use client'
 
-import { AccountTypeEnum, ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
+import { ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { useCallback } from 'react'
 import { useOpenfort } from '../../../components/Openfort/useOpenfort'
+import { DEFAULT_ACCOUNT_TYPE } from '../../../constants/openfort'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import { buildRecoveryParams } from '../../../shared/utils/recovery'
 import { logger } from '../../../utils/logger'
@@ -94,11 +95,11 @@ export const useConnectToWalletPostAuth = () => {
               getUserId: async () => (await client.user.get())?.id,
             }
           )
-          const accountType = walletConfig?.ethereum?.accountType ?? AccountTypeEnum.SMART_ACCOUNT
+          const accountType = walletConfig?.ethereum?.accountType ?? DEFAULT_ACCOUNT_TYPE
           const account = await client.embeddedWallet.create({
             chainType,
-            accountType: chainType === ChainTypeEnum.EVM ? accountType : AccountTypeEnum.EOA,
-            ...(chainType === ChainTypeEnum.EVM && accountType !== AccountTypeEnum.EOA && { chainId }),
+            accountType: chainType === ChainTypeEnum.EVM ? accountType : DEFAULT_ACCOUNT_TYPE,
+            ...(chainType === ChainTypeEnum.EVM && accountType !== DEFAULT_ACCOUNT_TYPE && { chainId }),
             recoveryParams,
           })
           await updateEmbeddedAccounts({ silent: true })
