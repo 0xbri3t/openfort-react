@@ -16,81 +16,72 @@ const wagmiConfig = createConfig(
 
 const queryClient = new QueryClient()
 
+if (!import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY) {
+  throw new Error('VITE_OPENFORT_PUBLISHABLE_KEY is required')
+}
+if (!import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY) {
+  throw new Error('VITE_SHIELD_PUBLISHABLE_KEY is required')
+}
+
+const thirdPartyAuth = {
+  provider: ThirdPartyOAuthProvider.BETTER_AUTH,
+  getAccessToken: async (): Promise<string | null> => {
+    const session = await authClient.getSession()
+    return session?.data?.session?.token ?? null
+  },
+}
+
+const walletConfig = {
+  shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY!,
+  ethereum: {
+    ethereumFeeSponsorshipId: import.meta.env.VITE_FEE_SPONSORSHIP_ID,
+  },
+  // For AUTOMATIC embedded wallet recovery an encryption session is required.
+  // See: https://www.openfort.io/docs/products/embedded-wallet/react-native/quickstart/automatic
+  // For backend setup: https://github.com/openfort-xyz/openfort-backend-quickstart
+  getEncryptionSession: async (): Promise<string | null> => {
+    try {
+      const session = await authClient.getSession()
+      const token = session?.data?.session?.token
+      if (!token) {
+        console.error('Better Auth - No token available')
+        return null
+      }
+      const response = await fetch(
+        `${import.meta.env.VITE_BETTERAUTH_URL + import.meta.env.VITE_BETTERAUTH_BASE_PATH}/encryption-session`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      if (!response.ok) {
+        console.error('Better Auth - Failed to get encryption session:', response.status)
+        return null
+      }
+      const data = await response.json()
+      console.log('Better Auth - Retrieved encryption session:', data)
+      return data.sessionId ?? null
+    } catch (error) {
+      console.error('Better Auth - Error getting encryption session:', error)
+      return null
+    }
+  },
+  connectOnLogin: true,
+}
+
 export function OpenfortProviders({ children }: { children: React.ReactNode }) {
-  const openfortPublishableKey = import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY
-  const shieldPublishableKey = import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY
-
-  if (!openfortPublishableKey) {
-    throw new Error('VITE_OPENFORT_PUBLISHABLE_KEY is required')
-  }
-  if (!shieldPublishableKey) {
-    throw new Error('VITE_SHIELD_PUBLISHABLE_KEY is required')
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={wagmiConfig}>
         <OpenfortWagmiBridge>
           <OpenfortProvider
             debugMode
-            publishableKey={openfortPublishableKey}
-            walletConfig={{
-              shieldPublishableKey, // Get it from https://dashboard.openfort.io
-              ethereum: {
-                ethereumFeeSponsorshipId: import.meta.env.VITE_FEE_SPONSORSHIP_ID, // Fee sponsorship ID for sponsoring transactions
-              },
-              // If you want to use AUTOMATIC embedded wallet recovery, an encryption session is required.
-              // See: https://www.openfort.io/docs/products/embedded-wallet/react-native/quickstart/automatic
-              // For backend setup, check: https://github.com/openfort-xyz/openfort-backend-quickstart
-              getEncryptionSession: async () => {
-                try {
-                  const session = await authClient.getSession()
-                  const token = session?.data?.session?.token
-
-                  if (!token) {
-                    console.error('Better Auth - No token available')
-                    return null
-                  }
-
-                  const response = await fetch(
-                    `${import.meta.env.VITE_BETTERAUTH_URL + import.meta.env.VITE_BETTERAUTH_BASE_PATH}/encryption-session`,
-                    {
-                      method: 'POST',
-                      headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                      },
-                    },
-                  )
-
-                  if (!response.ok) {
-                    console.error(
-                      'Better Auth - Failed to get encryption session:',
-                      response.status,
-                    )
-                    return null
-                  }
-
-                  const data = await response.json()
-                  console.log('Better Auth - Retrieved encryption session:', data)
-                  return data.sessionId ?? data?.sessionId ?? null
-                } catch (error) {
-                  console.error(
-                    'Better Auth - Error getting encryption session:',
-                    error,
-                  )
-                  return null
-                }
-              },
-              connectOnLogin: false, // Wallet creation handled manually after auth
-            }}
-            thirdPartyAuth={{
-              getAccessToken: async () => {
-                const session = await authClient.getSession()
-                return session?.data?.session?.token ?? null
-              },
-              provider: ThirdPartyOAuthProvider.BETTER_AUTH,
-            }}
+            publishableKey={import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY!}
+            walletConfig={walletConfig}
+            thirdPartyAuth={thirdPartyAuth}
           >
             {children}
           </OpenfortProvider>

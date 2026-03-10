@@ -1,15 +1,10 @@
 'use client'
 
-import {
-  AccountTypeEnum,
-  ChainTypeEnum,
-  type EmbeddedAccount,
-  EmbeddedState,
-  RecoveryMethod,
-} from '@openfort/openfort-js'
+import { ChainTypeEnum, type EmbeddedAccount, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { baseSepolia } from 'viem/chains'
 import { useOpenfortUIContext as useOpenfort } from '../../components/Openfort/useOpenfort'
+import { DEFAULT_ACCOUNT_TYPE } from '../../constants/openfort'
 import { useConnectionStrategy } from '../../core/ConnectionStrategyContext'
 import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
@@ -179,13 +174,12 @@ export function useEthereumEmbeddedWallet(options?: UseEmbeddedEthereumWalletOpt
         )
 
         // Determine account type (use createOptions, then walletConfig, else default to Smart Account)
-        const accountType =
-          createOptions?.accountType ?? walletConfig?.ethereum?.accountType ?? AccountTypeEnum.SMART_ACCOUNT
+        const accountType = createOptions?.accountType ?? walletConfig?.ethereum?.accountType ?? DEFAULT_ACCOUNT_TYPE
 
         const account = await client.embeddedWallet.create({
           chainType: ChainTypeEnum.EVM,
           accountType,
-          ...(accountType !== AccountTypeEnum.EOA && { chainId: createOptions?.chainId ?? creationChainId }),
+          ...(accountType !== DEFAULT_ACCOUNT_TYPE && { chainId: createOptions?.chainId ?? creationChainId }),
           recoveryParams,
         })
 
