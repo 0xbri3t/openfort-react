@@ -4,17 +4,24 @@ import {
   LockClosedIcon,
 } from '@heroicons/react/24/outline'
 import {
+  AccountTypeEnum,
   RecoveryMethod,
   type ConnectedEmbeddedEthereumWallet,
-  useEthereumEmbeddedWallet,
   useSignOut,
   useUser,
 } from '@openfort/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAccount } from 'wagmi'
 import { signOut as betterAuthSignOut } from '../../../integrations/betterauth'
-import { CreateWallet, CreateWalletSheet } from './WalletCreation'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 import { WalletRecoverPasswordSheet } from './WalletPasswordSheets'
+import { CreateWallet, CreateWalletSheet } from './WalletCreation'
+
+const ACCOUNT_TYPE_BADGE: Record<AccountTypeEnum, string> = {
+  [AccountTypeEnum.EOA]: 'EOA',
+  [AccountTypeEnum.SMART_ACCOUNT]: 'SM',
+  [AccountTypeEnum.DELEGATED_ACCOUNT]: 'DE',
+}
 
 function WalletRecoveryBadge({ wallet }: { wallet: ConnectedEmbeddedEthereumWallet }) {
   let Icon = LockClosedIcon
@@ -36,10 +43,54 @@ function WalletRecoveryBadge({ wallet }: { wallet: ConnectedEmbeddedEthereumWall
   }
 
   return (
-    <div className="flex items-center text-xs">
+    <div className="flex items-center text-xs gap-1">
       <span>{label}</span>
-      <Icon className="h-5 w-5 ml-2" />
+      <Icon className="h-4 w-4" />
     </div>
+  )
+}
+
+function WalletRow({
+  wallet,
+  isActive,
+  isConnecting,
+  nested,
+  onClick,
+}: {
+  wallet: ConnectedEmbeddedEthereumWallet
+  isActive: boolean
+  isConnecting: boolean
+  nested?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      key={wallet.id + wallet.address}
+      type="button"
+      className={`px-4 py-3 border data-[active=true]:border-zinc-300 border-zinc-700 rounded data-[active=false]:cursor-pointer data-[active=false]:hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1 text-sm ${nested ? 'ml-5' : ''}`}
+      onClick={onClick}
+      data-active={isActive}
+      disabled={isActive || isConnecting}
+    >
+      {isConnecting && isActive ? (
+        <p>Connecting...</p>
+      ) : (
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            {nested && <span className="text-zinc-500 text-xs">↳</span>}
+            <p className="font-medium">
+              {`${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`}
+            </p>
+            {wallet.accountType && (
+              <span className="text-[10px] font-semibold border border-zinc-600 rounded px-1 py-0.5 text-zinc-400">
+                {ACCOUNT_TYPE_BADGE[wallet.accountType]}
+              </span>
+            )}
+          </div>
+          <WalletRecoveryBadge wallet={wallet} />
+        </div>
+      )}
+    </button>
   )
 }
 
@@ -59,6 +110,26 @@ export function WalletListCard() {
   const [createWalletSheetOpen, setCreateWalletSheetOpen] = useState(false)
   const [walletToRecover, setWalletToRecover] =
     useState<ConnectedEmbeddedEthereumWallet | null>(null)
+
+  // Build parent/child hierarchy: Smart Accounts are children of their EOA owner
+  const { topLevel, childrenByOwner } = useMemo(() => {
+    const ownerAddresses = new Set(wallets.map((w) => w.address.toLowerCase()))
+    const childrenByOwner = new Map<string, ConnectedEmbeddedEthereumWallet[]>()
+    const topLevel: ConnectedEmbeddedEthereumWallet[] = []
+
+    for (const wallet of wallets) {
+      const owner = wallet.ownerAddress?.toLowerCase()
+      if (owner && ownerAddresses.has(owner) && owner !== wallet.address.toLowerCase()) {
+        const existing = childrenByOwner.get(owner) ?? []
+        existing.push(wallet)
+        childrenByOwner.set(owner, existing)
+      } else {
+        topLevel.push(wallet)
+      }
+    }
+
+    return { topLevel, childrenByOwner }
+  }, [wallets])
 
   if (isLoadingWallets || (!user && isAuthenticated)) {
     return <div>Loading wallets...</div>
@@ -97,29 +168,33 @@ export function WalletListCard() {
       <div className="space-y-4 pb-4">
         <h2>Your Wallets</h2>
         <div className="flex flex-col space-y-2">
-          {wallets.map((wallet: ConnectedEmbeddedEthereumWallet) => {
+          {topLevel.map((wallet) => {
+            const children = childrenByOwner.get(wallet.address.toLowerCase())
             const isActive =
               activeWallet?.address.toLowerCase() === wallet.address.toLowerCase()
             return (
-              <button
-                key={wallet.id + wallet.address}
-                type="button"
-                className="px-4 py-3 border data-[active=true]:border-zinc-300 border-zinc-700 rounded data-[active=false]:cursor-pointer data-[active=false]:hover:bg-zinc-700/20 hover:border-zinc-300 transition-colors flex-1 text-sm"
-                onClick={() => handleWalletClick(wallet)}
-                data-active={isActive}
-                disabled={isActive || isConnecting}
-              >
-                {isConnecting && isActive ? (
-                  <p>Connecting...</p>
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <p className="font-medium mr-2">
-                      {`${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`}
-                    </p>
-                    <WalletRecoveryBadge wallet={wallet} />
-                  </div>
-                )}
-              </button>
+              <div key={wallet.id} className="flex flex-col space-y-1">
+                <WalletRow
+                  wallet={wallet}
+                  isActive={isActive}
+                  isConnecting={isConnecting}
+                  onClick={() => handleWalletClick(wallet)}
+                />
+                {children?.map((child) => {
+                  const isChildActive =
+                    activeWallet?.address.toLowerCase() === child.address.toLowerCase()
+                  return (
+                    <WalletRow
+                      key={child.id}
+                      wallet={child}
+                      isActive={isChildActive}
+                      isConnecting={isConnecting}
+                      nested
+                      onClick={() => handleWalletClick(child)}
+                    />
+                  )
+                })}
+              </div>
             )
           })}
 
