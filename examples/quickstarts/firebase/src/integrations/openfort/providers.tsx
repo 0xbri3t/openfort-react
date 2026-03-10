@@ -16,6 +16,26 @@ const wagmiConfig = createConfig(
 
 const queryClient = new QueryClient()
 
+// Firebase's getIdToken(false) uses its own internal cache and only refreshes
+// when the token is near expiry — no navigator lock, no starvation risk.
+// Objects are defined outside the component for stable references so
+// OpenfortProvider doesn't re-render from reference inequality.
+const thirdPartyAuth = {
+  provider: ThirdPartyOAuthProvider.FIREBASE,
+  getAccessToken: async (): Promise<string | null> => {
+    return (await auth.currentUser?.getIdToken(/* forceRefresh */ false)) ?? null
+  },
+}
+
+const walletConfig = {
+  shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY!,
+  ethereum: {
+    ethereumFeeSponsorshipId: import.meta.env.VITE_FEE_SPONSORSHIP_ID,
+  },
+  createEncryptedSessionEndpoint: import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT,
+  connectOnLogin: false, // Wallet creation handled manually after auth
+}
+
 export function OpenfortProviders({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
@@ -24,28 +44,8 @@ export function OpenfortProviders({ children }: { children: React.ReactNode }) {
           <OpenfortProvider
             debugMode
             publishableKey={import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY!}
-            walletConfig={{
-              shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY!, // Get it from https://dashboard.openfort.io
-              ethereum: {
-                ethereumFeeSponsorshipId: import.meta.env.VITE_FEE_SPONSORSHIP_ID, // Fee sponsorship ID for sponsoring transactions
-              },
-              // If you want to use AUTOMATIC embedded wallet recovery, an encryption session is required.
-              // See: https://www.openfort.io/docs/products/embedded-wallet/react-native/quickstart/automatic
-              // For backend setup, check: https://github.com/openfort-xyz/openfort-backend-quickstart
-              createEncryptedSessionEndpoint: import.meta.env
-                .VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT,
-              connectOnLogin: false, // Wallet creation handled manually after auth
-            }}
-            thirdPartyAuth={{
-              getAccessToken: async () => {
-                return (
-                  (await auth.currentUser?.getIdToken(
-                    /* forceRefresh */ false,
-                  )) ?? null
-                )
-              },
-              provider: ThirdPartyOAuthProvider.FIREBASE,
-            }}
+            walletConfig={walletConfig}
+            thirdPartyAuth={thirdPartyAuth}
           >
             {children}
           </OpenfortProvider>

@@ -1,9 +1,11 @@
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import {
+  AccountTypeEnum,
   RecoveryMethod,
   type ConnectedEmbeddedEthereumWallet,
-  useEthereumEmbeddedWallet,
 } from '@openfort/react'
+import type { EmbeddedAccount } from '@openfort/react'
+import { useEthereumEmbeddedWallet } from '@openfort/react/ethereum'
 import { useState } from 'react'
 
 import { Sheet } from '../../../components/ui/Sheet'
@@ -12,14 +14,23 @@ type CreateWalletPasswordSheetProps = {
   open: boolean
   onClose: () => void
   onCreateWallet?: () => void
+  create: (options: {
+    recoveryMethod: RecoveryMethod
+    accountType?: AccountTypeEnum
+    password?: string
+  }) => Promise<EmbeddedAccount>
+  status: string
+  accountType: AccountTypeEnum
 }
 
 export function CreateWalletPasswordSheet({
   open,
   onClose,
   onCreateWallet,
+  create,
+  status,
+  accountType,
 }: CreateWalletPasswordSheetProps) {
-  const { create, status } = useEthereumEmbeddedWallet()
   const [error, setError] = useState<string | null>(null)
   const isCreating = status === 'creating'
 
@@ -43,6 +54,7 @@ export function CreateWalletPasswordSheet({
           try {
             await create({
               recoveryMethod: RecoveryMethod.PASSWORD,
+              accountType,
               password,
             })
             onCreateWallet?.()
@@ -68,6 +80,7 @@ export function CreateWalletPasswordSheet({
         <input
           type="password"
           name="password"
+          autoComplete="new-password"
           placeholder="Enter your wallet's password"
           className="w-full mt-2 p-2 border border-gray-300 rounded"
         />
@@ -140,6 +153,7 @@ export function WalletRecoverPasswordSheet({
         <input
           type="password"
           name="password"
+          autoComplete="current-password"
           placeholder="Enter your wallet's password"
           className="w-full mt-2 p-2 border border-gray-300 rounded"
         />
