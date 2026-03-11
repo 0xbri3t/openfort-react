@@ -77,10 +77,13 @@ const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => 
 
   const handleCreateWallet = async (recoveryMethod: RecoveryMethod) => {
     if (!selectedAccountType) return
+    const accountType = selectedAccountType
     setCreatingMethod(recoveryMethod)
+    setStep('idle')
+    setSelectedAccountType(null)
     try {
       const options = {
-        accountType: selectedAccountType,
+        accountType,
         ...(recoveryMethod === RecoveryMethod.PASSWORD && {
           recoveryMethod: RecoveryMethod.PASSWORD,
           password: 'example-password',
@@ -88,8 +91,7 @@ const CreateWalletButton = ({ ethereum }: { ethereum: EthereumWalletState }) => 
         ...(recoveryMethod === RecoveryMethod.PASSKEY && { recoveryMethod: RecoveryMethod.PASSKEY }),
       }
       await create(options)
-      setStep('idle')
-      setSelectedAccountType(null)
+      setCreatingMethod(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create wallet')
       setCreatingMethod(null)

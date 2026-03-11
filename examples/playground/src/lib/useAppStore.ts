@@ -40,7 +40,7 @@ const defaultWalletConfig: OpenfortWalletConfig = {
   // When switching EVM↔SVM the provider tree remounts; auto-creation here creates wallets
   // without the right session key config and with no user confirmation. Use the explicit
   // "Create wallet" UI instead.
-  connectOnLogin: true,
+  connectOnLogin: false,
 
   requestWalletRecoverOTP: async ({ userId, email, phone }) => {
     await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {
