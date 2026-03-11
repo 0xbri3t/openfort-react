@@ -16,7 +16,6 @@ test('setup: create guest wallet (svm) and persist auth state', async ({ page })
   const dash = new DashboardPage(page)
 
   await auth.goto()
-  await auth.openConnectModalFromNavbar()
   await auth.continueAsGuest('svm')
 
   await dash.expectLoaded('svm')

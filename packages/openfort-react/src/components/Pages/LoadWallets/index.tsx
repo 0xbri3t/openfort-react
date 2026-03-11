@@ -44,9 +44,8 @@ const errorForChainRegistry: Record<
 }
 
 const LoadWallets: React.FC = () => {
-  const { chainType } = useOpenfortCore()
-  const { user } = useOpenfortCore()
-  const { triggerResize, setRoute, setConnector } = useOpenfort()
+  const { chainType, user } = useOpenfortCore()
+  const { triggerResize, setRoute, setConnector, walletConfig } = useOpenfort()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
   const embeddedWallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
@@ -81,6 +80,10 @@ const LoadWallets: React.FC = () => {
     logger.log('User wallets loaded:', wallets.length)
 
     if (wallets.length === 0) {
+      if (walletConfig?.connectOnLogin === false) {
+        setRoute(routes.CONNECTED)
+        return
+      }
       setRoute(createRoute(chainType))
       return
     }
@@ -102,7 +105,7 @@ const LoadWallets: React.FC = () => {
     }
 
     setRoute(routes.SELECT_WALLET_TO_RECOVER)
-  }, [loadingUX, isLoadingWallets, wallets, user, chainType, setRoute, setConnector])
+  }, [loadingUX, isLoadingWallets, wallets, user, chainType, setRoute, setConnector, walletConfig])
 
   const { isError: isErrorFromChain, message: errorMessageFromChain } = errorForChainRegistry[chainType](errorWallets)
   const isError = !user || isErrorFromChain
