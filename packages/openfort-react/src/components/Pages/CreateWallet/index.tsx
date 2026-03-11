@@ -2,7 +2,7 @@
 
 import { ChainTypeEnum, EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon, PlusIcon, ShieldIcon } from '../../../assets/icons'
 import Logos from '../../../assets/logos'
@@ -87,17 +87,19 @@ const CreateWalletAutomaticRecovery = ({
   logoutOnBack: boolean
 }) => {
   const { embeddedState } = useOpenfortCore()
-  const { setRoute, triggerResize } = useOpenfort()
+  const { setRoute, triggerResize, walletConfig } = useOpenfort()
   const [recoveryError, setRecoveryError] = useState<Error | null>(null)
   const { create } = useEthereumEmbeddedWallet()
   const { isEnabled: isWalletRecoveryOTPEnabled, requestOTP } = useRecoveryOTP()
   const [shouldCreateWallet, setShouldCreateWallet] = useState(false)
+  const isCreatingRef = useRef(false)
   const [needsOTP, setNeedsOTP] = useState(false)
   const [otpResponse, setOtpResponse] = useState<OTPResponse | null>(null)
   const [otpStatus, setOtpStatus] = useState<'idle' | 'loading' | 'error' | 'success' | 'sending-otp' | 'send-otp'>(
     'idle'
   )
   const [error, setError] = useState<false | string>(false)
+  const [canSendOtp, setCanSendOtp] = useState(true)
 
   const handleCompleteOtp = async (otp: string) => {
     setOtpStatus('loading')
@@ -121,12 +123,16 @@ const CreateWalletAutomaticRecovery = ({
 
   useEffect(() => {
     if (!shouldCreateWallet) return
+    if (isCreatingRef.current) return
+    isCreatingRef.current = true
     ;(async () => {
       logger.log('Creating wallet Automatic recover')
       try {
         await create({ recoveryMethod: RecoveryMethod.AUTOMATIC })
+        setShouldCreateWallet(false)
         setRoute(routes.CONNECTED_SUCCESS)
       } catch (err) {
+        setShouldCreateWallet(false)
         const { error, isOTPRequired } = handleOtpRecoveryError(err, isWalletRecoveryOTPEnabled)
         if (isOTPRequired && isWalletRecoveryOTPEnabled) {
           try {
@@ -141,18 +147,18 @@ const CreateWalletAutomaticRecovery = ({
           logger.log('Error creating wallet', err)
           setRecoveryError(error)
         }
+      } finally {
+        isCreatingRef.current = false
       }
       triggerResize()
     })()
   }, [shouldCreateWallet, create, isWalletRecoveryOTPEnabled, requestOTP, triggerResize])
 
-  const [canSendOtp, setCanSendOtp] = useState(true)
-
   useEffect(() => {
-    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) {
-      setShouldCreateWallet(true)
-    }
-  }, [embeddedState])
+    if (embeddedState !== EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) return
+    if (walletConfig?.connectOnLogin === false) return
+    setShouldCreateWallet(true)
+  }, [embeddedState, walletConfig?.connectOnLogin])
   const handleResendClick = useCallback(() => {
     setOtpStatus('send-otp')
     setCanSendOtp(false)
@@ -238,32 +244,38 @@ const CreateWalletPasskeyRecovery = ({
   onBack: SetOnBackFunction
   logoutOnBack: boolean
 }) => {
-  const { triggerResize, setRoute } = useOpenfort()
+  const { triggerResize, setRoute, walletConfig } = useOpenfort()
   const { create } = useEthereumEmbeddedWallet()
   const [shouldCreateWallet, setShouldCreateWallet] = useState(false)
+  const isCreatingRef = useRef(false)
   const [recoveryError, setRecoveryError] = useState<Error | null>(null)
   const { embeddedState } = useOpenfortCore()
 
   useEffect(() => {
     if (!shouldCreateWallet) return
+    if (isCreatingRef.current) return
+    isCreatingRef.current = true
     ;(async () => {
       logger.log('Creating wallet passkey recovery')
       try {
         await create({ recoveryMethod: RecoveryMethod.PASSKEY })
+        setShouldCreateWallet(false)
         setRoute(routes.CONNECTED_SUCCESS)
       } catch (err) {
         logger.log('Error creating wallet', err)
         setRecoveryError(new Error('Failed to create wallet'))
         setShouldCreateWallet(false)
+      } finally {
+        isCreatingRef.current = false
       }
     })()
   }, [shouldCreateWallet, create])
 
   useEffect(() => {
-    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) {
-      setShouldCreateWallet(true)
-    }
-  }, [embeddedState])
+    if (embeddedState !== EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) return
+    if (walletConfig?.connectOnLogin === false) return
+    setShouldCreateWallet(true)
+  }, [embeddedState, walletConfig?.connectOnLogin])
 
   useEffect(() => {
     if (recoveryError) triggerResize()
@@ -436,7 +448,6 @@ const CreateEmbeddedWallet = ({ onBack, logoutOnBack }: { onBack: SetOnBackFunct
   }, [userSelectedMethod])
 
   const method = userSelectedMethod ?? uiConfig.walletRecovery.defaultMethod
-
   switch (method) {
     case RecoveryMethod.PASSWORD:
       return (
@@ -507,8 +518,7 @@ const CreateOrConnectWallet = () => {
 
 const EthereumCreateWallet: React.FC = () => {
   const { uiConfig, walletConfig, setRoute } = useOpenfort()
-  const { user } = useOpenfortCore()
-  const { chainType } = useOpenfortCore()
+  const { user, chainType } = useOpenfortCore()
 
   // Use chain-specific hooks
   const ethereumWallet = useEthereumEmbeddedWallet()
