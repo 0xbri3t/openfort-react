@@ -171,14 +171,39 @@ export const runCli = async (): Promise<CliResults> => {
         template: () => {
           return p.select({
             message: "Select an Openfort template:",
-            options: availableTemplates.map((template) => ({
-              value: template,
-              label:
-                template === "openfort-ui" ? "Openfort UI (default)" : template,
-              hint: getTemplateHint(template),
-            })),
+            options: availableTemplates
+              .filter((t) => t !== "solana-headless")
+              .map((template) => ({
+                value: template,
+                label:
+                  template === "openfort-ui"
+                    ? "Openfort UI (default)"
+                    : template,
+                hint: getTemplateHint(template),
+              })),
             initialValue: "openfort-ui",
           });
+        },
+        chain: ({ results }) => {
+          if (results.template === "headless") {
+            return p.select({
+              message: "Select blockchain:",
+              options: [
+                {
+                  value: "ethereum",
+                  label: "Ethereum (EVM)",
+                  hint: "Polygon Amoy, Beam testnet, etc.",
+                },
+                {
+                  value: "solana",
+                  label: "Solana (SVM)",
+                  hint: "Devnet / Mainnet-Beta",
+                },
+              ],
+              initialValue: "ethereum",
+            });
+          }
+          return undefined;
         },
         createBackend: () => {
           return p.confirm({
@@ -329,7 +354,9 @@ export const runCli = async (): Promise<CliResults> => {
 
     return {
       appName: (project.name as string) || cliResults.appName!,
-      template: project.template as OpenfortTemplate,
+      template: (project.chain === "solana" && project.template === "headless"
+        ? "solana-headless"
+        : project.template) as OpenfortTemplate,
       theme: project.theme as OpenfortTheme | undefined,
       createBackend: project.createBackend as boolean,
       apiEndpoint: project.apiEndpoint as string | undefined,
@@ -381,7 +408,7 @@ function getTemplateHint(template: OpenfortTemplate): string {
     case "openfort-ui":
       return "Pre-built UI components";
     case "headless":
-      return "Custom, unstyled components";
+      return "Custom, unstyled — Ethereum or Solana";
     case "firebase":
       return "With Firebase authentication";
     default:
