@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- [#201](https://github.com/openfort-xyz/openfort-react/pull/201) [`2c23537`](https://github.com/openfort-xyz/openfort-react/commit/2c235373b7879584c26e70951d3839b3157bd4b0) Thanks [@isardmart](https://github.com/isardmart)! - added google as default auth provider, EOA as default accountType
+
+- [#204](https://github.com/openfort-xyz/openfort-react/pull/204) [`68c497a`](https://github.com/openfort-xyz/openfort-react/commit/68c497a0df2848dcba91e3ca23c12fd309fae418) Thanks [@isardmart](https://github.com/isardmart)! - openfortbutton, re create wallet bug on login solved
+
+- [#205](https://github.com/openfort-xyz/openfort-react/pull/205) [`a002d56`](https://github.com/openfort-xyz/openfort-react/commit/a002d56f18dfc1a670892ea153f632dcacbcc6e1) Thanks [@isardmart](https://github.com/isardmart)! - wagmi been imported without dynamic guard, fixed
+
 ## 1.0.1
 
 ### Patch Changes
