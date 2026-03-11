@@ -20,7 +20,6 @@ import { logger } from '../../utils/logger'
 import { buildChainFromConfig } from '../../utils/rpc'
 import { isFamily } from '../../utils/wallets'
 
-import { EmbeddedWalletWagmiSync } from '../../wagmi/useEmbeddedWalletWagmiSync'
 import { type ContextValue, OpenfortContext, UIContext, type UIContextValue } from './context'
 import {
   type BuyFormState,
@@ -39,10 +38,16 @@ import {
 } from './types'
 
 const SolanaContextProvider = lazy(() =>
-  import('../../solana/SolanaContext').then((m) => ({ default: m.SolanaContextProvider }))
+  import(/* @vite-ignore */ '../../solana/SolanaContext').then((m) => ({ default: m.SolanaContextProvider }))
 )
 
-const LazyConnectKitModal = lazy(() => import('../ConnectModal'))
+const LazyEmbeddedWalletWagmiSync = lazy(() =>
+  import(/* @vite-ignore */ '../../wagmi/useEmbeddedWalletWagmiSync').then((m) => ({
+    default: m.EmbeddedWalletWagmiSync,
+  }))
+)
+
+const LazyConnectKitModal = lazy(() => import(/* @vite-ignore */ '../ConnectModal'))
 
 /** {@link OpenfortProvider} props. */
 type OpenfortProviderProps = {
@@ -400,7 +405,11 @@ export const OpenfortProvider = ({
 
   const innerChildren = (
     <>
-      {hasWagmi && <EmbeddedWalletWagmiSync />}
+      {hasWagmi && (
+        <Suspense fallback={null}>
+          <LazyEmbeddedWalletWagmiSync />
+        </Suspense>
+      )}
       {debugModeOptions.debugRoutes && (
         <pre
           style={{
