@@ -139,8 +139,10 @@ export const CoreOpenfortProvider: React.FC<CoreOpenfortProviderProps> = ({
     }))
   }, [])
 
-  // Sync chainType from UI context into the store
-  useEffect(() => {
+  // Sync chainType from UI context into the store — useLayoutEffect so the store
+  // is updated before the next paint, preventing a one-render-cycle race where
+  // the strategy context (synchronous) sees SVM but the store still shows EVM.
+  useLayoutEffect(() => {
     store.getState().setChainType(chainType)
   }, [store, chainType])
 

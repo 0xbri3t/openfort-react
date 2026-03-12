@@ -44,7 +44,7 @@ const errorForChainRegistry: Record<
 }
 
 const LoadWallets: React.FC = () => {
-  const { chainType, user } = useOpenfortCore()
+  const { chainType, user, isLoadingAccounts } = useOpenfortCore()
   const { triggerResize, setRoute, setConnector, walletConfig } = useOpenfort()
   const ethereumWallet = useEthereumEmbeddedWallet()
   const solanaWallet = useSolanaEmbeddedWallet()
@@ -56,7 +56,10 @@ const LoadWallets: React.FC = () => {
   const isLoadingWallets =
     embeddedWallet.status === 'fetching-wallets' ||
     embeddedWallet.status === 'connecting' ||
-    embeddedWallet.status === 'creating'
+    embeddedWallet.status === 'creating' ||
+    // For Solana, the hook never enters 'fetching-wallets' — accounts are derived from the
+    // core embeddedAccounts store. Wait for the core fetch to complete before routing.
+    isLoadingAccounts
   const errorWallets = embeddedWallet.status === 'error' ? new Error(embeddedWallet.error) : undefined
 
   useEffect(() => {

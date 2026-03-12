@@ -13,7 +13,7 @@ import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
  *
  * @remarks Client-only. Use in a Client Component (e.g. add `"use client"` in Next.js App Router).
  *
- * @returns user, linkedAccounts, isAuthenticated, isConnected, getAccessToken, validateAndRefreshToken
+ * @returns user, linkedAccounts, isLoading, isAuthenticated, isConnected, getAccessToken, validateAndRefreshToken
  *
  * @example
  * ```tsx
@@ -26,7 +26,7 @@ import { handleOAuthConfigError } from '../../utils/oauthErrorHandler'
  * ```
  */
 export function useUser() {
-  const { user, client, embeddedState, linkedAccounts, activeEmbeddedAddress } = useOpenfortCore()
+  const { user, client, embeddedState, linkedAccounts, activeEmbeddedAddress, isLoading } = useOpenfortCore()
 
   const isAuthenticated = embeddedState !== EmbeddedState.NONE && embeddedState !== EmbeddedState.UNAUTHENTICATED
   const isConnected = embeddedState === EmbeddedState.READY && !!activeEmbeddedAddress
@@ -54,6 +54,7 @@ export function useUser() {
   return {
     user,
     linkedAccounts,
+    isLoading,
     isAuthenticated,
     isConnected,
     getAccessToken: getAccessTokenAndUpdate,

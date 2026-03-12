@@ -1,11 +1,10 @@
 'use client'
 
-import { EmbeddedState, RecoveryMethod } from '@openfort/openfort-js'
+import { RecoveryMethod } from '@openfort/openfort-js'
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EmailIcon, FingerPrintIcon, KeyIcon, LockIcon, PhoneIcon } from '../../../assets/icons'
 import { OpenfortError } from '../../../core/errors'
-import { useOpenfortCore } from '../../../openfort/useOpenfort'
 import type { OTPResponse } from '../../../shared/hooks/useRecoveryOTP'
 import { useRecoveryOTP } from '../../../shared/hooks/useRecoveryOTP'
 import { handleOtpRecoveryError } from '../../../shared/utils/otpError'
@@ -65,7 +64,6 @@ const OtherMethod = ({
 }
 
 const SolanaCreateAutomatic = ({ onBack, logoutOnBack }: { onBack: SetOnBackFunction; logoutOnBack: boolean }) => {
-  const { embeddedState } = useOpenfortCore()
   const { setRoute, triggerResize } = useOpenfort()
   const embeddedWallet = useSolanaEmbeddedWallet()
   const { isEnabled: isWalletRecoveryOTPEnabled, requestOTP } = useRecoveryOTP()
@@ -127,11 +125,12 @@ const SolanaCreateAutomatic = ({ onBack, logoutOnBack }: { onBack: SetOnBackFunc
 
   const [canSendOtp, setCanSendOtp] = useState(true)
 
+  // Trigger creation on mount. We only land here when no Solana wallet exists.
+  // Don't gate on embeddedState — the user may have an EVM wallet (embeddedState=READY)
+  // but still need a Solana wallet.
   useEffect(() => {
-    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) {
-      setShouldCreate(true)
-    }
-  }, [embeddedState])
+    setShouldCreate(true)
+  }, [])
 
   const handleResendClick = useCallback(() => {
     setOtpStatus('send-otp')
@@ -219,7 +218,6 @@ const SolanaCreatePasskey = ({
 }) => {
   const { triggerResize, setRoute } = useOpenfort()
   const embeddedWallet = useSolanaEmbeddedWallet()
-  const { embeddedState } = useOpenfortCore()
   const [shouldCreate, setShouldCreate] = useState(false)
   const [recoveryError, setRecoveryError] = useState<Error | null>(null)
 
@@ -238,11 +236,12 @@ const SolanaCreatePasskey = ({
     })()
   }, [shouldCreate])
 
+  // Trigger creation on mount. We only land here when no Solana wallet exists.
+  // Don't gate on embeddedState — the user may have an EVM wallet (embeddedState=READY)
+  // but still need a Solana wallet.
   useEffect(() => {
-    if (embeddedState === EmbeddedState.EMBEDDED_SIGNER_NOT_CONFIGURED) {
-      setShouldCreate(true)
-    }
-  }, [embeddedState])
+    setShouldCreate(true)
+  }, [])
 
   useEffect(() => {
     if (recoveryError) triggerResize()
