@@ -12,7 +12,11 @@ export function setEmbeddedWalletProvider(p: OpenfortEmbeddedEthereumWalletProvi
 export function embeddedWalletConnector(): CreateConnectorFn<OpenfortEmbeddedEthereumWalletProvider | undefined> {
   return createConnector((config) => {
     const accountsChangedHandler = (accs: unknown) => {
-      config.emitter.emit('change', { accounts: accs as `0x${string}`[] })
+      // Filter out non-EVM addresses (e.g. Solana base58) that the SDK may emit
+      // when recover() is called for a Solana wallet — sdk bug, defensive guard.
+      const valid = (accs as string[]).filter((a) => /^0x[0-9a-fA-F]{40}$/i.test(a))
+      if (valid.length === 0) return
+      config.emitter.emit('change', { accounts: valid as `0x${string}`[] })
     }
     const chainChangedHandler = (chain: unknown) => {
       config.emitter.emit('change', { chainId: Number(chain) })
