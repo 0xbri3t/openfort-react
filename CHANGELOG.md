@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+### Patch Changes
+
+- [#206](https://github.com/openfort-xyz/openfort-react/pull/206) [`d29c3d8`](https://github.com/openfort-xyz/openfort-react/commit/d29c3d8c6c7876a58428894fa2ea9590af9bddae) Thanks [@isardmart](https://github.com/isardmart)! - create solana wallet opf button fixed, isloading in useUser
+
 ## 1.0.2
 
 ### Patch Changes
