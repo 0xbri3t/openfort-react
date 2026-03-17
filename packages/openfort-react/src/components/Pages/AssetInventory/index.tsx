@@ -173,6 +173,10 @@ export const AssetInventory = () => {
     if (!isBalancesLoading) triggerResize()
   }, [isBalancesLoading])
 
+  useEffect(() => {
+    triggerResize()
+  }, [showDetails])
+
   const tokens = (multiChain ? data : null) ?? []
   const hasBalance = tokens.some((t) => t.balance > ZERO)
 
@@ -205,7 +209,12 @@ export const AssetInventory = () => {
 
   if (showDetails) {
     return (
-      <SelectTokenContent key="details" onBack={() => setShowDetails(false)}>
+      <SelectTokenContent
+        key="details"
+        onBack={() => {
+          setShowDetails(false)
+        }}
+      >
         <ModalHeading>Configured assets</ModalHeading>
         <motion.div
           initial={{ opacity: 0, scale: 1.1 }}
@@ -213,7 +222,7 @@ export const AssetInventory = () => {
           transition={{ duration: 0.2, ease: [0.26, 0.08, 0.25, 1] }}
           style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
         >
-          <ContentWrapper style={{ overflowY: 'auto', maxHeight: 256 }}>
+          <ContentWrapper style={{ overflowY: 'auto', maxHeight: 400 }}>
             {Array.from(groupedByChain.entries()).map(([chainId, assets]) => (
               <ChainGroup key={chainId}>
                 <ChainGroupHeader>
