@@ -1,7 +1,13 @@
+'use client'
+
+import { ChainTypeEnum } from '@openfort/openfort-js'
 import { useEffect, useMemo, useState } from 'react'
-import { useAccount, useChainId } from 'wagmi'
+
 import Logos from '../../../assets/logos'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
+import { useEthereumEmbeddedWallet } from '../../../ethereum/hooks/useEthereumEmbeddedWallet'
+import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
+import { useOpenfortCore } from '../../../openfort/useOpenfort'
+import { useSolanaEmbeddedWallet } from '../../../solana/hooks/useSolanaEmbeddedWallet'
 import Button from '../../Common/Button'
 import { ModalBody, ModalContent, ModalHeading } from '../../Common/Modal/styles'
 import SquircleSpinner from '../../Common/SquircleSpinner'
@@ -15,15 +21,23 @@ import { isSameToken } from '../Send/utils'
 
 const BuyProcessing = () => {
   const { buyForm, setRoute, triggerResize, publishableKey } = useOpenfort()
+  const { chainType } = useOpenfortCore()
 
-  const { address } = useAccount()
-  const chainId = useChainId()
+  // Use chain-specific hooks
+  const ethereumWallet = useEthereumEmbeddedWallet()
+  const solanaWallet = useSolanaEmbeddedWallet()
+  const wallet = chainType === ChainTypeEnum.EVM ? ethereumWallet : solanaWallet
+
+  const isConnected = wallet.status === 'connected'
+  const address = isConnected ? wallet.address : undefined
+  const chainId = isConnected && chainType === ChainTypeEnum.EVM ? (wallet as typeof ethereumWallet).chainId : undefined
+
   const [popupWindow, setPopupWindow] = useState<Window | null>(null)
   const [showContinueButton, setShowContinueButton] = useState(false)
   const [isCreatingSession, setIsCreatingSession] = useState(true)
   const [sessionError, setSessionError] = useState(false)
 
-  const { data: assets } = useWalletAssets()
+  const { data: assets } = useEthereumWalletAssets()
 
   const matchedToken = useMemo(
     () => assets?.find((asset) => isSameToken(asset, buyForm.asset)),
@@ -44,7 +58,7 @@ const BuyProcessing = () => {
   // Create session and open popup on mount
   useEffect(() => {
     const createSessionAndOpenPopup = async () => {
-      if (!address || !fiatAmount || fiatAmount <= 0) {
+      if (!address || !chainId || !fiatAmount || fiatAmount <= 0) {
         setRoute(routes.BUY_SELECT_PROVIDER)
         return
       }
@@ -85,7 +99,8 @@ const BuyProcessing = () => {
           return
         }
 
-        // TODO: remove this? it fails if is set to EUR in coinbase
+        // Coinbase onramp rejects requests when fiatCurrency is set to a non-USD currency (e.g. EUR).
+        // Strip the param so it uses the user's default currency instead.
         const url = new URL(onrampUrl)
         url.searchParams.delete('fiatCurrency')
         const sanitizedProviderUrl = url.toString()

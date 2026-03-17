@@ -1,10 +1,13 @@
+'use client'
+
 import type { OAuthProvider, User } from '@openfort/openfort-js'
 import { useCallback, useState } from 'react'
+import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
 import { useOpenfortCore } from '../../../openfort/useOpenfort'
-import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
+import type { OpenfortHookOptions } from '../../../types'
 import { onError, onSuccess } from '../hookConsistency'
 import { useUI } from '../useUI'
-import type { UserWallet } from '../useWallets'
+import type { EthereumUserWallet, SolanaUserWallet } from '../walletTypes'
 import { buildCallbackUrl } from './requestEmailVerification'
 import { type BaseFlowState, mapStatus } from './status'
 import { type CreateWalletPostAuthOptions, useConnectToWalletPostAuth } from './useConnectToWalletPostAuth'
@@ -22,7 +25,7 @@ type InitOAuthReturnType = {
 export type StoreCredentialsResult = {
   // type: "storeCredentials";
   user?: User
-  wallet?: UserWallet
+  wallet?: EthereumUserWallet | SolanaUserWallet
   error?: OpenfortError
 }
 type StoreCredentialsOptions = {
@@ -175,7 +178,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           status: 'loading',
         })
 
-        await client.auth.initOAuth({
+        const redirectUrl = await client.auth.initOAuth({
           provider: authProvider,
           redirectTo: buildCallbackUrl({
             provider: authProvider,
@@ -183,6 +186,8 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
             isOpen,
           }),
         })
+
+        window.location.href = redirectUrl
 
         return onSuccess<InitOAuthReturnType>({
           data: {},
@@ -224,7 +229,7 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
           throw new OpenfortError('No auth token found', OpenfortReactErrorType.AUTHENTICATION_ERROR)
         }
 
-        await client.auth.initLinkOAuth({
+        const redirectUrl = await client.auth.initLinkOAuth({
           provider: authProvider,
           redirectTo: buildCallbackUrl({
             provider: authProvider,
@@ -232,6 +237,8 @@ export const useOAuth = (hookOptions: AuthHookOptions = {}) => {
             isOpen,
           }),
         })
+
+        window.location.href = redirectUrl
 
         return onSuccess<InitOAuthReturnType>({
           data: {},

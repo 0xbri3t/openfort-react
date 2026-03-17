@@ -1,16 +1,59 @@
-import { AuthProvider, type OpenfortProvider, RecoveryMethod } from '@openfort/react'
-import { beamTestnet, polygonAmoy } from 'viem/chains'
+import {
+  AuthProvider,
+  ChainTypeEnum,
+  type OpenfortProvider,
+  type OpenfortWalletConfig,
+  RecoveryMethod,
+} from '@openfort/react'
+import { polygonAmoy } from 'viem/chains'
 import { create } from 'zustand'
-import { customPageComponents } from '@/components/customPageComponents'
+import { DEFAULT_EVM_CHAIN, PLAYGROUND_EVM_CHAINS, RPC_URLS, SOLANA_CLUSTER, SOLANA_DEFAULT_RPC } from '@/lib/chains'
 
-type EditingEntity = {
-  id: string
+const defaultWalletConfig: OpenfortWalletConfig = {
+  shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
+  chainType: ChainTypeEnum.EVM,
+  ethereum: {
+    chainId: DEFAULT_EVM_CHAIN.id,
+    rpcUrls: RPC_URLS,
+    ethereumFeeSponsorshipId: Object.fromEntries(
+      PLAYGROUND_EVM_CHAINS.map((c) => [c.id, import.meta.env.VITE_FEE_SPONSORSHIP_ID!])
+    ),
+    assets: {
+      [polygonAmoy.id]: [import.meta.env.VITE_POLYGON_MINT_CONTRACT!],
+    },
+  },
+  solana: {
+    cluster: SOLANA_CLUSTER,
+    rpcUrls: {
+      [SOLANA_CLUSTER]: SOLANA_DEFAULT_RPC,
+    },
+  },
+
+  // If you want to use AUTOMATIC embedded wallet recovery, an encryption session is required.
+  // See: https://www.openfort.io/docs/products/embedded-wallet/react-native/quickstart/automatic
+  // For backend setup, check: https://github.com/openfort-xyz/openfort-backend-quickstart
+  getEncryptionSession: undefined, // Optional function to get the encryption session
+  createEncryptedSessionEndpoint:
+    import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT ||
+    'https://create-next-app.openfort.io/api/protected-create-encryption-session',
+  // Do NOT auto-create wallets on chain switch or after auth.
+  // When switching EVM↔SVM the provider tree remounts; auto-creation here creates wallets
+  // without the right session key config and with no user confirmation. Use the explicit
+  // "Create wallet" UI instead.
+  connectOnLogin: false,
+
+  requestWalletRecoverOTP: async ({ userId, email, phone }) => {
+    await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId, email, phone }),
+    })
+  },
 }
 
-const viewCustomComponents = false
-
 const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
-  // Set the publishable key of your Openfort account. This field is required.
   publishableKey: import.meta.env.VITE_OPENFORT_PUBLISHABLE_KEY,
 
   uiConfig: {
@@ -29,7 +72,7 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
       AuthProvider.DISCORD,
     ],
     phoneConfig: {
-      defaultCountry: 'es',
+      defaultCountry: 'us',
     },
     avoidLayoutShift: undefined,
     bufferPolyfill: undefined,
@@ -56,41 +99,10 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
       defaultMethod: RecoveryMethod.AUTOMATIC,
       allowedMethods: [RecoveryMethod.PASSWORD, RecoveryMethod.AUTOMATIC, RecoveryMethod.PASSKEY],
     },
-    customPageComponents: viewCustomComponents ? customPageComponents : undefined,
+    customPageComponents: undefined,
   },
 
-  // Set the wallet configuration. In this example, we will be using the embedded signer.
-  walletConfig: {
-    shieldPublishableKey: import.meta.env.VITE_SHIELD_PUBLISHABLE_KEY,
-
-    ethereumProviderPolicyId: {
-      [polygonAmoy.id]: import.meta.env.VITE_POLYGON_POLICY_ID!,
-      [beamTestnet.id]: import.meta.env.VITE_BEAM_POLICY_ID!,
-    },
-
-    // If you want to use AUTOMATIC embedded wallet recovery, an encryption session is required.
-    // See: https://www.openfort.io/docs/products/embedded-wallet/react-native/quickstart/automatic
-    // For backend setup, check: https://github.com/openfort-xyz/openfort-backend-quickstart
-    getEncryptionSession: undefined, // Optional function to get the encryption session
-    createEncryptedSessionEndpoint:
-      import.meta.env.VITE_CREATE_ENCRYPTED_SESSION_ENDPOINT ||
-      'https://create-next-app.openfort.io/api/protected-create-encryption-session',
-    recoverWalletAutomaticallyAfterAuth: undefined,
-    accountType: undefined,
-    assets: {
-      [polygonAmoy.id]: ['0xef147ed8bb07a2a0e7df4c1ac09e96dec459ffac'],
-    },
-    requestWalletRecoverOTP: async ({ userId, email, phone }) => {
-      await fetch(import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: userId, email, phone }),
-      })
-    },
-    // requestWalletRecoverOTPEndpoint: import.meta.env.VITE_REQUEST_WALLET_RECOVER_OTP_ENDPOINT,
-  },
+  walletConfig: defaultWalletConfig,
   onConnect: undefined,
   onDisconnect: undefined,
 
@@ -103,24 +115,18 @@ const defaultProviderOptions: Parameters<typeof OpenfortProvider>[0] = {
   },
   thirdPartyAuth: undefined,
   debugMode: {
-    openfortReactDebugMode: true,
-    openfortCoreDebugMode: true,
-    shieldDebugMode: true,
-    // debugRoutes: true,
+    openfortReactDebugMode: false,
+    openfortCoreDebugMode: false,
+    shieldDebugMode: false,
   },
 }
 
 interface Store {
   providerOptions: Parameters<typeof OpenfortProvider>[0]
   setProviderOptions: (options: Parameters<typeof OpenfortProvider>[0]) => void
-
-  editingEntity: EditingEntity | null
-  setEditingEntity: (entity: EditingEntity | null) => void
 }
 
 export const useAppStore = create<Store>((set) => ({
   providerOptions: defaultProviderOptions,
   setProviderOptions: (options) => set({ providerOptions: options }),
-  editingEntity: null,
-  setEditingEntity: (entity) => set({ editingEntity: entity }),
 }))

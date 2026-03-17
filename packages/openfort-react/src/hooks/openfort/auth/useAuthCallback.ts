@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
 import type { UIAuthProvider } from '../../../components/Openfort/types'
-import { OpenfortError, type OpenfortHookOptions, OpenfortReactErrorType } from '../../../types'
+import { OpenfortError, OpenfortReactErrorType } from '../../../core/errors'
+import type { OpenfortHookOptions } from '../../../types'
 import { logger } from '../../../utils/logger'
-import { onError } from '../hookConsistency'
 import type { CreateWalletPostAuthOptions } from './useConnectToWalletPostAuth'
 import { type EmailVerificationResult, useEmailAuth } from './useEmailAuth'
 import { type StoreCredentialsResult, useOAuth } from './useOAuth'
@@ -87,6 +89,7 @@ export const useAuthCallback = ({
 }: UseAuthCallbackOptions = {}) => {
   const [provider, setProvider] = useState<UIAuthProvider | null>(null)
   const [email, setEmail] = useState<string | null>(null)
+  const [alreadyVerified, setAlreadyVerified] = useState(false)
   const {
     verifyEmail,
     isSuccess: isEmailSuccess,
@@ -103,16 +106,18 @@ export const useAuthCallback = ({
     error: oAuthError,
   } = useOAuth()
 
+  const callbackProcessedRef = useRef(false)
+
   useEffect(() => {
     if (!enabled) return
+    if (callbackProcessedRef.current) return
+    callbackProcessedRef.current = true
 
     ;(async () => {
       // redirectUrl is not working with query params OF-1013
-      const fixedUrl = window.location.href.replace('?state=', '&state=') // redirectUrl is not working with query params
+      const fixedUrl = window.location.href.replace('?state=', '&state=')
       const url = new URL(fixedUrl)
       const openfortAuthProvider = url.searchParams.get('openfortAuthProvider')
-
-      await new Promise((resolve) => setTimeout(resolve, 5000))
 
       if (!openfortAuthProvider) {
         return
@@ -120,20 +125,12 @@ export const useAuthCallback = ({
 
       setProvider(openfortAuthProvider as UIAuthProvider)
       if (openfortAuthProvider === 'email') {
-        // Verify email flow
+        // Email verification flow
+        // The backend verifies the email server-side via /auth/verify-email?token=...
+        // and then redirects here. If a `state` token is present we verify client-side
+        // as well; otherwise the email is already verified and we just signal success.
         const state = url.searchParams.get('state')
         const email = url.searchParams.get('email')
-
-        if (!state || !email) {
-          logger.error('No state or email found in URL')
-          onError({
-            hookOptions,
-            options: {},
-            error: new OpenfortError('No state or email found in URL', OpenfortReactErrorType.AUTHENTICATION_ERROR),
-          })
-          return
-        }
-
         const removeParams = () => {
           ;['state', 'openfortAuthProvider', 'email'].forEach((key) => {
             url.searchParams.delete(key)
@@ -141,49 +138,53 @@ export const useAuthCallback = ({
           window.history.replaceState({}, document.title, url.toString())
         }
 
-        logger.log('EmailVerification', state, email)
-
-        const options: OpenfortHookOptions<Omit<CallbackResult, 'type'>> = {
-          onSuccess: (data) => {
-            hookOptions.onSuccess?.({
-              ...data,
-              type: 'verifyEmail',
-            })
-          },
-          onSettled: (data, error) => {
-            hookOptions.onSettled?.(
-              {
+        if (state && email) {
+          // State present — verify client-side as well
+          const options: OpenfortHookOptions<Omit<CallbackResult, 'type'>> = {
+            onSuccess: (data) => {
+              hookOptions.onSuccess?.({
                 ...data,
                 type: 'verifyEmail',
-              },
-              error
-            )
-          },
-          onError: hookOptions.onError,
-          throwOnError: hookOptions.throwOnError,
-        }
+              })
+            },
+            onError: hookOptions.onError,
+            throwOnError: hookOptions.throwOnError,
+          }
 
-        await verifyEmail({ email, state, ...options })
-        setEmail(email)
-        removeParams()
+          await verifyEmail({ email, state, ...options })
+          setEmail(email)
+          removeParams()
+        } else if (email) {
+          // No state — backend already verified the email, just signal success
+          setEmail(email)
+          setAlreadyVerified(true)
+          hookOptions.onSuccess?.({
+            email,
+            type: 'verifyEmail',
+          })
+          removeParams()
+        } else {
+          const err = new OpenfortError('No email found in URL', OpenfortReactErrorType.AUTHENTICATION_ERROR)
+          logger.error('No email found in URL')
+          hookOptions.onError?.(err)
+          if (hookOptions.throwOnError) throw err
+          return
+        }
       } else {
         const userId = url.searchParams.get('user_id')
         const token = url.searchParams.get('access_token')
 
         if (!userId || !token) {
           logger.error(`Missing user id or access token`, {
-            userId,
-            token: token ? `${token.substring(0, 10)}...` : token,
-            fixedUrl,
+            hasUserId: !!userId,
+            hasToken: !!token,
           })
-          onError({
-            hookOptions,
-            options: {},
-            error: new OpenfortError(
-              'Missing player id or access token or refresh token',
-              OpenfortReactErrorType.AUTHENTICATION_ERROR
-            ),
-          })
+          const err = new OpenfortError(
+            'Missing player id or access token or refresh token',
+            OpenfortReactErrorType.AUTHENTICATION_ERROR
+          )
+          hookOptions.onError?.(err)
+          if (hookOptions.throwOnError) throw err
 
           return
         }
@@ -204,24 +205,21 @@ export const useAuthCallback = ({
               type: 'storeCredentials',
             })
           },
-          onSettled: (data, error) => {
-            hookOptions.onSettled?.(
-              {
-                ...data,
-                type: 'storeCredentials',
-              },
-              error
-            )
-          },
           onError: hookOptions.onError,
           throwOnError: hookOptions.throwOnError,
         }
 
-        await storeCredentials({ userId, token, ...options })
+        await storeCredentials({
+          userId,
+          token,
+          logoutOnError: hookOptions.logoutOnError,
+          recoverWalletAutomatically: hookOptions.recoverWalletAutomatically,
+          ...options,
+        })
         removeParams()
       }
     })()
-  }, [])
+  }, []) // intentionally empty — runs once on mount to process the URL callback
 
   return {
     email,
@@ -230,7 +228,7 @@ export const useAuthCallback = ({
     storeCredentials,
     isLoading: isEmailLoading || isOAuthLoading,
     isError: isEmailError || isOAuthError,
-    isSuccess: isEmailSuccess || isOAuthSuccess,
+    isSuccess: isEmailSuccess || isOAuthSuccess || alreadyVerified,
     error: emailError || oAuthError,
   }
 }

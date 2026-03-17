@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- [#201](https://github.com/openfort-xyz/openfort-react/pull/201) [`2c23537`](https://github.com/openfort-xyz/openfort-react/commit/2c235373b7879584c26e70951d3839b3157bd4b0) Thanks [@isardmart](https://github.com/isardmart)! - solana, wagmi subpath, tree shakeable
+
+### Minor Changes
+
+- [#205](https://github.com/openfort-xyz/openfort-react/pull/205) [`9c442df`](https://github.com/openfort-xyz/openfort-react/commit/9c442df5080ea5f16ed1d2905da36d338105e722) Thanks [@isardmart](https://github.com/isardmart)! - added solana-headless template to the cli
+
+## 0.1.10
+
+### Patch Changes
+
+- [#186](https://github.com/openfort-xyz/openfort-react/pull/186) [`fdb39df`](https://github.com/openfort-xyz/openfort-react/commit/fdb39dffbfc52fd015ddb17a43cff321461047d1) Thanks [@isardmart](https://github.com/isardmart)! - added retries on connector of useWallets, fixed error on headless social login
+
 ## 0.1.9
 
 ### Patch Changes

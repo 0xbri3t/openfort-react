@@ -1,9 +1,10 @@
+'use client'
+
 import { useCallback } from 'react'
 import { type AuthorizationRequest, type Hex, parseSignature, type SignedAuthorization } from 'viem'
 import { hashAuthorization } from 'viem/utils'
-
+import { OpenfortError, OpenfortReactErrorType } from '../../core/errors'
 import { useOpenfortCore } from '../../openfort/useOpenfort'
-import { OpenfortError, OpenfortReactErrorType } from '../../types'
 
 export type SignAuthorizationParameters = AuthorizationRequest
 
@@ -41,8 +42,10 @@ type SignAuthorizationOptions = {
  * ```
  */
 export function use7702Authorization() {
+  // biome-ignore lint/correctness/useHookAtTopLevel: use7702Authorization is a valid hook name
   const { client } = useOpenfortCore()
 
+  // biome-ignore lint/correctness/useHookAtTopLevel: use7702Authorization is a valid hook name
   const signAuthorization = useCallback(
     async (
       parameters: SignAuthorizationParameters,
@@ -60,7 +63,7 @@ export function use7702Authorization() {
       if (!authorization.contractAddress) {
         throw new OpenfortError(
           'Authorization is missing the contract address to sign.',
-          OpenfortReactErrorType.VALIDATION_ERROR
+          OpenfortReactErrorType.CONFIGURATION_ERROR
         )
       }
 

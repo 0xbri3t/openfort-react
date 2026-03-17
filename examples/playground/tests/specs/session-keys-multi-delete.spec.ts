@@ -1,9 +1,54 @@
 import { expect, test } from '../fixtures/test'
 
 test.describe('Session keys - multiple + delete flow', () => {
-  test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({ dashboardPage }) => {
+  // test.describe.configure({ retries: 3 })
+
+  test('can create multiple session keys, revoke one (X), and delete it (trash)', async ({
+    page,
+    dashboardPage,
+    mode,
+  }) => {
+    test.skip(mode === 'svm', 'Session keys are EVM only')
     test.setTimeout(180_000)
-    await dashboardPage.ensureReady()
+    const m = mode
+    await dashboardPage.ensureReady(m)
+
+    // Wallets card
+    const walletsTitle = page
+      .locator('[data-slot="card-title"]')
+      .filter({ hasText: /^wallets$/i })
+      .first()
+    await expect(walletsTitle).toBeVisible({ timeout: 60_000 })
+    const walletsCard = walletsTitle.locator('xpath=ancestor::*[@data-slot="card"][1]')
+
+    await walletsCard.getByRole('button', { name: /create new wallet/i }).click()
+    await walletsCard.getByRole('button', { name: /smart account/i }).click()
+    await walletsCard.getByRole('button', { name: /^password$/i }).click()
+
+    const walletRowLocator = walletsCard.locator('button').filter({
+      hasText: /0x[a-f0-9]{4,}\.\.\.[a-f0-9]{4,}/i,
+    })
+
+    let initialCount = await walletRowLocator.count()
+
+    await expect(walletsCard.getByText(/^creating wallet with password recovery/i)).toBeVisible({ timeout: 30_000 })
+    await expect.poll(async () => await walletRowLocator.count(), { timeout: 120_000 }).toBeGreaterThan(initialCount)
+
+    // Wait for any wallet row to become the active account
+    await expect
+      .poll(
+        async () => {
+          const count = await walletRowLocator.count()
+          if (count <= initialCount) return false
+          for (let i = 0; i < count; i++) {
+            const isActive = await walletRowLocator.nth(i).evaluate((el) => el.classList.contains('text-primary'))
+            if (isActive) return true
+          }
+          return false
+        },
+        { timeout: 60_000 }
+      )
+      .toBe(true)
 
     const sessionCard = await dashboardPage.getCardByTitle(/session keys/i)
 
@@ -19,15 +64,15 @@ test.describe('Session keys - multiple + delete flow', () => {
     const ensureAtLeast = async (n: number) => {
       while ((await keySpans.count()) < n) {
         const before = await keySpans.count()
+        await page.waitForTimeout(1000)
         await createBtn.click()
-
         await expect.poll(async () => await keySpans.count(), { timeout: 120_000 }).toBeGreaterThan(before)
       }
     }
 
     await ensureAtLeast(2)
 
-    const initialCount = await keySpans.count()
+    initialCount = await keySpans.count()
     expect(initialCount).toBeGreaterThanOrEqual(2)
 
     // Select the 2nd key for the revoke+delete flow

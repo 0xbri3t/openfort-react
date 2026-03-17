@@ -2,8 +2,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { formatUnits } from 'viem'
 import { symbolToColor, TOKEN_LOGO } from '../../../constants/logos'
-import { useWalletAssets } from '../../../hooks/openfort/useWalletAssets'
-import { useChains } from '../../../hooks/useChains'
+import { useEthereumWalletAssets } from '../../../ethereum/hooks/useEthereumWalletAssets'
 import Chain from '../../Common/Chain'
 import { ModalHeading } from '../../Common/Modal/styles'
 import type { MultiChainAsset } from '../../Openfort/types'
@@ -166,9 +165,8 @@ function PillLogo({ symbol }: { symbol: string }) {
 }
 
 export const AssetInventory = () => {
-  const { data, multiChain, isLoading: isBalancesLoading } = useWalletAssets({ multiChain: true })
-  const { triggerResize } = useOpenfort()
-  const chains = useChains()
+  const { data, multiChain, isLoading: isBalancesLoading } = useEthereumWalletAssets({ multiChain: true })
+  const { triggerResize, chains } = useOpenfort()
   const [showDetails, setShowDetails] = useState(false)
 
   useEffect(() => {

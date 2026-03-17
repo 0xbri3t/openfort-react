@@ -1,17 +1,29 @@
+'use client'
+
+/**
+ * @deprecated This component requires wagmi and will be moved to @openfort/react/wagmi in v3.0.
+ * For embedded wallets, external wallet connections are not needed.
+ * This component is only used for connecting external wallets via WalletConnect.
+ */
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useEthereumBridge } from '../../../ethereum/OpenfortEthereumBridgeContext'
 import useIsMobile from '../../../hooks/useIsMobile'
 import { useWalletConnectModal } from '../../../hooks/useWalletConnectModal'
+import { logger } from '../../../utils/logger'
 import ConnectorList from '../../Common/ConnectorList'
 import Loader from '../../Common/Loading'
 import { routes } from '../../Openfort/types'
 import { useOpenfort } from '../../Openfort/useOpenfort'
 import { PageContent } from '../../PageContent'
 
+let hasWarnedConnectors = false
+
 const ConnectWithMobile = () => {
   const { open: openWalletConnectModal } = useWalletConnectModal()
   const [error, setError] = useState<string | undefined>(undefined)
-  const { connector, address } = useAccount()
+  const bridge = useEthereumBridge()
+  const connector = bridge?.account?.connector
+  const address = bridge?.account?.address
   const { setRoute, setConnector } = useOpenfort()
 
   const openWCModal = async () => {
@@ -31,8 +43,21 @@ const ConnectWithMobile = () => {
       const walletConnectDeeplinkChoice = localStorage.getItem('WALLETCONNECT_DEEPLINK_CHOICE')
 
       if (walletConnectDeeplinkChoice) {
-        const parsedChoice: { href: string; name: string } = JSON.parse(walletConnectDeeplinkChoice)
-        setConnector({ id: parsedChoice.name })
+        try {
+          const parsedChoice: unknown = JSON.parse(walletConnectDeeplinkChoice)
+          if (
+            parsedChoice &&
+            typeof parsedChoice === 'object' &&
+            'name' in parsedChoice &&
+            typeof (parsedChoice as { name: unknown }).name === 'string'
+          ) {
+            setConnector({ id: (parsedChoice as { name: string }).name })
+          } else {
+            setConnector({ id: connector.id })
+          }
+        } catch {
+          setConnector({ id: connector.id })
+        }
       } else {
         setConnector({ id: connector.id })
       }
@@ -53,6 +78,16 @@ const ConnectWithMobile = () => {
 
 const Connectors = ({ logoutOnBack }: { logoutOnBack?: boolean }) => {
   const isMobile = useIsMobile()
+
+  // Runtime deprecation warning
+  if (process.env.NODE_ENV === 'development' && !hasWarnedConnectors) {
+    logger.warn(
+      '[@openfort/react] <Connectors /> is deprecated and will be moved to @openfort/react/wagmi in v3.0.\n' +
+        'For embedded wallets, external wallet connections are not needed.\n' +
+        'See: https://openfort.io/docs/migration/external-wallets'
+    )
+    hasWarnedConnectors = true
+  }
 
   return (
     <PageContent logoutOnBack={logoutOnBack} width={312}>

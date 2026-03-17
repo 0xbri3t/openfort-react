@@ -13,10 +13,12 @@ import { Route as ShowcaseRouteImport } from './routes/_showcase'
 import { Route as HooksRouteImport } from './routes/_hooks'
 import { Route as ShowcaseIndexRouteImport } from './routes/_showcase/index'
 import { Route as HooksWagmiRouteImport } from './routes/_hooks/wagmi'
+import { Route as HooksSolanaRouteImport } from './routes/_hooks/solana'
 import { Route as HooksProviderRouteImport } from './routes/_hooks/provider'
 import { Route as ShowcaseShowcaseAuthRouteImport } from './routes/_showcase/showcase/auth'
-import { Route as HooksWalletUseWalletsRouteImport } from './routes/_hooks/wallet/useWallets'
-import { Route as HooksWalletUseWalletAssetsRouteImport } from './routes/_hooks/wallet/useWalletAssets'
+import { Route as HooksWalletUseSolanaEmbeddedWalletRouteImport } from './routes/_hooks/wallet/useSolanaEmbeddedWallet'
+import { Route as HooksWalletUseEthereumWalletAssetsRouteImport } from './routes/_hooks/wallet/useEthereumWalletAssets'
+import { Route as HooksWalletUseEthereumEmbeddedWalletRouteImport } from './routes/_hooks/wallet/useEthereumEmbeddedWallet'
 import { Route as HooksWagmiUseSwitchChainRouteImport } from './routes/_hooks/wagmi/useSwitchChain'
 import { Route as HooksWagmiUseDisconnectRouteImport } from './routes/_hooks/wagmi/useDisconnect'
 import { Route as HooksWagmiUseBalanceRouteImport } from './routes/_hooks/wagmi/useBalance'
@@ -28,6 +30,7 @@ import { Route as HooksAuthUseSignOutRouteImport } from './routes/_hooks/auth/us
 import { Route as HooksAuthUseOauthRouteImport } from './routes/_hooks/auth/useOauth'
 import { Route as HooksAuthUseGuestAuthRouteImport } from './routes/_hooks/auth/useGuestAuth'
 import { Route as HooksAuthUseEmailAuthRouteImport } from './routes/_hooks/auth/useEmailAuth'
+import { Route as HooksAuthUseConnectWithSiweRouteImport } from './routes/_hooks/auth/useConnectWithSiwe'
 import { Route as HooksAuthUseAuthCallbackRouteImport } from './routes/_hooks/auth/useAuthCallback'
 import { Route as ShowcaseShowcaseAuthIndexRouteImport } from './routes/_showcase/showcase/auth/index'
 import { Route as ShowcaseShowcaseAuthSignupRouteImport } from './routes/_showcase/showcase/auth/signup'
@@ -55,6 +58,11 @@ const HooksWagmiRoute = HooksWagmiRouteImport.update({
   path: '/wagmi',
   getParentRoute: () => HooksRoute,
 } as any)
+const HooksSolanaRoute = HooksSolanaRouteImport.update({
+  id: '/solana',
+  path: '/solana',
+  getParentRoute: () => HooksRoute,
+} as any)
 const HooksProviderRoute = HooksProviderRouteImport.update({
   id: '/provider',
   path: '/provider',
@@ -65,15 +73,22 @@ const ShowcaseShowcaseAuthRoute = ShowcaseShowcaseAuthRouteImport.update({
   path: '/showcase/auth',
   getParentRoute: () => ShowcaseRoute,
 } as any)
-const HooksWalletUseWalletsRoute = HooksWalletUseWalletsRouteImport.update({
-  id: '/wallet/useWallets',
-  path: '/wallet/useWallets',
-  getParentRoute: () => HooksRoute,
-} as any)
-const HooksWalletUseWalletAssetsRoute =
-  HooksWalletUseWalletAssetsRouteImport.update({
-    id: '/wallet/useWalletAssets',
-    path: '/wallet/useWalletAssets',
+const HooksWalletUseSolanaEmbeddedWalletRoute =
+  HooksWalletUseSolanaEmbeddedWalletRouteImport.update({
+    id: '/wallet/useSolanaEmbeddedWallet',
+    path: '/wallet/useSolanaEmbeddedWallet',
+    getParentRoute: () => HooksRoute,
+  } as any)
+const HooksWalletUseEthereumWalletAssetsRoute =
+  HooksWalletUseEthereumWalletAssetsRouteImport.update({
+    id: '/wallet/useEthereumWalletAssets',
+    path: '/wallet/useEthereumWalletAssets',
+    getParentRoute: () => HooksRoute,
+  } as any)
+const HooksWalletUseEthereumEmbeddedWalletRoute =
+  HooksWalletUseEthereumEmbeddedWalletRouteImport.update({
+    id: '/wallet/useEthereumEmbeddedWallet',
+    path: '/wallet/useEthereumEmbeddedWallet',
     getParentRoute: () => HooksRoute,
   } as any)
 const HooksWagmiUseSwitchChainRoute =
@@ -132,6 +147,12 @@ const HooksAuthUseEmailAuthRoute = HooksAuthUseEmailAuthRouteImport.update({
   path: '/auth/useEmailAuth',
   getParentRoute: () => HooksRoute,
 } as any)
+const HooksAuthUseConnectWithSiweRoute =
+  HooksAuthUseConnectWithSiweRouteImport.update({
+    id: '/auth/useConnectWithSiwe',
+    path: '/auth/useConnectWithSiwe',
+    getParentRoute: () => HooksRoute,
+  } as any)
 const HooksAuthUseAuthCallbackRoute =
   HooksAuthUseAuthCallbackRouteImport.update({
     id: '/auth/useAuthCallback',
@@ -184,8 +205,10 @@ const ShowcaseShowcaseAuthCallbackRoute =
 export interface FileRoutesByFullPath {
   '/': typeof ShowcaseIndexRoute
   '/provider': typeof HooksProviderRoute
+  '/solana': typeof HooksSolanaRoute
   '/wagmi': typeof HooksWagmiRouteWithChildren
   '/auth/useAuthCallback': typeof HooksAuthUseAuthCallbackRoute
+  '/auth/useConnectWithSiwe': typeof HooksAuthUseConnectWithSiweRoute
   '/auth/useEmailAuth': typeof HooksAuthUseEmailAuthRoute
   '/auth/useGuestAuth': typeof HooksAuthUseGuestAuthRoute
   '/auth/useOauth': typeof HooksAuthUseOauthRoute
@@ -197,8 +220,9 @@ export interface FileRoutesByFullPath {
   '/wagmi/useBalance': typeof HooksWagmiUseBalanceRoute
   '/wagmi/useDisconnect': typeof HooksWagmiUseDisconnectRoute
   '/wagmi/useSwitchChain': typeof HooksWagmiUseSwitchChainRoute
-  '/wallet/useWalletAssets': typeof HooksWalletUseWalletAssetsRoute
-  '/wallet/useWallets': typeof HooksWalletUseWalletsRoute
+  '/wallet/useEthereumEmbeddedWallet': typeof HooksWalletUseEthereumEmbeddedWalletRoute
+  '/wallet/useEthereumWalletAssets': typeof HooksWalletUseEthereumWalletAssetsRoute
+  '/wallet/useSolanaEmbeddedWallet': typeof HooksWalletUseSolanaEmbeddedWalletRoute
   '/showcase/auth': typeof ShowcaseShowcaseAuthRouteWithChildren
   '/showcase/auth/callback': typeof ShowcaseShowcaseAuthCallbackRoute
   '/showcase/auth/connect-wallet': typeof ShowcaseShowcaseAuthConnectWalletRoute
@@ -211,8 +235,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof ShowcaseIndexRoute
   '/provider': typeof HooksProviderRoute
+  '/solana': typeof HooksSolanaRoute
   '/wagmi': typeof HooksWagmiRouteWithChildren
   '/auth/useAuthCallback': typeof HooksAuthUseAuthCallbackRoute
+  '/auth/useConnectWithSiwe': typeof HooksAuthUseConnectWithSiweRoute
   '/auth/useEmailAuth': typeof HooksAuthUseEmailAuthRoute
   '/auth/useGuestAuth': typeof HooksAuthUseGuestAuthRoute
   '/auth/useOauth': typeof HooksAuthUseOauthRoute
@@ -224,8 +250,9 @@ export interface FileRoutesByTo {
   '/wagmi/useBalance': typeof HooksWagmiUseBalanceRoute
   '/wagmi/useDisconnect': typeof HooksWagmiUseDisconnectRoute
   '/wagmi/useSwitchChain': typeof HooksWagmiUseSwitchChainRoute
-  '/wallet/useWalletAssets': typeof HooksWalletUseWalletAssetsRoute
-  '/wallet/useWallets': typeof HooksWalletUseWalletsRoute
+  '/wallet/useEthereumEmbeddedWallet': typeof HooksWalletUseEthereumEmbeddedWalletRoute
+  '/wallet/useEthereumWalletAssets': typeof HooksWalletUseEthereumWalletAssetsRoute
+  '/wallet/useSolanaEmbeddedWallet': typeof HooksWalletUseSolanaEmbeddedWalletRoute
   '/showcase/auth/callback': typeof ShowcaseShowcaseAuthCallbackRoute
   '/showcase/auth/connect-wallet': typeof ShowcaseShowcaseAuthConnectWalletRoute
   '/showcase/auth/forgot-password': typeof ShowcaseShowcaseAuthForgotPasswordRoute
@@ -239,9 +266,11 @@ export interface FileRoutesById {
   '/_hooks': typeof HooksRouteWithChildren
   '/_showcase': typeof ShowcaseRouteWithChildren
   '/_hooks/provider': typeof HooksProviderRoute
+  '/_hooks/solana': typeof HooksSolanaRoute
   '/_hooks/wagmi': typeof HooksWagmiRouteWithChildren
   '/_showcase/': typeof ShowcaseIndexRoute
   '/_hooks/auth/useAuthCallback': typeof HooksAuthUseAuthCallbackRoute
+  '/_hooks/auth/useConnectWithSiwe': typeof HooksAuthUseConnectWithSiweRoute
   '/_hooks/auth/useEmailAuth': typeof HooksAuthUseEmailAuthRoute
   '/_hooks/auth/useGuestAuth': typeof HooksAuthUseGuestAuthRoute
   '/_hooks/auth/useOauth': typeof HooksAuthUseOauthRoute
@@ -253,8 +282,9 @@ export interface FileRoutesById {
   '/_hooks/wagmi/useBalance': typeof HooksWagmiUseBalanceRoute
   '/_hooks/wagmi/useDisconnect': typeof HooksWagmiUseDisconnectRoute
   '/_hooks/wagmi/useSwitchChain': typeof HooksWagmiUseSwitchChainRoute
-  '/_hooks/wallet/useWalletAssets': typeof HooksWalletUseWalletAssetsRoute
-  '/_hooks/wallet/useWallets': typeof HooksWalletUseWalletsRoute
+  '/_hooks/wallet/useEthereumEmbeddedWallet': typeof HooksWalletUseEthereumEmbeddedWalletRoute
+  '/_hooks/wallet/useEthereumWalletAssets': typeof HooksWalletUseEthereumWalletAssetsRoute
+  '/_hooks/wallet/useSolanaEmbeddedWallet': typeof HooksWalletUseSolanaEmbeddedWalletRoute
   '/_showcase/showcase/auth': typeof ShowcaseShowcaseAuthRouteWithChildren
   '/_showcase/showcase/auth/callback': typeof ShowcaseShowcaseAuthCallbackRoute
   '/_showcase/showcase/auth/connect-wallet': typeof ShowcaseShowcaseAuthConnectWalletRoute
@@ -269,8 +299,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/provider'
+    | '/solana'
     | '/wagmi'
     | '/auth/useAuthCallback'
+    | '/auth/useConnectWithSiwe'
     | '/auth/useEmailAuth'
     | '/auth/useGuestAuth'
     | '/auth/useOauth'
@@ -282,8 +314,9 @@ export interface FileRouteTypes {
     | '/wagmi/useBalance'
     | '/wagmi/useDisconnect'
     | '/wagmi/useSwitchChain'
-    | '/wallet/useWalletAssets'
-    | '/wallet/useWallets'
+    | '/wallet/useEthereumEmbeddedWallet'
+    | '/wallet/useEthereumWalletAssets'
+    | '/wallet/useSolanaEmbeddedWallet'
     | '/showcase/auth'
     | '/showcase/auth/callback'
     | '/showcase/auth/connect-wallet'
@@ -296,8 +329,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/provider'
+    | '/solana'
     | '/wagmi'
     | '/auth/useAuthCallback'
+    | '/auth/useConnectWithSiwe'
     | '/auth/useEmailAuth'
     | '/auth/useGuestAuth'
     | '/auth/useOauth'
@@ -309,8 +344,9 @@ export interface FileRouteTypes {
     | '/wagmi/useBalance'
     | '/wagmi/useDisconnect'
     | '/wagmi/useSwitchChain'
-    | '/wallet/useWalletAssets'
-    | '/wallet/useWallets'
+    | '/wallet/useEthereumEmbeddedWallet'
+    | '/wallet/useEthereumWalletAssets'
+    | '/wallet/useSolanaEmbeddedWallet'
     | '/showcase/auth/callback'
     | '/showcase/auth/connect-wallet'
     | '/showcase/auth/forgot-password'
@@ -323,9 +359,11 @@ export interface FileRouteTypes {
     | '/_hooks'
     | '/_showcase'
     | '/_hooks/provider'
+    | '/_hooks/solana'
     | '/_hooks/wagmi'
     | '/_showcase/'
     | '/_hooks/auth/useAuthCallback'
+    | '/_hooks/auth/useConnectWithSiwe'
     | '/_hooks/auth/useEmailAuth'
     | '/_hooks/auth/useGuestAuth'
     | '/_hooks/auth/useOauth'
@@ -337,8 +375,9 @@ export interface FileRouteTypes {
     | '/_hooks/wagmi/useBalance'
     | '/_hooks/wagmi/useDisconnect'
     | '/_hooks/wagmi/useSwitchChain'
-    | '/_hooks/wallet/useWalletAssets'
-    | '/_hooks/wallet/useWallets'
+    | '/_hooks/wallet/useEthereumEmbeddedWallet'
+    | '/_hooks/wallet/useEthereumWalletAssets'
+    | '/_hooks/wallet/useSolanaEmbeddedWallet'
     | '/_showcase/showcase/auth'
     | '/_showcase/showcase/auth/callback'
     | '/_showcase/showcase/auth/connect-wallet'
@@ -384,6 +423,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HooksWagmiRouteImport
       parentRoute: typeof HooksRoute
     }
+    '/_hooks/solana': {
+      id: '/_hooks/solana'
+      path: '/solana'
+      fullPath: '/solana'
+      preLoaderRoute: typeof HooksSolanaRouteImport
+      parentRoute: typeof HooksRoute
+    }
     '/_hooks/provider': {
       id: '/_hooks/provider'
       path: '/provider'
@@ -398,18 +444,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShowcaseShowcaseAuthRouteImport
       parentRoute: typeof ShowcaseRoute
     }
-    '/_hooks/wallet/useWallets': {
-      id: '/_hooks/wallet/useWallets'
-      path: '/wallet/useWallets'
-      fullPath: '/wallet/useWallets'
-      preLoaderRoute: typeof HooksWalletUseWalletsRouteImport
+    '/_hooks/wallet/useSolanaEmbeddedWallet': {
+      id: '/_hooks/wallet/useSolanaEmbeddedWallet'
+      path: '/wallet/useSolanaEmbeddedWallet'
+      fullPath: '/wallet/useSolanaEmbeddedWallet'
+      preLoaderRoute: typeof HooksWalletUseSolanaEmbeddedWalletRouteImport
       parentRoute: typeof HooksRoute
     }
-    '/_hooks/wallet/useWalletAssets': {
-      id: '/_hooks/wallet/useWalletAssets'
-      path: '/wallet/useWalletAssets'
-      fullPath: '/wallet/useWalletAssets'
-      preLoaderRoute: typeof HooksWalletUseWalletAssetsRouteImport
+    '/_hooks/wallet/useEthereumWalletAssets': {
+      id: '/_hooks/wallet/useEthereumWalletAssets'
+      path: '/wallet/useEthereumWalletAssets'
+      fullPath: '/wallet/useEthereumWalletAssets'
+      preLoaderRoute: typeof HooksWalletUseEthereumWalletAssetsRouteImport
+      parentRoute: typeof HooksRoute
+    }
+    '/_hooks/wallet/useEthereumEmbeddedWallet': {
+      id: '/_hooks/wallet/useEthereumEmbeddedWallet'
+      path: '/wallet/useEthereumEmbeddedWallet'
+      fullPath: '/wallet/useEthereumEmbeddedWallet'
+      preLoaderRoute: typeof HooksWalletUseEthereumEmbeddedWalletRouteImport
       parentRoute: typeof HooksRoute
     }
     '/_hooks/wagmi/useSwitchChain': {
@@ -487,6 +540,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/useEmailAuth'
       fullPath: '/auth/useEmailAuth'
       preLoaderRoute: typeof HooksAuthUseEmailAuthRouteImport
+      parentRoute: typeof HooksRoute
+    }
+    '/_hooks/auth/useConnectWithSiwe': {
+      id: '/_hooks/auth/useConnectWithSiwe'
+      path: '/auth/useConnectWithSiwe'
+      fullPath: '/auth/useConnectWithSiwe'
+      preLoaderRoute: typeof HooksAuthUseConnectWithSiweRouteImport
       parentRoute: typeof HooksRoute
     }
     '/_hooks/auth/useAuthCallback': {
@@ -568,8 +628,10 @@ const HooksWagmiRouteWithChildren = HooksWagmiRoute._addFileChildren(
 
 interface HooksRouteChildren {
   HooksProviderRoute: typeof HooksProviderRoute
+  HooksSolanaRoute: typeof HooksSolanaRoute
   HooksWagmiRoute: typeof HooksWagmiRouteWithChildren
   HooksAuthUseAuthCallbackRoute: typeof HooksAuthUseAuthCallbackRoute
+  HooksAuthUseConnectWithSiweRoute: typeof HooksAuthUseConnectWithSiweRoute
   HooksAuthUseEmailAuthRoute: typeof HooksAuthUseEmailAuthRoute
   HooksAuthUseGuestAuthRoute: typeof HooksAuthUseGuestAuthRoute
   HooksAuthUseOauthRoute: typeof HooksAuthUseOauthRoute
@@ -577,14 +639,17 @@ interface HooksRouteChildren {
   HooksAuthUseUserRoute: typeof HooksAuthUseUserRoute
   HooksAuthUseWalletAuthRoute: typeof HooksAuthUseWalletAuthRoute
   HooksUtilsUseUIRoute: typeof HooksUtilsUseUIRoute
-  HooksWalletUseWalletAssetsRoute: typeof HooksWalletUseWalletAssetsRoute
-  HooksWalletUseWalletsRoute: typeof HooksWalletUseWalletsRoute
+  HooksWalletUseEthereumEmbeddedWalletRoute: typeof HooksWalletUseEthereumEmbeddedWalletRoute
+  HooksWalletUseEthereumWalletAssetsRoute: typeof HooksWalletUseEthereumWalletAssetsRoute
+  HooksWalletUseSolanaEmbeddedWalletRoute: typeof HooksWalletUseSolanaEmbeddedWalletRoute
 }
 
 const HooksRouteChildren: HooksRouteChildren = {
   HooksProviderRoute: HooksProviderRoute,
+  HooksSolanaRoute: HooksSolanaRoute,
   HooksWagmiRoute: HooksWagmiRouteWithChildren,
   HooksAuthUseAuthCallbackRoute: HooksAuthUseAuthCallbackRoute,
+  HooksAuthUseConnectWithSiweRoute: HooksAuthUseConnectWithSiweRoute,
   HooksAuthUseEmailAuthRoute: HooksAuthUseEmailAuthRoute,
   HooksAuthUseGuestAuthRoute: HooksAuthUseGuestAuthRoute,
   HooksAuthUseOauthRoute: HooksAuthUseOauthRoute,
@@ -592,8 +657,12 @@ const HooksRouteChildren: HooksRouteChildren = {
   HooksAuthUseUserRoute: HooksAuthUseUserRoute,
   HooksAuthUseWalletAuthRoute: HooksAuthUseWalletAuthRoute,
   HooksUtilsUseUIRoute: HooksUtilsUseUIRoute,
-  HooksWalletUseWalletAssetsRoute: HooksWalletUseWalletAssetsRoute,
-  HooksWalletUseWalletsRoute: HooksWalletUseWalletsRoute,
+  HooksWalletUseEthereumEmbeddedWalletRoute:
+    HooksWalletUseEthereumEmbeddedWalletRoute,
+  HooksWalletUseEthereumWalletAssetsRoute:
+    HooksWalletUseEthereumWalletAssetsRoute,
+  HooksWalletUseSolanaEmbeddedWalletRoute:
+    HooksWalletUseSolanaEmbeddedWalletRoute,
 }
 
 const HooksRouteWithChildren = HooksRoute._addFileChildren(HooksRouteChildren)
